@@ -19,6 +19,10 @@ cd "$APP"
 go mod tidy
 go build -o "$TMP/server" ./cmd/server
 
+grep -q 'id="amarra-main"' web/templates/layouts/app.html
+test -f web/static/js/amarra.js
+! test -f vite.config.js
+
 export ENV=production
 export APP_URL=https://example.com
 export ADMIN_TOKEN=ci-smoke-secret

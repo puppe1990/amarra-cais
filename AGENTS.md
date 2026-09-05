@@ -1,17 +1,21 @@
-# Cais — AI Conventions
+# Amarra-cais — AI Conventions
 
 Primary reader of this repo is often an LLM agent: cheap `rg`, expensive full reads, file truncation ~2k lines. Optimize for grep-unique names, small modules, and headless tests.
+
+This is the HTML-first fork of Cais. Generated apps use **Amarra Views + Drive**, not Inertia + Svelte. The CLI binary is `amarra-cais` (it does not overwrite `cais`). Cais v0.11.x remains the Inertia product.
 
 ## Rule #1: TDD is mandatory
 
 Before writing production code:
 
-1. Write the test in `*_test.go` (scaffold Svelte: `web/src/pages/*.test.js` in generated apps)
+1. Write the test in `*_test.go` (framework JS: `pkg/amarra/js/*.test.mjs` or `pkg/cais/js/**/*.test.mjs`)
 2. Run: `go test ./... -v -run TestName` (framework JS: `npm run js:test`)
 3. Confirm it **fails** for the right reason (missing feature, not a typo)
 4. Write the **minimal** code to make it pass
 5. Run: `make test` and/or `make js-test` when JS changed
 6. Only then refactor
+
+Scaffolded apps: Go tests only (`go test ./...` / `amarra-cais test`). Pages are `web/templates/pages/*.html`, not Svelte.
 
 ## Clean Code for Agents (Akita / ranked)
 
@@ -23,74 +27,82 @@ Imperative. Prefer these when trading off effort.
 | 2        | **SRP** — one reason to change per file/package. Prefer three focused modules over one multi-concern dump.                                                                         |
 | 3        | **Greppable names** — unique domain nouns. Avoid `data`, `handler`, `Manager`, `Service`, `util`, `helper` as primary names. If `rg Name` floods, rename.                          |
 | 4        | **Comments = WHY / provenance** — security tradeoffs, SQLite limits, issue IDs (`#123`), upstream constraints. Never strip intent comments on refactor. No `// increment i` noise. |
-| 5        | **Explicit contracts** — Go public APIs fully typed; Svelte props named; no silent `interface{}`/`any` on boundaries.                                                              |
+| 5        | **Explicit contracts** — Go public APIs fully typed; HTML pages and kit tags named; no silent `interface{}`/`any` on boundaries.                                                   |
 | 6        | **DRY** — extract shared logic (generators, handlers, scaffold templates). No copy-variant drift.                                                                                  |
 | 7        | **Headless tests** — one command: `make ci` (or focused `go test ./pkg/... -run X`). SQLite `:memory:`; no manual seed for unit tests. Bug fix → regression test.                  |
 | 8        | **Predictable layout** — table below + generator patch markers. Mirror `foo.go` ↔ `foo_test.go`.                                                                                   |
-| 9        | **Inject deps** — handlers take `Store`, `*inertia.Inertia`, `cais.Config` via constructor; no hidden globals.                                                                     |
+| 9        | **Inject deps** — handlers take `Store`, `*view.Renderer`, `cais.Config` via constructor; no hidden globals.                                                                       |
 | 10       | **Early returns** — max ~2 nesting levels for control flow.                                                                                                                        |
-| 11       | **Errors with values** — `fmt.Errorf("vite watch: %w", err)` not bare `"failed"`.                                                                                                  |
+| 11       | **Errors with values** — `fmt.Errorf("tailwind watch: %w", err)` not bare `"failed"`.                                                                                              |
 | 12       | **Format without debate** — `gofmt` / `make format` (Prettier).                                                                                                                    |
 | 13       | **Structured logs** — JSON request/SQL in dev via `devlog`/`sqllog`; plain text only for CLI UX.                                                                                   |
 
 ### Repo red flags (split when you touch them)
 
-| Path                                          | Notes                                                         |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| `internal/cli/tpl_scaffold_handlers_*.go`     | Split done: home/contact/dashboard/auth + tests + testhelpers |
-| `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks             |
-| `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further        |
-| `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates               |
-| `internal/cli/resource_gen_inertia.go`        | ~600 — form gen vs handler gen                                |
-| `pkg/cais/pwa/assets/cais*.js`                | Already split core/chat; avoid growing monoliths              |
+| Path                                          | Notes                                                                            |
+| --------------------------------------------- | -------------------------------------------------------------------------------- |
+| `internal/cli/tpl_scaffold_handlers_*.go`     | Split done: home/contact/dashboard/auth + tests + testhelpers                    |
+| `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks                                |
+| `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further                           |
+| `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates                                  |
+| `internal/cli/tpl_scaffold_inertia.go`        | Leftover Inertia + Svelte blobs — **not** used by `amarra-cais new`; do not grow |
+| `pkg/cais/pwa/assets/cais*.js`                | Leftover HTMX runtime; generated apps ship `amarra.js` only                      |
 
 Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go`), never a mega template dump.
 
 ## Structure
 
-| Directory                 | Responsibility                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------- |
-| `pkg/cais/`               | Framework: config, router, render, htmx, middleware                                   |
-| `pkg/cais/httpx/`         | Render and redirect helpers for handlers                                              |
-| `pkg/cais/meta/`          | Open Graph / Twitter preview (`Site`, `PreviewHTML`)                                  |
-| `pkg/cais/session/`       | Cookie sessions (`SignIn`, `SignOut`, `Store`)                                        |
-| `pkg/cais/boot/`          | Rails-style startup banner                                                            |
-| `pkg/cais/devlog/`        | Development log buffer + `/logs` viewer                                               |
-| `pkg/cais/sqllog/`        | SQL query logging wrapper (`Wrap`, `EnabledForEnv`)                                   |
-| `pkg/cais/console/`       | Interactive REPL (yaegi + SQL)                                                        |
-| `pkg/cais/csrf/`          | CSRF tokens (double-submit cookie)                                                    |
-| `pkg/cais/validate/`      | Form field validation helpers                                                         |
-| `pkg/cais/forms/`         | Template helpers (`csrfField`, `fieldError`, `makeField`, `fieldInput`)               |
-| `pkg/cais/dotenv/`        | `.env` parser (`Parse`, `LoadFile`) used by `cais.Load()`                             |
-| `pkg/cais/i18n/`          | Locale catalogs (`LOCALE` env, `t` template func)                                     |
-| `pkg/cais/testutil/`      | Test helpers (`NewRenderer`, `NewRequest`, `AssertHTMLContains`, `AssertChatMarkers`) |
-| `pkg/cais/pwa/`           | Default PWA assets generator (manifest, icons, og.png)                                |
-| `pkg/cais/cache/`         | In-memory TTL cache + stable `Key`/`Hash` for ETags                                   |
-| `pkg/cais/pagination/`    | Offset/limit helpers for list pages                                                   |
-| `pkg/cais/stream/`        | SSE relay (`RelaySSE`, `WriteEvent`, `Flush`)                                         |
-| `pkg/cais/chat/`          | Chat bubbles, tool UI, SSE writers (`WriteStream`, `WriteMessage`)                    |
-| `pkg/cais/middleware/`    | CSRF, sessions, auth, rate limits, security headers                                   |
-| `pkg/cais/passwordreset/` | Password-reset tokens + notifier interface                                            |
-| `pkg/cais/sqlite/`        | WAL, busy timeout, foreign keys (`Configure`)                                         |
-| `pkg/cais/netutil/`       | Health payload + LAN URLs for mobile testing                                          |
-| `pkg/cais/migrate/`       | `schema_migrations` runner (idempotent on boot)                                       |
-| `pkg/cais/flash/`         | One-shot flash cookies                                                                |
-| `pkg/cais/jobs/`          | SQLite background job queue                                                           |
-| `pkg/cais/jobsui/`        | Localhost `/jobs` dashboard (counts, failed retry/discard, recurring)                 |
-| `pkg/cais/testdata/`      | Fixture HTML (HTMX layouts + chat_sse partials for framework tests)                   |
-| `internal/cli/`           | Generators (`cais new`, `cais g`, `cais destroy`) — **Inertia + Svelte scaffolds**    |
-| `cmd/amarra-cais/`        | CLI entry point                                                                       |
-| `cmd/pwagen/`             | Write PWA assets into a target directory                                              |
+| Directory                 | Responsibility                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| `pkg/cais/`               | Framework: config, router, render, middleware, sessions, jobs                            |
+| `pkg/amarra/view/`        | HTML views: `Load`, `<.component>` expand, kit, `view.Write`                             |
+| `pkg/amarra/`             | Drive/Frame headers (`IsDrive`, `FrameID`)                                               |
+| `pkg/amarra/stream/`      | Named SSE ops (`append`, `prepend`, `replace`, `morph`, `remove`, `toast`)               |
+| `pkg/amarra/live/`        | Live WebSocket stub (`501` until slice B)                                                |
+| `pkg/amarra/js/`          | Drive / Frame / Stream / Hook sources; esbuild → `pkg/cais/pwa/assets/amarra.js`         |
+| `pkg/cais/httpx/`         | Render and redirect helpers for handlers                                                 |
+| `pkg/cais/meta/`          | Open Graph / Twitter preview (`Site`, `PreviewHTML`)                                     |
+| `pkg/cais/session/`       | Cookie sessions (`SignIn`, `SignOut`, `Store`)                                           |
+| `pkg/cais/boot/`          | Rails-style startup banner                                                               |
+| `pkg/cais/devlog/`        | Development log buffer + `/logs` viewer                                                  |
+| `pkg/cais/sqllog/`        | SQL query logging wrapper (`Wrap`, `EnabledForEnv`)                                      |
+| `pkg/cais/console/`       | Interactive REPL (yaegi + SQL)                                                           |
+| `pkg/cais/csrf/`          | CSRF tokens (double-submit cookie)                                                       |
+| `pkg/cais/validate/`      | Form field validation helpers                                                            |
+| `pkg/cais/forms/`         | Template helpers (`csrfField`, `fieldError`, `makeField`, `fieldInput`, `fieldPassword`) |
+| `pkg/cais/dotenv/`        | `.env` parser (`Parse`, `LoadFile`) used by `cais.Load()`                                |
+| `pkg/cais/i18n/`          | Locale catalogs (`LOCALE` env, `t` template func)                                        |
+| `pkg/cais/testutil/`      | Test helpers (`NewRenderer`, `NewRequest`, `AssertHTMLContains`, `AssertChatMarkers`)    |
+| `pkg/cais/pwa/`           | Default PWA assets (`InstallForAmarra` ships `amarra.js`)                                |
+| `pkg/cais/cache/`         | In-memory TTL cache + stable `Key`/`Hash` for ETags                                      |
+| `pkg/cais/pagination/`    | Offset/limit helpers for list pages                                                      |
+| `pkg/cais/stream/`        | Legacy SSE relay (prefer `pkg/amarra/stream` in new code)                                |
+| `pkg/cais/chat/`          | Chat bubbles, tool UI (`LiveBubble`, `MessageBubble`)                                    |
+| `pkg/cais/middleware/`    | CSRF, sessions, auth, rate limits, security headers                                      |
+| `pkg/cais/passwordreset/` | Password-reset tokens + notifier interface                                               |
+| `pkg/cais/sqlite/`        | WAL, busy timeout, foreign keys (`Configure`)                                            |
+| `pkg/cais/netutil/`       | Health payload + LAN URLs for mobile testing                                             |
+| `pkg/cais/migrate/`       | `schema_migrations` runner (idempotent on boot)                                          |
+| `pkg/cais/flash/`         | One-shot flash cookies                                                                   |
+| `pkg/cais/jobs/`          | SQLite background job queue                                                              |
+| `pkg/cais/jobsui/`        | Localhost `/jobs` dashboard (counts, failed retry/discard, recurring)                    |
+| `pkg/cais/testdata/`      | Fixture HTML (legacy HTMX layouts + chat_sse partials for framework tests)               |
+| `pkg/cais/htmx.go`        | Leftover HTMX helpers — not the public generated-app contract                            |
+| `internal/cli/`           | Generators (`amarra-cais new`, `g`, `destroy`) — **HTML + Amarra scaffolds**             |
+| `cmd/amarra-cais/`        | CLI entry point                                                                          |
+| `cmd/pwagen/`             | Write PWA assets into a target directory                                                 |
 
-This repo is **framework + CLI only** (no dogfood app). Apps live outside; create with `cais new`.
+This repo is **framework + CLI only** (no dogfood app). Apps live outside; create with `amarra-cais new`.
 
-### Generated apps (`cais new`)
+### Generated apps (`amarra-cais new`)
 
-Layout: `app.html` + `web/src/pages/*.svelte` + gonertia + Vite → `web/static/build/`. Default scaffold uses `pwa.InstallForInertia` (no HTMX JS bundles).
+Layout: `web/templates/layouts/app.html` (`#amarra-main`) + `web/templates/pages/*.html` + `web/static/js/amarra.js`. Default scaffold uses `pwa.InstallForAmarra` (no Vite, no gonertia, no HTMX JS bundles).
 
-`cais g handler` / `cais g page` generate **Svelte** pages in `web/src/pages/`.
+`amarra-cais g handler` / `amarra-cais g page` generate **HTML** pages in `web/templates/pages/`.
 
-`cais g resource` on Inertia apps → Svelte admin. `cais g stream chat` still uses HTMX partials until ported.
+`amarra-cais g resource` generates HTML admin CRUD (`view.Write` + kit `<.form>`). `amarra-cais g stream chat` uses Amarra Stream SSE (`data-amarra-stream`). `amarra-cais g component` writes `web/templates/components/<name>.html`.
+
+Handlers do **not** check `HX-Request`. They call `view.Write`.
 
 ## Router path params and groups
 
@@ -115,158 +127,133 @@ r.Delete("/webhooks/{id}", deleteHandler)
 r.Post("/webhooks/incoming/{token}", receiver)
 ```
 
-`cais.Router` rewrites the panic with a short hint. `cais routes` also warns when it can detect this statically from `routes.go`.
+`cais.Router` rewrites the panic with a short hint. `amarra-cais routes` also warns when it can detect this statically from `routes.go`.
 
 ## Admin protection
 
-| Mode                    | Middleware                         | Generator flag            |
-| ----------------------- | ---------------------------------- | ------------------------- |
-| Browser admin (default) | `middleware.RequireAuth("/login")` | `cais g resource` default |
-| Bearer token API        | `middleware.AdminAuth(cfg)`        | `--admin-auth bearer`     |
+| Mode                    | Middleware                         | Generator flag                   |
+| ----------------------- | ---------------------------------- | -------------------------------- |
+| Browser admin (default) | `middleware.RequireAuth("/login")` | `amarra-cais g resource` default |
+| Bearer token API        | `middleware.AdminAuth(cfg)`        | `--admin-auth bearer`            |
 
 Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `AdminAuth` accepts Bearer header only, no query params. No-op in development when unset.
 
-`cais g resource` defaults to session auth (`--admin-auth session`). Use `--admin-auth bearer` for token-only admin APIs without login pages.
+`amarra-cais g resource` defaults to session auth (`--admin-auth session`). Use `--admin-auth bearer` for token-only admin APIs without login pages.
 
 ## Session auth
 
-`cais new` includes login/logout and protects `/dashboard`. Add to existing apps with `cais g auth`.
+`amarra-cais new` includes login/logout and protects `/dashboard`. Add to existing apps with `amarra-cais g auth`.
 
 ```go
 r.Use(middleware.LoadSession(deps.Store.Sessions()))
-r.Use(middleware.Flash)
+r.Use(middleware.Flash(cfg))
 r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
-auth := handlers.NewAuthHandler(renderer, store, site, store.Sessions(), cfg, catalog, inertia)
+auth := handlers.NewAuthHandler(views, store, site, store.Sessions(), cfg, catalog)
 session.SignIn(w, sessions, r, userID, session.CookieOptionsFromConfig(cfg))
 flash.Set(w, "notice", "Bem-vindo!", cfg.CookieSecure())
 ```
 
 Dev seed user: `demo@example.com` / `password`. Sessions persist in SQLite via `session.NewSQLiteStore`.
 
-**Session expiry** — cookies and DB rows expire after 7 days (`sessionTTL` / `defaultMaxAge`). SQLite stores `expires_at`; expired rows are ignored on lookup. Prune stale rows with `cais db prune-sessions` (or call `session.Store.PruneExpired()`).
+**Session expiry** — cookies and DB rows expire after 7 days (`sessionTTL` / `defaultMaxAge`). SQLite stores `expires_at`; expired rows are ignored on lookup. Prune stale rows with `amarra-cais db prune-sessions` (or call `session.Store.PruneExpired()`).
 
 **Production cookies** — `session.CookieOptionsFromConfig(cfg)` sets `Secure` when `cfg.CookieSecure()` is true (`ENV=production`).
 
-## Inertia + Svelte (default frontend)
+## Amarra Views + Drive (default frontend)
 
-Handlers in generated apps render **Inertia + Svelte** only (no HTMX HTML fallbacks in `cais new` scaffolds).
+Handlers in generated apps render **HTML** via `pkg/amarra/view`. Boot loads templates once (`view.Load`); unknown `<.component>` tags fail at boot, not on the first request.
 
 ```go
-// GET
-_ = h.inertia.Render(w, r, "Contact", inertia.Props{"site": meta.ForRequest(h.site, r)})
+view.Write(w, r, h.views, view.Page{
+  Layout: "app",
+  Name:   "contact",
+  Data: map[string]any{
+    "Title":     h.catalog.T("contact.title"),
+    "Site":      meta.ForRequest(h.site, r),
+    "CSRFToken": csrf.TokenFromRequest(r),
+    "Flash":     flashMsg,
+  },
+}, h.cfg)
 
-// Validation errors — re-render same component; gonertia fills props.errors
-ve := make(inertia.ValidationErrors)
-ve["email"] = "Invalid email"
-ctx := inertia.SetValidationErrors(r.Context(), ve)
-_ = h.inertia.Render(w, r.WithContext(ctx), "Contact", inertia.Props{})
+// Validation — same page, status 422, `.Errors` on inputs
+writeView(w, r, h.views, h.cfg, "contact", amarraData(r, h.site, map[string]any{
+  "Title":  h.catalog.T("contact.title"),
+  "Errors": errs,
+  "Name":   name,
+  "Email":  email,
+}), http.StatusUnprocessableEntity)
 
-// Flash on redirect — use cais flash cookies (not inertia.SetFlash; needs FlashDataProvider)
+// Flash on redirect — cais cookie API only
 flash.Set(w, "notice", "Saved!", cfg.CookieSecure())
-h.inertia.Redirect(w, r, "/dashboard", http.StatusSeeOther)
-// On the next request, middleware.Flash puts the cookie into context; pass into props:
-if msg, ok := flash.MessageFromRequest(r); ok {
-  props["flash"] = inertia.Flash{msg.Kind: msg.Message}
-}
+http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 ```
 
-**Where HTMX remains (on purpose):**
+Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only.
 
-| Area                                           | Why                                                            |
-| ---------------------------------------------- | -------------------------------------------------------------- |
-| `cais g stream chat`                           | SSE agent UI still uses HTMX partials + `cais.js` until ported |
-| `cais g resource` on non-Inertia apps          | HTML admin CRUD when `Home.svelte` is missing                  |
-| `pkg/cais` htmx helpers / `pwa/assets` HTMX JS | Framework support for the above                                |
-| `pkg/cais/testdata/.../chat_sse*.html`         | Chat SSE contract tests                                        |
+**Public HTML contract** (`amarra.js`): `data-amarra-drive`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-hook` / `amarra-live`, `<amarra-frame>`. HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
 
-Default apps (`cais new`) use `pwa.InstallForInertia` — no HTMX JS bundles.
-
-Svelte pages use `@inertiajs/svelte`:
-
-```svelte
-<script>
-  import { useForm } from '@inertiajs/svelte'
-  export let errors = {}
-  // Inertia 3 + Svelte 5: useForm returns a reactive object, not a store — no $form
-  let form = useForm({ name: '', email: '' })
-  function submit() { form.post('/contact') }
-</script>
+```html
+{{ define "content" }}
+<.form action="/items" method="post">
+  {{ csrfField .CSRFToken }}
+  <.input name="title" label="Title" value="{{ .Item.Title }}" error="{{ fieldError .Errors "title" }}" />
+  <.button type="submit">Save</.button>
+</.form>
+{{ end }}
 ```
 
-**useForm + Svelte 5 — do not reactive-write props into the form object** (can blank the page):
+Shipped kit (override in `web/templates/components/`): `form`, `input`, `button`, `flash`, `nav`, `pagination`, `modal`. One slot: `.Inner`. Self-closing `<.flash />` is allowed.
 
-```svelte
-<script>
-  import { useForm } from '@inertiajs/svelte'
-  export let items = []
+`{{ linkTo "/x" "Label" }}` emits a Drive-enabled `<a data-amarra-drive="true">`. `<.form>` injects `data-amarra-drive="true"`.
 
-  // ❌ Easy to break under Svelte 5
-  // let form = useForm({ item_id: '' })
-  // $: if (items.length) form.item_id = items[0].id
+**Live** (`/amarra/live`) is a 501 stub in this slice. Do not invent a WebSocket protocol in CRUD handlers.
 
-  // ✅ Local state for derived UI; assign into form only on submit
-  let itemId = items[0]?.id ?? ''
-  let form = useForm({ item_id: '', note: '' })
-  function submit() {
-    form.item_id = itemId
-    form.post('/sales')
-  }
-</script>
-```
-
-Also: prefer `bind:value` on user-edited fields; never re-create `useForm(...)` inside `$:` / `$derived` blocks; defend array props with `Array.isArray` before feeding the form.
-
-Vite builds to `web/static/build/` (`npm run build`). `app.html` loads `/static/build/assets/main.js`.
-
-**Frontend TDD** — Vitest + Testing Library in `web/src/pages/*.test.js`:
+**Frontend TDD** — framework JS only:
 
 ```bash
-npm run test:fe   # or make js-test in framework repo (also runs pkg/cais/js/*.test.mjs)
+npm run js:test   # pkg/cais/js/**/*.test.mjs + pkg/amarra/js/**/*.test.mjs
 ```
 
 ## New page (scaffolded app)
 
-1. Go test in `internal/handlers/foo_test.go` — `setupTestInertia` + `inertiaRequest` + `assertInertiaComponent` (see `inertia_test.go`)
-2. Optional Svelte test in `web/src/pages/Foo.test.js`
-3. Svelte page in `web/src/pages/Foo.svelte`
-4. Handler — `h.inertia.Render(w, r, "Foo", inertia.Props{"site": meta.ForRequest(h.site, r)})`
-5. Register the route in `internal/app/routes.go`
+1. Go test in `internal/handlers/foo_test.go` — `setupTestViews(t)` + assert HTML (`id="amarra-main"`, form fields)
+2. HTML page in `web/templates/pages/foo.html` (`{{ define "content" }}`)
+3. Handler — `view.Write` / `writeView` with `amarraData`
+4. Register the route in `internal/app/routes.go`
 
-Or use `cais g handler foo` (creates handler + test + `web/src/pages/Foo.svelte` + route patch).
+Or use `amarra-cais g handler foo` (creates handler + test + `web/templates/pages/foo.html` + route patch).
 
-Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter props in Inertia pages.
+Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page data (`amarraData` / `meta.ForRequest`).
 
-**Inertia integration tests** (`internal/app/app_test.go`) — set `X-Inertia: true` on requests; successful POSTs return `303` redirects; validation returns `200` with `props.errors`.
+**Integration tests** (`internal/app/` when present, or handler tests): GET page first; POSTs return `303` on success and `422` HTML with `.Errors` on validation. Do not set `X-Inertia`.
 
 ## CSRF
 
 - `middleware.CSRF(cfg)` on the router (validates POST/PUT/DELETE/PATCH)
 - Double-submit cookie (`cais_csrf`) — token in cookie + form field or `X-CSRF-Token` header; no server-side token store
 
-**HTMX templates** — pass `meta.ForRequest(site, r)` in page data; layout renders `<meta name="csrf-token">` + `cais.js` sends `X-CSRF-Token` on HTMX requests. HTML forms: `{{ csrfField .CSRFToken }}` or hidden `csrf_token` input.
+**HTML templates** — pass `meta.ForRequest(site, r)` / `amarraData`; layout renders `<meta name="csrf-token">` + `amarra.js` sends `X-CSRF-Token` on Drive requests. Forms: `{{ csrfField .CSRFToken }}` or hidden `csrf_token` input. Kit `<.form>` still needs the CSRF field in the body.
 
-**Inertia + Svelte** — `@inertiajs/svelte` `useForm` posts include the CSRF cookie automatically; middleware still validates cookie + body/header.
-
-**Integration tests** — GET page first (read `csrf` cookie), then POST with matching `csrf_token` field + cookie (and `X-Inertia: true` for Inertia routes).
+**Integration tests** — GET page first (read `csrf` cookie), then POST with matching `csrf_token` field + cookie.
 
 ## Flash messages
 
-- `middleware.Flash` on the router (after `LoadSession`)
-- **One API:** `flash.Set(w, "notice", "Saved!", cfg.CookieSecure())` then redirect. Do **not** use `inertia.SetFlash` — without a gonertia `FlashDataProvider` it is a silent no-op (#140).
-- Read on the next request: `flash.MessageFromRequest(r)` → put into Inertia `props["flash"]`, or HTMX via `meta.ForRequest(site, r)` → `.Flash`
-- Layouts: `{{ flashMessage .Flash }}` (`pkg/cais/forms`) — never `{{ .Flash }}` (stringifies the struct)
+- `middleware.Flash(cfg)` on the router (after `LoadSession`)
+- **One API:** `flash.Set(w, "notice", "Saved!", cfg.CookieSecure())` then redirect.
+- Read on the next request: `flash.MessageFromRequest(r)` → put into page data (scaffold `amarraData` copies `s.Flash`). Layout: `<.flash />` **inside** `#amarra-main` so Drive morph keeps notices.
+- Helpers: `{{ flashMessage .Flash }}` (`pkg/cais/forms`) — never `{{ .Flash }}` (stringifies the struct)
 - One-shot: consumed on the next request
 
 ## Mobile PWA
 
 - `boot.Print` shows **LAN** URLs for phone testing on Wi‑Fi
 - `GET /health` returns `lan_urls` via `netutil.HealthPayload` — use this array, never concatenate `APP_URL` + port manually
-- `cais pwa --bump` increments `CACHE_VERSION` in `sw.js` after template/HTML changes
-- `cais dev` auto-bumps `CACHE_VERSION` when `sw.js` exists (fresh assets on phone without a manual bump)
-- `cais doctor --mobile` checks flash markup, Google Fonts CSP, SW cache, chat SSE partial, SSE reconnect, chat agent JS (`finalizeChatStream`), chat enter-submit JS (`bindChatEnterSubmit`), chat form CSS (`.cais-chat-shell`), `#chat-messages` scroll container, and health `lan_urls`
+- `amarra-cais pwa --bump` increments `CACHE_VERSION` in `sw.js` after template/HTML changes
+- `amarra-cais dev` auto-bumps `CACHE_VERSION` when `sw.js` exists (fresh assets on phone without a manual bump)
+- `amarra-cais doctor --mobile` checks flash markup, Google Fonts CSP, `amarra.js`, SW cache (network-first `/static/js/amarra.js`), chat form CSS, `#chat-messages` scroll container, and health `lan_urls`
 - Scaffold `input.css` uses system fonts (no `fonts.googleapis.com` — blocked by default CSP)
 
-**Mobile SSE checklist:** `cais doctor --mobile` → `cais pwa --bump` → open boot **LAN** URL on phone → stay on chat page while agent responds (avoid hx-boost away mid-stream)
+**Mobile checklist:** `amarra-cais doctor --mobile` → `amarra-cais pwa --bump` → open boot **LAN** URL on phone → stay on the page while SSE streams (Drive morphs `#amarra-main`; a full navigation drops the EventSource)
 
 ## Security headers
 
@@ -281,8 +268,8 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter props in
 Wrap sensitive POST routes with per-IP token buckets:
 
 ```go
-loginLimit := middleware.NewRateLimiter(10)   // 10 req/min
-contactLimit := middleware.NewRateLimiter(20) // 20 req/min
+loginLimit := middleware.NewRateLimiter(10, cfg)   // 10 req/min
+contactLimit := middleware.NewRateLimiter(20, cfg) // 20 req/min
 r.Post("/login", loginLimit.Middleware(http.HandlerFunc(auth.LoginPost)).ServeHTTP)
 r.Post("/contact", contactLimit.Middleware(http.HandlerFunc(contact.Post)).ServeHTTP)
 ```
@@ -291,60 +278,39 @@ Rate limiters use `middleware.ClientIP(r, cfg)` — set `TRUSTED_PROXIES` when b
 
 ## SSE / streaming
 
-Cais ships `sse-ext.min.js` (HTMX SSE extension). Long-lived streams need server and handler setup:
+Amarra Stream (`pkg/amarra/stream`) is the named-op contract. Long-lived streams need server and handler setup:
 
 | Setting        | Normal handlers | SSE routes                                             |
 | -------------- | --------------- | ------------------------------------------------------ |
-| `WriteTimeout` | `30s` ok        | **`0`** (disabled) — scaffold default                  |
+| `WriteTimeout` | `30s` ok        | **`0`** (disabled) — set on chat/stream routes         |
 | Flush          | N/A             | `stream.Flush(w)` — never assert `http.Flusher` on `w` |
 
 ```go
 import (
+    "github.com/puppe1990/amarra-cais/pkg/amarra/stream"
     "github.com/puppe1990/amarra-cais/pkg/cais/chat"
-    "github.com/puppe1990/amarra-cais/pkg/cais/stream"
 )
 
 func streamHandler(w http.ResponseWriter, r *http.Request) {
     stream.RelaySSE(w)
-    _ = chat.WriteStream(w, chat.LiveBubble("token…"))   // event: stream
-    _ = chat.WriteMessage(w, chat.MessageBubble(chat.RoleAssistant, "done", time.Now().UTC()))
-    _ = stream.WriteEvent(w, "thinking", chat.ThinkingHTML("…")) // prefer over manual fmt.Fprintf
+    _ = stream.WriteOp(w, stream.Op{Kind: "morph", Target: "chat-live", HTML: chat.LiveBubble("token…")})
+    _ = stream.WriteOp(w, stream.Op{Kind: "append", Target: "chat-history", HTML: chat.MessageBubble(chat.RoleAssistant, "done", time.Now().UTC())})
     _ = stream.Flush(w) // never w.(http.Flusher) — middleware may hide Flusher
-}
-
-// Proxy upstream SSE (e.g. OpenCode /event) to the browser:
-func relayHandler(w http.ResponseWriter, upstream *http.Response) {
-    stream.RelaySSE(w)
-    _, _ = stream.RelayAndCopy(w, upstream.Body)
 }
 ```
 
-**Chat template patterns** — two partials ship with `cais new`:
+Named ops: `append`, `prepend`, `replace`, `morph`, `remove`, `toast`. Chat partials use `data-amarra-stream` (not `hx-ext` / `sse-ext`).
+
+**Chat template patterns** — two partials ship with `amarra-cais g stream chat`:
 
 | Partial               | Use case                        | DOM                                                                    |
 | --------------------- | ------------------------------- | ---------------------------------------------------------------------- |
-| `chat_sse.html`       | Echo / simple bots              | Single `#chat-history`; SSE appends with `beforeend`                   |
+| `chat_sse.html`       | Echo / simple bots              | `#chat-history` + `#chat-live`; `data-amarra-stream`                   |
 | `chat_sse_agent.html` | Agent streaming (tokens, tools) | `#chat-history` + `#chat-stream` + `#chat-live` under `#chat-messages` |
 
-Simple mode — `chat_sse.html`: `#chat-sse` uses `sse-swap="message"` + `hx-swap="beforeend"` + `hx-target="#chat-history"`. Set `data-cais-sse-persist="true"` so `cais.js` reconnects SSE after `hx-boost` navigation.
+**Server helpers** — `pkg/cais/chat`: `LiveBubble`, `MessageBubble`, `SafeMessageBubble`, `ToolCallBubble`, `ToolResultBubble`, `DetailBubble`, `Truncate`, `SelectWindowWithLastUser`, `UnsafeLiveHTML` / `UnsafeMessageHTML` (caller sanitizes HTML).
 
-Agent mode — `chat_sse_agent.html`: opt-in with `data-cais-chat="true"`. SSE events:
-
-| Event      | Target           | Swap        | Purpose                                   |
-| ---------- | ---------------- | ----------- | ----------------------------------------- |
-| `stream`   | `#chat-live`     | `innerHTML` | Live token/tool bubble (`data-cais-live`) |
-| `message`  | `#chat-stream`   | `beforeend` | Finalized assistant chunks                |
-| `thinking` | `#chat-thinking` | `outerHTML` | Thinking indicator                        |
-
-**Ordering pitfall** — `hxChatForm` posts user bubbles to `#chat-history` with `beforeend`. If agent SSE writes to sibling containers (`#chat-stream`, `#chat-live`) without merging first, the user input appears above in-flight assistant output. Agent mode requires `cais.js` `finalizeChatStream()` (runs automatically when `data-cais-chat` is present; also exposed as `window.caisFinalizeChatStream`).
-
-**Server helpers** — `pkg/cais/chat`: `LiveBubble`, `MessageBubble`, `SafeMessageBubble`, `ToolCallBubble`, `ToolResultBubble`, `DetailBubble`, `Truncate`, `SelectWindowWithLastUser`, `UnsafeLiveHTML` / `UnsafeMessageHTML` (caller sanitizes HTML), `WriteStream`, `WriteMessage` (wrap `stream.WriteEvent`).
-
-**Chat form** — `{{ hxChatForm "/chat/{id}/messages" "#chat-thinking" }}` on the `<form>`: `cais.js` `bindChatEnterSubmit` sends on Enter, Shift+Enter newline. Input clears on submit; use `data-cais-chat-optimistic="true"` only when the POST partial does **not** return a user bubble (otherwise `dedupOptimisticUserBubble` drops the duplicate). Optional `data-cais-poll-url` on `#chat-sse` enables history refresh fallback when SSE fails (poll is skipped while stream slots are active).
-
-`cais doctor` warns when `sse-ext.min.js` is present and `WriteTimeout > 0` in `internal/app/app.go`.
-
-**Chat handler tests** — `cais g stream chat` generates handler tests using `testutil.AssertChatMarkers` (Show) and `testutil.AssertHTMLContains` (PostMessage bubble). Missing records return `http.NotFound` (not 500):
+**Chat handler tests** — `amarra-cais g stream chat` generates handler tests using `testutil.AssertChatMarkers` (Show) and `testutil.AssertHTMLContains` (PostMessage bubble). Missing records return `http.NotFound` (not 500):
 
 ```go
 conv, err := h.store.FindConversationByID(id)
@@ -354,24 +320,16 @@ if err != nil {
 }
 ```
 
-## HTMX interactions
+## Drive / Frame / Hook
 
-Used by `cais g resource` / `cais g stream chat` admin and chat UIs until ported to Svelte.
+Used by `amarra-cais new` / `g resource` / `g stream chat`.
 
-- Partial in `web/templates/partials/` — each file has `{{ define "name" }}` matching the filename
-- Partials are parsed into full pages too, so `{{ template "name" . }}` works in pages and layouts
-- For HTMX swaps, handler returns the partial via `RenderPartial` (not a full layout)
-- Template attributes: `hx-post`, `hx-target`, `hx-swap`
-- Handler: prefer `httpx.WritePage` (thin wrapper over `RenderPageOrPartial`) for forms that return partial on HTMX and full page otherwise
-- Test with `req.Header.Set("HX-Request", "true")`
+- Pages in `web/templates/pages/` — `{{ define "content" }}` plus optional `{{ define "frame:<id>" }}`
+- Layout: `#amarra-nav`, `#amarra-main`, `#amarra-toast-host`; one script `/static/js/amarra.js`
+- Do not test with `HX-Request`. Drive sets `Amarra-Drive: true`; frames set `Amarra-Frame: <id>`
+- List caching — combine `cache.Key(...)` + `cache.Hash(version)` with `httpx.NotModified` / `httpx.SetETag` for 304 responses on stable list pages
 
-```go
-httpx.WritePage(w, r, renderer, httpx.PageConfig{
-  Layout: "base", Page: "contact", Partial: "contact_errors", Data: data, Status: 422,
-}, cfg)
-```
-
-**List caching** — combine `cache.Key(...)` + `cache.Hash(version)` with `httpx.NotModified` / `httpx.SetETag` for 304 responses on stable list pages.
+`pkg/cais/htmxattrs` and `httpx.WritePage` still exist for leftover HTMX apps. New generators must not emit `hx-*`.
 
 ## Form validation
 
@@ -389,13 +347,15 @@ if errs.Any() {
 
 Pass `errs` as `.Errors` in page data when re-rendering forms.
 
-**Form helpers** (`pkg/cais/forms`, registered on the renderer):
+**Form helpers** (`pkg/cais/forms`, registered on the view renderer):
 
 ```html
 {{ fieldInput (makeField "name" "Name" .Name "text" true .Errors) }}
 ```
 
-`makeField` returns `forms.FieldData`; `fieldInput` renders input/textarea/checkbox + error. Resource generator admin forms use these by default.
+`makeField` returns `forms.FieldData`; `fieldInput` renders input/textarea/checkbox + error. Resource generator admin forms use these plus kit `<.form>` / `<.button>`.
+
+Password fields: always `fieldPassword` (eye show/hide).
 
 Foreign-key selects:
 
@@ -406,38 +366,23 @@ Foreign-key selects:
 
 ## Foreign keys in generators
 
-`cais g resource post --fields title:string,category_id:references` (or `category:belongs_to`):
+`amarra-cais g resource post --fields title:string,category_id:references` (or `category:belongs_to`):
 
 - Migration column: `INTEGER [NOT NULL] REFERENCES categories(id)`
 - Store: `ListCategoryOptions()` — `SELECT id, COALESCE(name, title, id) FROM categories`
 - Admin form: `fieldSelect` / `makeSelectField` populated from options
 
-Generate the parent resource first (`cais g resource category --fields name:string`). Referenced table needs a `name` or `title` column for labels.
+Generate the parent resource first (`amarra-cais g resource category --fields name:string`). Referenced table needs a `name` or `title` column for labels.
 
 ## Integration tests (auth + contact)
 
-Multi-step flows belong in `internal/app/app_test.go` (full router + CSRF + session + Inertia):
+Multi-step flows belong in `internal/app/` (full router + CSRF + session + HTML) when you add them; scaffold ships focused handler tests:
 
 1. `GET /login` or `/contact` — read `csrf` cookie
-2. `POST` with matching `csrf_token` field + cookie; set `X-Inertia: true` for Inertia routes
+2. `POST` with matching `csrf_token` field + cookie
 3. Follow session/flash cookies on subsequent requests
 
-See `TestApp_LoginPost_withCSRF_redirects`, `TestApp_AuthFlow_loginDashboardLogout`, `TestApp_ContactPost_validationWithCSRF_returns422`, `TestApp_Smoke_contactInertia_loginDashboardLogout`.
-
-## HTMX UX (app-like feel)
-
-HTMX layouts load `cais-core.js` (or full `cais.js`) after `htmx.min.js` — CSRF header, focus restore, optimistic toggles, nav tab sync. Chat pages add `cais-chat.js` (testable logic in `cais-chat-logic.mjs`).
-
-- **App shell** — `#cais-main` + `#cais-nav`; `navTab` links use `hx-boost` (swap main only, no full reload)
-- **Small targets** — swap `#form-errors` or `this`, not whole lists
-- **Transitions** — `hx-swap="innerHTML swap:150ms"` on forms; `outerHTML swap:150ms` on toggles
-- **Forms** — `{{ hxForm "/path" "#errors" "#spinner" }}` (`pkg/cais/htmxattrs`); `.htmx-request-hide` on submit label
-- **Bool toggles** — `data-cais-optimistic="toggle"` for instant class flip (see resource generator)
-- **Count / remove** — `data-cais-optimistic="count"` or `"remove"` for feed-style actions (rollback on error)
-- **Morph swaps** — default for nav (`hx-swap="morph:innerHTML"`) and paginate for better mobile/SPA state. The old `data-cais-view-transition` attr was removed (was dead code). Use `hxMorphOuter` helper for toggles.
-- **CSS** — `input.css`: `.htmx-swapping`, `.htmx-settling`, `.cais-skeleton`, `.cais-toast-enter`
-- **Response headers** — `cais.SetToast`, `cais.SetFocus(w, "#field")`, `cais.SetRetarget`, `cais.SetTrigger`
-- **Admin CRUD** — `cais g resource` generates `hxForm` admin forms, inline delete (`hx-swap="delete"`), `RenderPageOrPartial` on 422
+Success: `303`. Validation: `422` HTML containing the field error. Handler tests use `setupTestViews` + `httptest` (see generated `home_test.go` / `contact_test.go` / `auth_test.go`).
 
 ## New table
 
@@ -459,7 +404,7 @@ CREATE TABLE bookmarks (...);
 DROP TABLE IF EXISTS bookmarks;
 ```
 
-`cais db rollback` executes the `-- down` SQL when present, then removes the `schema_migrations` row. Without a down section, only the record is removed.
+`amarra-cais db rollback` executes the `-- down` SQL when present, then removes the `schema_migrations` row. Without a down section, only the record is removed.
 
 ## Development logging
 
@@ -467,7 +412,7 @@ In `ENV=development`:
 
 - `middleware.LoggerTo(devlog.MirrorDefault(...))` — JSON request logs when `cfg.LogJSON()` (`kind: request`); `LOG_FORMAT=text` opts out
 - `sqllog.ConfigForEnv(env)` — SQL JSON logs in development (`kind: sql`); plain text when `JSON: false`
-- `devlog.Register(r, cfg.Env, buf)` — mounts `/logs` (localhost only, HTMX refresh)
+- `devlog.Register(r, cfg.Env, buf)` — mounts `/logs` (localhost only)
 - `jobsui.Register(r, db)` — mounts `/jobs` (localhost only, all envs; SSH tunnel in production)
 
 Boot banner via `boot.Print` in `cmd/server/main.go`. Port auto-pick via `cais.ResolvePort` when preferred port is busy.
@@ -483,86 +428,86 @@ Set `LOCALE=en` (default) or `LOCALE=pt` for UI strings via `pkg/cais/i18n`. See
 ## CLI generators
 
 ```bash
-cais new myapp              # includes AGENTS.md, GitHub Actions CI, pre-commit, golangci-lint, Prettier
-cais new myapp --minimal
-cais new myapp --blank
-cais new myapp --module github.com/acme/myapp
-cais g [--dry-run] stream chat              # SSE chat: conversations, messages, stream relay scaffold
-cais g [--dry-run] resource bookmark --fields title:string,url:url,notes:text? --public --paginate --force
-cais destroy [--dry-run] resource bookmark   # undo generator output
-cais destroy [--dry-run] model bookmark      # remove model + migration + store methods
-cais destroy [--dry-run] handler settings
-cais destroy [--dry-run] auth                # remove login/auth scaffolding
-cais destroy [--dry-run] migration add_tags  # remove *_add_tags.sql
-cais g [--dry-run] model bookmark --fields title:string,url:url
-cais g [--dry-run] handler settings
-cais g [--dry-run] page about
-cais g [--dry-run] migration add_tags
-cais g [--dry-run] auth       # login/logout + protected dashboard
-cais g [--dry-run] console    # scaffold cmd/console/main.go
-cais g [--dry-run] ci         # add CI/pre-commit to existing apps
-cais g [--dry-run] job send_welcome --cron "0 3 * * *"
-cais doctor [--mobile]        # verify setup (Inertia/Vite, htmx, air, go.mod, PWA/mobile)
-cais pwa [--bump]             # write/refresh PWA assets; --bump invalidates SW cache
-cais link [path] [--unlink]   # go.mod replace for local Cais dev (do not commit; unlink before push)
-cais routes                   # list routes from internal/app/routes.go
+amarra-cais new myapp              # includes AGENTS.md, GitHub Actions CI, pre-commit, golangci-lint, Prettier
+amarra-cais new myapp --minimal
+amarra-cais new myapp --blank
+amarra-cais new myapp --module github.com/acme/myapp
+amarra-cais g [--dry-run] stream chat              # SSE chat: conversations, messages, stream relay scaffold
+amarra-cais g [--dry-run] resource bookmark --fields title:string,url:url,notes:text? --public --paginate --force
+amarra-cais destroy [--dry-run] resource bookmark   # undo generator output
+amarra-cais destroy [--dry-run] model bookmark      # remove model + migration + store methods
+amarra-cais destroy [--dry-run] handler settings
+amarra-cais destroy [--dry-run] auth                # remove login/auth scaffolding
+amarra-cais destroy [--dry-run] migration add_tags  # remove *_add_tags.sql
+amarra-cais g [--dry-run] model bookmark --fields title:string,url:url
+amarra-cais g [--dry-run] handler settings
+amarra-cais g [--dry-run] page about
+amarra-cais g [--dry-run] component card
+amarra-cais g [--dry-run] migration add_tags
+amarra-cais g [--dry-run] auth       # login/logout + protected dashboard
+amarra-cais g [--dry-run] console    # scaffold cmd/console/main.go
+amarra-cais g [--dry-run] ci         # add CI/pre-commit to existing apps
+amarra-cais g [--dry-run] job send_welcome --cron "0 3 * * *"
+amarra-cais doctor [--mobile]        # verify amarra.js, layouts/app.html, air, go.mod, PWA/mobile
+amarra-cais pwa [--bump]             # write/refresh PWA assets; --bump invalidates SW cache
+amarra-cais link [path] [--unlink]   # go.mod replace for local framework dev (do not commit; unlink before push)
+amarra-cais routes                   # list routes from internal/app/routes.go
 ```
 
-**Aliases:** `cais g` → generate, `cais i` → install, `cais b` → build, `cais s` → server, `cais c` → console.
+**Aliases:** `amarra-cais g` → generate, `amarra-cais i` → install, `amarra-cais b` → build, `amarra-cais s` → server, `amarra-cais c` → console.
 
 Field types: `string`, `text`, `url`, `bool`, `int`, `date`, `references` (or `name:belongs_to`). Suffix `?` for optional.
 
 **Resource options:** `--public` (public list page), `--paginate` (admin index pagination, 25/page), `--no-seed` (skip demo data), `--admin-auth session|bearer` (default: session).
 
-**Model generator** — `cais g model` creates model struct, migration, and store methods only (no handlers, templates, or routes). Use for data layer without admin CRUD.
+**Model generator** — `amarra-cais g model` creates model struct, migration, and store methods only (no handlers, templates, or routes). Use for data layer without admin CRUD.
 
-**Dry-run** — `cais g --dry-run ...` and `cais destroy --dry-run ...` print planned changes without writing files.
+**Dry-run** — `amarra-cais g --dry-run ...` and `amarra-cais destroy --dry-run ...` print planned changes without writing files.
 
-**Destroy** — `cais destroy resource|handler|model <name>` removes generated files and unpatches `routes.go`, `store.go`, `seeds.go`, and layout nav where applicable. `destroy auth` also reverts `app.go` session middleware. `destroy migration` removes matching `*_<name>.sql` only (does not roll back `schema_migrations`).
+**Destroy** — `amarra-cais destroy resource|handler|model <name>` removes generated files and unpatches `routes.go`, `store.go`, `seeds.go`, and layout nav where applicable. `destroy auth` also reverts `app.go` session middleware. `destroy migration` removes matching `*_<name>.sql` only (does not roll back `schema_migrations`).
 
-**Demo seed** — `cais g resource` (unless `--no-seed`) generates `SeedDemo*` store methods and wires them into `cmd/server/main.go` at boot.
+**Demo seed** — `amarra-cais g resource` (unless `--no-seed`) generates `SeedDemo*` store methods and wires them into `cmd/server/main.go` at boot.
 
-## App commands (run from a Cais app)
+## App commands (run from an Amarra app)
 
 ```bash
-cais install  # npm install + go mod tidy
-cais css      # build Tailwind
-cais dev      # hot reload + tailwind watch
-cais build    # bin/server
-cais server   # go run ./cmd/server
-cais test     # go test ./...
-npm run test:fe           # vitest (Svelte pages; also in scaffold package.json)
-cais doctor [--mobile]  # verify Inertia/Vite, htmx, air, go.mod, PWA/mobile
-cais pwa [--bump]       # write/refresh PWA assets
-cais console  # Rails-style REPL (store, cfg, db + sql)
-cais routes   # list HTTP routes from internal/app/routes.go
-cais link [../Cais] [--unlink]  # go.mod replace for local framework dev (unlink before push)
-cais db migrate        # run pending migrations
-cais db status         # list applied/pending migrations
-cais db rollback       # roll back last migration (runs -- down SQL when present)
-cais db prune-sessions # delete expired login sessions from SQLite
-cais db seed           # run internal/db/seeds.go (idempotent; safe in production for catalog data)
-cais db seed --list    # list seed helpers referenced in seeds.go
-cais jobs work [--queues default,mail] [--concurrency 2]
-cais jobs status
-cais routes --verbose  # routes with handler names and middleware
-cais version           # print framework version
+amarra-cais install  # npm install + go mod tidy
+amarra-cais css      # build Tailwind
+amarra-cais dev      # hot reload + tailwind watch
+amarra-cais build    # bin/server
+amarra-cais server   # go run ./cmd/server
+amarra-cais test     # go test ./...
+amarra-cais doctor [--mobile]  # verify amarra.js, air, go.mod, PWA/mobile
+amarra-cais pwa [--bump]       # write/refresh PWA assets
+amarra-cais console  # Rails-style REPL (store, cfg, db + sql)
+amarra-cais routes   # list HTTP routes from internal/app/routes.go
+amarra-cais link [../amarra-cais] [--unlink]  # go.mod replace for local framework dev (unlink before push)
+amarra-cais db migrate        # run pending migrations
+amarra-cais db status         # list applied/pending migrations
+amarra-cais db rollback       # roll back last migration (runs -- down SQL when present)
+amarra-cais db prune-sessions # delete expired login sessions from SQLite
+amarra-cais db seed           # run internal/db/seeds.go (idempotent; safe in production for catalog data)
+amarra-cais db seed --list    # list seed helpers referenced in seeds.go
+amarra-cais jobs work [--queues default,mail] [--concurrency 2]
+amarra-cais jobs status
+amarra-cais routes --verbose  # routes with handler names and middleware
+amarra-cais version           # print framework version
 ```
 
 ## Background jobs
 
 SQLite queue in `pkg/cais/jobs` (same DB file as the app). See [jobs design](docs/superpowers/specs/2026-07-01-jobs-design.md).
 
-**Dashboard:** `GET /jobs` (localhost only, all envs) via `jobsui.Register` in `app.New`. Detail: `GET /jobs/{id}`. Filter `?kind=`. Failed: Retry / Discard. Orphans: Requeue stuck (skips live worker jobs). Finished: Clear finished. Worker heartbeats show liveness; two live workers warn (one SQLite file). `cais routes` lists these when `jobsui.Register` is present.
+**Dashboard:** `GET /jobs` (localhost only, all envs) via `jobsui.Register` in `app.New`. Detail: `GET /jobs/{id}`. Filter `?kind=`. Failed: Retry / Discard. Orphans: Requeue stuck (skips live worker jobs). Finished: Clear finished. Worker heartbeats show liveness; two live workers warn (one SQLite file). `amarra-cais routes` lists these when `jobsui.Register` is present.
 
 ```bash
-cais g job prune_sessions --cron "0 3 * * *"  # internal/jobs/*.go + registry + cmd/worker
-cais db migrate                                # jobs + recurring_tasks tables
-cais jobs work --concurrency 2                   # worker + delayed-job dispatcher + heartbeat
-cais jobs status                               # counts + queues + workers + recurring
-cais jobs retry 12
-cais jobs discard 12
-cais jobs prune [--older 24h]
+amarra-cais g job prune_sessions --cron "0 3 * * *"  # internal/jobs/*.go + registry + cmd/worker
+amarra-cais db migrate                                # jobs + recurring_tasks tables
+amarra-cais jobs work --concurrency 2                   # worker + delayed-job dispatcher + heartbeat
+amarra-cais jobs status                               # counts + queues + workers + recurring
+amarra-cais jobs retry 12
+amarra-cais jobs discard 12
+amarra-cais jobs prune [--older 24h]
 ```
 
 Enqueue from handlers:
@@ -582,61 +527,60 @@ store.RequeueOrphaned(ctx, jobs.DefaultWorkerStale)
 store.ListLiveWorkers(ctx, jobs.DefaultWorkerStale)
 ```
 
-Register handlers in `internal/jobs/registry.go`. Built-in: `PruneSessions`. Production: run `cais jobs work` as a separate process next to `bin/server`. Open `http://127.0.0.1:<port>/jobs` (SSH tunnel if remote).
+Register handlers in `internal/jobs/registry.go`. Built-in: `PruneSessions`. Production: run `amarra-cais jobs work` as a separate process next to `bin/server`. Open `http://127.0.0.1:<port>/jobs` (SSH tunnel if remote).
 
-**Generator troubleshooting** — if `could not patch routes.go` or `could not patch store`, check that `registerRoutes` and `Close() error` markers exist. Public nav links need `<!-- cais:nav -->` in the layout (or `</nav>`). Run `cais db migrate` after `g resource` / `g model` / `g auth`.
+**Generator troubleshooting** — if `could not patch routes.go` or `could not patch store`, check that `registerRoutes` and `Close() error` markers exist. Public nav links need `<!-- cais:nav -->` in the layout (or `</nav>`). Run `amarra-cais db migrate` after `g resource` / `g model` / `g auth`.
 
 Console bindings: `store`, `cfg`, `db`, plus any custom keys in `Bindings`. Commands: `help`, `sql`, `reload`, `history`, `!N`/`!!`, `exit`. Arrow keys when stdin is a TTY.
 
-`/logs` — development-only log viewer (localhost). Shows request + SQL logs with HTMX auto-refresh.
+`/logs` — development-only log viewer (localhost). Shows request + SQL logs.
 
-`/jobs` — queue dashboard (localhost, all envs). Counts, failed retry/discard, scheduled, recurring. `cais doctor` warns if `jobsui.Register` is missing.
+`/jobs` — queue dashboard (localhost, all envs). Counts, failed retry/discard, scheduled, recurring. `amarra-cais doctor` warns if `jobsui.Register` is missing.
 
 ## CLI generator layout
 
-The `cais` CLI lives in `internal/cli/`. Scaffold templates are split by responsibility so agents can grep a single file instead of loading a 2400-line monolith.
+The `amarra-cais` CLI lives in `internal/cli/`. Scaffold templates are split by responsibility so agents can grep a single file instead of loading a 2400-line monolith.
 
-| Path                                                            | Responsibility                                                 |
-| --------------------------------------------------------------- | -------------------------------------------------------------- |
-| `internal/cli/cli.go`                                           | Command routing (`new`, `g`, `destroy`, `db`, …)               |
-| `internal/cli/tpl_scaffold_handlers_*.go`                       | Inertia handler templates (home/contact/auth; not `*_test.go`) |
-| `internal/cli/doctor.go` / `doctor_env.go` / `doctor_mobile.go` | `cais doctor` checks (core / env / mobile)                     |
-| `internal/cli/scaffold.go`                                      | `cais new` orchestration and `writeTemplate`                   |
-| `internal/cli/resource.go`                                      | `cais g resource` orchestration (writes files, calls patches)  |
-| `internal/cli/resource_patch.go`                                | Patches store, routes, layout nav, seeds, main for resources   |
-| `internal/cli/resource_gen_*.go`                                | Resource code generation (store, admin, public, HTML, fields)  |
-| `internal/cli/tpl_scaffold_*.go`                                | Embedded `const tpl*` for `cais new` scaffolding               |
-| `internal/cli/tpl_scaffold_main.go`                             | `cmd/server/main.go` (full + blank)                            |
-| `internal/cli/tpl_scaffold_app_core.go`                         | `internal/app/app.go` (full + blank)                           |
-| `internal/cli/tpl_scaffold_routes.go`                           | `internal/app/routes.go` (full, minimal, blank)                |
-| `internal/cli/tpl_scaffold_console.go`                          | `cmd/console/main.go`                                          |
-| `internal/cli/tpl_scaffold_auth.go`                             | Auth Go templates (handler, store, model, migration, tests)    |
-| `internal/cli/tpl_scaffold_auth_pages.go`                       | Auth HTML page templates (`login`, `signup`, reset)            |
-| `internal/cli/tpl_scaffold_inertia.go`                          | Vite, Svelte, `app.html`, `web/src/main.js`                    |
-| `internal/cli/tpl_scaffold_handlers_{home,contact,auth,...}.go` | Inertia handler scaffolds (one domain per file)                |
-| `internal/cli/tpl_scaffold_web.go`                              | Legacy HTMX layout fragments (resource/chat generators)        |
-| `internal/cli/tpl_stream_chat.go`                               | `cais g stream chat` templates and handlers                    |
-| `internal/cli/stream.go`                                        | `cais g stream chat` orchestration                             |
-| `internal/cli/scaffold_auth.go`                                 | `cais g auth` orchestration and store/app/route patches        |
-| `internal/cli/patch.go`                                         | AST-safe patches into generated apps (`routes.go`, `store.go`) |
-| `internal/cli/patch/`                                           | `go/ast` helpers — regex patches break nested `cais.IntParam`  |
-| `internal/cli/doctor.go`                                        | `cais doctor` checks (Inertia, Vite, HTMX, PWA, mobile)        |
-| `internal/cli/pwa_cmd.go`                                       | `cais pwa` asset writer                                        |
-| `internal/cli/commands.go`                                      | `cais install`, `cais css`, `cais dev`                         |
-| `internal/cli/destroy.go`                                       | `cais destroy` — reverses generators                           |
+| Path                                                            | Responsibility                                                       |
+| --------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `internal/cli/cli.go`                                           | Command routing (`new`, `g`, `destroy`, `db`, …)                     |
+| `internal/cli/tpl_scaffold_handlers_*.go`                       | HTML handler templates (home/contact/auth; not `*_test.go`)          |
+| `internal/cli/doctor.go` / `doctor_env.go` / `doctor_mobile.go` | `amarra-cais doctor` checks (core / env / mobile)                    |
+| `internal/cli/scaffold.go`                                      | `amarra-cais new` orchestration and `writeTemplate`                  |
+| `internal/cli/resource.go`                                      | `amarra-cais g resource` orchestration (writes files, calls patches) |
+| `internal/cli/resource_patch.go`                                | Patches store, routes, layout nav, seeds, main for resources         |
+| `internal/cli/resource_gen_*.go`                                | Resource code generation (store, admin, public, HTML, fields)        |
+| `internal/cli/tpl_scaffold_*.go`                                | Embedded `const tpl*` for `amarra-cais new` scaffolding              |
+| `internal/cli/tpl_scaffold_main.go`                             | `cmd/server/main.go` (full + blank)                                  |
+| `internal/cli/tpl_scaffold_app_core.go`                         | `internal/app/app.go` (full + blank)                                 |
+| `internal/cli/tpl_scaffold_routes.go`                           | `internal/app/routes.go` (full, minimal, blank)                      |
+| `internal/cli/tpl_scaffold_console.go`                          | `cmd/console/main.go`                                                |
+| `internal/cli/tpl_scaffold_auth.go`                             | Auth Go templates (handler, store, model, migration, tests)          |
+| `internal/cli/tpl_scaffold_auth_pages.go`                       | Auth HTML page templates (`login`, `signup`, reset)                  |
+| `internal/cli/tpl_scaffold_inertia.go`                          | Leftover Vite/Svelte blobs — not written by `new`                    |
+| `internal/cli/tpl_scaffold_handlers_{home,contact,auth,...}.go` | HTML handler scaffolds (one domain per file)                         |
+| `internal/cli/tpl_scaffold_web.go`                              | Amarra layout (`#amarra-main` + `amarra.js`)                         |
+| `internal/cli/tpl_stream_chat.go`                               | `amarra-cais g stream chat` templates and handlers                   |
+| `internal/cli/stream.go`                                        | `amarra-cais g stream chat` orchestration                            |
+| `internal/cli/scaffold_auth.go`                                 | `amarra-cais g auth` orchestration and store/app/route patches       |
+| `internal/cli/patch.go`                                         | AST-safe patches into generated apps (`routes.go`, `store.go`)       |
+| `internal/cli/patch/`                                           | `go/ast` helpers — regex patches break nested `cais.IntParam`        |
+| `internal/cli/pwa_cmd.go`                                       | `amarra-cais pwa` asset writer                                       |
+| `internal/cli/commands.go`                                      | `amarra-cais install`, `css`, `dev` (air + Tailwind, no Vite)        |
+| `internal/cli/destroy.go`                                       | `amarra-cais destroy` — reverses generators                          |
 
 **Generator tests** (split by domain — run focused suites while editing generators):
 
-| Test file                    | Scope                                  |
-| ---------------------------- | -------------------------------------- |
-| `cli_help_test.go`           | `cais help` output                     |
-| `cli_new_test.go`            | `cais new` (full, minimal, blank)      |
-| `resource_scaffold_test.go`  | `cais g resource`                      |
-| `scaffold_handler_test.go`   | `cais g handler` route patching        |
-| `scaffold_model_test.go`     | `cais g model`                         |
-| `scaffold_migration_test.go` | `cais g migration` numbering           |
-| `generate_dryrun_test.go`    | `--dry-run` generators                 |
-| `patch_gomod_test.go`        | `replace` directive in scaffolded apps |
+| Test file                     | Scope                                    |
+| ----------------------------- | ---------------------------------------- |
+| `cli_help_test.go`            | `amarra-cais help` output                |
+| `cli_new_test.go`             | `amarra-cais new` (full, minimal, blank) |
+| `resource_scaffold_*_test.go` | `amarra-cais g resource`                 |
+| `scaffold_handler_test.go`    | `amarra-cais g handler` route patching   |
+| `scaffold_model_test.go`      | `amarra-cais g model`                    |
+| `scaffold_migration_test.go`  | `amarra-cais g migration` numbering      |
+| `generate_dryrun_test.go`     | `--dry-run` generators                   |
+| `patch_gomod_test.go`         | `replace` directive in scaffolded apps   |
 
 ```bash
 go test ./internal/cli/... -run TestScaffoldResource -count=1
@@ -651,7 +595,7 @@ go test ./internal/cli/... -count=1
 ```bash
 make test-v         # TDD: verbose Go tests
 make test           # Go validation with -race (agent default for backend)
-make js-test        # pkg/cais/js unit tests
+make js-test        # pkg/cais/js + pkg/amarra/js unit tests
 make lint           # golangci-lint
 make format         # prettier --write
 make ci             # test + js-test + lint + format-check (full gate)
@@ -660,24 +604,25 @@ make install-cli    # go install ./cmd/amarra-cais
 ```
 
 **One-shot validation:** `make ci`  
-**Focused TDD:** `go test ./pkg/cais/httpx/ -run TestParseFormOrJSON -count=1 -v`  
-CI runs Go tests + `npm run js:test` + lint + Prettier + smoke (`cais new`).
+**Focused TDD:** `go test ./pkg/amarra/view/ -run TestWrite -count=1 -v`  
+CI runs Go tests + `npm run js:test` + lint + Prettier + smoke (`amarra-cais new`).
 
 ## Production deploy (generated apps)
 
 Cross-compile and ship static assets beside the binary:
 
 ```bash
-npm run build   # Vite → web/static/build/
-cais build --os linux --arch amd64 -o bin/server-linux
+amarra-cais css     # Tailwind → web/static/css/styles.css
+amarra-cais build --os linux --arch amd64 -o bin/server-linux
 tar czf release.tar.gz bin/server-linux web/static
 ```
 
 - Guide: `docs/deploy/lightsail-systemd.md`
 - Template: `deploy/systemd/cais-app.service.example`
-- `cais doctor` checks `web/static` + `manifest.webmanifest`
+- `amarra-cais doctor` checks `web/static` + `manifest.webmanifest` + `amarra.js`
 - Set `STATIC_DIR` / `TEMPLATES_DIR` when `WorkingDirectory` is not the app root
-- Dev-only seeds (demo user) do not run when `ENV=production`; use `cais db seed` for catalog data
+- Dev-only seeds (demo user) do not run when `ENV=production`; use `amarra-cais db seed` for catalog data
+- No Vite `web/static/build/` — ship `web/static/js/amarra.js` + CSS
 
 Pre-commit (tests, lint, prettier): `make pre-commit-install` once, then hooks run on every commit.
 
@@ -685,13 +630,13 @@ Pre-commit (tests, lint, prettier): `make pre-commit-install` once, then hooks r
 
 See **Clean Code for Agents** above. Project extras:
 
-- Comment **why** on security, SQLite concurrency, CSRF/cookie, Inertia JSON vs form, boot-time vs per-request.
+- Comment **why** on security, SQLite concurrency, CSRF/cookie, Drive vs full HTML, boot-time vs per-request.
 - Do not narrate WHAT the code does — names and tests already cover that.
 - Prefer file- or func-level provenance over inline noise; agents load whole files.
 - Keep generator templates (`tpl_*`) accurate — there is no dogfood app to drift against; rely on CLI scaffold tests.
-- Inertia + Svelte 5: `mount()`, `form.*` (not `$form`), `router.post` for mutations, `httpx.ParseFormOrJSON`, CSRF `cais_csrf` / `X-CSRF-Token`.
-- Password fields: always use `PasswordInput.svelte` (Svelte) or `fieldPassword` / `fieldInput` with type `password` (HTML) — eye show/hide is default.
-- Do not reactive-assign Inertia props into `useForm` fields (`$: form.x = prop`) — prefer local state + assign on submit (blank page footgun).
+- Amarra: `view.Write`, `amarraData`, kit `<.form>` / `<.input>` / `<.button>` / `<.flash />`, CSRF `cais_csrf` / `X-CSRF-Token`.
+- Password fields: always `fieldPassword` / `fieldInput` with type `password` — eye show/hide is default.
+- Do not emit `vite.config.js`, `.svelte`, gonertia, or `HX-Request` checks in new generators.
 
 ## Defensive categories (implement only these)
 
@@ -707,12 +652,13 @@ Agents implement the categories listed — do not invent extra ops policy.
 
 ## Do not
 
-- Parse templates per request (use `cais.NewRenderer`)
+- Parse templates per request (use `view.Load` once at boot)
 - Use inline CSS (use Tailwind classes in templates)
 - Mock the database (use SQLite `:memory:`)
-- Import `internal/` from `pkg/cais/` (avoids import cycles)
+- Import `internal/` from `pkg/cais/` or `pkg/amarra/` (avoids import cycles)
 - Grow files past ~500 lines without splitting
 - Ship features without a test the agent can run headless
 - Strip WHY/provenance comments “to clean up”
+- Check `HX-Request` or render Inertia JSON in generated apps
+- Add `vite.config.js` / Svelte pages to `amarra-cais new`
 - Use `$form` store syntax or Svelte 4 `new App()` in scaffolds
-- Reactive writes into `useForm` from `$:` / derived props on multi-field pages

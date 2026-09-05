@@ -54,6 +54,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"http.Redirect(w, r, \"/dashboard\", http.StatusSeeOther)\n" +
 	"```\n\n" +
 	"Pages define a content block plus kit tags `<.form>` / `<.input>` / `<.button>` / `<.flash />`.\n" +
+	"Drive morphs `#amarra-main` (`data-amarra-drive`, `linkTo`, `<.form>`). Do not check `HX-Request`.\n" +
 	"Password fields: `fieldPassword` (eye show/hide).\n" +
 	"Parse bodies with `httpx.ParseFormOrJSON`.\n\n" +
 	"## Auth, CSRF, flash\n\n" +

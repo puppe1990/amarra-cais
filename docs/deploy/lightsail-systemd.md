@@ -5,9 +5,9 @@ Guia para instâncias Ubuntu nano (512MB RAM) sem Docker — o padrão usado em 
 ## 1. Build na máquina de desenvolvimento
 
 ```bash
-cais css
-cais build --os linux --arch amd64 -o bin/server-linux
-cais doctor   # valida web/static + manifest
+amarra-cais css
+amarra-cais build --os linux --arch amd64 -o bin/server-linux
+amarra-cais doctor   # valida web/static + amarra.js + manifest
 ```
 
 Empacote binário + static:
@@ -70,7 +70,7 @@ Aponte DNS `A` para o IP estático da instância. Caddy emite o certificado apó
 Seeds de desenvolvimento (usuário demo) **não** rodam em `ENV=production`. Para catálogo idempotente:
 
 ```bash
-cais db seed
+amarra-cais db seed
 ```
 
 Registre seeds de domínio em `internal/db/seeds.go` — seguros para rodar em produção.
@@ -89,5 +89,5 @@ curl -s https://myapp.example.com/health
 | ------------------------------ | ----------------------------------------------------- |
 | `web/static not found` no boot | `WorkingDirectory=/opt/myapp/current` ou `STATIC_DIR` |
 | Certificado TLS pendente       | DNS `A` ainda não propagou                            |
-| App vazio após deploy          | `cais db seed` ou `/signup`                           |
+| App vazio após deploy          | `amarra-cais db seed` ou `/signup`                    |
 | IP errado nos logs             | `TRUSTED_PROXIES=127.0.0.1` atrás do Caddy            |

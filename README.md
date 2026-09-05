@@ -1,31 +1,33 @@
-# Go on Cais
+# Amarra-cais
 
 ![Go on Cais](pkg/cais/pwa/assets/go-on-cais.jpg)
 
-Full-stack Go framework for mini apps (Lightsail-friendly): **Inertia.js + Svelte 5**, Tailwind, and SQLite — with a Rails-style CLI.
+Full-stack Go framework for mini apps (Lightsail-friendly): **Amarra Views + Drive**, Tailwind, and SQLite — with a Rails-style CLI.
 
-This repository is the **framework + CLI** only. Generate apps with `cais new`.
+This repository is the **framework + CLI** only. Generate apps with `amarra-cais new`. The CLI binary is `amarra-cais` (it does not overwrite `cais`). Cais v0.11.x remains the Inertia + Svelte product.
 
 ## Stack
 
-| Layer     | Choice                                                                       |
-| --------- | ---------------------------------------------------------------------------- |
-| Language  | Go 1.26 (`net/http` stdlib; see `go.mod`)                                    |
-| Frontend  | **Inertia.js + Svelte 5** (`@inertiajs/svelte` + Vite → `web/static/build/`) |
-| CSS       | Tailwind CSS 3.x                                                             |
-| DB        | SQLite (`modernc.org/sqlite`, no CGO)                                        |
-| PWA       | Manifest, service worker, offline page, icons, fullscreen                    |
-| Meta      | Open Graph / Twitter via `pkg/cais/meta`                                     |
-| Legacy UI | HTMX helpers in `pkg/cais/` for `cais g stream chat` / non-Inertia resource  |
+| Layer    | Choice                                                                |
+| -------- | --------------------------------------------------------------------- |
+| Language | Go 1.26 (`net/http` stdlib; see `go.mod`)                             |
+| Frontend | **Amarra Views + Drive** (`pkg/amarra/view` + `/static/js/amarra.js`) |
+| CSS      | Tailwind CSS 3.x                                                      |
+| DB       | SQLite (`modernc.org/sqlite`, no CGO)                                 |
+| PWA      | Manifest, service worker, offline page, icons, fullscreen             |
+| Meta     | Open Graph / Twitter via `pkg/cais/meta`                              |
+| Core     | Router, session, CSRF, jobs, SQLite in `pkg/cais/`                    |
+
+The browser does not mount a SPA. Handlers call `view.Write`. Drive morphs `#amarra-main`. There is no Vite, Svelte, or Inertia in generated apps.
 
 ## Quick start
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.11.0   # or: make install-cli from this repo
-cais version   # expect 0.11.0
-cais new myapp
-cd myapp && cais install && cais dev   # http://localhost:8080
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.1.0   # or: make install-cli from this repo
+amarra-cais version   # expect 0.1.0
+amarra-cais new myapp
+cd myapp && amarra-cais install && amarra-cais dev   # http://localhost:8080
 ```
 
 **Developing the framework itself:**
@@ -34,9 +36,10 @@ cd myapp && cais install && cais dev   # http://localhost:8080
 export PATH="$HOME/go/bin:$PATH"
 make install-cli
 make test                 # go test ./... -race
+make js-test              # pkg/cais/js + pkg/amarra/js
 make ci                   # test + js-test + lint + format-check
 # Local CLI against this checkout:
-cais link .               # from an app dir, or set CAIS_REPLACE; unlink before push
+amarra-cais link .        # from an app dir, or set CAIS_REPLACE; unlink before push
 ```
 
 Demo login in a fresh scaffold (dev seed): `demo@example.com` / `password`.
@@ -48,28 +51,29 @@ make install-cli
 export PATH="$HOME/go/bin:$PATH"
 ```
 
-| Command                                                                                        | Description                                                                              |
-| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `cais new <app> [dir] [--minimal\|--blank] [--module path]`                                    | Scaffold app (Inertia + Svelte by default)                                               |
-| `cais g [--dry-run] handler\|page\|resource\|model\|migration\|auth\|console\|ci\|job\|stream` | Generators                                                                               |
-| `cais destroy [--dry-run] resource\|handler\|model\|auth\|migration`                           | Undo generators                                                                          |
-| `cais install`                                                                                 | `npm install` + `go mod tidy`                                                            |
-| `cais dev`                                                                                     | **air + Tailwind watch + `vite build --watch`** (Svelte rebuilds on `web/src/**` change) |
-| `cais css` / `cais build` / `cais server` / `cais test`                                        | CSS, binary, run, tests                                                                  |
-| `cais console`                                                                                 | REPL (store, cfg, db + SQL)                                                              |
-| `cais routes [--verbose]`                                                                      | List routes from `internal/app/routes.go`                                                |
-| `cais db migrate\|status\|rollback\|prune-sessions\|seed`                                      | Migrations & seeds                                                                       |
-| `cais jobs work\|status\|retry\|discard\|prune`                                                | SQLite background jobs + `/jobs` dashboard                                               |
-| `cais doctor [--mobile]`                                                                       | Verify Inertia/Vite, PWA, mobile SSE, SW cache strategy                                  |
-| `cais pwa [--bump]`                                                                            | Write/refresh PWA assets; **migrates** `sw.js` to network-first SPA; `--bump` cache      |
-| `cais link [path] [--unlink]`                                                                  | Local `go.mod replace` for framework dev                                                 |
-| `cais version`                                                                                 | Framework version                                                                        |
+| Command                                                                                                          | Description                                               |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `amarra-cais new <app> [dir] [--minimal\|--blank] [--module path]`                                               | Scaffold app (HTML + Amarra Drive by default)             |
+| `amarra-cais g [--dry-run] handler\|page\|resource\|model\|migration\|auth\|console\|ci\|job\|stream\|component` | Generators                                                |
+| `amarra-cais destroy [--dry-run] resource\|handler\|model\|auth\|migration\|component`                           | Undo generators                                           |
+| `amarra-cais install`                                                                                            | `npm install` + `go mod tidy` (+ Tailwind build)          |
+| `amarra-cais dev`                                                                                                | **air + Tailwind watch** (HTML templates reload with air) |
+| `amarra-cais css` / `amarra-cais build` / `amarra-cais server` / `amarra-cais test`                              | CSS, binary, run, tests                                   |
+| `amarra-cais console`                                                                                            | REPL (store, cfg, db + SQL)                               |
+| `amarra-cais routes [--verbose]`                                                                                 | List routes from `internal/app/routes.go`                 |
+| `amarra-cais db migrate\|status\|rollback\|prune-sessions\|seed`                                                 | Migrations & seeds                                        |
+| `amarra-cais jobs work\|status\|retry\|discard\|prune`                                                           | SQLite background jobs + `/jobs` dashboard                |
+| `amarra-cais doctor [--mobile]`                                                                                  | Verify amarra.js, `#amarra-main`, PWA, mobile             |
+| `amarra-cais pwa [--bump]`                                                                                       | Write/refresh PWA assets; `--bump` cache                  |
+| `amarra-cais link [path] [--unlink]`                                                                             | Local `go.mod replace` for framework dev                  |
+| `amarra-cais version`                                                                                            | Framework version                                         |
 
 Field types for generators: `string`, `text`, `url`, `bool`, `int`, `date`, `references` (or `name:belongs_to`). Suffix `?` for optional.
 
 ```bash
-cais g resource bookmark --fields title:string,url:url,notes:text? --public --paginate
-cais g handler settings   # Go handler + test + web/src/pages/Settings.svelte
+amarra-cais g resource bookmark --fields title:string,url:url,notes:text? --public --paginate
+amarra-cais g handler settings   # Go handler + test + web/templates/pages/settings.html
+amarra-cais g component card     # web/templates/components/card.html
 ```
 
 ## Development experience (in generated apps)
@@ -77,50 +81,58 @@ cais g handler settings   # Go handler + test + web/src/pages/Settings.svelte
 - **Port auto-pick** if `:8080` is busy
 - **Boot banner** with LAN URLs for phone testing on Wi‑Fi
 - **Logs** — JSON request (`kind: request`) + SQL (`kind: sql`); `LOG_FORMAT=text` for plain text
-- **`/logs`** — localhost-only HTMX log viewer in development
+- **`/logs`** — localhost-only log viewer in development
 - **`/jobs`** — localhost-only queue dashboard (counts, failed retry/discard, recurring)
-- **Frontend** — `cais dev` rebuilds Vite assets when Svelte sources change
-- **PWA** — SW is **network-first** for `/static/build/` and `/static/css/`; `cais pwa --bump` after HTML changes on phones
+- **Frontend** — server-rendered HTML; Drive morphs `#amarra-main` (no Vite)
+- **PWA** — SW is **network-first** for `/static/js/amarra.js` and `/static/css/`; `amarra-cais pwa --bump` after HTML changes on phones
 
 ## Structure
 
 ```
 pkg/cais/              framework packages (router, httpx, session, jobs, pwa, …)
-internal/cli/          cais CLI + scaffold templates (split by domain)
+pkg/amarra/            Views, Drive, Frame, Stream, Live stub, amarra.js sources
+internal/cli/          amarra-cais CLI + scaffold templates (split by domain)
 cmd/amarra-cais/       CLI entry point
 cmd/pwagen/            helper to write PWA assets into a directory
-scripts/               smoke-scaffold + smoke-production (via cais new)
+scripts/               smoke-scaffold + smoke-production (via amarra-cais new)
 ```
 
-Scaffolded apps get `cmd/server`, `internal/app`, `internal/handlers`, `web/src`, etc. — not this repo.
+Scaffolded apps get `cmd/server`, `internal/app`, `internal/handlers`, `web/templates`, `web/static/js/amarra.js` — not this repo.
 
-## Inertia + Svelte (generated apps)
+## Amarra Views + Drive (generated apps)
 
-Handlers render components via gonertia:
+Handlers render HTML via `view.Write`:
 
 ```go
-_ = h.inertia.Render(w, r, "Login", inertia.Props{
-  "site": meta.ForRequest(h.site, r),
-})
-// Validation: inertia.SetValidationErrors → re-render same component
-// Flash redirect: flash.Set(w, kind, msg, secure) + h.inertia.Redirect(..., 303)
-// (do not use inertia.SetFlash — no FlashDataProvider in the scaffold)
+view.Write(w, r, h.views, view.Page{
+  Layout: "app",
+  Name:   "login",
+  Data: map[string]any{
+    "Title":     "Login",
+    "Site":      meta.ForRequest(h.site, r),
+    "CSRFToken": csrf.TokenFromRequest(r),
+  },
+}, h.cfg)
+// Validation: same page, status 422, `.Errors` on inputs
+// Flash on redirect: flash.Set(w, kind, msg, secure) + http.Redirect(..., 303)
 ```
 
-Svelte pages use `useForm` as a **reactive object** (not a store — no `$form`):
+Pages live in `web/templates/pages/*.html` and define a `content` block. Kit tags expand at boot:
 
-```svelte
-<script>
-  import { useForm, router } from '@inertiajs/svelte'
-  let form = useForm({ email: '', password: '' })
-  function submit() { form.post('/login') }
-  function logout() { router.post('/logout') }  // use:inertia is for GET only
-</script>
+```html
+{{ define "content" }}
+<h1>{{ .Title }}</h1>
+<.form action="/contact" method="post">
+  {{ csrfField .CSRFToken }}
+  <.input name="email" type="email" label="Email" value="{{ .Email }}" error="{{ fieldError .Errors "email" }}" />
+  <.button type="submit">Send</.button>
+</.form>
+{{ end }}
 ```
 
-**Svelte 5 footgun:** do not push Inertia props into the form via reactive statements (`$: form.item_id = items[0].id`). Prefer local state for derived UI and set form fields on submit.
+**Drive** — clicks/submits with `data-amarra-drive="true"` (or `{{ linkTo }}` / `<.form>`) become `fetch` with `Amarra-Drive: true` + CSRF, then morph `#amarra-main`. First load, curl, and crawlers get the full layout.
 
-**JSON bodies** — Inertia posts `application/json`. Handlers should use:
+**JSON bodies** — if a client posts JSON, handlers should use:
 
 ```go
 if err := httpx.ParseFormOrJSON(r); err != nil { /* ... */ }
@@ -140,15 +152,15 @@ r.Group(middleware.RequireAuth("/login"), func(g *cais.Router) {
 
 **httpx** — `RenderOrError`, `WritePage`, `SeeOther`, `ParseFormOrJSON`, `FormTruthy`, ETag helpers.
 
-**Sessions** — cookie auth (7-day TTL), `session.SignIn` / `SignOut`, `cais db prune-sessions`.
+**Sessions** — cookie auth (7-day TTL), `session.SignIn` / `SignOut`, `amarra-cais db prune-sessions`.
 
 **CSRF** — double-submit cookie `cais_csrf` + form field / `X-CSRF-Token`.
 
 **Jobs** — SQLite queue, no Redis:
 
 ```bash
-cais g job send_welcome --cron "0 3 * * *"
-cais jobs work --concurrency 2
+amarra-cais g job send_welcome --cron "0 3 * * *"
+amarra-cais jobs work --concurrency 2
 ```
 
 ## Framework commands
@@ -156,7 +168,7 @@ cais jobs work --concurrency 2
 ```bash
 make test           # go test ./... -race
 make test-v         # verbose
-make js-test        # pkg/cais/js unit tests
+make js-test        # pkg/cais/js + pkg/amarra/js unit tests
 make lint           # golangci-lint
 make format         # prettier --write
 make ci             # test + js-test + lint + format-check
@@ -164,15 +176,17 @@ make build          # bin/amarra-cais
 make install-cli    # go install ./cmd/amarra-cais
 ```
 
-CI runs Go tests, JS unit tests, lint, Prettier, and smoke (`cais new` + production boot of a scaffolded app).
+CI runs Go tests, JS unit tests, lint, Prettier, and smoke (`amarra-cais new` + production boot of a scaffolded app).
 
 ## Production deploy (generated apps)
 
 ```bash
-npm run build   # Vite → web/static/build/assets/main.js (required; go build alone is not a production artifact)
-cais build --os linux --arch amd64 -o bin/server-linux
+amarra-cais css     # Tailwind → web/static/css/styles.css
+amarra-cais build --os linux --arch amd64 -o bin/server-linux
 tar czf release.tar.gz bin/server-linux web/static
 ```
+
+Ship `web/static` (CSS, `js/amarra.js`, PWA) beside the binary. There is no Vite `web/static/build/` step.
 
 - Guide: `docs/deploy/lightsail-systemd.md`
 - Template: `deploy/systemd/cais-app.service.example`

@@ -62,7 +62,7 @@ var enMessages = map[string]string{
 
 	"home.title":            "Home",
 	"home.welcome":          "Welcome, %s!",
-	"home.tagline":          "Mini Go app with HTMX, Tailwind, and SQLite.",
+	"home.tagline":          "Mini Go app with Amarra, Tailwind, and SQLite.",
 	"home.contact_link":     "Contact",
 	"home.default_name":     "Developer",
 	"home.rails_heading":    "You're on Cais!",
@@ -74,7 +74,7 @@ var enMessages = map[string]string{
 	"home.step_docs":        "Explore the framework",
 	"home.powered_by":       "Powered by Cais — lightweight apps on Lightsail",
 	"home.minimal.tagline":  "Go app with Amarra, Tailwind, and SQLite — powered by Cais.",
-	"home.minimal.hint":     "Use ` + "`cais g resource <name> --public`" + ` to get started.",
+	"home.minimal.hint":     "Use ` + "`amarra-cais g resource <name> --public`" + ` to get started.",
 
 	"dashboard.title":    "Dashboard",
 	"dashboard.contacts": "Contacts:",
@@ -124,7 +124,7 @@ var ptMessages = map[string]string{
 
 	"home.title":            "Página Inicial",
 	"home.welcome":          "Bem-vindo, %s!",
-	"home.tagline":          "Mini app Go com HTMX, Tailwind e SQLite.",
+	"home.tagline":          "Mini app Go com Amarra, Tailwind e SQLite.",
 	"home.contact_link":     "Contato",
 	"home.default_name":     "Desenvolvedor",
 	"home.rails_heading":    "Você está no Cais!",
@@ -135,8 +135,8 @@ var ptMessages = map[string]string{
 	"home.step_dev":         "Suba o servidor de desenvolvimento",
 	"home.step_docs":        "Explore o framework",
 	"home.powered_by":       "Powered by Cais — apps leves no Lightsail",
-	"home.minimal.tagline":  "App Go com HTMX, Tailwind e SQLite — powered by Cais.",
-	"home.minimal.hint":     "Use ` + "`cais g resource <name> --public`" + ` para começar.",
+	"home.minimal.tagline":  "App Go com Amarra, Tailwind e SQLite — powered by Cais.",
+	"home.minimal.hint":     "Use ` + "`amarra-cais g resource <name> --public`" + ` para começar.",
 
 	"dashboard.title":    "Dashboard",
 	"dashboard.contacts": "Contatos:",

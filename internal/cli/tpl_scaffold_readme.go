@@ -3,8 +3,8 @@ package cli
 const tplREADME = "# {{.AppName}}\n\n" +
 	"Full-stack Go app built with [Amarra](https://github.com/puppe1990/amarra-cais): HTML templates, Tailwind, and SQLite.\n\n" +
 	"## Stack\n\n" +
-	"- Go 1.26 (net/http stdlib) + Amarra views\n" +
-	"- HTML pages (`web/templates/pages/`) + `amarra.js` Drive\n" +
+	"- Go 1.26 (net/http stdlib) + Amarra Views + Drive\n" +
+	"- HTML pages (`web/templates/pages/`) + `view.Write` + `amarra.js`\n" +
 	"- Tailwind CSS 3.x\n" +
 	"- SQLite (modernc.org/sqlite, no CGO)\n\n" +
 	"## Quick start\n\n" +

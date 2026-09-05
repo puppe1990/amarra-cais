@@ -10,7 +10,7 @@ require (
 )
 `
 
-const tplEmptyCSS = `/* Run: cais css */\n`
+const tplEmptyCSS = `/* Run: amarra-cais css */\n`
 
 const tplAir = `root = "."
 tmp_dir = "tmp"
