@@ -14,7 +14,7 @@ func TestCLI_Help_IncludesAppCommands(t *testing.T) {
 	if err := c.Run([]string{"help"}); err != nil {
 		t.Fatal(err)
 	}
-	for _, cmd := range []string{"cais install", "cais css", "cais dev", "cais build", "cais server", "cais db migrate", "cais db status", "cais db rollback", "cais db prune-sessions", "cais db seed", "cais routes", "cais version", "cais g [--dry-run] ci", "cais g [--dry-run] console", "cais destroy"} {
+	for _, cmd := range []string{"amarra-cais install", "amarra-cais css", "amarra-cais dev", "amarra-cais build", "amarra-cais server", "amarra-cais db migrate", "amarra-cais db status", "amarra-cais db rollback", "amarra-cais db prune-sessions", "amarra-cais db seed", "amarra-cais routes", "amarra-cais version", "amarra-cais g [--dry-run] ci", "amarra-cais g [--dry-run] console", "amarra-cais destroy"} {
 		if !strings.Contains(buf.String(), cmd) {
 			t.Errorf("help missing %q", cmd)
 		}
@@ -56,7 +56,7 @@ func TestFindAir(t *testing.T) {
 
 func TestRunTailwindBuild_missingInput(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module test\nrequire github.com/puppe1990/cais v0.3.0\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module test\nrequire github.com/puppe1990/amarra-cais v0.3.0\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	err := runTailwindBuild(dir, false)

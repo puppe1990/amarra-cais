@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/csrf"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
 )
 
 func TestCSRF_safeMethod_setsCookie(t *testing.T) {

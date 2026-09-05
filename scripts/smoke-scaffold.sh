@@ -6,13 +6,13 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 cd "$ROOT"
-go build -o "$TMP/cais" ./cmd/cais
+go build -o "$TMP/amarra-cais" ./cmd/amarra-cais
 
 export CAIS_REPLACE="$ROOT"
 export CAIS_SKIP_TIDY=1
 
 APP="$TMP/smokeapp"
-"$TMP/cais" new smokeapp "$APP"
+"$TMP/amarra-cais" new smokeapp "$APP"
 cd "$APP"
 go mod tidy
 

@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/netutil"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/netutil"
 )
 
 type Options struct {

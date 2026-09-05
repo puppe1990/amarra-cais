@@ -98,7 +98,7 @@ func cleanupSessionImport(content string) string {
 	if strings.Contains(content, "session.") {
 		return content
 	}
-	content = strings.Replace(content, "\t\"github.com/puppe1990/cais/pkg/cais/session\"\n", "", 1)
+	content = strings.Replace(content, "\t\"github.com/puppe1990/amarra-cais/pkg/cais/session\"\n", "", 1)
 	content = regexp.MustCompile(`import \(\n\n`).ReplaceAllString(content, "import (\n")
 	return content
 }
@@ -152,14 +152,14 @@ func unpatchAuthRoutes(content string) string {
 	content = strings.Join(out, "\n")
 	if !strings.Contains(content, "middleware.") {
 		content = strings.Replace(content,
-			`"github.com/puppe1990/cais/pkg/cais/middleware"
+			`"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 `,
 			"",
 			1,
 		)
 		content = strings.Replace(content,
 			`
-	"github.com/puppe1990/cais/pkg/cais/middleware"`,
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"`,
 			"",
 			1,
 		)

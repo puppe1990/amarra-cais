@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	inertia "github.com/romsar/gonertia/v3"
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/i18n"
-	"github.com/puppe1990/cais/pkg/cais/meta"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
+	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 )
 
 type {{.Pascal}}Handler struct {

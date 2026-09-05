@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 // ClientIP returns the client address. X-Forwarded-For is trusted only when RemoteAddr is in TRUSTED_PROXIES.

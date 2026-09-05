@@ -9,7 +9,7 @@ import (
 
 func writeMinimalCaisApp(t *testing.T, dir string, withVite bool) {
 	t.Helper()
-	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module testapp\nrequire github.com/puppe1990/cais v0.3.0\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module testapp\nrequire github.com/puppe1990/amarra-cais v0.3.0\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "input.css"), []byte("@tailwind base;"), 0o644); err != nil {

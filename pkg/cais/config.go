@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/puppe1990/cais/pkg/cais/dotenv"
+	"github.com/puppe1990/amarra-cais/pkg/cais/dotenv"
 )
 
 type Config struct {

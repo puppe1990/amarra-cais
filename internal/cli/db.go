@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/migrate"
-	"github.com/puppe1990/cais/pkg/cais/session"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/migrate"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 
 	_ "modernc.org/sqlite"
 )
@@ -88,7 +88,7 @@ import (
 
 	"%s/internal/db"
 	"%s/internal/store"
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func main() {

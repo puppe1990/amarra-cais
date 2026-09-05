@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais/stream"
+	"github.com/puppe1990/amarra-cais/pkg/cais/stream"
 )
 
 // WriteStream emits event: stream for live token/tool updates into #chat-live.

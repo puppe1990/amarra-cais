@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func Logger(cfg cais.Config) func(http.Handler) http.Handler {

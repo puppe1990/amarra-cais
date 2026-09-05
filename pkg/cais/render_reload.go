@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais/i18n"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 )
 
 var (

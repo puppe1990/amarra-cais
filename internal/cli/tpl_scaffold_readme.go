@@ -1,7 +1,7 @@
 package cli
 
 const tplREADME = "# {{.AppName}}\n\n" +
-	"Full-stack Go app built with [Cais](https://github.com/puppe1990/cais): Inertia.js, Svelte, Tailwind, and SQLite.\n\n" +
+	"Full-stack Go app built with [Cais](https://github.com/puppe1990/amarra-cais): Inertia.js, Svelte, Tailwind, and SQLite.\n\n" +
 	"## Stack\n\n" +
 	"- Go 1.26 (net/http stdlib) + gonertia\n" +
 	"- Svelte 5 + @inertiajs/svelte (Vite → web/static/build/)\n" +
@@ -65,7 +65,7 @@ const tplREADME = "# {{.AppName}}\n\n" +
 	"4. Run `cais doctor --mobile` to catch flash markup, font CSP, and SW cache issues.\n"
 
 const tplREADMEBlank = "# {{.AppName}}\n\n" +
-	"Full-stack Go app built with [Cais](https://github.com/puppe1990/cais): Inertia.js, Svelte, Tailwind, and SQLite.\n\n" +
+	"Full-stack Go app built with [Cais](https://github.com/puppe1990/amarra-cais): Inertia.js, Svelte, Tailwind, and SQLite.\n\n" +
 	"## Quick start\n\n" +
 	"```bash\n" +
 	"cais install  # npm install + go mod tidy\n" +

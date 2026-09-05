@@ -5,7 +5,7 @@ import (
 	"html"
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func Register(r *cais.Router, env string, buf *Buffer) {

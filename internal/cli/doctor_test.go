@@ -45,7 +45,7 @@ func TestCheckCLIVersion_okOnDevBuild(t *testing.T) {
 	// frameworkVersion() in tests is usually "dev" — should not warn.
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(`module app
-require github.com/puppe1990/cais v0.8.0
+require github.com/puppe1990/amarra-cais v0.8.0
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}

@@ -191,7 +191,7 @@ func checkCLIVersion(dir string) doctorCheck {
 			Name:     name,
 			Optional: true,
 			Detail:   fmt.Sprintf("CLI v%s is older than go.mod v%s — generators and cais dev may lack features", formatSemver(cli), formatSemver(mod)),
-			FixHint:  fmt.Sprintf("go install %s/cmd/cais@v%s", frameworkModule, formatSemver(mod)),
+			FixHint:  fmt.Sprintf("go install %s/cmd/amarra-cais@v%s", frameworkModule, formatSemver(mod)),
 		}
 	}
 
@@ -203,7 +203,7 @@ func checkCLIVersion(dir string) doctorCheck {
 				Name:     name,
 				Optional: true,
 				Detail:   fmt.Sprintf("CLI v%s predates vite build --watch (need ≥ v%s) — SPA will not rebuild on web/src changes", formatSemver(cli), minViteWatchVersion),
-				FixHint:  fmt.Sprintf("go install %s/cmd/cais@v%s  # or @latest after release", frameworkModule, minViteWatchVersion),
+				FixHint:  fmt.Sprintf("go install %s/cmd/amarra-cais@v%s  # or @latest after release", frameworkModule, minViteWatchVersion),
 			}
 		}
 	}

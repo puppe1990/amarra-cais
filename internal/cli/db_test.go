@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais/session"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 
 	_ "modernc.org/sqlite"
 )
@@ -131,7 +131,7 @@ func writeMinimalApp(t *testing.T, dir string) {
 	files := map[string]string{
 		"go.mod": `module testapp
 
-require github.com/puppe1990/cais v0.3.0
+require github.com/puppe1990/amarra-cais v0.3.0
 `,
 		"internal/store/migrations/001_contacts.sql": `CREATE TABLE IF NOT EXISTS contacts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

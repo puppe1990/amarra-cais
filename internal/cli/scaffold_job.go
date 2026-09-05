@@ -84,7 +84,7 @@ func buildJobHandler(data scaffoldData) string {
 import (
 	"context"
 
-	caisjobs "github.com/puppe1990/cais/pkg/cais/jobs"
+	caisjobs "github.com/puppe1990/amarra-cais/pkg/cais/jobs"
 	"%s/internal/store"
 )
 
@@ -168,13 +168,13 @@ func patchJobRecurringSeed(dir string, data scaffoldData, opts jobOpts, dryRun b
 	}
 	content = strings.Replace(content, marker, block+marker, 1)
 
-	if !strings.Contains(content, "github.com/puppe1990/cais/pkg/cais/jobs") {
+	if !strings.Contains(content, "github.com/puppe1990/amarra-cais/pkg/cais/jobs") {
 		content = strings.Replace(content,
 			`import (`,
 			`import (
 	"context"
 
-	caisjobs "github.com/puppe1990/cais/pkg/cais/jobs"
+	caisjobs "github.com/puppe1990/amarra-cais/pkg/cais/jobs"
 
 `,
 			1,
@@ -205,7 +205,7 @@ const tplJobRegistry = `package jobs
 import (
 	"database/sql"
 
-	caisjobs "github.com/puppe1990/cais/pkg/cais/jobs"
+	caisjobs "github.com/puppe1990/amarra-cais/pkg/cais/jobs"
 
 	"{{.ModulePath}}/internal/store"
 )
@@ -229,8 +229,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	caisjobs "github.com/puppe1990/cais/pkg/cais/jobs"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	caisjobs "github.com/puppe1990/amarra-cais/pkg/cais/jobs"
 
 	appjobs "{{.ModulePath}}/internal/jobs"
 	"{{.ModulePath}}/internal/store"

@@ -3,7 +3,7 @@ package forms
 import (
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais/flash"
+	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
 )
 
 func TestFlashMessage_fromStruct(t *testing.T) {

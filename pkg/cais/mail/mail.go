@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 // Config holds SMTP connection settings from environment variables.

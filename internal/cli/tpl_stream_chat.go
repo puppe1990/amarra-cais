@@ -33,13 +33,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/chat"
-	"github.com/puppe1990/cais/pkg/cais/httpx"
-	"github.com/puppe1990/cais/pkg/cais/i18n"
-	"github.com/puppe1990/cais/pkg/cais/meta"
-	"github.com/puppe1990/cais/pkg/cais/stream"
-	"github.com/puppe1990/cais/pkg/cais/validate"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/chat"
+	"github.com/puppe1990/amarra-cais/pkg/cais/httpx"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
+	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
+	"github.com/puppe1990/amarra-cais/pkg/cais/stream"
+	"github.com/puppe1990/amarra-cais/pkg/cais/validate"
 
 	"{{.ModulePath}}/internal/models"
 	"{{.ModulePath}}/internal/store"
@@ -224,8 +224,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/testutil"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/testutil"
 )
 
 func TestChatHandler_List_Returns200(t *testing.T) {

@@ -218,7 +218,7 @@ const tplPageHome = `{{"{{"}} define "title" {{"}}"}}{{"{{"}} .AppName {{"}}"}}{
         <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-800/10 text-xs font-bold text-amber-950">3</span>
         <div>
           <p class="font-medium text-stone-800">{{"{{"}} t "home.step_docs" {{"}}"}}</p>
-          <a href="https://github.com/puppe1990/cais" class="mt-1 inline-block text-sm text-amber-900 underline decoration-amber-700/40 underline-offset-2 hover:decoration-amber-800">github.com/puppe1990/cais</a>
+          <a href="https://github.com/puppe1990/amarra-cais" class="mt-1 inline-block text-sm text-amber-900 underline decoration-amber-700/40 underline-offset-2 hover:decoration-amber-800">github.com/puppe1990/amarra-cais</a>
         </div>
       </li>
     </ol>

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/puppe1990/cais/pkg/cais/pwa"
+	"github.com/puppe1990/amarra-cais/pkg/cais/pwa"
 )
 
 // qualityToolingFiles returns CI/lint/format configs written by cais new and cais g ci.
@@ -24,8 +24,8 @@ func qualityToolingFiles() map[string]string {
 }
 
 // defaultScaffoldCaisVersion is used when the CLI is built from source ((devel)).
-// Keep aligned with the latest published tag so `cais new` resolves without a local replace.
-const defaultScaffoldCaisVersion = "0.11.0"
+// Keep aligned with the latest published tag so `amarra-cais new` resolves without a local replace.
+const defaultScaffoldCaisVersion = "0.1.0"
 
 func scaffoldModuleVersion() string {
 	v := strings.TrimPrefix(frameworkVersion(), "v")

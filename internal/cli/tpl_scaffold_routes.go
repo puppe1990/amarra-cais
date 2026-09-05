@@ -6,8 +6,8 @@ const tplRoutes = `package app
 import (
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/middleware"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 
 	"{{.ModulePath}}/internal/handlers"
 )
@@ -41,7 +41,7 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 const tplRoutesMinimal = `package app
 
 import (
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 
 	"{{.ModulePath}}/internal/handlers"
 )

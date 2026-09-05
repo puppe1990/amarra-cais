@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/csrf"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
 )
 
 // CSRF protects state-changing requests with a double-submit cookie token.

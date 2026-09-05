@@ -290,8 +290,8 @@ func TestUnpatchResourceRoutes_keepsUserLinesMentioningAdminPath(t *testing.T) {
 	content := `package app
 
 import (
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/middleware"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 
 	"example.com/app/internal/handlers"
 )

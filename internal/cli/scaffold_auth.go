@@ -100,11 +100,11 @@ func patchStoreForAuth(dir string, dryRun bool) error {
 		)
 	}
 
-	if !strings.Contains(content, "github.com/puppe1990/cais/pkg/cais/session") {
+	if !strings.Contains(content, "github.com/puppe1990/amarra-cais/pkg/cais/session") {
 		content = strings.Replace(content,
-			`"github.com/puppe1990/cais/pkg/cais/sqllog"`,
-			`"github.com/puppe1990/cais/pkg/cais/session"
-	"github.com/puppe1990/cais/pkg/cais/sqllog"`,
+			`"github.com/puppe1990/amarra-cais/pkg/cais/sqllog"`,
+			`"github.com/puppe1990/amarra-cais/pkg/cais/session"
+	"github.com/puppe1990/amarra-cais/pkg/cais/sqllog"`,
 			1,
 		)
 	}
@@ -218,11 +218,11 @@ func patchAppForAuth(dir string, dryRun bool) error {
 	changed := false
 
 	if !strings.Contains(content, "LoadSession") {
-		if !strings.Contains(content, "github.com/puppe1990/cais/pkg/cais/session") {
+		if !strings.Contains(content, "github.com/puppe1990/amarra-cais/pkg/cais/session") {
 			content = strings.Replace(content,
-				`"github.com/puppe1990/cais/pkg/cais/middleware"`,
-				`"github.com/puppe1990/cais/pkg/cais/middleware"
-	"github.com/puppe1990/cais/pkg/cais/session"`,
+				`"github.com/puppe1990/amarra-cais/pkg/cais/middleware"`,
+				`"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"`,
 				1,
 			)
 		}
@@ -268,22 +268,22 @@ func patchRoutesForAuth(dir string, dryRun bool) error {
 		return nil
 	}
 
-	if !strings.Contains(content, "github.com/puppe1990/cais/pkg/cais/middleware") {
+	if !strings.Contains(content, "github.com/puppe1990/amarra-cais/pkg/cais/middleware") {
 		content = strings.Replace(content,
-			`"github.com/puppe1990/cais/pkg/cais"`,
-			`"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/middleware"`,
+			`"github.com/puppe1990/amarra-cais/pkg/cais"`,
+			`"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"`,
 			1,
 		)
 	}
 	if !strings.Contains(content, `"net/http"`) {
 		content = strings.Replace(content,
 			`import (
-	"github.com/puppe1990/cais/pkg/cais"`,
+	"github.com/puppe1990/amarra-cais/pkg/cais"`,
 			`import (
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"`,
+	"github.com/puppe1990/amarra-cais/pkg/cais"`,
 			1,
 		)
 	}

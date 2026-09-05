@@ -3,8 +3,8 @@ package passwordreset
 import (
 	"log"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/mail"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/mail"
 )
 
 type smtpNotifier struct {

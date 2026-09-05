@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/puppe1990/cais/internal/cli/patch"
+import "github.com/puppe1990/amarra-cais/internal/cli/patch"
 
 // insertBeforeFunctionEnd appends statements before the closing brace of funcName.
 // Uses go/ast (internal/cli/patch), not regex: generated routes often nest

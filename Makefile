@@ -1,6 +1,6 @@
 .PHONY: build test test-v lint format format-check pre-commit-install ci install-cli js-build js-test clean
 
-BIN := bin/cais
+BIN := bin/amarra-cais
 
 test:
 	go test ./... -race -count=1
@@ -9,7 +9,7 @@ test-v:
 	go test ./... -v -count=1
 
 build:
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o $(BIN) ./cmd/cais
+	CGO_ENABLED=0 go build -ldflags="-s -w" -o $(BIN) ./cmd/amarra-cais
 
 lint:
 	golangci-lint run ./...
@@ -32,7 +32,7 @@ pre-commit-install:
 ci: test js-test lint format-check
 
 install-cli:
-	go install ./cmd/cais
+	go install ./cmd/amarra-cais
 
 clean:
 	rm -rf bin/ tmp/

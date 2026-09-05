@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func TestRepl_ReloadRefreshesBindings(t *testing.T) {

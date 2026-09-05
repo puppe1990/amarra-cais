@@ -11,8 +11,8 @@ func TestInsertBeforeFunctionEnd_scaffoldRoutesWithResourceGroup(t *testing.T) {
 import (
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/middleware"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 	"github.com/puppe1990/demo/internal/handlers"
 )
 

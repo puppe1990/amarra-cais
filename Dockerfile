@@ -4,11 +4,11 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /cais ./cmd/cais
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /amarra-cais ./cmd/amarra-cais
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates && \
     adduser -D -u 1000 cais
-COPY --from=build /cais /usr/local/bin/cais
+COPY --from=build /amarra-cais /usr/local/bin/amarra-cais
 USER cais
-ENTRYPOINT ["cais"]
+ENTRYPOINT ["amarra-cais"]

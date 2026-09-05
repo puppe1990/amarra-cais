@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func TestRateLimit_blocksAfterBurst(t *testing.T) {

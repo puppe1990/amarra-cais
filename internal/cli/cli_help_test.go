@@ -14,8 +14,29 @@ func TestCLI_Help(t *testing.T) {
 	if err := c.Run([]string{"help"}); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "cais new") {
-		t.Error("help missing cais new")
+	if !strings.Contains(buf.String(), "amarra-cais new") {
+		t.Error("help missing amarra-cais new")
+	}
+}
+
+func TestCLI_Help_UsesAmarraCais(t *testing.T) {
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	if err := c.Run([]string{"help"}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	for _, want := range []string{
+		"amarra-cais new",
+		"amarra-cais version",
+		"amarra-cais g",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("help missing %q", want)
+		}
+	}
+	if strings.Contains(out, "  cais new") {
+		t.Error("help still documents cais new")
 	}
 }
 
@@ -65,8 +86,8 @@ func assertNewHelpDoesNotScaffold(t *testing.T, args []string, forbiddenDirs ...
 		t.Fatal(err)
 	}
 	out := buf.String()
-	if !strings.Contains(out, "cais new") {
-		t.Errorf("help output missing cais new usage: %q", out)
+	if !strings.Contains(out, "amarra-cais new") {
+		t.Errorf("help output missing amarra-cais new usage: %q", out)
 	}
 	if strings.Contains(out, "Created app") {
 		t.Errorf("help must not scaffold: %q", out)

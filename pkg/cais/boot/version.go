@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const modulePath = "github.com/puppe1990/cais"
+const modulePath = "github.com/puppe1990/amarra-cais"
 
 func CaisVersion() string {
 	info, ok := debug.ReadBuildInfo()

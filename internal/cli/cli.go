@@ -15,7 +15,7 @@ type CLI struct {
 func Main() int {
 	c := &CLI{Out: os.Stdout}
 	if err := c.Run(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "cais: %v\n", err)
+		fmt.Fprintf(os.Stderr, "amarra-cais: %v\n", err)
 		return 1
 	}
 	return 0
@@ -66,7 +66,7 @@ func (c *CLI) Run(args []string) error {
 		c.printHelp()
 		return nil
 	default:
-		return fmt.Errorf("unknown command %q (run cais help)", args[0])
+		return fmt.Errorf("unknown command %q (run amarra-cais help)", args[0])
 	}
 }
 
@@ -74,65 +74,65 @@ func (c *CLI) printHelp() {
 	_, _ = fmt.Fprintln(c.Out, `Cais — Rails-style CLI for Go full-stack apps
 
 Usage:
-  cais new <app> [dir] [--minimal] [--blank] [--module <path>]
+  amarra-cais new <app> [dir] [--minimal] [--blank] [--module <path>]
                                Create a new app (default dir: ./<app>)
-  cais new <app> [dir] --minimal   Slim app (home only)
-  cais new <app> [dir] --blank     Empty app (no starter content)
-  cais new <app> [dir] --module <path>   Override go module path
-  cais g [--dry-run] handler <name>      Generate handler + test + page template
-  cais g [--dry-run] resource <name> [--fields title:string,url:url] [--public] [--paginate] [--no-seed] [--force] [--admin-auth session|bearer]
-  cais g [--dry-run] model <name> [--fields title:string,url:url]
-  cais g [--dry-run] page <name>         Generate page template only
-  cais g [--dry-run] migration <name>    Generate SQL migration file
-  cais g [--dry-run] job <name> [--cron "0 3 * * *"]
+  amarra-cais new <app> [dir] --minimal   Slim app (home only)
+  amarra-cais new <app> [dir] --blank     Empty app (no starter content)
+  amarra-cais new <app> [dir] --module <path>   Override go module path
+  amarra-cais g [--dry-run] handler <name>      Generate handler + test + page template
+  amarra-cais g [--dry-run] resource <name> [--fields title:string,url:url] [--public] [--paginate] [--no-seed] [--force] [--admin-auth session|bearer]
+  amarra-cais g [--dry-run] model <name> [--fields title:string,url:url]
+  amarra-cais g [--dry-run] page <name>         Generate page template only
+  amarra-cais g [--dry-run] migration <name>    Generate SQL migration file
+  amarra-cais g [--dry-run] job <name> [--cron "0 3 * * *"]
                              Generate job handler + cmd/worker + registry
-  cais g [--dry-run] auth                Add login/logout and protect dashboard
-  cais g [--dry-run] console             Scaffold cmd/console/main.go
-  cais g [--dry-run] ci                  Add GitHub Actions CI, pre-commit, lint, Prettier
-  cais install               npm install + go mod tidy
-  cais css                   Build Tailwind CSS
-  cais dev                   Hot reload (air + tailwind + vite build --watch)
-  cais build [--os linux] [--arch amd64] [-o path]
+  amarra-cais g [--dry-run] auth                Add login/logout and protect dashboard
+  amarra-cais g [--dry-run] console             Scaffold cmd/console/main.go
+  amarra-cais g [--dry-run] ci                  Add GitHub Actions CI, pre-commit, lint, Prettier
+  amarra-cais install               npm install + go mod tidy
+  amarra-cais css                   Build Tailwind CSS
+  amarra-cais dev                   Hot reload (air + tailwind + vite build --watch)
+  amarra-cais build [--os linux] [--arch amd64] [-o path]
                                Build bin/server (cross-compile for deploy)
-  cais server                Run the app (go run ./cmd/server)
-  cais test                  Run tests (go test ./...)
-  cais doctor [--mobile]     Check app setup (htmx, air, go.mod, PWA/mobile)
-  cais pwa [--bump]          Write or refresh PWA assets; --bump invalidates SW cache
-  cais link [path] [--unlink]  Add go.mod replace for local Cais dev (default: sibling ../Cais)
-  cais console               Interactive app console (Go REPL + SQL)
-  cais db migrate            Run pending SQL migrations
-  cais db status             List migration status
-  cais db rollback           Roll back last migration (runs -- down SQL when present)
-  cais db prune-sessions     Delete expired login sessions from SQLite
-  cais db seed               Run internal/db/seeds.go
-  cais jobs work [--queues default,mail] [--concurrency 2]
+  amarra-cais server                Run the app (go run ./cmd/server)
+  amarra-cais test                  Run tests (go test ./...)
+  amarra-cais doctor [--mobile]     Check app setup (htmx, air, go.mod, PWA/mobile)
+  amarra-cais pwa [--bump]          Write or refresh PWA assets; --bump invalidates SW cache
+  amarra-cais link [path] [--unlink]  Add go.mod replace for local Cais dev (default: sibling ../Cais)
+  amarra-cais console               Interactive app console (Go REPL + SQL)
+  amarra-cais db migrate            Run pending SQL migrations
+  amarra-cais db status             List migration status
+  amarra-cais db rollback           Roll back last migration (runs -- down SQL when present)
+  amarra-cais db prune-sessions     Delete expired login sessions from SQLite
+  amarra-cais db seed               Run internal/db/seeds.go
+  amarra-cais jobs work [--queues default,mail] [--concurrency 2]
                              Run background job worker + dispatcher
-  cais jobs status           Show job counts, queues, workers, and recurring tasks
-  cais jobs retry|discard <id>
-  cais jobs prune [--older 24h]
-  cais routes [--verbose]    List HTTP routes from internal/app/routes.go
-  cais destroy [--dry-run] resource|handler|model <name>
+  amarra-cais jobs status           Show job counts, queues, workers, and recurring tasks
+  amarra-cais jobs retry|discard <id>
+  amarra-cais jobs prune [--older 24h]
+  amarra-cais routes [--verbose]    List HTTP routes from internal/app/routes.go
+  amarra-cais destroy [--dry-run] resource|handler|model <name>
                              Remove generated resource, handler, or model files
-  cais destroy [--dry-run] auth             Remove login/auth scaffolding
-  cais destroy [--dry-run] migration <name> Remove a generated SQL migration file
-  cais version               Print Cais framework version
-  cais help                  Show this help
+  amarra-cais destroy [--dry-run] auth             Remove login/auth scaffolding
+  amarra-cais destroy [--dry-run] migration <name> Remove a generated SQL migration file
+  amarra-cais version               Print Cais framework version
+  amarra-cais help                  Show this help
 
 Aliases:
-  cais g        → cais generate
-  cais i        → cais install
-  cais b        → cais build
-  cais s        → cais server
-  cais c        → cais console
+  amarra-cais g        → amarra-cais generate
+  amarra-cais i        → amarra-cais install
+  amarra-cais b        → amarra-cais build
+  amarra-cais s        → amarra-cais server
+  amarra-cais c        → amarra-cais console
 
 Examples:
-  cais new myapp && cd myapp && cais install && cais dev
-  cais g handler settings
-  cais console
-  cais css && cais server`)
+  amarra-cais new myapp && cd myapp && amarra-cais install && amarra-cais dev
+  amarra-cais g handler settings
+  amarra-cais console
+  amarra-cais css && amarra-cais server`)
 }
 
-const newUsage = "usage: cais new <app> [dir] [--minimal] [--blank] [--module <path>]"
+const newUsage = "usage: amarra-cais new <app> [dir] [--minimal] [--blank] [--module <path>]"
 
 func (c *CLI) cmdNew(args []string) error {
 	if newArgsWantHelp(args) {
@@ -169,7 +169,7 @@ func (c *CLI) cmdNew(args []string) error {
 		return err
 	}
 
-	_, _ = fmt.Fprintf(c.Out, "Created app %q at %s\n\nNext steps:\n  cd %s\n  cais install\n  cais dev\n", opts.name, abs, abs)
+	_, _ = fmt.Fprintf(c.Out, "Created app %q at %s\n\nNext steps:\n  cd %s\n  amarra-cais install\n  amarra-cais dev\n", opts.name, abs, abs)
 	return nil
 }
 
@@ -238,7 +238,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
-		return fmt.Errorf("usage: cais g [--dry-run] <handler|page|migration|resource|model|stream|job|console|auth|ci> [name]")
+		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|migration|resource|model|stream|job|console|auth|ci> [name]")
 	}
 
 	kind := args[0]
@@ -251,7 +251,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 		if isCaisFramework(cwd) {
 			return fmt.Errorf("you are inside the Cais framework directory — cd into your app first")
 		}
-		return fmt.Errorf("not a Cais app (missing go.mod with github.com/puppe1990/cais as a dependency)")
+		return fmt.Errorf("not a Cais app (missing go.mod with github.com/puppe1990/amarra-cais as a dependency)")
 	}
 
 	var genErr error
@@ -264,7 +264,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 		genErr = scaffoldCI(cwd, scaffoldData{AppName: filepath.Base(cwd), ModulePath: moduleFromDir(cwd)}, dryRun)
 	case "job":
 		if len(args) < 2 {
-			return fmt.Errorf("usage: cais g job <name> [--cron \"0 3 * * *\"]")
+			return fmt.Errorf("usage: amarra-cais g job <name> [--cron \"0 3 * * *\"]")
 		}
 		opts, parseErr := parseJobOpts(args[2:])
 		if parseErr != nil {
@@ -274,12 +274,12 @@ func (c *CLI) cmdGenerate(args []string) error {
 		genErr = scaffoldJob(cwd, args[1], opts)
 	case "stream":
 		if len(args) < 2 || args[1] != "chat" {
-			return fmt.Errorf("usage: cais g stream chat")
+			return fmt.Errorf("usage: amarra-cais g stream chat")
 		}
 		genErr = scaffoldStreamChat(cwd, streamOpts{dryRun: dryRun})
 	case "handler", "page", "migration", "resource", "model":
 		if len(args) < 2 {
-			return fmt.Errorf("usage: cais g %s <name>", kind)
+			return fmt.Errorf("usage: amarra-cais g %s <name>", kind)
 		}
 		name := args[1]
 		switch kind {
@@ -320,11 +320,11 @@ func printGenerateNextSteps(w io.Writer, kind string) {
 	_, _ = fmt.Fprintln(w)
 	switch kind {
 	case "resource", "model", "migration", "auth", "stream":
-		_, _ = fmt.Fprintln(w, "=> Next: cais db migrate && cais test")
+		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais db migrate && amarra-cais test")
 	case "app":
-		_, _ = fmt.Fprintln(w, "=> Next: cais install && cais dev")
+		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais install && amarra-cais dev")
 	default:
-		_, _ = fmt.Fprintln(w, "=> Next: cais test")
+		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais test")
 	}
 }
 
@@ -393,10 +393,10 @@ func isCaisApp(dir string) bool {
 		return false
 	}
 	content := string(data)
-	if strings.HasPrefix(content, "module github.com/puppe1990/cais") {
+	if strings.HasPrefix(content, "module github.com/puppe1990/amarra-cais") {
 		return false
 	}
-	return strings.Contains(content, "github.com/puppe1990/cais")
+	return strings.Contains(content, "github.com/puppe1990/amarra-cais")
 }
 
 func isCaisFramework(dir string) bool {
@@ -404,5 +404,5 @@ func isCaisFramework(dir string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.HasPrefix(string(data), "module github.com/puppe1990/cais")
+	return strings.HasPrefix(string(data), "module github.com/puppe1990/amarra-cais")
 }

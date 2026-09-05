@@ -10,9 +10,9 @@ import (
 	"os"
 
 	inertia "github.com/romsar/gonertia/v3"
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/boot"
-	"github.com/puppe1990/cais/pkg/cais/meta"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/boot"
+	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 
 	"{{.ModulePath}}/internal/app"
 	appi18n "{{.ModulePath}}/internal/i18n"

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais/session"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 )
 
 const (

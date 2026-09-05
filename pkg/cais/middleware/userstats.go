@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais/session"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 )
 
 // UserStats holds gamification chrome for layout templates (meta.Site).

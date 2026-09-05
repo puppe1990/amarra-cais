@@ -22,10 +22,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/puppe1990/cais/pkg/cais/devlog"
-	"github.com/puppe1990/cais/pkg/cais/session"
-	caissqlite "github.com/puppe1990/cais/pkg/cais/sqlite"
-	"github.com/puppe1990/cais/pkg/cais/sqllog"
+	"github.com/puppe1990/amarra-cais/pkg/cais/devlog"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
+	caissqlite "github.com/puppe1990/amarra-cais/pkg/cais/sqlite"
+	"github.com/puppe1990/amarra-cais/pkg/cais/sqllog"
 	_ "modernc.org/sqlite"
 
 	"{{.ModulePath}}/internal/models"
@@ -274,7 +274,7 @@ import (
 	"database/sql"
 	"embed"
 
-	"github.com/puppe1990/cais/pkg/cais/migrate"
+	"github.com/puppe1990/amarra-cais/pkg/cais/migrate"
 )
 
 //go:embed migrations/*.sql
@@ -301,9 +301,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/puppe1990/cais/pkg/cais/devlog"
-	"github.com/puppe1990/cais/pkg/cais/session"
-	"github.com/puppe1990/cais/pkg/cais/sqllog"
+	"github.com/puppe1990/amarra-cais/pkg/cais/devlog"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
+	"github.com/puppe1990/amarra-cais/pkg/cais/sqllog"
 	_ "modernc.org/sqlite"
 )
 

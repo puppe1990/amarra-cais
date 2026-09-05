@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 type RateLimiter struct {

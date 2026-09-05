@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/session"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 )
 
 // LoadSession reads the session cookie and attaches the user ID to the request context.

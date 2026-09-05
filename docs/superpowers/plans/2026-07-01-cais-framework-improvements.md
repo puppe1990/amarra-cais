@@ -251,7 +251,7 @@ package session
 import (
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func TestCookieOptionsFromConfig_productionSecure(t *testing.T) {
@@ -281,7 +281,7 @@ func (c Config) CookieSecure() bool {
 In `pkg/cais/session/cookie.go`:
 
 ```go
-import "github.com/puppe1990/cais/pkg/cais"
+import "github.com/puppe1990/amarra-cais/pkg/cais"
 
 func CookieOptionsFromConfig(cfg cais.Config) CookieOptions {
 	return CookieOptions{Secure: cfg.CookieSecure()}
@@ -331,7 +331,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func TestSecurityHeaders_production(t *testing.T) {
@@ -384,7 +384,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func SecurityHeaders(cfg cais.Config) func(http.Handler) http.Handler {
@@ -970,7 +970,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais/flash"
+	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
 )
 
 type flashKey struct{}

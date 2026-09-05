@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais/jobs"
+	"github.com/puppe1990/amarra-cais/pkg/cais/jobs"
 )
 
 func (c *CLI) cmdJobs(args []string) error {

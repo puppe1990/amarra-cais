@@ -10,7 +10,7 @@ import (
 
 func TestCheckLocalCaisReplace_nilWhenNoReplace(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module app\n\nrequire github.com/puppe1990/cais v0.8.1\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module app\n\nrequire github.com/puppe1990/amarra-cais v0.8.1\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if c := checkLocalCaisReplace(dir); c != nil {
@@ -22,7 +22,7 @@ func TestCheckLocalCaisReplace_warnsOutsideCI(t *testing.T) {
 	t.Setenv("CI", "")
 	t.Setenv("GITHUB_ACTIONS", "")
 	dir := t.TempDir()
-	mod := "module app\n\nrequire github.com/puppe1990/cais v0.8.1\n\nreplace github.com/puppe1990/cais => ../cais\n"
+	mod := "module app\n\nrequire github.com/puppe1990/amarra-cais v0.8.1\n\nreplace github.com/puppe1990/amarra-cais => ../cais\n"
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(mod), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestCheckLocalCaisReplace_failsInCI(t *testing.T) {
 	t.Setenv("CI", "true")
 	t.Setenv("GITHUB_ACTIONS", "")
 	dir := t.TempDir()
-	mod := "module app\n\nreplace github.com/puppe1990/cais => ../cais\n"
+	mod := "module app\n\nreplace github.com/puppe1990/amarra-cais => ../cais\n"
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(mod), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestCheckLocalCaisReplace_failsOnGitHubActions(t *testing.T) {
 	t.Setenv("CI", "")
 	t.Setenv("GITHUB_ACTIONS", "true")
 	dir := t.TempDir()
-	mod := "module app\n\nreplace github.com/puppe1990/cais => ../cais\n"
+	mod := "module app\n\nreplace github.com/puppe1990/amarra-cais => ../cais\n"
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(mod), 0o644); err != nil {
 		t.Fatal(err)
 	}

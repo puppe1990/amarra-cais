@@ -24,7 +24,7 @@ func TestCLI_Help_IncludesVersion(t *testing.T) {
 	if err := c.Run([]string{"help"}); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "cais version") {
-		t.Error("help missing cais version")
+	if !strings.Contains(buf.String(), "amarra-cais version") {
+		t.Error("help missing amarra-cais version")
 	}
 }

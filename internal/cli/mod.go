@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const frameworkModule = "github.com/puppe1990/cais"
+const frameworkModule = "github.com/puppe1990/amarra-cais"
 
 func readModulePath(dir string) string {
 	data, err := os.ReadFile(filepath.Join(dir, "go.mod"))

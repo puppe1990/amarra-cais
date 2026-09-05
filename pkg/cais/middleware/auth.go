@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 // AdminAuth protects routes with a Bearer token from cfg.AdminToken.

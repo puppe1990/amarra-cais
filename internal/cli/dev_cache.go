@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/puppe1990/cais/pkg/cais/pwa"
+	"github.com/puppe1990/amarra-cais/pkg/cais/pwa"
 )
 
 // maybeBumpDevCache increments CACHE_VERSION when sw.js exists (phone testing during cais dev).

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 // SecurityHeaders sets baseline headers. CSP allows 'unsafe-inline' for HTMX and inline layout scripts.

@@ -23,7 +23,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/puppe1990/cais
+        - github.com/puppe1990/amarra-cais
   exclusions:
     generated: lax
     paths:

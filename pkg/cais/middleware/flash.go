@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/flash"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
 )
 
 // Flash consumes any flash cookie, clears it, and stores the message in context.

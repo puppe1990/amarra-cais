@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais/jobs"
+	"github.com/puppe1990/amarra-cais/pkg/cais/jobs"
 )
 
 func TestCLI_JobsStatusEmpty(t *testing.T) {

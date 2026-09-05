@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/flash"
-	"github.com/puppe1990/cais/pkg/cais/i18n"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 
 	"{{.ModulePath}}/internal/store"
 )

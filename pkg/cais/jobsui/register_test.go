@@ -13,10 +13,10 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/csrf"
-	"github.com/puppe1990/cais/pkg/cais/jobs"
-	"github.com/puppe1990/cais/pkg/cais/middleware"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
+	"github.com/puppe1990/amarra-cais/pkg/cais/jobs"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 )
 
 func testDB(t *testing.T) *sql.DB {

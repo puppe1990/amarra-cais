@@ -3,7 +3,7 @@ package session
 import (
 	"testing"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 func TestCookieOptionsFromConfig_productionSecure(t *testing.T) {

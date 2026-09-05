@@ -22,7 +22,7 @@ This repository is the **framework + CLI** only. Generate apps with `cais new`.
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-go install github.com/puppe1990/cais/cmd/cais@v0.11.0   # or: make install-cli from this repo
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.11.0   # or: make install-cli from this repo
 cais version   # expect 0.11.0
 cais new myapp
 cd myapp && cais install && cais dev   # http://localhost:8080
@@ -87,7 +87,7 @@ cais g handler settings   # Go handler + test + web/src/pages/Settings.svelte
 ```
 pkg/cais/              framework packages (router, httpx, session, jobs, pwa, …)
 internal/cli/          cais CLI + scaffold templates (split by domain)
-cmd/cais/              CLI entry point
+cmd/amarra-cais/       CLI entry point
 cmd/pwagen/            helper to write PWA assets into a directory
 scripts/               smoke-scaffold + smoke-production (via cais new)
 ```
@@ -160,8 +160,8 @@ make js-test        # pkg/cais/js unit tests
 make lint           # golangci-lint
 make format         # prettier --write
 make ci             # test + js-test + lint + format-check
-make build          # bin/cais
-make install-cli    # go install ./cmd/cais
+make build          # bin/amarra-cais
+make install-cli    # go install ./cmd/amarra-cais
 ```
 
 CI runs Go tests, JS unit tests, lint, Prettier, and smoke (`cais new` + production boot of a scaffolded app).

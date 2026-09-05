@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/puppe1990/cais/pkg/cais/boot"
+	"github.com/puppe1990/amarra-cais/pkg/cais/boot"
 )
 
 const (

@@ -18,7 +18,7 @@ func TestPatchGoModReplace_CaisAppsLayout(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := os.WriteFile(filepath.Join(caisDir, "go.mod"), []byte("module github.com/puppe1990/cais\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(caisDir, "go.mod"), []byte("module github.com/puppe1990/amarra-cais\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := scaffoldNewApp(appsDir, scaffoldData{
@@ -31,7 +31,7 @@ func TestPatchGoModReplace_CaisAppsLayout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(mod), "replace github.com/puppe1990/cais => ../../Cais") {
+	if !strings.Contains(string(mod), "replace github.com/puppe1990/amarra-cais => ../../Cais") {
 		t.Errorf("go.mod missing sibling Cais replace: %s", mod)
 	}
 }
@@ -48,7 +48,7 @@ func TestPatchGoModReplace_RemoteAppDirFromCwd(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := os.WriteFile(filepath.Join(caisDir, "go.mod"), []byte("module github.com/puppe1990/cais\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(caisDir, "go.mod"), []byte("module github.com/puppe1990/amarra-cais\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	t.Chdir(appsDir)
@@ -63,7 +63,7 @@ func TestPatchGoModReplace_RemoteAppDirFromCwd(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantRel := filepath.Join("..", "..", "Cais")
-	want := "replace github.com/puppe1990/cais => " + wantRel
+	want := "replace github.com/puppe1990/amarra-cais => " + wantRel
 	if !strings.Contains(string(mod), want) {
 		t.Errorf("go.mod missing Cais replace from cwd layout:\nwant substring %q\ngot:\n%s", want, mod)
 	}
@@ -78,7 +78,7 @@ func TestPatchGoModReplace(t *testing.T) {
 	if err := os.MkdirAll(caisDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(caisDir, "go.mod"), []byte("module github.com/puppe1990/cais\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(caisDir, "go.mod"), []byte("module github.com/puppe1990/amarra-cais\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := scaffoldNewApp(appDir, scaffoldData{
@@ -91,7 +91,7 @@ func TestPatchGoModReplace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(body), "replace github.com/puppe1990/cais => ../Cais") {
+	if !strings.Contains(string(body), "replace github.com/puppe1990/amarra-cais => ../Cais") {
 		t.Errorf("go.mod missing replace: %s", body)
 	}
 }

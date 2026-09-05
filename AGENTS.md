@@ -79,7 +79,7 @@ Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go
 | `pkg/cais/jobsui/`        | Localhost `/jobs` dashboard (counts, failed retry/discard, recurring)                 |
 | `pkg/cais/testdata/`      | Fixture HTML (HTMX layouts + chat_sse partials for framework tests)                   |
 | `internal/cli/`           | Generators (`cais new`, `cais g`, `cais destroy`) — **Inertia + Svelte scaffolds**    |
-| `cmd/cais/`               | CLI entry point                                                                       |
+| `cmd/amarra-cais/`        | CLI entry point                                                                       |
 | `cmd/pwagen/`             | Write PWA assets into a target directory                                              |
 
 This repo is **framework + CLI only** (no dogfood app). Apps live outside; create with `cais new`.
@@ -300,8 +300,8 @@ Cais ships `sse-ext.min.js` (HTMX SSE extension). Long-lived streams need server
 
 ```go
 import (
-    "github.com/puppe1990/cais/pkg/cais/chat"
-    "github.com/puppe1990/cais/pkg/cais/stream"
+    "github.com/puppe1990/amarra-cais/pkg/cais/chat"
+    "github.com/puppe1990/amarra-cais/pkg/cais/stream"
 )
 
 func streamHandler(w http.ResponseWriter, r *http.Request) {
@@ -655,8 +655,8 @@ make js-test        # pkg/cais/js unit tests
 make lint           # golangci-lint
 make format         # prettier --write
 make ci             # test + js-test + lint + format-check (full gate)
-make build          # bin/cais
-make install-cli    # go install ./cmd/cais
+make build          # bin/amarra-cais
+make install-cli    # go install ./cmd/amarra-cais
 ```
 
 **One-shot validation:** `make ci`  

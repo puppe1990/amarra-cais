@@ -5,9 +5,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/logentry"
-	"github.com/puppe1990/cais/pkg/cais/logtime"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/logentry"
+	"github.com/puppe1990/amarra-cais/pkg/cais/logtime"
 )
 
 func logRequestStarted(w io.Writer, cfg cais.Config, method, path, remote string, at time.Time) {

@@ -159,12 +159,9 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	if !strings.Contains(gomodBody, "gonertia") {
 		t.Error("go.mod should require gonertia")
 	}
-	if strings.Contains(gomodBody, "v0.1.0") {
-		t.Error("go.mod must not pin broken cais@v0.1.0")
-	}
-	if !strings.Contains(gomodBody, "github.com/puppe1990/cais v"+defaultScaffoldCaisVersion) &&
-		!strings.Contains(gomodBody, "github.com/puppe1990/cais v") {
-		t.Errorf("go.mod should require a current cais version, got:\n%s", gomodBody)
+	if !strings.Contains(gomodBody, "github.com/puppe1990/amarra-cais v"+defaultScaffoldCaisVersion) &&
+		!strings.Contains(gomodBody, "github.com/puppe1990/amarra-cais v") {
+		t.Errorf("go.mod should require a current amarra-cais version, got:\n%s", gomodBody)
 	}
 
 	mainJS, err := os.ReadFile(filepath.Join(appDir, "web/src/main.js"))

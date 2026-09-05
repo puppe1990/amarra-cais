@@ -3,7 +3,7 @@ package forms
 import (
 	"html/template"
 
-	"github.com/puppe1990/cais/pkg/cais/csrf"
+	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
 )
 
 // Funcs returns template helpers for HTML forms.

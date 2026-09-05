@@ -70,9 +70,9 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 	}
 	if data.Paginate && !strings.Contains(content, "pkg/cais/pagination") {
 		content = strings.Replace(content,
-			`"github.com/puppe1990/cais/pkg/cais/sqllog"`,
-			`"github.com/puppe1990/cais/pkg/cais/pagination"
-	"github.com/puppe1990/cais/pkg/cais/sqllog"`,
+			`"github.com/puppe1990/amarra-cais/pkg/cais/sqllog"`,
+			`"github.com/puppe1990/amarra-cais/pkg/cais/pagination"
+	"github.com/puppe1990/amarra-cais/pkg/cais/sqllog"`,
 			1,
 		)
 	}

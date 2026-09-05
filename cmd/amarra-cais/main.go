@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/puppe1990/cais/internal/cli"
+	"github.com/puppe1990/amarra-cais/internal/cli"
 )
 
 func main() {

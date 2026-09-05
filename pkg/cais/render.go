@@ -11,11 +11,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/puppe1990/cais/pkg/cais/forms"
-	"github.com/puppe1990/cais/pkg/cais/htmxattrs"
-	"github.com/puppe1990/cais/pkg/cais/i18n"
-	"github.com/puppe1990/cais/pkg/cais/meta"
-	"github.com/puppe1990/cais/pkg/cais/money"
+	"github.com/puppe1990/amarra-cais/pkg/cais/forms"
+	"github.com/puppe1990/amarra-cais/pkg/cais/htmxattrs"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
+	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
+	"github.com/puppe1990/amarra-cais/pkg/cais/money"
 )
 
 func NewRendererFromDir(dir string, catalog *i18n.Catalog) (*Renderer, error) {

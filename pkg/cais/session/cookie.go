@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
 const DefaultCookieName = "cais_session"

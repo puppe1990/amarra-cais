@@ -13,8 +13,8 @@ const fixtureRoutesGo = `package app
 import (
 	"net/http"
 
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/middleware"
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 )
 
 func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
@@ -224,7 +224,7 @@ func writeRoutesApp(t *testing.T, dir string) {
 	files := map[string]string{
 		"go.mod": `module testapp
 
-require github.com/puppe1990/cais v0.3.0
+require github.com/puppe1990/amarra-cais v0.3.0
 `,
 		"internal/app/routes.go": fixtureRoutesGo,
 	}
