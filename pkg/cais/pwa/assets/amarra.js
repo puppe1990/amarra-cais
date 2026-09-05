@@ -877,8 +877,103 @@
     if (typeof write === "function") return write.call(globalThis.navigator.clipboard, text);
   });
 
+  // pkg/amarra/js/hook_password.mjs
+  var CLICK2 = "_amarraPasswordClick";
+  function makePassword(findInput) {
+    const resolve = findInput ?? defaultFind;
+    return {
+      connect(el) {
+        if (!el || typeof el.addEventListener !== "function") return;
+        const fn = (ev) => {
+          ev?.preventDefault?.();
+          const sel = el.getAttribute?.("data-amarra-password-for") ?? "";
+          const input = resolve(sel, el);
+          if (!input) return;
+          const show = input.type === "password";
+          input.type = show ? "text" : "password";
+          el.setAttribute?.("aria-pressed", show ? "true" : "false");
+          const showIcon = el.querySelector?.('[data-cais-password-icon="show"]');
+          const hideIcon = el.querySelector?.('[data-cais-password-icon="hide"]');
+          showIcon?.classList?.toggle?.("hidden", show);
+          hideIcon?.classList?.toggle?.("hidden", !show);
+        };
+        el[CLICK2] = fn;
+        el.addEventListener("click", fn);
+      },
+      disconnect(el) {
+        const fn = el?.[CLICK2];
+        if (!fn || typeof el.removeEventListener !== "function") return;
+        el.removeEventListener("click", fn);
+        delete el[CLICK2];
+      }
+    };
+  }
+  function defaultFind(sel, el) {
+    if (!sel) return null;
+    const root = el?.ownerDocument ?? globalThis.document;
+    return root?.querySelector?.(sel) ?? null;
+  }
+  var password = makePassword();
+
+  // pkg/amarra/js/hook_theme.mjs
+  var CLICK3 = "_amarraThemeClick";
+  var DEFAULT_KEY = "amarra-theme";
+  var DEFAULT_CLASS = "light";
+  function makeTheme(opts = {}) {
+    const className = opts.className ?? DEFAULT_CLASS;
+    const key = opts.key ?? DEFAULT_KEY;
+    const getHtml = opts.html ?? (() => globalThis.document?.documentElement);
+    const getStorage = () => opts.storage ?? globalThis.localStorage;
+    const getMeta = opts.themeColorMeta ?? (() => globalThis.document?.querySelector?.('meta[name="theme-color"]'));
+    function apply(on, el) {
+      const html = getHtml();
+      if (html?.classList) {
+        if (on) html.classList.add(className);
+        else html.classList.remove(className);
+      }
+      try {
+        getStorage()?.setItem?.(key, on ? className : "");
+      } catch {
+      }
+      const meta = getMeta?.();
+      const lightColor = el?.getAttribute?.("data-amarra-theme-color") || opts.lightColor;
+      const darkColor = el?.getAttribute?.("data-amarra-theme-color-off") || opts.darkColor;
+      const color = on ? lightColor : darkColor;
+      if (meta && color) meta.setAttribute?.("content", color);
+    }
+    return {
+      connect(el) {
+        if (!el || typeof el.addEventListener !== "function") return;
+        let stored = "";
+        try {
+          stored = getStorage()?.getItem?.(key) ?? "";
+        } catch {
+          stored = "";
+        }
+        if (stored === className) apply(true, el);
+        const fn = (ev) => {
+          ev?.preventDefault?.();
+          const html = getHtml();
+          const on = !html?.classList?.contains?.(className);
+          apply(on, el);
+        };
+        el[CLICK3] = fn;
+        el.addEventListener("click", fn);
+      },
+      disconnect(el) {
+        const fn = el?.[CLICK3];
+        if (!fn || typeof el.removeEventListener !== "function") return;
+        el.removeEventListener("click", fn);
+        delete el[CLICK3];
+      }
+    };
+  }
+  var theme = makeTheme();
+
   // pkg/amarra/js/hook.mjs
   register("clipboard", clipboard);
+  register("password", password);
+  register("theme", theme);
   var ON_CLASSES = ["bg-green-50", "text-green-700"];
   var OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
   var TOAST_MS = 2e3;
@@ -971,6 +1066,8 @@
     if (doc.documentElement?.dataset?.amarraHook === "true") return;
     if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
     register("clipboard", clipboard);
+    register("password", password);
+    register("theme", theme);
     scan(doc);
     let optimistic = null;
     doc.addEventListener("amarra:toast", (ev) => {
