@@ -51,22 +51,22 @@ make install-cli
 export PATH="$HOME/go/bin:$PATH"
 ```
 
-| Command                                                                                                          | Description                                               |
-| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `amarra-cais new <app> [dir] [--minimal\|--blank] [--module path]`                                               | Scaffold app (HTML + Amarra Drive by default)             |
-| `amarra-cais g [--dry-run] handler\|page\|resource\|model\|migration\|auth\|console\|ci\|job\|stream\|component` | Generators                                                |
-| `amarra-cais destroy [--dry-run] resource\|handler\|model\|auth\|migration\|component`                           | Undo generators                                           |
-| `amarra-cais install`                                                                                            | `npm install` + `go mod tidy` (+ Tailwind build)          |
-| `amarra-cais dev`                                                                                                | **air + Tailwind watch** (HTML templates reload with air) |
-| `amarra-cais css` / `amarra-cais build` / `amarra-cais server` / `amarra-cais test`                              | CSS, binary, run, tests                                   |
-| `amarra-cais console`                                                                                            | REPL (store, cfg, db + SQL)                               |
-| `amarra-cais routes [--verbose]`                                                                                 | List routes from `internal/app/routes.go`                 |
-| `amarra-cais db migrate\|status\|rollback\|prune-sessions\|seed`                                                 | Migrations & seeds                                        |
-| `amarra-cais jobs work\|status\|retry\|discard\|prune`                                                           | SQLite background jobs + `/jobs` dashboard                |
-| `amarra-cais doctor [--mobile]`                                                                                  | Verify amarra.js, `#amarra-main`, PWA, mobile             |
-| `amarra-cais pwa [--bump]`                                                                                       | Write/refresh PWA assets; `--bump` cache                  |
-| `amarra-cais link [path] [--unlink]`                                                                             | Local `go.mod replace` for framework dev                  |
-| `amarra-cais version`                                                                                            | Framework version                                         |
+| Command                                                                                                                | Description                                               |
+| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `amarra-cais new <app> [dir] [--minimal\|--blank] [--module path]`                                                     | Scaffold app (HTML + Amarra Drive by default)             |
+| `amarra-cais g [--dry-run] handler\|page\|resource\|model\|migration\|auth\|console\|ci\|job\|stream\|live\|component` | Generators                                                |
+| `amarra-cais destroy [--dry-run] resource\|handler\|model\|auth\|migration\|component`                                 | Undo generators                                           |
+| `amarra-cais install`                                                                                                  | `npm install` + `go mod tidy` (+ Tailwind build)          |
+| `amarra-cais dev`                                                                                                      | **air + Tailwind watch** (HTML templates reload with air) |
+| `amarra-cais css` / `amarra-cais build` / `amarra-cais server` / `amarra-cais test`                                    | CSS, binary, run, tests                                   |
+| `amarra-cais console`                                                                                                  | REPL (store, cfg, db + SQL)                               |
+| `amarra-cais routes [--verbose]`                                                                                       | List routes from `internal/app/routes.go`                 |
+| `amarra-cais db migrate\|status\|rollback\|prune-sessions\|seed`                                                       | Migrations & seeds                                        |
+| `amarra-cais jobs work\|status\|retry\|discard\|prune`                                                                 | SQLite background jobs + `/jobs` dashboard                |
+| `amarra-cais doctor [--mobile]`                                                                                        | Verify amarra.js, `#amarra-main`, PWA, mobile             |
+| `amarra-cais pwa [--bump]`                                                                                             | Write/refresh PWA assets; `--bump` cache                  |
+| `amarra-cais link [path] [--unlink]`                                                                                   | Local `go.mod replace` for framework dev                  |
+| `amarra-cais version`                                                                                                  | Framework version                                         |
 
 Field types for generators: `string`, `text`, `url`, `bool`, `int`, `date`, `references` (or `name:belongs_to`). Suffix `?` for optional.
 
@@ -90,7 +90,7 @@ amarra-cais g component card     # web/templates/components/card.html
 
 ```
 pkg/cais/              framework packages (router, httpx, session, jobs, pwa, …)
-pkg/amarra/            Views, Drive, Frame, Stream, Live stub, amarra.js sources
+pkg/amarra/            Views, Drive, Frame, Stream, Live hub, amarra.js sources
 internal/cli/          amarra-cais CLI + scaffold templates (split by domain)
 cmd/amarra-cais/       CLI entry point
 cmd/pwagen/            helper to write PWA assets into a directory

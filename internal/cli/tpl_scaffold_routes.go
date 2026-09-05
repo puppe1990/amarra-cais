@@ -6,6 +6,7 @@ const tplRoutes = `package app
 import (
 	"net/http"
 
+	"github.com/puppe1990/amarra-cais/pkg/amarra/live"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 
@@ -36,11 +37,18 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	r.Post("/logout", auth.LogoutPost)
 	r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
 }
+
+func registerLiveViews(hub *live.Hub, deps Deps) {
+	_ = hub
+	_ = deps
+	// cais:live-views
+}
 `
 
 const tplRoutesMinimal = `package app
 
 import (
+	"github.com/puppe1990/amarra-cais/pkg/amarra/live"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 
 	"{{.ModulePath}}/internal/handlers"
@@ -49,6 +57,12 @@ import (
 func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	home := handlers.NewHomeHandler(deps.Views, deps.Site, deps.Catalog, cfg)
 	r.Get("/", home.ServeHTTP)
+}
+
+func registerLiveViews(hub *live.Hub, deps Deps) {
+	_ = hub
+	_ = deps
+	// cais:live-views
 }
 `
 

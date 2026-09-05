@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Added
+
+- Amarra Live WebSocket hub at `GET /amarra/live` (`Mount`/`Handle`/`Render`, CSRF join, MaxConns, idle ping, in-process `Broadcast`).
+- JS auto-connect for `[amarra-live]`; `amarra-click` / `change` / `submit` inside the live root go over WS.
+- `amarra-cais g live <name>` counter view; `amarra-cais g stream chat --live`.
+
 ## [0.0.3] - 2026-09-05
 
 ### Removed

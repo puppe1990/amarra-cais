@@ -85,6 +85,9 @@ Usage:
   amarra-cais g [--dry-run] model <name> [--fields title:string,url:url]
   amarra-cais g [--dry-run] page <name>         Generate page template only
   amarra-cais g [--dry-run] migration <name>    Generate SQL migration file
+  amarra-cais g [--dry-run] live <name>         Generate Live view + page (WebSocket)
+  amarra-cais g [--dry-run] stream chat [--live]
+                             Generate SSE chat (optional Live WebSocket)
   amarra-cais g [--dry-run] job <name> [--cron "0 3 * * *"]
                              Generate job handler + cmd/worker + registry
   amarra-cais g [--dry-run] auth                Add login/logout and protect dashboard
@@ -239,7 +242,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
-		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|component|migration|resource|model|stream|job|console|auth|ci> [name]")
+		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|component|migration|resource|model|stream|live|job|console|auth|ci> [name]")
 	}
 
 	kind := args[0]
@@ -273,11 +276,22 @@ func (c *CLI) cmdGenerate(args []string) error {
 		}
 		opts.dryRun = dryRun
 		genErr = scaffoldJob(cwd, args[1], opts)
+	case "live":
+		if len(args) < 2 {
+			return fmt.Errorf("usage: amarra-cais g live <name>")
+		}
+		genErr = scaffoldLive(cwd, args[1], dryRun)
 	case "stream":
 		if len(args) < 2 || args[1] != "chat" {
-			return fmt.Errorf("usage: amarra-cais g stream chat")
+			return fmt.Errorf("usage: amarra-cais g stream chat [--live]")
 		}
-		genErr = scaffoldStreamChat(cwd, streamOpts{dryRun: dryRun})
+		opts := streamOpts{dryRun: dryRun}
+		for _, a := range args[2:] {
+			if a == "--live" {
+				opts.live = true
+			}
+		}
+		genErr = scaffoldStreamChat(cwd, opts)
 	case "component":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais g component <name>")

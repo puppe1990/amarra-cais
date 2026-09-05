@@ -69,7 +69,9 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 	r.StaticForEnv("/static", deps.StaticDir, cfg)
 
 	registerRoutes(r, deps, cfg)
-	r.Handle("GET /amarra/live", live.Handler())
+	hub := live.NewHub(live.Config{})
+	registerLiveViews(hub, deps)
+	r.Handle("GET /amarra/live", hub.Handler())
 	devlog.Register(r, cfg.Env, buf)
 	if err := jobsui.Register(r, deps.Store.DB()); err != nil {
 		return nil, fmt.Errorf("jobs dashboard: %w", err)

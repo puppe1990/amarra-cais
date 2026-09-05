@@ -54,6 +54,21 @@ func TestCLI_Help_IncludesResource(t *testing.T) {
 	}
 }
 
+func TestCLI_Help_IncludesLive(t *testing.T) {
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	if err := c.Run([]string{"help"}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "g [--dry-run] live") {
+		t.Error("help missing g live")
+	}
+	if !strings.Contains(out, "stream chat") {
+		t.Error("help missing g stream chat")
+	}
+}
+
 func TestCLI_Help_IncludesComponent(t *testing.T) {
 	var buf bytes.Buffer
 	c := &CLI{Out: &buf}
