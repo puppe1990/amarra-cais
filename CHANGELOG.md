@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.1.0] - 2026-09-05
+
 ### Added
 
 - Amarra Live WebSocket hub at `GET /amarra/live` (`Mount`/`Handle`/`Render`, CSRF join, MaxConns, idle ping, in-process `Broadcast`).
