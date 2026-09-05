@@ -12,6 +12,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - JS auto-connect for `[amarra-live]`; `amarra-click` / `change` / `submit` inside the live root go over WS.
 - `amarra-cais g live <name>` counter view; `amarra-cais g stream chat --live`.
 - Stimulus-shaped `amarra-hook` registry (`connect` / `updated` / `disconnect` / `handleEvent`) plus clipboard, password reveal, color-scheme, and client reveal/toggle builtins (#5, #7).
+- Kit `<.locale-toggle />` (Drive POST `/locale`) and configurable i18n cookie name (`SetCookieOpts`, `CatalogForRequestNamed`) (#6).
 - Drive: title/CSRF head merge, progress bar, `data-amarra-confirm`, `data-amarra-method` / `_method`, `data-amarra-disable-with`, 422 `aria-invalid` focus, scroll restore.
 - Frame: `data-amarra-frame` targeting from links, `loading="lazy"`.
 - Stream: `stream.WriteHTTP` (`text/vnd.amarra-stream`) and `before` / `after` ops.

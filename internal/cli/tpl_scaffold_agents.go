@@ -53,7 +53,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"flash.Set(w, \"notice\", \"Saved!\", cfg.CookieSecure())\n" +
 	"http.Redirect(w, r, \"/dashboard\", http.StatusSeeOther)\n" +
 	"```\n\n" +
-	"Pages define a content block plus kit tags `<.form>` / `<.input>` / `<.button>` / `<.flash />`.\n" +
+	"Pages define a content block plus kit tags `<.form>` / `<.input>` / `<.button>` / `<.flash />` / `<.locale-toggle />`.\n" +
 	"Drive morphs `#amarra-main` (`data-amarra-drive`, `linkTo`, `<.form>`). Do not check `HX-Request`.\n" +
 	"Password fields: `fieldPassword` (eye show/hide via `amarra-hook=\"password\"`).\n" +
 	"Shipped hooks: `clipboard`, `password`, `reveal` (client show/hide, no Drive round-trip), `theme` (`html.light` + `localStorage[\"amarra-theme\"]`).\n" +
