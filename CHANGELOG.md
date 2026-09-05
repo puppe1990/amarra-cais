@@ -18,6 +18,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - Stream: `stream.WriteHTTP` (`text/vnd.amarra-stream`) and `before` / `after` ops.
 - Live socket `Patch` / `Navigate` / `Stream` / `Push`; JS `amarra-debounce`, `amarra-click-loading`.
 - Kit: `<.form>` injects CSRF; `<.select>` / `<.textarea>` / `<.checkbox>`; `linkTo` dict opts (`method`, `confirm`, `frame`).
+- `docs/migrate-inertia.md` — Cais Inertia → Amarra rewrite guide; `doctor` vite FAIL points at it (#8).
 
 ## [0.0.3] - 2026-09-05
 
