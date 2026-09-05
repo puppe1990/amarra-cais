@@ -191,8 +191,8 @@ func TestDestroyAuth_removesGeneratedFiles(t *testing.T) {
 	for _, path := range []string{
 		"internal/handlers/auth.go",
 		"internal/models/user.go",
-		"web/src/pages/Login.svelte",
-		"web/src/pages/Signup.svelte",
+		"web/templates/pages/login.html",
+		"web/templates/pages/signup.html",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
 			t.Errorf("expected %s removed", path)

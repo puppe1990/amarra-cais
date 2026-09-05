@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 
-	inertia "github.com/romsar/gonertia/v3"
+	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/boot"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
@@ -59,13 +59,9 @@ func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {
 	}
 
 	catalog := appi18n.NewCatalog(cfg.Locale)
-	templatesDir, err := cais.ResolveWebDir("templates", cfg.TemplatesDir)
+	views, err := view.Load(tmplFS, catalog)
 	if err != nil {
-		templatesDir = ""
-	}
-	renderer, err := cais.NewRendererForEnv(cfg, tmplFS, templatesDir, catalog)
-	if err != nil {
-		return nil, fmt.Errorf("renderer: %w", err)
+		return nil, fmt.Errorf("views: %w", err)
 	}
 
 	s, err := store.NewSQLiteStore(cfg.DBPath, cfg.Env)
@@ -79,19 +75,12 @@ func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {
 		return nil, err
 	}
 
-	inertiaI, err := inertia.NewFromFileFS(tmplFS, "app.html")
-	if err != nil {
-		_ = s.Close()
-		return nil, fmt.Errorf("inertia root: %w", err)
-	}
-
 	return app.New(cfg, app.Deps{
-		Renderer:  renderer,
+		Views:     views,
 		Store:     s,
 		StaticDir: staticDir,
 		Site:      meta.SiteFrom("{{.AppName}}", cfg.AppURL),
 		Catalog:   catalog,
-		Inertia:   inertiaI,
 	})
 }
 `

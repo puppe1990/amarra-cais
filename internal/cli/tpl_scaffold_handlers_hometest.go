@@ -1,4 +1,3 @@
-// Inertia handler scaffold templates (ported from Cais demo).
 package cli
 
 const tplHomeTest = `package handlers
@@ -15,7 +14,7 @@ import (
 
 func newHomeHandler(t *testing.T) *HomeHandler {
 	t.Helper()
-	return NewHomeHandler(setupTestRenderer(t), testSite(), i18n.DefaultCatalog(), cais.Config{}, setupTestInertia(t))
+	return NewHomeHandler(setupTestViews(t), testSite(), i18n.DefaultCatalog(), cais.Config{})
 }
 
 func TestHomeHandler_Returns200(t *testing.T) {
@@ -30,17 +29,7 @@ func TestHomeHandler_Returns200(t *testing.T) {
 	}
 }
 
-func TestHomeHandler_InertiaComponent(t *testing.T) {
-	h := newHomeHandler(t)
-
-	req := inertiaRequest(http.MethodGet, "/", nil)
-	rr := httptest.NewRecorder()
-	h.ServeHTTP(rr, req)
-
-	assertInertiaComponent(t, rr, "Home")
-}
-
-func TestHomeHandler_InertiaShell(t *testing.T) {
+func TestHomeHandler_RendersHTML(t *testing.T) {
 	h := newHomeHandler(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -48,8 +37,11 @@ func TestHomeHandler_InertiaShell(t *testing.T) {
 	h.ServeHTTP(rr, req)
 
 	body := rr.Body.String()
-	if !strings.Contains(body, ` + "`" + `id="app"` + "`" + `) && !strings.Contains(body, "data-page") {
-		t.Errorf("body missing Inertia shell markers, got: %s", body)
+	if !strings.Contains(body, ` + "`" + `id="amarra-main"` + "`" + `) {
+		t.Errorf("body missing #amarra-main, got: %s", body)
+	}
+	if !strings.Contains(body, "You're on Cais!") {
+		t.Errorf("body missing heading, got: %s", body)
 	}
 }
 
@@ -64,4 +56,5 @@ func TestHomeHandler_ContentType(t *testing.T) {
 	if !strings.Contains(ct, "text/html") {
 		t.Errorf("Content-Type = %q, want text/html", ct)
 	}
-}`
+}
+`

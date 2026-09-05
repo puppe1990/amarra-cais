@@ -1,4 +1,3 @@
-// Inertia handler scaffold templates (ported from Cais demo).
 package cli
 
 const tplContactHandler = `package handlers
@@ -7,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	inertia "github.com/romsar/gonertia/v3"
+	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
 	"github.com/puppe1990/amarra-cais/pkg/cais/httpx"
@@ -20,24 +19,21 @@ import (
 )
 
 type ContactHandler struct {
-	renderer *cais.Renderer
-	store    store.Store
-	site     meta.Site
-	catalog  *i18n.Catalog
-	cfg      cais.Config
-	inertia  *inertia.Inertia
+	views   *view.Renderer
+	store   store.Store
+	site    meta.Site
+	catalog *i18n.Catalog
+	cfg     cais.Config
 }
 
-func NewContactHandler(renderer *cais.Renderer, s store.Store, site meta.Site, catalog *i18n.Catalog, cfg cais.Config, i *inertia.Inertia) *ContactHandler {
-	return &ContactHandler{renderer: renderer, store: s, site: site, catalog: catalog, cfg: cfg, inertia: i}
+func NewContactHandler(views *view.Renderer, s store.Store, site meta.Site, catalog *i18n.Catalog, cfg cais.Config) *ContactHandler {
+	return &ContactHandler{views: views, store: s, site: site, catalog: catalog, cfg: cfg}
 }
 
 func (h *ContactHandler) Get(w http.ResponseWriter, r *http.Request) {
-	props := inertia.Props{"site": meta.ForRequest(h.site, r)}
-	if msg, ok := flash.MessageFromRequest(r); ok {
-		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
-	}
-	_ = h.inertia.Render(w, r, "Contact", props)
+	writeView(w, r, h.views, h.cfg, "contact", amarraData(r, h.site, map[string]any{
+		"Title": h.catalog.T("contact.title"),
+	}), 0)
 }
 
 func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {
@@ -61,12 +57,12 @@ func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {
 		errs.Add("email", msg)
 	}
 	if errs.Any() {
-		ve := make(inertia.ValidationErrors)
-		for k, v := range errs {
-			ve[k] = v
-		}
-		ctx := inertia.SetValidationErrors(r.Context(), ve)
-		_ = h.inertia.Render(w, r.WithContext(ctx), "Contact", inertia.Props{})
+		writeView(w, r, h.views, h.cfg, "contact", amarraData(r, h.site, map[string]any{
+			"Title":  h.catalog.T("contact.title"),
+			"Errors": errs,
+			"Name":   name,
+			"Email":  email,
+		}), http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -76,6 +72,6 @@ func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	flash.Set(w, "success", "Message sent successfully.", h.cfg.CookieSecure())
-	h.inertia.Redirect(w, r, "/contact", http.StatusSeeOther)
+	http.Redirect(w, r, "/contact", http.StatusSeeOther)
 }
 `

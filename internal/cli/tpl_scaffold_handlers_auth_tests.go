@@ -1,4 +1,3 @@
-// Inertia handler scaffold templates (ported from Cais demo).
 package cli
 
 const tplAuthTest = `package handlers
@@ -20,7 +19,7 @@ import (
 func newAuthHandler(t *testing.T) (*AuthHandler, store.Store) {
 	t.Helper()
 	s := setupTestStore(t)
-	h := NewAuthHandler(setupTestRenderer(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog(), setupTestInertia(t))
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog())
 	return h, s
 }
 
@@ -42,16 +41,17 @@ func TestAuth_LoginPost_invalidCredentials(t *testing.T) {
 	h, _ := newAuthHandler(t)
 
 	form := url.Values{"email": {"nobody@example.com"}, "password": {"wrong"}}
-	req := inertiaRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr := httptest.NewRecorder()
 	h.LoginPost(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rr.Code)
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("status = %d, want 422", rr.Code)
 	}
-	assertInertiaComponent(t, rr, "Login")
-	assertInertiaErrors(t, rr, "email")
+	if !strings.Contains(rr.Body.String(), "Invalid email or password") {
+		t.Errorf("missing credentials error, got: %s", rr.Body.String())
+	}
 }
 
 func TestAuth_LoginPost_validCredentials_redirects(t *testing.T) {
@@ -60,7 +60,7 @@ func TestAuth_LoginPost_validCredentials_redirects(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = s.Close() })
-	h := NewAuthHandler(setupTestRenderer(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog(), setupTestInertia(t))
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog())
 
 	form := url.Values{"email": {"demo@example.com"}, "password": {"password"}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
@@ -82,7 +82,7 @@ func TestAuth_LoginPost_validCredentials_redirects(t *testing.T) {
 		}
 	}
 	if !foundFlash {
-		t.Error("login must set cais_flash cookie via flash.Set (inertia.SetFlash is a no-op without FlashDataProvider)")
+		t.Error("login must set cais_flash cookie via flash.Set")
 	}
 }`
 
@@ -108,7 +108,7 @@ func newAuthHandlerForSignup(t *testing.T) (*AuthHandler, store.Store) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = s.Close() })
-	h := NewAuthHandler(setupTestRenderer(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog(), setupTestInertia(t))
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog())
 	return h, s
 }
 
@@ -155,25 +155,31 @@ func TestAuth_SignUpPost_duplicateEmail_returnsError(t *testing.T) {
 		t.Fatalf("first signup status = %d, want 303", rr.Code)
 	}
 
-	req2 := inertiaRequest(http.MethodPost, "/signup", strings.NewReader(form.Encode()))
+	req2 := httptest.NewRequest(http.MethodPost, "/signup", strings.NewReader(form.Encode()))
 	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr2 := httptest.NewRecorder()
 	h.SignUpPost(rr2, req2)
-	if rr2.Code != http.StatusOK {
-		t.Fatalf("duplicate signup status = %d, want 200", rr2.Code)
+	if rr2.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("duplicate signup status = %d, want 422", rr2.Code)
 	}
-	assertInertiaComponent(t, rr2, "Signup")
-	assertInertiaErrors(t, rr2, "email")
+	if !strings.Contains(rr2.Body.String(), "already registered") {
+		t.Errorf("missing email taken error, got: %s", rr2.Body.String())
+	}
 }
 
-func TestAuth_SignUp_InertiaComponent(t *testing.T) {
+func TestAuth_SignUp_RendersForm(t *testing.T) {
 	h, _ := newAuthHandlerForSignup(t)
 
-	req := inertiaRequest(http.MethodGet, "/signup", nil)
+	req := httptest.NewRequest(http.MethodGet, "/signup", nil)
 	rr := httptest.NewRecorder()
 	h.SignUp(rr, req)
 
-	assertInertiaComponent(t, rr, "Signup")
+	if rr.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), ` + "`" + `action="/signup"` + "`" + `) {
+		t.Errorf("missing signup form, got: %s", rr.Body.String())
+	}
 }`
 
 const tplAuthResetTest = `package handlers
@@ -206,7 +212,7 @@ func (c *captureNotifier) NotifyReset(email, token string) error {
 
 func newAuthHandlerForReset(t *testing.T, s store.Store, notify passwordreset.Notifier) *AuthHandler {
 	t.Helper()
-	h := NewAuthHandler(setupTestRenderer(t), s, testSite(), s.Sessions(), cais.Config{AppURL: "http://localhost:8080"}, i18n.DefaultCatalog(), setupTestInertia(t))
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{AppURL: "http://localhost:8080"}, i18n.DefaultCatalog())
 	h.resetNotify = notify
 	return h
 }
@@ -257,15 +263,17 @@ func TestAuth_ForgotPasswordPost_knownEmail_notifiesAndRedirects(t *testing.T) {
 	}
 }
 
-func TestAuth_ForgotPassword_InertiaComponent(t *testing.T) {
+func TestAuth_ForgotPassword_RendersForm(t *testing.T) {
 	s := setupTestStore(t)
 	h := newAuthHandlerForReset(t, s, &captureNotifier{})
 
-	req := inertiaRequest(http.MethodGet, "/forgot-password", nil)
+	req := httptest.NewRequest(http.MethodGet, "/forgot-password", nil)
 	rr := httptest.NewRecorder()
 	h.ForgotPassword(rr, req)
 
-	assertInertiaComponent(t, rr, "ForgotPassword")
+	if !strings.Contains(rr.Body.String(), ` + "`" + `action="/forgot-password"` + "`" + `) {
+		t.Errorf("missing forgot-password form, got: %s", rr.Body.String())
+	}
 }
 
 func TestAuth_ResetPasswordPost_validToken_updatesPassword(t *testing.T) {
@@ -320,14 +328,15 @@ func TestAuth_ResetPasswordPost_invalidToken_rendersError(t *testing.T) {
 		"password":              {"new-password-123"},
 		"password_confirmation": {"new-password-123"},
 	}
-	req := inertiaRequest(http.MethodPost, "/reset-password", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/reset-password", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr := httptest.NewRecorder()
 	h.ResetPasswordPost(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rr.Code)
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("status = %d, want 422", rr.Code)
 	}
-	assertInertiaComponent(t, rr, "ResetPassword")
-	assertInertiaErrors(t, rr, "token")
+	if !strings.Contains(rr.Body.String(), "invalid or has expired") {
+		t.Errorf("missing token error, got: %s", rr.Body.String())
+	}
 }`

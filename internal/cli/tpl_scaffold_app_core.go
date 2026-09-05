@@ -11,7 +11,8 @@ import (
 	"net/http"
 	"time"
 
-	inertia "github.com/romsar/gonertia/v3"
+	"github.com/puppe1990/amarra-cais/pkg/amarra/live"
+	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/devlog"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
@@ -24,12 +25,11 @@ import (
 )
 
 type Deps struct {
-	Renderer  *cais.Renderer
+	Views     *view.Renderer
 	Store     store.Store
 	StaticDir string
 	Site      meta.Site
 	Catalog   *i18n.Catalog
-	Inertia   *inertia.Inertia
 }
 
 type App struct {
@@ -39,26 +39,12 @@ type App struct {
 	server *http.Server
 }
 
-const defaultInertiaRoot = ` + "`" + `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8" />{{"{{ .inertiaHead }}"}}</head>
-<body>{{"{{ .inertia }}"}}</body>
-</html>` + "`" + `
-
 func New(cfg cais.Config, deps Deps) (*App, error) {
-	if deps.Renderer == nil {
-		return nil, fmt.Errorf("renderer is required")
+	if deps.Views == nil {
+		return nil, fmt.Errorf("views are required")
 	}
 	if deps.Store == nil {
 		return nil, fmt.Errorf("store is required")
-	}
-
-	if deps.Inertia == nil {
-		var err error
-		deps.Inertia, err = inertia.New(defaultInertiaRoot)
-		if err != nil {
-			return nil, fmt.Errorf("inertia: %w", err)
-		}
 	}
 
 	site := deps.Site
@@ -83,6 +69,7 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 	r.StaticForEnv("/static", deps.StaticDir, cfg)
 
 	registerRoutes(r, deps, cfg)
+	r.Handle("/amarra/live", live.Handler())
 	devlog.Register(r, cfg.Env, buf)
 	if err := jobsui.Register(r, deps.Store.DB()); err != nil {
 		return nil, fmt.Errorf("jobs dashboard: %w", err)

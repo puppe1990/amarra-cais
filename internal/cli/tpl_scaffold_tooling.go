@@ -332,9 +332,9 @@ const tplInputCSS = `@tailwind base;
 }
 `
 
-const tplTailwind = `/** @type {import('tailwindcss').Config} */
+const tplTailwind = `/** @type {import("tailwindcss").Config} */
 module.exports = {
-  content: ["./web/src/**/*.{html,js,svelte}"],
+  content: ["./web/templates/**/*.html"],
   safelist: [
     "cais-password-wrap",
     "cais-password-toggle",
@@ -359,7 +359,7 @@ module.exports = {
       fontFamily: {
         sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
         display: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
-        mono: ['"JetBrains Mono"', "ui-monospace", "SFMono-Regular", "monospace"],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       boxShadow: {
         "2xs": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
@@ -374,26 +374,13 @@ module.exports = {
 const tplPackageJSON = `{
   "private": true,
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^7.1.2",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/svelte": "^5.4.2",
-    "jsdom": "^29.1.1",
     "prettier": "^3.5.3",
-    "tailwindcss": "^3.4.17",
-    "vite": "^8.1.3",
-    "vitest": "^4.1.9"
+    "tailwindcss": "^3.4.17"
   },
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "vite build",
-    "dev:fe": "vite",
-    "test:fe": "vitest run",
     "test": "npm run format:check"
-  },
-  "dependencies": {
-    "@inertiajs/svelte": "^3.6.0",
-    "svelte": "^5.56.4"
   }
 }
 `
@@ -429,15 +416,11 @@ css:
 css-watch:
 	npx tailwindcss -i $(CSS_IN) -o $(CSS_OUT) --watch
 
-build: css fe
+build: css
 	CGO_ENABLED=0 go build -ldflags="-s -w" -o $(BIN) ./cmd/server
-
-fe:
-	npm run build
 
 dev: css
 	$(MAKE) css-watch &
-	npm run dev:fe &
 	$(CAIS) dev
 `
 
@@ -518,9 +501,9 @@ const tplPreCommitConfig = `repos:
     rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
-        # web/src is Svelte (no prettier plugin in scaffold); web/static is build output.
+        # web/templates is Go html/template; web/static is generated CSS/PWA.
         # Exclude so UI-only commits do not fail with "No files matching" (#146).
-        exclude: ^(web/static/|web/src/|web/templates/)
+        exclude: ^(web/static/|web/templates/)
         args: [--no-error-on-unmatched-pattern]
 
   - repo: local
@@ -614,8 +597,6 @@ bin/
 tmp/
 data/
 web/templates/
-web/src/
-web/static/build/
 web/static/css/styles.css
 package-lock.json
 go.sum
@@ -624,7 +605,6 @@ go.sum
 const tplGitignore = `bin/
 data/
 web/static/css/styles.css
-web/static/build/
 node_modules/
 tmp/
 .air/

@@ -26,8 +26,7 @@ func TestScaffoldHandler_usesModernHandlerPattern(t *testing.T) {
 	}
 	body := string(handler)
 	for _, needle := range []string{
-		"inertia.Render",
-		"meta.ForRequest",
+		"view.Write",
 		"meta.Site",
 		"i18n.Catalog",
 	} {
@@ -40,8 +39,15 @@ func TestScaffoldHandler_usesModernHandlerPattern(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(routes), "handlers.NewAboutHandler(deps.Site, deps.Catalog, deps.Inertia)") {
-		t.Error("routes.go should wire site, catalog, and inertia into handler")
+	if !strings.Contains(string(routes), "handlers.NewAboutHandler(deps.Views, deps.Site, deps.Catalog, cfg)") {
+		t.Error("routes.go should wire views, site, catalog, and cfg into handler")
+	}
+	viewData, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/viewdata.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(viewData), "meta.ForRequest") {
+		t.Error("viewdata.go missing meta.ForRequest")
 	}
 }
 
@@ -60,16 +66,16 @@ func TestScaffoldResource_adminFormUsesFormHelpers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	form, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/AdminWidgetForm.svelte"))
+	form, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_widget_form.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	body := string(form)
-	if !strings.Contains(body, `useForm`) {
-		t.Error("admin form should use @inertiajs/svelte useForm")
+	if !strings.Contains(body, `csrfField`) && !strings.Contains(body, `fieldInput`) {
+		t.Error("admin form should use HTML form helpers")
 	}
-	if !strings.Contains(body, `errors.`) {
-		t.Error("admin form should render errors prop")
+	if !strings.Contains(body, `.Errors`) {
+		t.Error("admin form should render errors")
 	}
 
 	admin, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/admin_widgets.go"))
@@ -80,7 +86,7 @@ func TestScaffoldResource_adminFormUsesFormHelpers(t *testing.T) {
 	if !strings.Contains(adminBody, "validate.FieldErrors") {
 		t.Error("admin handler should use validate.FieldErrors")
 	}
-	if !strings.Contains(adminBody, "inertia.SetValidationErrors") {
-		t.Error("admin handler should use inertia.SetValidationErrors on validation errors")
+	if !strings.Contains(adminBody, "view.Write") {
+		t.Error("admin handler should use view.Write on validation errors")
 	}
 }

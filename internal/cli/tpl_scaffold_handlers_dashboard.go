@@ -1,4 +1,3 @@
-// Inertia handler scaffold templates (ported from Cais demo).
 package cli
 
 const tplDashboardHandler = `package handlers
@@ -6,24 +5,24 @@ const tplDashboardHandler = `package handlers
 import (
 	"net/http"
 
-	inertia "github.com/romsar/gonertia/v3"
+	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 
 	"{{.ModulePath}}/internal/store"
 )
 
 type DashboardHandler struct {
-	renderer *cais.Renderer
-	store    store.Store
-	site     meta.Site
-	cfg      cais.Config
-	inertia  *inertia.Inertia
+	views   *view.Renderer
+	store   store.Store
+	site    meta.Site
+	catalog *i18n.Catalog
+	cfg     cais.Config
 }
 
-func NewDashboardHandler(renderer *cais.Renderer, s store.Store, site meta.Site, cfg cais.Config, i *inertia.Inertia) *DashboardHandler {
-	return &DashboardHandler{renderer: renderer, store: s, site: site, cfg: cfg, inertia: i}
+func NewDashboardHandler(views *view.Renderer, s store.Store, site meta.Site, catalog *i18n.Catalog, cfg cais.Config) *DashboardHandler {
+	return &DashboardHandler{views: views, store: s, site: site, catalog: catalog, cfg: cfg}
 }
 
 func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,14 +32,10 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	props := inertia.Props{
-		"site":          meta.ForRequest(h.site, r),
-		"totalContacts": count,
-		"env":           h.cfg.Env,
-	}
-	if msg, ok := flash.MessageFromRequest(r); ok {
-		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
-	}
-	_ = h.inertia.Render(w, r, "Dashboard", props)
+	writeView(w, r, h.views, h.cfg, "dashboard", amarraData(r, h.site, map[string]any{
+		"Title":         h.catalog.T("dashboard.title"),
+		"TotalContacts": count,
+		"Env":           h.cfg.Env,
+	}), 0)
 }
 `

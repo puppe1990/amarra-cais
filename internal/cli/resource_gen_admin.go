@@ -103,9 +103,13 @@ func buildAdminShowMethod(data scaffoldData) string {
 		http.NotFound(w, r)
 		return
 	}
-	httpx.RenderOrError(w, h.renderer, "base", "admin_%s_show", Admin%sShowData{
-		Site: meta.ForRequest(h.site, r),
-		Item: item,
+	view.Write(w, r, h.views, view.Page{
+		Layout: "app",
+		Name:   "admin_%s_show",
+		Data: Admin%sShowData{
+			Site: meta.ForRequest(h.site, r),
+			Item: item,
+		},
 	}, h.cfg)
 }`, data.PluralPascal, data.Pascal, data.Snake, data.PluralPascal)
 }
@@ -157,13 +161,12 @@ func buildAdminIndexMethod(data scaffoldData) string {
 		PrevPage: pg.PrevPage,
 		NextPage: pg.NextPage,
 	}
-	httpx.RenderPageOrPartial(w, r, h.renderer, httpx.RenderOptions{
-		Layout:  "base",
-		Page:    "admin_%s",
-		Partial: "admin_%s_index",
-		Data:    data,
+	view.Write(w, r, h.views, view.Page{
+		Layout: "app",
+		Name:   "admin_%s",
+		Data:   data,
 	}, h.cfg)
-}`, data.PluralPascal, data.PluralPascal, data.PluralPascal, data.Plural, data.Plural)
+}`, data.PluralPascal, data.PluralPascal, data.PluralPascal, data.Plural)
 	}
 	return fmt.Sprintf(`func (h *Admin%sHandler) Index(w http.ResponseWriter, r *http.Request) {
 	items, err := h.store.ListAll%s()
@@ -171,9 +174,13 @@ func buildAdminIndexMethod(data scaffoldData) string {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	httpx.RenderOrError(w, h.renderer, "base", "admin_%s", Admin%sIndexData{
-		Site:  meta.ForRequest(h.site, r),
-		Items: items,
+	view.Write(w, r, h.views, view.Page{
+		Layout: "app",
+		Name:   "admin_%s",
+		Data: Admin%sIndexData{
+			Site:  meta.ForRequest(h.site, r),
+			Items: items,
+		},
 	}, h.cfg)
 }`, data.PluralPascal, data.PluralPascal, data.Plural, data.PluralPascal)
 }
@@ -224,6 +231,7 @@ import (
 	"net/http"
 %s	"strings"
 
+	"%s/pkg/amarra/view"
 	"%s/pkg/cais/validate"
 %s%s	"%s/pkg/cais"
 	"%s/pkg/cais/httpx"
@@ -234,10 +242,10 @@ import (
 )
 
 type Admin%sHandler struct {
-	renderer *cais.Renderer
-	store    store.Store
-	site     meta.Site
-	cfg      cais.Config
+	views *view.Renderer
+	store store.Store
+	site  meta.Site
+	cfg   cais.Config
 }
 
 %s
@@ -246,8 +254,8 @@ type Admin%sHandler struct {
 
 %s
 
-func NewAdmin%sHandler(renderer *cais.Renderer, s store.Store, site meta.Site, cfg cais.Config) *Admin%sHandler {
-	return &Admin%sHandler{renderer: renderer, store: s, site: site, cfg: cfg}
+func NewAdmin%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.Config) *Admin%sHandler {
+	return &Admin%sHandler{views: views, store: s, site: site, cfg: cfg}
 }
 
 %s
@@ -255,7 +263,7 @@ func NewAdmin%sHandler(renderer *cais.Renderer, s store.Store, site meta.Site, c
 %s
 
 %sfunc (h *Admin%sHandler) New(w http.ResponseWriter, r *http.Request) {
-	httpx.RenderOrError(w, h.renderer, "base", "admin_%s_form", %s, h.cfg)
+	view.Write(w, r, h.views, view.Page{Layout: "app", Name: "admin_%s_form", Data: %s}, h.cfg)
 }
 
 func (h *Admin%sHandler) Edit(w http.ResponseWriter, r *http.Request, id int64) {
@@ -264,18 +272,17 @@ func (h *Admin%sHandler) Edit(w http.ResponseWriter, r *http.Request, id int64) 
 		http.NotFound(w, r)
 		return
 	}
-	httpx.RenderOrError(w, h.renderer, "base", "admin_%s_form", %s, h.cfg)
+	view.Write(w, r, h.views, view.Page{Layout: "app", Name: "admin_%s_form", Data: %s}, h.cfg)
 }
 
 func (h *Admin%sHandler) Create(w http.ResponseWriter, r *http.Request) {
 	item, errs := h.parseForm(r)
 	if errs.Any() {
-		httpx.RenderPageOrPartial(w, r, h.renderer, httpx.RenderOptions{
-			Layout:  "base",
-			Page:    "admin_%s_form",
-			Partial: "admin_%s_form_errors",
-			Data:    %s,
-			Status:  http.StatusUnprocessableEntity,
+		view.Write(w, r, h.views, view.Page{
+			Layout: "app",
+			Name:   "admin_%s_form",
+			Data:   %s,
+			Status: http.StatusUnprocessableEntity,
 		}, h.cfg)
 		return
 	}
@@ -290,12 +297,11 @@ func (h *Admin%sHandler) Update(w http.ResponseWriter, r *http.Request, id int64
 	item, errs := h.parseForm(r)
 	item.ID = id
 	if errs.Any() {
-		httpx.RenderPageOrPartial(w, r, h.renderer, httpx.RenderOptions{
-			Layout:  "base",
-			Page:    "admin_%s_form",
-			Partial: "admin_%s_form_errors",
-			Data:    %s,
-			Status:  http.StatusUnprocessableEntity,
+		view.Write(w, r, h.views, view.Page{
+			Layout: "app",
+			Name:   "admin_%s_form",
+			Data:   %s,
+			Status: http.StatusUnprocessableEntity,
 		}, h.cfg)
 		return
 	}
@@ -311,10 +317,6 @@ func (h *Admin%sHandler) Delete(w http.ResponseWriter, r *http.Request, id int64
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if cais.IsHTMX(r) {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
 	httpx.SeeOther(w, r, "/admin/%s")
 }
 
@@ -323,6 +325,7 @@ func (h *Admin%sHandler) parseForm(r *http.Request) (models.%s, validate.FieldEr
 }
 `,
 		boolImport(hasStrconv, "\t\"strconv\"\n"),
+		frameworkModule,
 		frameworkModule,
 		paginationImport,
 		formsImport,
@@ -337,9 +340,9 @@ func (h *Admin%sHandler) parseForm(r *http.Request) (models.%s, validate.FieldEr
 		formDataMethod,
 		data.PluralPascal, data.Snake, newRender,
 		data.PluralPascal, data.Pascal, data.Snake, editRender,
-		data.PluralPascal, data.Snake, data.Snake, createErrRender,
+		data.PluralPascal, data.Snake, createErrRender,
 		data.Pascal, data.Plural,
-		data.PluralPascal, data.Snake, data.Snake, updateErrRender,
+		data.PluralPascal, data.Snake, updateErrRender,
 		data.Pascal, data.Plural,
 		data.PluralPascal, data.Pascal, data.Plural,
 		data.PluralPascal, data.Pascal, parse,

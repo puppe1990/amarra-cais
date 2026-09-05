@@ -25,9 +25,9 @@ func TestScaffoldResource_CreatesCRUD(t *testing.T) {
 		"internal/models/product.go",
 		"internal/handlers/admin_products.go",
 		"internal/handlers/admin_products_test.go",
-		"web/src/pages/AdminProducts.svelte",
-		"web/src/pages/AdminProductForm.svelte",
-		"web/src/pages/AdminProductShow.svelte",
+		"web/templates/pages/admin_products.html",
+		"web/templates/pages/admin_product_form.html",
+		"web/templates/pages/admin_product_show.html",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
 			t.Errorf("missing %s: %v", path, err)
@@ -60,12 +60,12 @@ func TestScaffoldResource_CreatesCRUD(t *testing.T) {
 	}
 }
 
-func TestScaffoldResource_adminInertiaDefaults(t *testing.T) {
+func TestScaffoldResource_adminHTMLDefaults(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
-	appDir := filepath.Join(t.TempDir(), "inertiashop2")
+	appDir := filepath.Join(t.TempDir(), "htmlshop2")
 	if err := scaffoldNewApp(appDir, scaffoldData{
-		AppName:    "inertiashop2",
-		ModulePath: "github.com/puppe1990/inertiashop2",
+		AppName:    "htmlshop2",
+		ModulePath: "github.com/puppe1990/htmlshop2",
 	}, true, false); err != nil {
 		t.Fatal(err)
 	}
@@ -73,24 +73,24 @@ func TestScaffoldResource_adminInertiaDefaults(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	indexSvelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/AdminWidgets.svelte"))
+	indexHTML, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_widgets.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	indexBody := string(indexSvelte)
-	for _, want := range []string{`use:inertia`, `/admin/widgets/new`, `deleteItem`} {
+	indexBody := string(indexHTML)
+	for _, want := range []string{`/admin/widgets/new`, `define "content"`} {
 		if !strings.Contains(indexBody, want) {
 			t.Errorf("admin index missing %q", want)
 		}
 	}
 
-	formSvelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/AdminWidgetForm.svelte"))
+	formHTML, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_widget_form.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	formBody := string(formSvelte)
-	if !strings.Contains(formBody, `useForm`) || !strings.Contains(formBody, `errors.`) {
-		t.Error("admin form should use useForm and errors prop")
+	formBody := string(formHTML)
+	if !strings.Contains(formBody, `csrfField`) || !strings.Contains(formBody, `.Errors`) {
+		t.Error("admin form should use csrfField and errors")
 	}
 
 	adminGo, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/admin_widgets.go"))
@@ -98,11 +98,11 @@ func TestScaffoldResource_adminInertiaDefaults(t *testing.T) {
 		t.Fatal(err)
 	}
 	adminBody := string(adminGo)
-	if !strings.Contains(adminBody, "inertia.SetValidationErrors") {
-		t.Error("admin handler should use inertia.SetValidationErrors on validation errors")
+	if !strings.Contains(adminBody, "view.Write") {
+		t.Error("admin handler should use view.Write on validation errors")
 	}
-	if strings.Contains(adminBody, "IsHTMX") {
-		t.Error("inertia admin should not reference IsHTMX")
+	if strings.Contains(adminBody, "inertia") {
+		t.Error("HTML admin should not reference inertia")
 	}
 }
 
@@ -211,12 +211,12 @@ func TestScaffoldResource_PluralPascal_ListAllMethod(t *testing.T) {
 		t.Errorf("admin handler wrong ListAll method: %s", admin)
 	}
 
-	publicSvelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Recipes.svelte"))
+	publicHTML, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/recipes.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(publicSvelte), `{#each items`) {
-		t.Error("Recipes.svelte missing items loop")
+	if !strings.Contains(string(publicHTML), `range .Items`) {
+		t.Error("recipes.html missing items loop")
 	}
 }
 

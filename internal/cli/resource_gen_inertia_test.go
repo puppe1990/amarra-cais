@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestScaffoldResource_Inertia_generatesSvelteAdmin(t *testing.T) {
+func TestScaffoldResource_HTML_generatesAmarraAdmin(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
@@ -18,10 +18,10 @@ func TestScaffoldResource_Inertia_generatesSvelteAdmin(t *testing.T) {
 	caisDir := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
 	t.Setenv("CAIS_REPLACE", caisDir)
 
-	appDir := filepath.Join(t.TempDir(), "inertiashop")
+	appDir := filepath.Join(t.TempDir(), "htmlshop")
 	if err := scaffoldNewApp(appDir, scaffoldData{
-		AppName:    "inertiashop",
-		ModulePath: "github.com/puppe1990/inertiashop",
+		AppName:    "htmlshop",
+		ModulePath: "github.com/puppe1990/htmlshop",
 	}, false, false); err != nil {
 		t.Fatal(err)
 	}
@@ -30,9 +30,9 @@ func TestScaffoldResource_Inertia_generatesSvelteAdmin(t *testing.T) {
 	}
 
 	for _, path := range []string{
-		"web/src/pages/AdminProducts.svelte",
-		"web/src/pages/AdminProductForm.svelte",
-		"web/src/pages/AdminProductShow.svelte",
+		"web/templates/pages/admin_products.html",
+		"web/templates/pages/admin_product_form.html",
+		"web/templates/pages/admin_product_show.html",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
 			t.Errorf("missing %s: %v", path, err)
@@ -40,11 +40,11 @@ func TestScaffoldResource_Inertia_generatesSvelteAdmin(t *testing.T) {
 	}
 
 	for _, path := range []string{
-		"web/templates/pages/admin_products.html",
-		"web/templates/pages/admin_product_form.html",
+		"web/src/pages/AdminProducts.svelte",
+		"web/src/pages/AdminProductForm.svelte",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
-			t.Errorf("legacy HTMX template should not exist: %s", path)
+			t.Errorf("Svelte admin page should not exist: %s", path)
 		}
 	}
 
@@ -54,26 +54,26 @@ func TestScaffoldResource_Inertia_generatesSvelteAdmin(t *testing.T) {
 	}
 	body := string(adminGo)
 	for _, want := range []string{
-		"gonertia/v3",
-		`inertia.Render(w, r, "AdminProducts"`,
-		`inertia.Render(w, r, "AdminProductForm"`,
-		"inertia.SetValidationErrors",
-		"h.inertia.Redirect",
+		"pkg/amarra/view",
+		`Name:   "admin_products"`,
+		`Name: "admin_product_form"`,
+		"view.Write",
+		"httpx.SeeOther",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("admin handler missing %q", want)
 		}
 	}
-	if strings.Contains(body, "RenderPageOrPartial") {
-		t.Error("inertia admin should not use RenderPageOrPartial")
+	if strings.Contains(body, "gonertia") || strings.Contains(body, "inertia.Render") {
+		t.Error("HTML admin should not use gonertia")
 	}
 
 	routes, err := os.ReadFile(filepath.Join(appDir, "internal/app/routes.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(routes), "deps.Inertia") {
-		t.Error("routes.go should pass deps.Inertia to admin handler")
+	if !strings.Contains(string(routes), "deps.Views") {
+		t.Error("routes.go should pass deps.Views to admin handler")
 	}
 
 	tidy := exec.Command("go", "mod", "tidy")

@@ -20,9 +20,19 @@ const tplPartialIcons = `{{"{{"}}- define "icon_sparkles_md" {{"}}"}}-
 {{"{{"}}- end {{"}}"}}-
 `
 
+const tplPartialErrors = `{{"{{- "}}define "contact_errors" -{{"}}"}}
+<div class="text-red-600 text-sm mb-4">{{"{{"}} .Message {{"}}"}}</div>
+{{"{{- "}}end -{{"}}"}}
+`
+
+const tplPartialSuccess = `{{"{{- "}}define "contact_success" -{{"}}"}}
+<div class="text-green-600 text-sm mb-4">{{"{{"}} t "contact.success" {{"}}"}}</div>
+{{"{{- "}}end -{{"}}"}}
+`
+
 const tplPartialNavLinks = `{{"{{"}}- define "nav_links" {{"}}"}}-
-<a href="/" data-cais-nav="/" hx-boost="true" hx-target="#cais-main" hx-select="#cais-main" hx-push-url="true" hx-swap="morph:innerHTML" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "home" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_home_nav" . {{"}}"}}Home</a>
-<a href="/contact" data-cais-nav="/contact" hx-boost="true" hx-target="#cais-main" hx-select="#cais-main" hx-push-url="true" hx-swap="morph:innerHTML" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "contact" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_message_nav" . {{"}}"}}Contact</a>
-<a href="/dashboard" data-cais-nav="/dashboard" hx-boost="true" hx-target="#cais-main" hx-select="#cais-main" hx-push-url="true" hx-swap="morph:innerHTML" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+<a href="/" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "home" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_home_nav" . {{"}}"}}Home</a>
+<a href="/contact" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "contact" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_message_nav" . {{"}}"}}Contact</a>
+<a href="/dashboard" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
 {{"{{"}}- end {{"}}"}}-
 `

@@ -78,10 +78,10 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 		"internal/models/user.go",
 		"internal/store/migrations/002_auth.sql",
 		"internal/store/password_reset.go",
-		"web/src/pages/Login.svelte",
-		"web/src/pages/Signup.svelte",
-		"web/src/pages/ForgotPassword.svelte",
-		"web/src/pages/ResetPassword.svelte",
+		"web/templates/pages/login.html",
+		"web/templates/pages/signup.html",
+		"web/templates/pages/forgot_password.html",
+		"web/templates/pages/reset_password.html",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
 			t.Errorf("missing %s: %v", path, err)
@@ -136,8 +136,12 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 	if !strings.Contains(authBody, "h.catalog.T(\"auth.reset_success\")") || !strings.Contains(authBody, "flash.Set") {
 		t.Error("auth.go reset success must call flash.Set")
 	}
-	if !strings.Contains(authBody, "meta.ForRequest") {
-		t.Error("auth.go missing meta.ForRequest")
+	viewData, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/viewdata.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(viewData), "meta.ForRequest") {
+		t.Error("viewdata.go missing meta.ForRequest")
 	}
 
 	dashboardHandler, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/dashboard.go"))
@@ -145,26 +149,19 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 	dashBody := string(dashboardHandler)
-	if !strings.Contains(dashBody, "flash.MessageFromRequest") {
-		t.Error("dashboard.go must pass flash.MessageFromRequest into Inertia props")
-	}
-	if !strings.Contains(dashBody, `"flash"`) {
-		t.Error("dashboard.go must include flash in Inertia props")
+	if !strings.Contains(dashBody, "amarraData") {
+		t.Error("dashboard.go must pass page data via amarraData (includes flash)")
 	}
 
-	loginSvelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Login.svelte"))
+	loginHTML, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/login.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(loginSvelte), "flash") {
-		t.Error("Login.svelte must accept/display flash props")
+	if !strings.Contains(string(loginHTML), "<.form") {
+		t.Error("login.html must use <.form>")
 	}
-	dashSvelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Dashboard.svelte"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(dashSvelte), "flash") {
-		t.Error("Dashboard.svelte must accept/display flash props")
+	if !strings.Contains(tplLayout, "<.flash") {
+		t.Error("layout must render <.flash />")
 	}
 	if !strings.Contains(body, "NewRateLimiter") {
 		t.Error("routes.go missing rate limiter on login")
@@ -186,11 +183,11 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 		file   string
 		needle string
 	}{
-		{"Login.svelte", "PasswordInput"},
-		{"Signup.svelte", "password_confirmation"},
-		{"ResetPassword.svelte", "PasswordInput"},
+		{"login.html", "fieldPassword"},
+		{"signup.html", "password_confirmation"},
+		{"reset_password.html", "fieldPassword"},
 	} {
-		body, err := os.ReadFile(filepath.Join(appDir, "web/src/pages", tc.file))
+		body, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages", tc.file))
 		if err != nil {
 			t.Fatalf("read %s: %v", tc.file, err)
 		}
@@ -198,32 +195,18 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 			t.Errorf("%s missing %q", tc.file, tc.needle)
 		}
 	}
-	pw, err := os.ReadFile(filepath.Join(appDir, "web/src/components/PasswordInput.svelte"))
-	if err != nil {
-		t.Fatal("PasswordInput.svelte missing from scaffold")
-	}
-	if !strings.Contains(string(pw), "cais-password-toggle") {
-		t.Error("PasswordInput.svelte should include show/hide toggle")
-	}
 
 	// Auth pages must be centered on screen by default (#149).
-	authLayout, err := os.ReadFile(filepath.Join(appDir, "web/src/components/AuthLayout.svelte"))
-	if err != nil {
-		t.Fatal("AuthLayout.svelte missing from scaffold")
-	}
-	layoutBody := string(authLayout)
-	for _, needle := range []string{"min-h-screen", "items-center", "justify-center"} {
-		if !strings.Contains(layoutBody, needle) {
-			t.Errorf("AuthLayout.svelte missing centering class %q", needle)
-		}
-	}
-	for _, page := range []string{"Login.svelte", "Signup.svelte", "ForgotPassword.svelte", "ResetPassword.svelte"} {
-		pageBody, err := os.ReadFile(filepath.Join(appDir, "web/src/pages", page))
+	for _, page := range []string{"login.html", "signup.html", "forgot_password.html", "reset_password.html"} {
+		pageBody, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages", page))
 		if err != nil {
 			t.Fatalf("%s: %v", page, err)
 		}
-		if !strings.Contains(string(pageBody), "AuthLayout") {
-			t.Errorf("%s should use AuthLayout for centered auth shell", page)
+		text := string(pageBody)
+		for _, needle := range []string{"min-h-screen", "items-center", "justify-center"} {
+			if !strings.Contains(text, needle) {
+				t.Errorf("%s missing centering class %q", page, needle)
+			}
 		}
 	}
 }

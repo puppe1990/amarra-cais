@@ -52,7 +52,7 @@ func (h *%sHandler) Toggle(w http.ResponseWriter, r *http.Request, id int64) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	httpx.RenderPartial(w, h.renderer, "%s_toggle", item)
+	http.Redirect(w, r, "/%s", http.StatusSeeOther)
 }
 `, data.PluralPascal, data.Pascal, boolField.Pascal, boolField.Pascal, data.Pascal, data.Plural)
 	}
@@ -69,8 +69,8 @@ func (h *%sHandler) Toggle(w http.ResponseWriter, r *http.Request, id int64) {
 import (
 	"net/http"
 %s
-%s	"%s/pkg/cais"
-	"%s/pkg/cais/httpx"
+%s	"%s/pkg/amarra/view"
+	"%s/pkg/cais"
 	"%s/pkg/cais/meta"
 
 	"%s/internal/models"
@@ -78,10 +78,10 @@ import (
 )
 
 type %sHandler struct {
-	renderer *cais.Renderer
-	store    store.Store
-	site     meta.Site
-	cfg      cais.Config
+	views *view.Renderer
+	store store.Store
+	site  meta.Site
+	cfg   cais.Config
 }
 
 type %sListData struct {
@@ -89,8 +89,8 @@ type %sListData struct {
 	Items []models.%s%s%s
 }
 
-func New%sHandler(renderer *cais.Renderer, s store.Store, site meta.Site, cfg cais.Config) *%sHandler {
-	return &%sHandler{renderer: renderer, store: s, site: site, cfg: cfg}
+func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.Config) *%sHandler {
+	return &%sHandler{views: views, store: s, site: site, cfg: cfg}
 }
 
 %s%s`,
@@ -136,14 +136,13 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 		PrevPage: pg.PrevPage,
 		NextPage: pg.NextPage%s,
 	}
-	httpx.RenderPageOrPartial(w, r, h.renderer, httpx.RenderOptions{
-		Layout:  "base",
-		Page:    "%s",
-		Partial: "%s_list",
-		Data:    listData,
+	view.Write(w, r, h.views, view.Page{
+		Layout: "app",
+		Name:   "%s",
+		Data:   listData,
 	}, h.cfg)
 }
-`, data.PluralPascal, data.PluralPascal, listSum, data.PluralPascal, sumArg, data.Plural, data.Plural)
+`, data.PluralPascal, data.PluralPascal, listSum, data.PluralPascal, sumArg, data.Plural)
 	}
 	return fmt.Sprintf(`func (h *%sHandler) List(w http.ResponseWriter, r *http.Request) {
 	items, err := h.store.ListAll%s()
@@ -151,9 +150,13 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}%s
-	httpx.RenderOrError(w, h.renderer, "base", "%s", %sListData{
-		Site:  meta.ForRequest(h.site, r),
-		Items: items%s,
+	view.Write(w, r, h.views, view.Page{
+		Layout: "app",
+		Name:   "%s",
+		Data: %sListData{
+			Site:  meta.ForRequest(h.site, r),
+			Items: items%s,
+		},
 	}, h.cfg)
 }
 `, data.PluralPascal, data.PluralPascal, listSum, data.Plural, data.PluralPascal, sumArg)

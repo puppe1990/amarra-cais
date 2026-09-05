@@ -30,8 +30,8 @@ func TestScaffoldTooling_CITriggersMainAndMaster(t *testing.T) {
 	}
 }
 
-func TestScaffoldTooling_PrettierAllowsEmptyOrIgnoresWebSrc(t *testing.T) {
-	// #146 — committing only web/src must not fail prettier hook
+func TestScaffoldTooling_PrettierAllowsEmptyOrIgnoresTemplates(t *testing.T) {
+	// #146 — committing only web/templates must not fail prettier hook
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "fmtapp")
 	if err := scaffoldNewApp(appDir, scaffoldData{
@@ -45,11 +45,10 @@ func TestScaffoldTooling_PrettierAllowsEmptyOrIgnoresWebSrc(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := string(pre)
-	// Either no-error-on-unmatched-pattern, or pre-commit exclude of web/src so hook is skipped
 	hasEmptyOK := strings.Contains(body, "no-error-on-unmatched-pattern")
-	hasExcludeSrc := strings.Contains(body, "web/src")
-	if !hasEmptyOK && !hasExcludeSrc {
-		t.Error("pre-commit prettier must tolerate web/src-only commits (args or exclude)")
+	hasExcludeTemplates := strings.Contains(body, "web/templates")
+	if !hasEmptyOK && !hasExcludeTemplates {
+		t.Error("pre-commit prettier must tolerate template-only commits (args or exclude)")
 	}
 }
 

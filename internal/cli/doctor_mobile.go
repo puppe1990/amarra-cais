@@ -9,14 +9,18 @@ import (
 )
 
 func checkFlashTemplate(dir string) doctorCheck {
-	path := filepath.Join(dir, "web/templates/layouts/base.html")
+	path := filepath.Join(dir, "web/templates/layouts/app.html")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return doctorCheck{Name: "flash template", OK: true, Detail: "skipped (no base.html)"}
+		path = filepath.Join(dir, "web/templates/layouts/base.html")
+		data, err = os.ReadFile(path)
+	}
+	if err != nil {
+		return doctorCheck{Name: "flash template", OK: true, Detail: "skipped (no layout)"}
 	}
 	content := string(data)
-	if strings.Contains(content, "flashMessage") || strings.Contains(content, ".Flash.Message") {
-		return doctorCheck{Name: "flash template", OK: true, Detail: "uses flashMessage or .Flash.Message"}
+	if strings.Contains(content, "flashMessage") || strings.Contains(content, ".Flash.Message") || strings.Contains(content, "<.flash") {
+		return doctorCheck{Name: "flash template", OK: true, Detail: "uses flashMessage, .Flash.Message, or <.flash>"}
 	}
 	if strings.Contains(content, "{{ .Flash }}") || strings.Contains(content, "{{.Flash}}") {
 		return doctorCheck{

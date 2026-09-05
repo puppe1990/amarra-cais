@@ -51,7 +51,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		"internal/handlers/contact_test.go":          tplContactTest,
 		"internal/handlers/dashboard.go":             tplDashboardHandler,
 		"internal/handlers/dashboard_test.go":        tplDashboardTest,
-		"internal/handlers/inertia_test.go":          tplInertiaTest,
+		"internal/handlers/viewdata.go":              tplViewData,
 		"internal/handlers/helpers_test.go":          tplHelpersTest,
 		"internal/models/contact.go":                 tplContactModel,
 		"internal/store/store.go":                    tplStore,
@@ -66,25 +66,18 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		"internal/handlers/auth_signup_test.go":      tplAuthSignupTest,
 		"internal/handlers/auth_reset_test.go":       tplAuthResetTest,
 		"web/embed.go":                               tplWebEmbed,
-		"web/templates/app.html":                     tplAppHTML,
-		"web/src/main.js":                            tplMainJS,
-		"web/src/components/AppLayout.svelte":        tplAppLayout,
-		"web/src/components/AuthLayout.svelte":       tplAuthLayout,
-		"web/src/components/PasswordInput.svelte":    tplPasswordInput,
-		"web/src/pages/Home.svelte":                  tplSvelteHome,
-		"web/src/pages/Contact.svelte":               tplSvelteContact,
-		"web/src/pages/Dashboard.svelte":             tplSvelteDashboard,
-		"web/src/pages/Login.svelte":                 tplSvelteLogin,
-		"web/src/pages/Signup.svelte":                tplSvelteSignup,
-		"web/src/pages/ForgotPassword.svelte":        tplSvelteForgotPassword,
-		"web/src/pages/ResetPassword.svelte":         tplSvelteResetPassword,
-		"web/static/build/.gitkeep":                  tplBuildGitkeep,
+		"web/templates/layouts/app.html":             tplLayout,
+		"web/templates/pages/home.html":              tplPageHome,
+		"web/templates/pages/contact.html":           tplPageContact,
+		"web/templates/pages/dashboard.html":         tplPageDashboard,
+		"web/templates/pages/login.html":             tplPageLogin,
+		"web/templates/pages/signup.html":            tplPageSignup,
+		"web/templates/pages/forgot_password.html":   tplPageForgotPassword,
+		"web/templates/pages/reset_password.html":    tplPageResetPassword,
+		"web/templates/components/.gitkeep":          "",
 		"web/static/css/styles.css":                  tplEmptyCSS,
 		"input.css":                                  tplInputCSS,
 		"tailwind.config.js":                         tplTailwind,
-		"vite.config.js":                             tplViteConfig,
-		"svelte.config.js":                           tplSvelteConfig,
-		"vitest-setup.js":                            tplVitestSetup,
 		"package.json":                               tplPackageJSON,
 		"Makefile":                                   tplMakefile,
 		".gitignore":                                 tplGitignore,
@@ -104,43 +97,38 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 
 	if blank {
 		files = map[string]string{
-			"go.mod":                              tplGoMod,
-			"cmd/server/main.go":                  tplMainBlank,
-			"cmd/console/main.go":                 tplConsole,
-			"internal/app/app.go":                 tplAppBlank,
-			"internal/app/routes.go":              tplRoutesBlank,
-			"internal/handlers/helpers_test.go":   tplHelpersTest,
-			"internal/handlers/inertia_test.go":   tplInertiaTest,
-			"internal/store/store.go":             tplStoreMinimal,
-			"internal/store/store_test.go":        tplStoreTestMinimal,
-			"internal/store/migrations.go":        tplMigrations,
-			"internal/store/migrations/.gitkeep":  "",
-			"web/embed.go":                        tplWebEmbed,
-			"internal/handlers/home.go":           tplHomeHandler,
-			"internal/handlers/home_test.go":      tplHomeTest,
-			"web/templates/app.html":              tplAppHTML,
-			"web/src/main.js":                     tplMainJS,
-			"web/src/components/AppLayout.svelte": tplAppLayout,
-			"web/src/pages/Home.svelte":           tplSvelteHome,
-			"web/static/build/.gitkeep":           tplBuildGitkeep,
-			"web/static/css/styles.css":           tplEmptyCSS,
-			"input.css":                           tplInputCSS,
-			"tailwind.config.js":                  tplTailwind,
-			"vite.config.js":                      tplViteConfig,
-			"svelte.config.js":                    tplSvelteConfig,
-			"vitest-setup.js":                     tplVitestSetup,
-			"package.json":                        tplPackageJSON,
-			"Makefile":                            tplMakefile,
-			".gitignore":                          tplGitignore,
-			".air.toml":                           tplAir,
-			".env.example":                        tplEnvExample,
-			"README.md":                           tplREADMEBlank,
-			"AGENTS.md":                           tplAgentsMD,
-			"internal/i18n/i18n.go":               tplI18nCatalog,
-			"internal/i18n/en.go":                 tplI18nEn,
-			"internal/i18n/pt.go":                 tplI18nPt,
-			"internal/i18n/i18n_test.go":          tplI18nTest,
-			"internal/db/seeds.go":                tplSeedsMinimal,
+			"go.mod":                             tplGoMod,
+			"cmd/server/main.go":                 tplMainBlank,
+			"cmd/console/main.go":                tplConsole,
+			"internal/app/app.go":                tplAppBlank,
+			"internal/app/routes.go":             tplRoutesBlank,
+			"internal/handlers/helpers_test.go":  tplHelpersTest,
+			"internal/handlers/viewdata.go":      tplViewData,
+			"internal/store/store.go":            tplStoreMinimal,
+			"internal/store/store_test.go":       tplStoreTestMinimal,
+			"internal/store/migrations.go":       tplMigrations,
+			"internal/store/migrations/.gitkeep": "",
+			"web/embed.go":                       tplWebEmbed,
+			"internal/handlers/home.go":          tplHomeHandler,
+			"internal/handlers/home_test.go":     tplHomeTest,
+			"web/templates/layouts/app.html":     tplLayoutBlank,
+			"web/templates/pages/home.html":      tplPageHome,
+			"web/templates/components/.gitkeep":  "",
+			"web/static/css/styles.css":          tplEmptyCSS,
+			"input.css":                          tplInputCSS,
+			"tailwind.config.js":                 tplTailwind,
+			"package.json":                       tplPackageJSON,
+			"Makefile":                           tplMakefile,
+			".gitignore":                         tplGitignore,
+			".air.toml":                          tplAir,
+			".env.example":                       tplEnvExample,
+			"README.md":                          tplREADMEBlank,
+			"AGENTS.md":                          tplAgentsMD,
+			"internal/i18n/i18n.go":              tplI18nCatalog,
+			"internal/i18n/en.go":                tplI18nEn,
+			"internal/i18n/pt.go":                tplI18nPt,
+			"internal/i18n/i18n_test.go":         tplI18nTest,
+			"internal/db/seeds.go":               tplSeedsMinimal,
 		}
 		for path, content := range qualityToolingFiles() {
 			files[path] = content
@@ -158,13 +146,13 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		delete(files, "internal/models/user.go")
 		delete(files, "internal/store/migrations/001_contacts.sql")
 		delete(files, "internal/store/migrations/002_auth.sql")
-		delete(files, "web/src/pages/Contact.svelte")
-		delete(files, "web/src/pages/Dashboard.svelte")
-		delete(files, "web/src/pages/Login.svelte")
-		delete(files, "web/src/pages/Signup.svelte")
-		delete(files, "web/src/pages/ForgotPassword.svelte")
-		delete(files, "web/src/pages/ResetPassword.svelte")
-		delete(files, "web/src/components/AuthLayout.svelte")
+		delete(files, "web/templates/pages/contact.html")
+		delete(files, "web/templates/pages/dashboard.html")
+		delete(files, "web/templates/pages/login.html")
+		delete(files, "web/templates/pages/signup.html")
+		delete(files, "web/templates/pages/forgot_password.html")
+		delete(files, "web/templates/pages/reset_password.html")
+		files["web/templates/layouts/app.html"] = tplLayoutMinimal
 		files["internal/app/routes.go"] = tplRoutesMinimal
 		files["internal/store/store.go"] = tplStoreMinimal
 		files["internal/store/store_test.go"] = tplStoreTestMinimal
@@ -183,7 +171,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		return fmt.Errorf("gofmt: %w", err)
 	}
 
-	if err := pwa.InstallForInertia(dir, data.AppName); err != nil {
+	if err := pwa.InstallForAmarra(dir, data.AppName); err != nil {
 		return fmt.Errorf("pwa assets: %w", err)
 	}
 
@@ -207,7 +195,7 @@ func scaffoldHandler(dir, name string, dryRun bool) error {
 	files := map[string]string{
 		filepath.Join("internal/handlers", data.Snake+".go"):      tplGenericHandler,
 		filepath.Join("internal/handlers", data.Snake+"_test.go"): tplGenericHandlerTest,
-		filepath.Join("web/src/pages", data.Pascal+".svelte"):     tplGenericPage,
+		filepath.Join("web/templates/pages", data.Snake+".html"):  tplGenericPage,
 	}
 
 	for path, content := range files {
@@ -225,10 +213,10 @@ func scaffoldHandler(dir, name string, dryRun bool) error {
 
 func scaffoldPage(dir, name string, dryRun bool) error {
 	data := dataForHandler(name)
-	rel := filepath.Join("web/src/pages", data.Pascal+".svelte")
+	rel := filepath.Join("web/templates/pages", data.Snake+".html")
 	path := filepath.Join(dir, rel)
 	if _, err := os.Stat(path); err == nil {
-		return fmt.Errorf("web/src/pages/%s.svelte already exists", data.Pascal)
+		return fmt.Errorf("web/templates/pages/%s.html already exists", data.Snake)
 	}
 	return writeScaffoldTemplate(path, tplGenericPage, data, rel, dryRun)
 }
@@ -256,7 +244,7 @@ func patchRoutes(dir string, data scaffoldData, dryRun bool) error {
 	}
 
 	insert := fmt.Sprintf(
-		"\n\t%s := handlers.New%sHandler(deps.Site, deps.Catalog, deps.Inertia)\n\tr.Get(\"/%s\", %s.ServeHTTP)\n",
+		"\n\t%s := handlers.New%sHandler(deps.Views, deps.Site, deps.Catalog, cfg)\n\tr.Get(\"/%s\", %s.ServeHTTP)\n",
 		data.Camel, data.Pascal, data.Snake, data.Camel,
 	)
 

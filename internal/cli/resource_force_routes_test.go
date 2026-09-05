@@ -27,11 +27,11 @@ func TestScaffoldResource_forceUpgradesRouteConstructors(t *testing.T) {
 		t.Fatal(err)
 	}
 	legacy := strings.ReplaceAll(string(body),
-		"handlers.NewProductsHandler(deps.Store, deps.Site, deps.Inertia)",
+		"handlers.NewProductsHandler(deps.Views, deps.Store, deps.Site, cfg)",
 		"handlers.NewProductsHandler(deps.Renderer, deps.Store, cfg)",
 	)
 	legacy = strings.ReplaceAll(legacy,
-		"handlers.NewAdminProductsHandler(deps.Store, deps.Site, deps.Inertia)",
+		"handlers.NewAdminProductsHandler(deps.Views, deps.Store, deps.Site, cfg)",
 		"handlers.NewAdminProductsHandler(deps.Renderer, deps.Store, cfg)",
 	)
 	if err := os.WriteFile(routesPath, []byte(legacy), 0o644); err != nil {
@@ -49,8 +49,8 @@ func TestScaffoldResource_forceUpgradesRouteConstructors(t *testing.T) {
 	}
 	s := string(updated)
 	for _, want := range []string{
-		"handlers.NewProductsHandler(deps.Store, deps.Site, deps.Inertia)",
-		"handlers.NewAdminProductsHandler(deps.Store, deps.Site, deps.Inertia)",
+		"handlers.NewProductsHandler(deps.Views, deps.Store, deps.Site, cfg)",
+		"handlers.NewAdminProductsHandler(deps.Views, deps.Store, deps.Site, cfg)",
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("routes.go missing %q after --force:\n%s", want, s)

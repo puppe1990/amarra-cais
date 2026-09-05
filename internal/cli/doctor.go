@@ -31,6 +31,8 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 	}
 	if isInertiaApp(dir) {
 		checks = append(checks, checkInertiaFrontend(dir), checkViteConfig(dir))
+	} else if isAmarraApp(dir) {
+		checks = append(checks, checkAmarraFrontend(dir))
 	} else {
 		checks = append(checks, checkHTMX(dir), checkSSEExt(dir))
 	}
@@ -225,6 +227,44 @@ func formatSemver(s semverCore) string {
 func isInertiaApp(dir string) bool {
 	_, err := os.Stat(filepath.Join(dir, "vite.config.js"))
 	return err == nil
+}
+
+func isAmarraApp(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, "web/templates/layouts/app.html"))
+	return err == nil
+}
+
+func checkAmarraFrontend(dir string) doctorCheck {
+	layout := filepath.Join(dir, "web/templates/layouts/app.html")
+	data, err := os.ReadFile(layout)
+	if err != nil {
+		return doctorCheck{
+			Name:    "Amarra frontend",
+			Detail:  "missing web/templates/layouts/app.html",
+			FixHint: "re-run amarra-cais new or restore layouts/app.html",
+		}
+	}
+	content := string(data)
+	var missing []string
+	for _, want := range []string{`id="amarra-main"`, `/static/js/amarra.js`} {
+		if !strings.Contains(content, want) {
+			missing = append(missing, want)
+		}
+	}
+	if strings.Contains(content, "hx-ext") || strings.Contains(content, "htmx.min.js") {
+		missing = append(missing, "must not load htmx")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/static/js/amarra.js")); err != nil {
+		missing = append(missing, "web/static/js/amarra.js")
+	}
+	if len(missing) > 0 {
+		return doctorCheck{
+			Name:    "Amarra frontend",
+			Detail:  "missing: " + strings.Join(missing, ", "),
+			FixHint: "amarra-cais pwa && restore web/templates/layouts/app.html",
+		}
+	}
+	return doctorCheck{Name: "Amarra frontend", OK: true, Detail: "layouts/app.html + amarra.js"}
 }
 
 func checkInertiaFrontend(dir string) doctorCheck {

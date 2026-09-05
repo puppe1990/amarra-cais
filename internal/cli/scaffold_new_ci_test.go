@@ -52,7 +52,7 @@ func TestScaffoldNewApp_ConsoleDoesNotFatalAfterDefer(t *testing.T) {
 	}
 }
 
-func TestScaffoldNewApp_ViteJSConfigsMatchPrettier(t *testing.T) {
+func TestScaffoldNewApp_JSConfigsMatchPrettier(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "fmtjs")
 	if err := scaffoldNewApp(appDir, scaffoldData{
@@ -62,29 +62,16 @@ func TestScaffoldNewApp_ViteJSConfigsMatchPrettier(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	checks := []struct {
-		rel     string
-		needles []string
-	}{
-		{"vite.config.js", []string{`from "vite"`, `";`, `from "@sveltejs/vite-plugin-svelte"`}},
-		{"svelte.config.js", []string{`from "@sveltejs/vite-plugin-svelte"`, `";`}},
-		{"vitest-setup.js", []string{`import "@testing-library/jest-dom/vitest";`}},
+	body, err := os.ReadFile(filepath.Join(appDir, "tailwind.config.js"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tc := range checks {
-		body, err := os.ReadFile(filepath.Join(appDir, tc.rel))
-		if err != nil {
-			t.Errorf("%s: %v", tc.rel, err)
-			continue
-		}
-		src := string(body)
-		if strings.Contains(src, "'") {
-			t.Errorf("%s: single-quoted strings fail Prettier (singleQuote: false)", tc.rel)
-		}
-		for _, needle := range tc.needles {
-			if !strings.Contains(src, needle) {
-				t.Errorf("%s missing %q", tc.rel, needle)
-			}
-		}
+	src := string(body)
+	if strings.Contains(src, "'") {
+		t.Error("tailwind.config.js: single-quoted strings fail Prettier (singleQuote: false)")
+	}
+	if !strings.Contains(src, `"./web/templates/**/*.html"`) {
+		t.Error("tailwind.config.js should scan HTML templates")
 	}
 }
 

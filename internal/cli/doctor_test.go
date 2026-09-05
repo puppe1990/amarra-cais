@@ -191,13 +191,13 @@ func TestDoctor_MobileWarnsMultiSlotWithoutFinalize(t *testing.T) {
 	}, true, false); err != nil {
 		t.Fatal(err)
 	}
-	// Inertia scaffolds have no chat partials or cais.js — agent chat check is skipped.
+	// Amarra scaffolds have no chat partials or cais.js — agent chat check is skipped.
 	out := runDoctorOutputMobile(t, dir)
 	if !strings.Contains(out, "chat agent JS") {
 		t.Errorf("expected chat agent JS check in output, got:\n%s", out)
 	}
 	if strings.Contains(out, "[warn] chat agent JS") {
-		t.Errorf("Inertia scaffold should not warn on chat agent JS, got:\n%s", out)
+		t.Errorf("Amarra scaffold should not warn on chat agent JS, got:\n%s", out)
 	}
 }
 
@@ -228,29 +228,47 @@ func TestDoctor_AllOK(t *testing.T) {
 	if err := runDoctor(&buf, dir, doctorOptions{}); err != nil {
 		t.Fatalf("doctor failed: %v\n%s", err, buf.String())
 	}
-	if !strings.Contains(buf.String(), "Inertia frontend") {
-		t.Error("missing Inertia frontend check")
+	if !strings.Contains(buf.String(), "Amarra frontend") {
+		t.Error("missing Amarra frontend check")
 	}
-	if !strings.Contains(buf.String(), "vite.config.js") {
-		t.Error("missing vite.config.js check")
+	if strings.Contains(buf.String(), "vite.config.js") {
+		t.Error("Amarra scaffold should not run vite.config.js check")
+	}
+}
+
+func TestDoctor_FailsWhenAmarraJSMissing(t *testing.T) {
+	unsetCIEnv(t)
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := t.TempDir()
+	if err := scaffoldNewApp(dir, scaffoldData{
+		AppName:    "nojs",
+		ModulePath: "github.com/puppe1990/nojs",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	writeStylesCSSBody(t, dir)
+	if err := os.Remove(filepath.Join(dir, "web/static/js/amarra.js")); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := runDoctor(&buf, dir, doctorOptions{})
+	if err == nil {
+		t.Fatalf("runDoctor should fail without amarra.js, output:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "[FAIL] Amarra frontend") {
+		t.Errorf("expected FAIL Amarra frontend, got:\n%s", buf.String())
 	}
 }
 
 func TestDoctor_FailsWhenViteMainJSMissing(t *testing.T) {
 	unsetCIEnv(t)
-	t.Setenv("CAIS_SKIP_TIDY", "1")
 	dir := t.TempDir()
-	if err := scaffoldNewApp(dir, scaffoldData{
-		AppName:    "nobundle",
-		ModulePath: "github.com/puppe1990/nobundle",
-	}, true, false); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "vite.config.js"), []byte("export default {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	writeStylesCSSBody(t, dir)
-	// Scaffold keeps web/static/build/.gitkeep so Stat(buildDir) succeeds without
-	// the Inertia entry app.html loads (#159). Directory presence is not enough.
-	if _, err := os.Stat(filepath.Join(dir, "web/static/build/.gitkeep")); err != nil {
-		t.Fatalf("precondition: scaffold .gitkeep missing: %v", err)
+	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"dependencies":{"@inertiajs/svelte":"3.0.0"},"scripts":{"build":"vite build"}}`), 0o644); err != nil {
+		t.Fatal(err)
 	}
 
 	c := checkViteConfig(dir)
@@ -260,21 +278,18 @@ func TestDoctor_FailsWhenViteMainJSMissing(t *testing.T) {
 	if c.Optional {
 		t.Fatalf("missing Vite main.js must not be optional, got %+v", c)
 	}
-
-	var buf bytes.Buffer
-	err := runDoctor(&buf, dir, doctorOptions{})
-	if err == nil {
-		t.Fatalf("runDoctor should fail without main.js, output:\n%s", buf.String())
-	}
-	if !strings.Contains(buf.String(), "[FAIL] vite.config.js") {
-		t.Errorf("expected FAIL vite.config.js, got:\n%s", buf.String())
-	}
 }
 
 func TestDoctor_ViteOKWhenMainJSPresent(t *testing.T) {
 	unsetCIEnv(t)
-	t.Setenv("CAIS_SKIP_TIDY", "1")
-	dir := scaffoldDoctorApp(t)
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "vite.config.js"), []byte("export default {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"dependencies":{"@inertiajs/svelte":"3.0.0"},"scripts":{"build":"vite build"}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	writeBuiltViteMainJS(t, dir)
 
 	c := checkViteConfig(dir)
 	if !c.OK {
@@ -498,7 +513,6 @@ func scaffoldDoctorApp(t *testing.T) string {
 func writeBuiltStylesCSS(t *testing.T, dir string) {
 	t.Helper()
 	writeStylesCSSBody(t, dir)
-	writeBuiltViteMainJS(t, dir)
 }
 
 func writeStylesCSSBody(t *testing.T, dir string) {

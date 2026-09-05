@@ -149,16 +149,16 @@ func TestScaffoldResource_FloatFields(t *testing.T) {
 		t.Error("seed data should use float literal for lat")
 	}
 
-	form, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/AdminStoreForm.svelte"))
+	form, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_store_form.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	formBody := string(form)
-	if !strings.Contains(formBody, `bind:value={form.Lat}`) || !strings.Contains(formBody, `type="float"`) {
-		t.Error("admin svelte form should include lat float field")
+	if !strings.Contains(formBody, `.Item.Lat`) || !strings.Contains(formBody, `"float"`) {
+		t.Error("admin HTML form should include lat float field")
 	}
-	if !strings.Contains(formBody, `form.Lng`) {
-		t.Error("admin svelte form should include lng float field")
+	if !strings.Contains(formBody, `.Item.Lng`) {
+		t.Error("admin HTML form should include lng float field")
 	}
 }
 
@@ -205,16 +205,16 @@ func TestScaffoldResource_ReferencesField(t *testing.T) {
 	if !strings.Contains(adminBody, "ListCategoryOptions()") {
 		t.Error("admin handler missing ListCategoryOptions call")
 	}
-	if !strings.Contains(adminBody, `"categoryOptions"`) {
-		t.Error("admin handler should pass categoryOptions in inertia props")
+	if !strings.Contains(adminBody, "CategoryOptions") {
+		t.Error("admin handler should pass CategoryOptions to the form")
 	}
 
-	form, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/AdminBookmarkForm.svelte"))
+	form, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_bookmark_form.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(form), "categoryOptions") {
-		t.Error("admin svelte form missing category select options")
+	if !strings.Contains(string(form), "CategoryOptions") {
+		t.Error("admin HTML form missing category select options")
 	}
 }
 

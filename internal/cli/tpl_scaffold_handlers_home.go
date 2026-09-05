@@ -1,50 +1,34 @@
-// Inertia handler scaffold templates (ported from Cais demo).
 package cli
 
 const tplHomeHandler = `package handlers
 
 import (
-	"fmt"
 	"net/http"
 
-	inertia "github.com/romsar/gonertia/v3"
+	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 )
 
 type HomeHandler struct {
-	renderer *cais.Renderer
-	site     meta.Site
-	catalog  *i18n.Catalog
-	cfg      cais.Config
-	inertia  *inertia.Inertia
+	views   *view.Renderer
+	site    meta.Site
+	catalog *i18n.Catalog
+	cfg     cais.Config
 }
 
-func NewHomeHandler(renderer *cais.Renderer, site meta.Site, catalog *i18n.Catalog, cfg cais.Config, i *inertia.Inertia) *HomeHandler {
-	return &HomeHandler{renderer: renderer, site: site, catalog: catalog, cfg: cfg, inertia: i}
+func NewHomeHandler(views *view.Renderer, site meta.Site, catalog *i18n.Catalog, cfg cais.Config) *HomeHandler {
+	return &HomeHandler{views: views, site: site, catalog: catalog, cfg: cfg}
 }
 
 func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	site := meta.ForRequest(h.site, r)
-	props := inertia.Props{
-		"title": h.catalog.T("home.title"),
-		"site":  site,
-		"labels": map[string]string{
-			"heading":   h.catalog.T("home.rails_heading"),
-			"subtitle":  fmt.Sprintf(h.catalog.T("home.rails_subtitle"), site.AppName),
-			"stack":     h.catalog.T("home.stack"),
-			"contact":   h.catalog.T("home.contact_link"),
-			"login":     h.catalog.T("auth.login_submit"),
-			"dashboard": h.catalog.T("dashboard.title"),
-		},
-	}
-	if msg, ok := flash.MessageFromRequest(r); ok {
-		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
-	}
-	if err := h.inertia.Render(w, r, "Home", props); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	view.Write(w, r, h.views, view.Page{
+		Layout: "app",
+		Name:   "home",
+		Data: amarraData(r, h.site, map[string]any{
+			"Title": h.catalog.T("home.title"),
+		}),
+	}, h.cfg)
 }
 `

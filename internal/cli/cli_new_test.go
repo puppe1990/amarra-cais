@@ -64,18 +64,71 @@ func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
 			text := string(body)
 			for _, needle := range []string{
 				"TDD",
-				"Inertia",
+				"Amarra",
+				"view.Write",
 				"flash.Set",
-				"cais g",
+				"amarra-cais g",
 				"internal/handlers",
-				"web/src/pages",
+				"web/templates/pages",
 				tc.name, // AppName rendered into title
 			} {
 				if !strings.Contains(text, needle) {
 					t.Errorf("AGENTS.md missing %q", needle)
 				}
 			}
+			for _, stale := range []string{"Inertia", "web/src/pages"} {
+				if strings.Contains(text, stale) {
+					t.Errorf("AGENTS.md still mentions %q", stale)
+				}
+			}
 		})
+	}
+}
+
+func TestScaffoldNewApp_htmlFirstNoInertia(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "demo")
+	if err := scaffoldNewApp(appDir, scaffoldData{AppName: "demo", ModulePath: "example.com/demo", CaisVersion: "0.1.0"}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	mustExist := []string{
+		"web/templates/layouts/app.html",
+		"web/templates/pages/home.html",
+		"web/templates/pages/login.html",
+		"web/templates/components/.gitkeep",
+		"web/static/js/amarra.js",
+		"internal/handlers/home.go",
+	}
+	mustNot := []string{
+		"vite.config.js",
+		"svelte.config.js",
+		"web/src/pages/Home.svelte",
+		"web/src/main.js",
+		"internal/handlers/inertia_test.go",
+	}
+	for _, p := range mustExist {
+		if _, err := os.Stat(filepath.Join(appDir, p)); err != nil {
+			t.Errorf("missing %s", p)
+		}
+	}
+	for _, p := range mustNot {
+		if _, err := os.Stat(filepath.Join(appDir, p)); err == nil {
+			t.Errorf("should not exist %s", p)
+		}
+	}
+	gomod, _ := os.ReadFile(filepath.Join(appDir, "go.mod"))
+	if strings.Contains(string(gomod), "gonertia") {
+		t.Error("go.mod still has gonertia")
+	}
+	if !strings.Contains(string(gomod), "github.com/puppe1990/amarra-cais") {
+		t.Error("go.mod missing amarra-cais")
+	}
+	home, _ := os.ReadFile(filepath.Join(appDir, "internal/handlers/home.go"))
+	if strings.Contains(string(home), "inertia") {
+		t.Error("home handler still uses inertia")
+	}
+	if !strings.Contains(string(home), "view.Write") {
+		t.Error("home handler missing view.Write")
 	}
 }
 
@@ -97,15 +150,13 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		"internal/i18n/pt.go",
 		".env.example",
 		"internal/handlers/dashboard.go",
-		"internal/handlers/inertia_test.go",
-		"web/templates/app.html",
-		"web/src/main.js",
-		"web/src/pages/Home.svelte",
-		"web/src/pages/Contact.svelte",
-		"web/src/pages/Dashboard.svelte",
-		"web/src/pages/Login.svelte",
-		"vite.config.js",
-		"svelte.config.js",
+		"internal/handlers/viewdata.go",
+		"web/templates/layouts/app.html",
+		"web/templates/pages/home.html",
+		"web/templates/pages/contact.html",
+		"web/templates/pages/dashboard.html",
+		"web/templates/pages/login.html",
+		"web/static/js/amarra.js",
 		"package.json",
 		"web/static/manifest.webmanifest",
 		"web/static/js/sw.js",
@@ -121,10 +172,13 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	for _, path := range []string{
 		"web/static/js/htmx.min.js",
 		"web/static/js/cais.js",
-		"web/templates/pages/home.html",
+		"vite.config.js",
+		"svelte.config.js",
+		"web/src/pages/Home.svelte",
+		"internal/handlers/inertia_test.go",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
-			t.Errorf("HTMX scaffold artifact should not exist: %s", path)
+			t.Errorf("Inertia/HTMX scaffold artifact should not exist: %s", path)
 		}
 	}
 
@@ -133,11 +187,11 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		t.Fatal(err)
 	}
 	appGoBody := string(appGo)
-	if !strings.Contains(appGoBody, "Inertia   *inertia.Inertia") {
-		t.Error("app.go should wire gonertia Inertia in Deps")
+	if !strings.Contains(appGoBody, "Views     *view.Renderer") {
+		t.Error("app.go should wire *view.Renderer in Deps")
 	}
-	if !strings.Contains(appGoBody, "deps.Inertia, err = inertia.New") {
-		t.Error("app.New must assign fallback Inertia onto deps.Inertia before registerRoutes")
+	if !strings.Contains(appGoBody, `r.Handle("/amarra/live", live.Handler())`) {
+		t.Error("app.New must register live.Handler at /amarra/live")
 	}
 	if !strings.Contains(appGoBody, "jobsui.Register") {
 		t.Error("app.go should mount the localhost /jobs dashboard")
@@ -156,49 +210,27 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		t.Fatal(err)
 	}
 	gomodBody := string(gomod)
-	if !strings.Contains(gomodBody, "gonertia") {
-		t.Error("go.mod should require gonertia")
+	if strings.Contains(gomodBody, "gonertia") {
+		t.Error("go.mod must not require gonertia")
 	}
 	if !strings.Contains(gomodBody, "github.com/puppe1990/amarra-cais v"+defaultScaffoldCaisVersion) &&
 		!strings.Contains(gomodBody, "github.com/puppe1990/amarra-cais v") {
 		t.Errorf("go.mod should require a current amarra-cais version, got:\n%s", gomodBody)
 	}
 
-	mainJS, err := os.ReadFile(filepath.Join(appDir, "web/src/main.js"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	mainBody := string(mainJS)
-	for _, needle := range []string{
-		`import { mount } from 'svelte'`,
-		`mount(App, { target: el, props })`,
-		`xsrfCookieName: import.meta.env.PROD ? '__Host-cais_csrf' : 'cais_csrf'`,
-		`xsrfHeaderName: 'X-CSRF-Token'`,
-	} {
-		if !strings.Contains(mainBody, needle) {
-			t.Errorf("web/src/main.js missing %q", needle)
-		}
-	}
-	if strings.Contains(mainBody, "new App(") {
-		t.Error("web/src/main.js must not use Svelte 4 new App() constructor")
-	}
-
-	login, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Login.svelte"))
+	login, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/login.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	loginBody := string(login)
-	if strings.Contains(loginBody, "$form") {
-		t.Error("Login.svelte must not use $form store syntax (Inertia 3 useForm is not a store)")
+	if !strings.Contains(loginBody, `action="/login"`) {
+		t.Error("login.html should post to /login")
 	}
-	if !strings.Contains(loginBody, "form.post('/login')") || !strings.Contains(loginBody, "bind:value={form.email}") {
-		t.Error("Login.svelte should bind form fields without $ prefix")
+	if !strings.Contains(loginBody, "csrfField") {
+		t.Error("login.html should include csrfField")
 	}
-	if !strings.Contains(loginBody, "PasswordInput") {
-		t.Error("Login.svelte should use PasswordInput with eye toggle")
-	}
-	if _, err := os.Stat(filepath.Join(appDir, "web/src/components/PasswordInput.svelte")); err != nil {
-		t.Error("scaffold should include web/src/components/PasswordInput.svelte")
+	if !strings.Contains(loginBody, "fieldPassword") {
+		t.Error("login.html should use fieldPassword with eye toggle")
 	}
 
 	auth, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/auth.go"))
@@ -206,41 +238,42 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !strings.Contains(string(auth), "httpx.ParseFormOrJSON") {
-		t.Error("auth handler should use httpx.ParseFormOrJSON for Inertia JSON posts")
+		t.Error("auth handler should use httpx.ParseFormOrJSON")
 	}
 	if strings.Contains(string(auth), "r.ParseForm()") {
 		t.Error("auth handler must not call r.ParseForm() alone (breaks JSON bodies)")
 	}
 
-	appHTML, err := os.ReadFile(filepath.Join(appDir, "web/templates/app.html"))
+	appHTML, err := os.ReadFile(filepath.Join(appDir, "web/templates/layouts/app.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(appHTML), "<title>myapp</title>") {
-		t.Error("app.html should include a default <title>")
+	layoutBody := string(appHTML)
+	if !strings.Contains(layoutBody, "/static/js/amarra.js") {
+		t.Error("layouts/app.html should load amarra.js")
+	}
+	if !strings.Contains(layoutBody, `id="amarra-main"`) {
+		t.Error("layouts/app.html should include #amarra-main")
+	}
+	if strings.Contains(layoutBody, "hx-ext") || strings.Contains(layoutBody, "htmx") {
+		t.Error("layouts/app.html must not load htmx")
 	}
 
-	dash, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Dashboard.svelte"))
+	dash, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/dashboard.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	dashBody := string(dash)
-	if strings.Contains(dashBody, `action="/logout" use:inertia`) || strings.Contains(dashBody, `use:inertia>\n    <button`) {
-		t.Error("Dashboard logout must not use use:inertia on a POST form")
-	}
-	if !strings.Contains(dashBody, `router.post('/logout')`) {
-		t.Error("Dashboard logout should call router.post('/logout')")
-	}
-	if !strings.Contains(dashBody, "<svelte:head>") {
-		t.Error("Dashboard should set document title via svelte:head")
+	if !strings.Contains(dashBody, `action="/logout"`) {
+		t.Error("Dashboard logout should post to /logout")
 	}
 
 	pkg, err := os.ReadFile(filepath.Join(appDir, "package.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(pkg), "@inertiajs/svelte") {
-		t.Error("package.json should include @inertiajs/svelte")
+	if strings.Contains(string(pkg), "@inertiajs/svelte") || strings.Contains(string(pkg), "vite") {
+		t.Error("package.json should be Tailwind-only (no Vite/Svelte)")
 	}
 
 	css, err := os.ReadFile(filepath.Join(appDir, "input.css"))
@@ -475,12 +508,12 @@ func TestCLI_NewBlankCreatesEmptyApp(t *testing.T) {
 
 	for _, path := range []string{
 		"internal/handlers/home.go",
-		"web/templates/app.html",
-		"web/src/pages/Home.svelte",
-		"web/src/main.js",
+		"web/templates/layouts/app.html",
+		"web/templates/pages/home.html",
+		"web/static/js/amarra.js",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
-			t.Errorf("blank app missing inertia file %s: %v", path, err)
+			t.Errorf("blank app missing HTML file %s: %v", path, err)
 		}
 	}
 
@@ -489,8 +522,9 @@ func TestCLI_NewBlankCreatesEmptyApp(t *testing.T) {
 		"internal/handlers/dashboard.go",
 		"internal/models/contact.go",
 		"internal/store/migrations/001_contacts.sql",
-		"web/src/pages/Contact.svelte",
+		"web/templates/pages/contact.html",
 		"web/static/js/htmx.min.js",
+		"vite.config.js",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
 			t.Errorf("blank app should not have %s", path)
@@ -627,8 +661,8 @@ func TestCLI_NewMainUsesTemplateHotReload(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := string(mainGo)
-	if !strings.Contains(body, "NewRendererForEnv") {
-		t.Error("main.go should use NewRendererForEnv for development template hot reload")
+	if !strings.Contains(body, "view.Load") {
+		t.Error("main.go should use view.Load for Amarra templates")
 	}
 	air, err := os.ReadFile(filepath.Join(appDir, ".air.toml"))
 	if err != nil {
@@ -639,7 +673,7 @@ func TestCLI_NewMainUsesTemplateHotReload(t *testing.T) {
 	}
 }
 
-func TestCLI_NewIncludesInertiaAndVite(t *testing.T) {
+func TestCLI_NewIncludesAmarraHTML(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "full")
 	if err := scaffoldNewApp(appDir, scaffoldData{
@@ -649,10 +683,9 @@ func TestCLI_NewIncludesInertiaAndVite(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, path := range []string{
-		"web/templates/app.html",
-		"vite.config.js",
-		"web/src/pages/Home.svelte",
-		"svelte.config.js",
+		"web/templates/layouts/app.html",
+		"web/templates/pages/home.html",
+		"web/static/js/amarra.js",
 		".air.toml",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {

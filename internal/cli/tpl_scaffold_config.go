@@ -6,7 +6,6 @@ go 1.26
 
 require (
 	github.com/puppe1990/amarra-cais v{{.CaisVersion}}
-	github.com/romsar/gonertia/v3 v3.0.0
 	modernc.org/sqlite v1.53.0
 )
 `
@@ -37,7 +36,7 @@ const tplWebEmbed = `package web
 
 import "embed"
 
-//go:embed templates/*
+//go:embed all:templates
 var Templates embed.FS
 `
 

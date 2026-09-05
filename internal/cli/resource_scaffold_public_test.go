@@ -53,18 +53,18 @@ func TestScaffoldResource_PublicInsertsNavAfterMarker(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	nav, err := os.ReadFile(filepath.Join(appDir, "web/src/components/AppLayout.svelte"))
+	nav, err := os.ReadFile(filepath.Join(appDir, "web/templates/layouts/app.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	body := string(nav)
 	if !strings.Contains(body, "<!-- cais:nav -->") {
-		t.Fatal("AppLayout.svelte missing <!-- cais:nav --> marker")
+		t.Fatal("layouts/app.html missing <!-- cais:nav --> marker")
 	}
 	markerIdx := strings.Index(body, "<!-- cais:nav -->")
 	linkIdx := strings.Index(body, `href="/products"`)
 	if linkIdx == -1 {
-		t.Fatal("AppLayout.svelte missing public products nav link")
+		t.Fatal("layouts/app.html missing public products nav link")
 	}
 	if linkIdx < markerIdx {
 		t.Error("nav link should appear after <!-- cais:nav --> marker")
@@ -88,13 +88,13 @@ func TestScaffoldResource_BlankAppLogoLinksToPublicList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	nav, err := os.ReadFile(filepath.Join(appDir, "web/src/components/AppLayout.svelte"))
+	nav, err := os.ReadFile(filepath.Join(appDir, "web/templates/layouts/app.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	body := string(nav)
 	if !strings.Contains(body, `href="/books"`) {
-		t.Error("AppLayout.svelte nav should include public books list link")
+		t.Error("layouts/app.html nav should include public books list link")
 	}
 }
 
@@ -115,23 +115,18 @@ func TestScaffoldResource_PublicListRichFields(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	svelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Tasks.svelte"))
+	page, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/tasks.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := string(svelte)
+	body := string(page)
 	if !strings.Contains(body, `Tasks`) {
-		t.Error("public svelte page should use plural resource name Tasks")
+		t.Error("public HTML page should use plural resource name Tasks")
 	}
-	if !strings.Contains(body, `{#each items`) {
+	if !strings.Contains(body, `range .Items`) {
 		t.Error("public list should iterate items")
 	}
-	if !strings.Contains(body, `item.Title`) {
+	if !strings.Contains(body, `.Title`) {
 		t.Error("public list should render title field")
-	}
-	for _, needle := range []string{`use:inertia`, `export let items`} {
-		if !strings.Contains(body, needle) {
-			t.Errorf("public list missing HTMX UX attribute %q", needle)
-		}
 	}
 }

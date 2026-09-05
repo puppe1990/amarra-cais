@@ -58,25 +58,32 @@ func TestScaffoldResource_Paginate(t *testing.T) {
 	if !strings.Contains(adminBody, "perPage := 25") {
 		t.Error("admin handler should default perPage to 25")
 	}
-	for _, needle := range []string{`"page"`, `"total"`, `"perPage"`, `"hasPrev"`, `"hasNext"`} {
+	for _, needle := range []string{"Page:", "Total:", "PerPage:", "HasPrev", "HasNext"} {
 		if !strings.Contains(adminBody, needle) {
-			t.Errorf("admin index props missing %s", needle)
+			t.Errorf("admin index data missing %s", needle)
 		}
 	}
-	for _, needle := range []string{`inertia.Render(w, r, "AdminArticles"`, `"hasPrev"`, `"nextPage"`} {
+	for _, needle := range []string{`view.Write`, "HasPrev", "NextPage"} {
 		if !strings.Contains(adminBody, needle) {
 			t.Errorf("paginated admin handler missing %q", needle)
 		}
 	}
 
-	svelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/AdminArticles.svelte"))
+	page, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_articles.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	svelteBody := string(svelte)
-	for _, needle := range []string{`<table`, `hasPrev`, `nextPage`, `use:inertia`} {
-		if !strings.Contains(svelteBody, needle) {
-			t.Errorf("admin svelte page missing %q", needle)
+	if !strings.Contains(string(page), `template "admin_articles_index"`) {
+		t.Error("paginated admin page should include admin_articles_index partial")
+	}
+	partial, err := os.ReadFile(filepath.Join(appDir, "web/templates/partials/admin_articles_index.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	partialBody := string(partial)
+	for _, needle := range []string{`<table`, `HasPrev`, `NextPage`} {
+		if !strings.Contains(partialBody, needle) {
+			t.Errorf("admin index partial missing %q", needle)
 		}
 	}
 }
@@ -106,25 +113,28 @@ func TestScaffoldResource_PublicPaginate(t *testing.T) {
 	if strings.Contains(handlerBody, "ListAllPosts()") {
 		t.Error("paginated public handler should not call ListAllPosts")
 	}
-	for _, needle := range []string{"ListPosts(page, perPage)", `inertia.Render(w, r, "Posts"`} {
+	for _, needle := range []string{"ListPosts(page, perPage)", `view.Write`} {
 		if !strings.Contains(handlerBody, needle) {
 			t.Errorf("public handler missing %q", needle)
 		}
 	}
 
-	svelte, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Posts.svelte"))
+	page, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/posts.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	svelteBody := string(svelte)
-	for _, needle := range []string{`{#each items`, `hasPrev`, `use:inertia`} {
-		if !strings.Contains(svelteBody, needle) {
-			t.Errorf("public svelte page missing %q", needle)
-		}
+	if !strings.Contains(string(page), `template "posts_list"`) {
+		t.Error("paginated public page should include posts_list partial")
 	}
-
-	if !strings.Contains(svelteBody, "nextPage") {
-		t.Error("public svelte page should include nextPage pagination")
+	partial, err := os.ReadFile(filepath.Join(appDir, "web/templates/partials/posts_list.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	partialBody := string(partial)
+	for _, needle := range []string{`range .Items`, `HasPrev`, `NextPage`} {
+		if !strings.Contains(partialBody, needle) {
+			t.Errorf("public list partial missing %q", needle)
+		}
 	}
 }
 

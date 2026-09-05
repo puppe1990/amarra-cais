@@ -23,13 +23,13 @@ func TestLayoutTemplates_fullHasDefaultNavLinks(t *testing.T) {
 	if !strings.Contains(tplLayout, `template "nav_links"`) {
 		t.Error("full layout should render nav_links partial")
 	}
-	for _, link := range []string{`href="/contact"`, `href="/dashboard"`, `hx-boost`} {
+	for _, link := range []string{`href="/contact"`, `href="/dashboard"`, `data-amarra-drive="true"`} {
 		if !strings.Contains(tplPartialNavLinks, link) {
 			t.Errorf("nav_links partial missing %s", link)
 		}
 	}
-	if !strings.Contains(tplLayout, "cais-toast-host") {
-		t.Error("full layout missing cais-toast-host")
+	if !strings.Contains(tplLayout, "amarra-toast-host") {
+		t.Error("full layout missing amarra-toast-host")
 	}
 }
 
@@ -45,29 +45,26 @@ func TestLayoutTemplates_useSharedHead(t *testing.T) {
 		"minimal": tplLayoutMinimal,
 		"blank":   tplLayoutBlank,
 	} {
-		if !strings.Contains(tpl, "htmx.min.js") || !strings.Contains(tpl, `define "base"`) {
+		if !strings.Contains(tpl, "/static/js/amarra.js") || !strings.Contains(tpl, `define "app"`) {
 			t.Errorf("%s layout missing shared head/shell fragments", name)
 		}
-		if !strings.Contains(tpl, "idiomorph-ext.min.js") || !strings.Contains(tpl, `hx-ext="morph,sse"`) {
-			t.Errorf("%s layout missing htmx morph + sse extensions", name)
-		}
-		if !strings.Contains(tpl, "sse-ext.min.js") {
-			t.Errorf("%s layout missing sse-ext.min.js script", name)
+		if strings.Contains(tpl, "htmx.min.js") || strings.Contains(tpl, `hx-ext`) {
+			t.Errorf("%s layout must not load htmx", name)
 		}
 	}
 }
 
-func TestLayoutTemplates_hasBoostShell(t *testing.T) {
+func TestLayoutTemplates_hasDriveShell(t *testing.T) {
 	for name, tpl := range map[string]string{
 		"full":    tplLayout,
 		"minimal": tplLayoutMinimal,
 		"blank":   tplLayoutBlank,
 	} {
-		if !strings.Contains(tpl, `id="cais-nav"`) {
-			t.Errorf("%s layout missing cais-nav id", name)
+		if !strings.Contains(tpl, `id="amarra-nav"`) {
+			t.Errorf("%s layout missing amarra-nav id", name)
 		}
-		if !strings.Contains(tpl, `id="cais-main"`) || !strings.Contains(tpl, ``) {
-			t.Errorf("%s layout missing cais-main shell with view transition", name)
+		if !strings.Contains(tpl, `id="amarra-main"`) {
+			t.Errorf("%s layout missing amarra-main shell", name)
 		}
 	}
 }
@@ -107,17 +104,15 @@ func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 	}
 }
 
-func TestLayoutTemplates_contactFormUsesHxFormHelper(t *testing.T) {
-	if !strings.Contains(tplPageContact, `hxForm "/contact"`) {
-		t.Error("contact form should use hxForm helper")
+func TestLayoutTemplates_contactFormUsesKitForm(t *testing.T) {
+	if !strings.Contains(tplPageContact, `<.form action="/contact"`) {
+		t.Error("contact form should use <.form> kit tag")
 	}
 }
 
-func TestLayoutTemplates_dashboardUsesIconPartials(t *testing.T) {
-	for _, icon := range []string{`icon_users_md`, `icon_shield_md`} {
-		if !strings.Contains(tplPageDashboard, icon) {
-			t.Errorf("dashboard page should use %s partial", icon)
-		}
+func TestLayoutTemplates_dashboardUsesLogoutForm(t *testing.T) {
+	if !strings.Contains(tplPageDashboard, `action="/logout"`) {
+		t.Error("dashboard page should post logout")
 	}
 }
 
