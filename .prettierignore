@@ -3,6 +3,7 @@ bin/
 tmp/
 data/
 pkg/cais/pwa/assets/
+pkg/amarra/js/vendor/
 pkg/cais/testdata/
 package-lock.json
 go.sum

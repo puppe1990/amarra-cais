@@ -27,7 +27,16 @@ async function main() {
     sourcemap: false,
   });
 
-  console.log("js-build: produced cais-chat-logic.mjs from testable sources");
+  await build({
+    entryPoints: [resolve(root, "pkg/amarra/js/entry.mjs")],
+    bundle: true,
+    format: "iife",
+    outfile: resolve(outDir, "amarra.js"),
+    minify: false,
+    sourcemap: false,
+  });
+
+  console.log("js-build: produced cais-chat-logic.mjs and amarra.js");
 }
 
 main().catch((err) => {
