@@ -132,6 +132,75 @@ func TestScaffoldNewApp_htmlFirstNoInertia(t *testing.T) {
 	}
 }
 
+func TestScaffoldNewApp_driveFlashLoginEmailHomeTest(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "drivefix")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "drivefix",
+		ModulePath: "github.com/puppe1990/drivefix",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+
+	login, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/login.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loginBody := string(login)
+	if strings.Contains(loginBody, `value="{{ if .Email }}`) {
+		t.Error("login email value attr must not embed {{ if .Email }} (ExpandAll treats it as static)")
+	}
+	if !strings.Contains(loginBody, `value="{{ .Email }}"`) {
+		t.Error(`login email should use value="{{ .Email }}"`)
+	}
+
+	auth, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/auth.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(auth), `"Email":`) {
+		t.Error("auth handler must set Email on login GET and 422")
+	}
+	if !strings.Contains(string(auth), "demo@example.com") {
+		t.Error("login GET should prefill demo@example.com outside production")
+	}
+
+	layout, err := os.ReadFile(filepath.Join(appDir, "web/templates/layouts/app.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	layoutBody := string(layout)
+	mainIdx := strings.Index(layoutBody, `id="amarra-main"`)
+	if mainIdx < 0 {
+		t.Fatal("layouts/app.html missing #amarra-main")
+	}
+	flashIdx := strings.Index(layoutBody, `<.flash`)
+	if flashIdx < 0 {
+		t.Fatal("layouts/app.html missing <.flash>")
+	}
+	closeMain := strings.Index(layoutBody[mainIdx:], "</main>")
+	if closeMain < 0 {
+		t.Fatal("layouts/app.html missing </main>")
+	}
+	if flashIdx < mainIdx || flashIdx > mainIdx+closeMain {
+		t.Error("<.flash /> must be inside #amarra-main so Drive morph keeps notices")
+	}
+	if strings.Contains(layoutBody, "}}-") {
+		t.Error("layout has stray '-' after }} (define/end should use {{- … -}})")
+	}
+
+	homeTest, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/home_test.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(homeTest), "You're on Cais!") {
+		t.Error("home test must not assert unescaped You're (html/template emits &#39;)")
+	}
+	if !strings.Contains(string(homeTest), "on Cais!") {
+		t.Error("home test should still assert the heading")
+	}
+}
+
 func TestCLI_NewCreatesApp(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "myapp")

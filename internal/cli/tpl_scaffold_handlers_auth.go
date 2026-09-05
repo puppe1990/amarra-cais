@@ -49,7 +49,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
-	h.renderAuth(w, r, "login", map[string]any{"Title": h.catalog.T("auth.login_title")}, 0)
+	email := ""
+	if h.cfg.Env != "production" {
+		email = "demo@example.com"
+	}
+	h.renderAuth(w, r, "login", map[string]any{
+		"Title": h.catalog.T("auth.login_title"),
+		"Email": email,
+	}, 0)
 }
 
 func (h *AuthHandler) LoginPost(w http.ResponseWriter, r *http.Request) {

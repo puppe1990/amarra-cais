@@ -9,7 +9,7 @@ const tplPageLogin = `{{"{{"}} define "content" {{"}}"}}
     </div>
     <.form action="/login" method="post">
       {{"{{"}} csrfField .CSRFToken {{"}}"}}
-      <.input name="email" type="email" label="Email" value="{{"{{"}} if .Email {{"}}"}}{{"{{"}} .Email {{"}}"}}{{"{{"}} else {{"}}"}}demo@example.com{{"{{"}} end {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
+      <.input name="email" type="email" label="Email" value="{{"{{"}} .Email {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
       {{"{{"}} fieldPassword (makeField "password" (t "auth.password_label") "" "password" true .Errors) {{"}}"}}
       <.button type="submit">{{"{{"}} t "auth.login_submit" {{"}}"}}</.button>
     </.form>
