@@ -31,8 +31,8 @@ const tplPartialSuccess = `{{"{{- "}}define "contact_success" -{{"}}"}}
 `
 
 const tplPartialNavLinks = `{{"{{"}}- define "nav_links" -{{"}}"}}
-<a href="/" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "home" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_home_nav" . {{"}}"}}Home</a>
-<a href="/contact" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "contact" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_message_nav" . {{"}}"}}Contact</a>
-<a href="/dashboard" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}bg-slate-900 text-white shadow-2xs{{"{{"}} else {{"}}"}}text-slate-600 hover:text-slate-900 hover:bg-slate-100{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+<a href="/" data-amarra-drive="true" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "home" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_home_nav" . {{"}}"}}Home</a>
+<a href="/contact" data-amarra-drive="true" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "contact" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_message_nav" . {{"}}"}}Contact</a>
+<a href="/dashboard" data-amarra-drive="true" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
 {{"{{"}}- end -{{"}}"}}
 `

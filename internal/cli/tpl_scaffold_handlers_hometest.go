@@ -40,7 +40,7 @@ func TestHomeHandler_RendersHTML(t *testing.T) {
 	if !strings.Contains(body, ` + "`" + `id="amarra-main"` + "`" + `) {
 		t.Errorf("body missing #amarra-main, got: %s", body)
 	}
-	if !strings.Contains(body, "on Cais!") {
+	if !strings.Contains(body, "made landfall") {
 		t.Errorf("body missing heading, got: %s", body)
 	}
 }

@@ -21,7 +21,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="manifest" href="/static/manifest.webmanifest" />
-    <meta name="theme-color" content="#4f46e5" />
+    <meta name="theme-color" content="#c9893a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -30,29 +30,25 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
     <link rel="icon" href="/static/icons/icon.png" type="image/png" />
     <script src="/static/js/amarra.js" defer></script>
   </head>
-  <body class="min-h-screen bg-slate-50 font-sans antialiased text-slate-900 flex flex-col justify-between">
+  <body class="min-h-screen bg-ink font-sans antialiased text-foam flex flex-col justify-between">
     <div>
-      <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <a href="/" class="flex items-center gap-2.5 group" data-amarra-drive="true">
-            <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-xs flex items-center justify-center group-hover:bg-indigo-700 transition">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div>
-              <h1 class="text-lg font-black text-slate-900 tracking-tight font-display flex items-center gap-1.5 leading-none">
-                {{.AppName}}
-                <span class="text-[9px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Beta</span>
-              </h1>
-              <p class="text-[10px] text-slate-500 font-semibold mt-1">Powered by Amarra</p>
-            </div>
+      <header class="bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+          <a href="/" class="flex items-center gap-3 group" data-amarra-drive="true">
+            <span class="flex h-9 w-9 items-center justify-center border border-copper/70 text-copper group-hover:bg-copper group-hover:text-ink transition-colors" aria-hidden="true">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 20V8m0 0a3 3 0 116 0v1H5m14 11V9a3 3 0 00-3-3h-3" /></svg>
+            </span>
+            <span>
+              <span class="block font-serif text-xl leading-none tracking-tight text-foam">{{.AppName}}</span>
+              <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80">Amarra</span>
+            </span>
           </a>
+          <a href="/login" data-amarra-drive="true" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
         </div>
       </header>
-      <nav id="amarra-nav" class="bg-white border-b border-slate-200 shadow-2xs sticky top-[53px] z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex space-x-1 py-1.5 overflow-x-auto no-scrollbar">
+      <nav id="amarra-nav" class="bg-ink border-b border-foam/10 sticky top-[57px] z-30">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex gap-1 py-1 overflow-x-auto no-scrollbar">
             `
 
 const tplLayoutNavFull = `<!-- cais:nav -->
@@ -65,16 +61,13 @@ const tplLayoutBaseClose = `
         </div>
       </nav>
       <div id="amarra-toast-host" aria-live="polite"></div>
-      <main id="amarra-main" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-grow">
+      <main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5">
         <.flash />
         {{"{{"}} template "content" . {{"}}"}}
       </main>
     </div>
-    <footer class="mt-auto border-t border-slate-200/80 pt-8 pb-6 text-center text-xs text-slate-400">
-      <div class="max-w-7xl mx-auto px-4">
-        <p>© 2026 {{.AppName}}. Built with Amarra.</p>
-        <p class="mt-1">HTML + Go + SQLite — server-rendered, app-like UX.</p>
-      </div>
+    <footer class="mt-auto border-t border-foam/10 py-6 text-center font-mono text-[10px] uppercase tracking-[0.22em] text-foam/40">
+      <p>© 2026 {{.AppName}} · Built with Amarra</p>
     </footer>
     {{"{{"}} if eq .Site.Env "development" {{"}}"}}
     <script>
@@ -120,11 +113,46 @@ const tplCaisLogo = `{{"{{"}} define "cais_logo" {{"}}"}}
 `
 
 const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
-<div class="flex flex-col items-center justify-center px-6 py-14 text-center">
-  <h1 class="mt-10 font-serif text-4xl font-semibold tracking-tight text-stone-800 md:text-5xl">{{"{{"}} t "home.rails_heading" {{"}}"}}</h1>
-  <p data-testid="amarra-ready" class="mt-3 text-lg text-stone-600">{{"{{"}} t "home.rails_subtitle" .Site.AppName {{"}}"}}</p>
-  <p class="mt-2 text-sm text-stone-500">{{"{{"}} t "home.stack" {{"}}"}}</p>
-</div>
+<section class="amarra-grain relative isolate overflow-hidden min-h-[calc(100vh-12rem)] -mx-4 sm:-mx-6 lg:-mx-8 -my-5 px-6 sm:px-10 lg:px-14 py-16 md:py-24">
+  <div class="pointer-events-none absolute -top-24 left-[12%] h-80 w-80 rounded-full bg-copper/30 blur-3xl amarra-lantern"></div>
+  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_12%_-10%,rgba(201,137,58,0.22),transparent_42%),radial-gradient(ellipse_at_100%_110%,rgba(18,70,78,0.55),transparent_50%)]"></div>
+  <svg class="pointer-events-none absolute right-[-6%] top-4 hidden h-[28rem] w-[28rem] text-copper/15 lg:block" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+    <circle cx="100" cy="100" r="78" stroke="currentColor" stroke-width="0.6"></circle>
+    <circle cx="100" cy="100" r="52" stroke="currentColor" stroke-width="0.6"></circle>
+    <path d="M100 22v156M22 100h156" stroke="currentColor" stroke-width="0.4"></path>
+    <rect x="86" y="68" width="28" height="72" rx="4" stroke="currentColor" stroke-width="1.5"></rect>
+    <path d="M76 92h48M76 108h48" stroke="currentColor" stroke-width="2.2"></path>
+  </svg>
+  <div class="relative mx-auto max-w-6xl grid items-end gap-14 lg:grid-cols-12">
+    <div class="lg:col-span-7">
+      <p class="amarra-rise font-mono text-[11px] uppercase tracking-[0.32em] text-copper">{{"{{"}} t "home.berth_label" {{"}}"}}</p>
+      <h1 class="amarra-rise amarra-rise-delay-1 mt-5 font-serif italic text-[clamp(2.75rem,7vw,6.25rem)] leading-[0.88] text-foam">{{"{{"}} t "home.rails_heading" {{"}}"}}</h1>
+      <p data-testid="amarra-ready" class="amarra-rise amarra-rise-delay-2 mt-8 max-w-md text-lg leading-relaxed text-foam/65">{{"{{"}} t "home.rails_subtitle" .Site.AppName {{"}}"}}</p>
+      <div class="amarra-rise amarra-rise-delay-3 mt-10 flex flex-wrap items-center gap-6">
+        <a href="/login" data-amarra-drive="true" class="inline-flex items-center gap-2 bg-copper px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-foam transition-colors">{{"{{"}} t "home.cta_board" {{"}}"}}</a>
+        <a href="/contact" data-amarra-drive="true" class="font-mono text-[11px] uppercase tracking-[0.22em] text-foam/55 hover:text-copper transition-colors">{{"{{"}} t "home.contact_link" {{"}}"}}</a>
+      </div>
+      <div class="amarra-rise amarra-rise-delay-4 mt-14 flex items-center gap-4 text-copper/50">
+        <span class="h-px w-16 bg-copper/60"></span>
+        <span class="font-mono text-[10px] uppercase tracking-[0.35em]">{{"{{"}} t "home.tide_mark" {{"}}"}}</span>
+      </div>
+    </div>
+    <aside class="lg:col-span-5 amarra-rise amarra-rise-delay-2">
+      <div class="border border-copper/45 bg-ink/70 p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+        <p class="font-mono text-[10px] uppercase tracking-[0.26em] text-copper">{{"{{"}} t "home.manifest_label" {{"}}"}}</p>
+        <p class="mt-3 font-serif text-3xl text-foam">{{"{{"}} .Site.AppName {{"}}"}}</p>
+        <p class="mt-1 font-mono text-xs text-foam/45">{{"{{"}} t "home.stack" {{"}}"}}</p>
+        <ol class="mt-7 space-y-3 font-mono text-[12px] text-foam/75">
+          <li><span class="text-copper">01 —</span> {{"{{"}} t "home.step_resource" {{"}}"}}</li>
+          <li><span class="text-copper">02 —</span> {{"{{"}} t "home.step_dev" {{"}}"}}</li>
+          <li><span class="text-copper">03 —</span> {{"{{"}} t "home.step_docs" {{"}}"}}</li>
+        </ol>
+        <pre class="mt-7 whitespace-pre-wrap break-words border-t border-foam/10 pt-4 font-mono text-[11px] leading-relaxed text-copper">amarra-cais g resource bookmark
+--fields title:string --public</pre>
+      </div>
+    </aside>
+  </div>
+</section>
 {{"{{"}} end {{"}}"}}
 `
 

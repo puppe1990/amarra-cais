@@ -24,8 +24,8 @@ The browser does not mount a SPA. Handlers call `view.Write`. Drive morphs `#ama
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.0.1   # or: make install-cli from this repo
-amarra-cais version   # expect 0.0.1
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.0.2   # or: make install-cli from this repo
+amarra-cais version   # expect 0.0.2
 amarra-cais new myapp
 cd myapp && amarra-cais install && amarra-cais dev   # http://localhost:8080
 ```

@@ -6,6 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.0.2] - 2026-09-05
+
+### Changed
+
+- Harbor greeting on `amarra-cais new`: ink/foam/copper shell, “You made landfall.” / “Você atracou.”, Come aboard CTA, and a manifest ticket with the first generator command.
+- Layout header links to `/login`; home/contact/dashboard set `ActiveNav`.
+
+## [0.0.1] - 2026-09-05
+
+First public cut of **amarra-cais**: HTML-first fork of Cais. Generated apps use Amarra Views + Drive (no Inertia/Svelte/Vite). Live is a 501 stub.
+
 ## [0.11.0] - 2026-08-28
 
 ### Added

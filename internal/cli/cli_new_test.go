@@ -196,7 +196,7 @@ func TestScaffoldNewApp_driveFlashLoginEmailHomeTest(t *testing.T) {
 	if strings.Contains(string(homeTest), "You're on Cais!") {
 		t.Error("home test must not assert unescaped You're (html/template emits &#39;)")
 	}
-	if !strings.Contains(string(homeTest), "on Cais!") {
+	if !strings.Contains(string(homeTest), "made landfall") {
 		t.Error("home test should still assert the heading")
 	}
 }

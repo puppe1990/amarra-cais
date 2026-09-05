@@ -116,6 +116,34 @@ func TestLayoutTemplates_dashboardUsesLogoutForm(t *testing.T) {
 	}
 }
 
+func TestPageHome_greetingHarborLayout(t *testing.T) {
+	for _, token := range []string{
+		`data-testid="amarra-ready"`,
+		"amarra-grain",
+		"home.rails_heading",
+		"home.cta_board",
+		"home.berth_label",
+		"home.manifest_label",
+		"home.tide_mark",
+	} {
+		if !strings.Contains(tplPageHome, token) {
+			t.Errorf("home page missing %q", token)
+		}
+	}
+	if !strings.Contains(tplI18nEn, `"home.cta_board"`) || !strings.Contains(tplI18nEn, "Come aboard") {
+		t.Error("en catalog missing home.cta_board")
+	}
+	if !strings.Contains(tplI18nPt, "Suba a bordo") {
+		t.Error("pt catalog missing boarding CTA")
+	}
+	if !strings.Contains(tplLayoutBaseOpen, `href="/login"`) {
+		t.Error("shell header should link to /login")
+	}
+	if !strings.Contains(tplHomeHandler, `"ActiveNav": "home"`) {
+		t.Error("home handler should set ActiveNav")
+	}
+}
+
 func TestLayoutTemplates_shellDesignTokens(t *testing.T) {
 	for name, tpl := range map[string]string{
 		"full":    tplLayout,
@@ -123,10 +151,10 @@ func TestLayoutTemplates_shellDesignTokens(t *testing.T) {
 		"blank":   tplLayoutBlank,
 	} {
 		for _, token := range []string{
-			"font-display",
-			"shadow-2xs",
+			"bg-ink",
+			"text-foam",
+			"text-copper",
 			"no-scrollbar",
-			"max-w-7xl",
 			"sticky top-0",
 		} {
 			if !strings.Contains(tpl, token) {

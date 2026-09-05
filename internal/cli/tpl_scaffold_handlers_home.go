@@ -27,7 +27,8 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Layout: "app",
 		Name:   "home",
 		Data: amarraData(r, h.site, map[string]any{
-			"Title": h.catalog.T("home.title"),
+			"Title":     h.catalog.T("home.title"),
+			"ActiveNav": "home",
 		}),
 	}, h.cfg)
 }

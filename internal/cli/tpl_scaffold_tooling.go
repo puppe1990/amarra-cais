@@ -6,7 +6,7 @@ const tplInputCSS = `@tailwind base;
 
 @layer base {
   body {
-    @apply font-sans antialiased text-slate-900 bg-slate-50;
+    @apply font-sans antialiased text-foam bg-ink;
   }
 }
 
@@ -26,6 +26,73 @@ const tplInputCSS = `@tailwind base;
     width: 14px;
     height: 14px;
     flex-shrink: 0;
+  }
+
+  .amarra-grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.11;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  @keyframes amarra-rise {
+    from {
+      opacity: 0;
+      transform: translateY(1.15rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes amarra-lantern {
+    0%,
+    100% {
+      opacity: 0.38;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.72;
+      transform: scale(1.08);
+    }
+  }
+
+  .amarra-rise {
+    animation-name: amarra-rise;
+    animation-duration: 0.85s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: both;
+  }
+
+  .amarra-rise-delay-1 {
+    animation-delay: 90ms;
+  }
+
+  .amarra-rise-delay-2 {
+    animation-delay: 180ms;
+  }
+
+  .amarra-rise-delay-3 {
+    animation-delay: 280ms;
+  }
+
+  .amarra-rise-delay-4 {
+    animation-delay: 380ms;
+  }
+
+  .amarra-lantern {
+    animation: amarra-lantern 6.5s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .amarra-rise,
+    .amarra-lantern {
+      animation: none;
+    }
   }
 
   .htmx-swapping {
@@ -356,10 +423,17 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        ink: "#081014",
+        foam: "#f3ead8",
+        copper: "#c9893a",
+        tide: "#14343c",
+      },
       fontFamily: {
-        sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
-        display: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
-        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+        sans: ["Avenir Next", "Segoe UI", "Helvetica Neue", "system-ui", "sans-serif"],
+        serif: ["Iowan Old Style", "Palatino Linotype", "Palatino", "Georgia", "serif"],
+        display: ["Iowan Old Style", "Palatino Linotype", "Palatino", "Georgia", "serif"],
+        mono: ["IBM Plex Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       boxShadow: {
         "2xs": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
