@@ -1,5 +1,6 @@
 import { morph } from "./morph.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
+import { visitIntoFrame } from "./frame.mjs";
 import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
 import { confirmOk, disableSubmit, requestMethod, restoreSubmit } from "./drive_form.mjs";
 import { captureScroll, focusFirstInvalid, restoreScroll } from "./drive_restore.mjs";
@@ -163,7 +164,11 @@ export function start(opts = {}) {
     if (!confirmOk(a, opts.confirm)) return;
     const method = requestMethod(a, "GET");
     event.preventDefault();
-    void visit(resolved?.href ?? href, { ...shared, method }).catch(() => emitDriveError(doc));
+    const hrefURL = resolved?.href ?? href;
+    void (async () => {
+      if (await visitIntoFrame(a, hrefURL, shared)) return;
+      await visit(hrefURL, { ...shared, method });
+    })().catch(() => emitDriveError(doc));
   });
 
   doc.addEventListener("submit", (event) => {
