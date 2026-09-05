@@ -34,7 +34,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"| `web/templates/pages/` | HTML pages |\n" +
 	"| `web/templates/components/` | App component overrides |\n" +
 	"| `web/static/` | CSS, `amarra.js`, PWA |\n\n" +
-	"Patch markers (do not remove): `registerRoutes`, `Close() error`, `<!-- cais:nav -->`.\n\n" +
+	"Patch markers (do not remove): `registerRoutes`, `Close() error`, `<!-- cais:nav -->`, `// cais:live-views`.\n\n" +
 	"## Amarra HTML\n\n" +
 	"Handlers render HTML via `view.Write`:\n\n" +
 	"```go\n" +
@@ -70,6 +70,8 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"amarra-cais g resource bookmark --fields title:string,url:url,notes:text?\n" +
 	"amarra-cais g model tag --fields name:string\n" +
 	"amarra-cais g migration add_notes\n" +
+	"amarra-cais g live counter         # WebSocket Live view + /live/counter\n" +
+	"amarra-cais g stream chat --live   # chat with Live WS (SSE is the default)\n" +
 	"amarra-cais g auth                 # if app was --blank/--minimal\n" +
 	"amarra-cais db migrate\n" +
 	"```\n\n" +

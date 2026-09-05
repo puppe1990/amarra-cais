@@ -57,7 +57,7 @@ Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go
 | `pkg/amarra/view/`        | HTML views: `Load`, `<.component>` expand, kit, `view.Write`                             |
 | `pkg/amarra/`             | Drive/Frame headers (`IsDrive`, `FrameID`)                                               |
 | `pkg/amarra/stream/`      | Named SSE ops (`append`, `prepend`, `replace`, `morph`, `remove`, `toast`)               |
-| `pkg/amarra/live/`        | Live WebSocket stub (`501` until slice B)                                                |
+| `pkg/amarra/live/`        | Live WebSocket hub (`Mount`/`Handle`/`Render`, in-process broadcast)                     |
 | `pkg/amarra/js/`          | Drive / Frame / Stream / Hook sources; esbuild → `pkg/cais/pwa/assets/amarra.js`         |
 | `pkg/cais/httpx/`         | Render and redirect helpers for handlers                                                 |
 | `pkg/cais/meta/`          | Open Graph / Twitter preview (`Site`, `PreviewHTML`)                                     |
@@ -205,7 +205,7 @@ Shipped kit (override in `web/templates/components/`): `form`, `input`, `button`
 
 `{{ linkTo "/x" "Label" }}` emits a Drive-enabled `<a data-amarra-drive="true">`. `<.form>` injects `data-amarra-drive="true"`.
 
-**Live** (`/amarra/live`) is a 501 stub in this slice. Do not invent a WebSocket protocol in CRUD handlers.
+**Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only.
 
 **Frontend TDD** — framework JS only:
 
