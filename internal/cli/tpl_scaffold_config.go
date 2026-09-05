@@ -20,7 +20,7 @@ tmp_dir = "tmp"
   entrypoint = ["./tmp/main"]
   delay = 1000
   exclude_dir = ["tmp", "data", "bin", "node_modules"]
-  include_ext = ["go"]
+  include_ext = ["go", "html", "css"]
   stop_on_error = true
 
 [log]

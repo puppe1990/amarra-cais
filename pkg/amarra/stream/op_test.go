@@ -17,6 +17,20 @@ func TestWriteOp_append(t *testing.T) {
 	}
 }
 
+func TestWriteOp_appendIncludesTarget(t *testing.T) {
+	rr := httptest.NewRecorder()
+	if err := WriteOp(rr, Op{Kind: "append", Target: "chat-history", HTML: "<p>hi</p>"}); err != nil {
+		t.Fatal(err)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "id: chat-history") {
+		t.Fatalf("missing target id, got %q", body)
+	}
+	if !strings.Contains(body, "event: append") || !strings.Contains(body, "data: <p>hi</p>") {
+		t.Fatalf("%q", body)
+	}
+}
+
 func TestWriteOp_toast(t *testing.T) {
 	rr := httptest.NewRecorder()
 	if err := WriteOp(rr, Op{Kind: "toast", HTML: "Saved!"}); err != nil {

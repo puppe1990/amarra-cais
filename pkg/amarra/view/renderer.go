@@ -26,7 +26,7 @@ type namedTemplateSrc struct {
 	src  string
 }
 
-// Load parses layouts, pages, and components once at boot.
+// Load parses layouts, pages, partials, and components once at boot.
 // Unknown <.component> tags fail here so apps do not serve broken views.
 func Load(fsys fs.FS, catalog *i18n.Catalog) (*Renderer, error) {
 	if catalog == nil {
@@ -38,12 +38,17 @@ func Load(fsys fs.FS, catalog *i18n.Catalog) (*Renderer, error) {
 		return nil, err
 	}
 
-	layouts, err := loadExpandedLayouts(fsys, components)
+	layouts, err := loadExpandedNamed(fsys, "layouts/*.html", components)
 	if err != nil {
 		return nil, err
 	}
 	if len(layouts) == 0 {
 		return nil, fmt.Errorf("no layout templates found")
+	}
+
+	partials, err := loadExpandedNamed(fsys, "partials/*.html", components)
+	if err != nil {
+		return nil, err
 	}
 
 	pagePaths, err := listPagePaths(fsys)
@@ -62,7 +67,7 @@ func Load(fsys fs.FS, catalog *i18n.Catalog) (*Renderer, error) {
 			return nil, fmt.Errorf("expand %s: %w", pagePath, err)
 		}
 		name := pageNameFromPath(pagePath)
-		tmpl, err := parsePageTemplates(layouts, name, expanded, catalog)
+		tmpl, err := parsePageTemplates(layouts, partials, name, expanded, catalog)
 		if err != nil {
 			return nil, fmt.Errorf("parse page %s: %w", name, err)
 		}
@@ -92,13 +97,13 @@ func loadComponentSources(fsys fs.FS) (map[string]string, error) {
 	return components, nil
 }
 
-func loadExpandedLayouts(fsys fs.FS, components map[string]string) ([]namedTemplateSrc, error) {
-	paths, err := fs.Glob(fsys, "layouts/*.html")
+func loadExpandedNamed(fsys fs.FS, pattern string, components map[string]string) ([]namedTemplateSrc, error) {
+	paths, err := fs.Glob(fsys, pattern)
 	if err != nil {
 		return nil, err
 	}
 	sort.Strings(paths)
-	layouts := make([]namedTemplateSrc, 0, len(paths))
+	out := make([]namedTemplateSrc, 0, len(paths))
 	for _, p := range paths {
 		raw, err := fs.ReadFile(fsys, p)
 		if err != nil {
@@ -108,9 +113,9 @@ func loadExpandedLayouts(fsys fs.FS, components map[string]string) ([]namedTempl
 		if err != nil {
 			return nil, fmt.Errorf("expand %s: %w", p, err)
 		}
-		layouts = append(layouts, namedTemplateSrc{name: path.Base(p), src: expanded})
+		out = append(out, namedTemplateSrc{name: path.Base(p), src: expanded})
 	}
-	return layouts, nil
+	return out, nil
 }
 
 func listPagePaths(fsys fs.FS) ([]string, error) {
@@ -134,17 +139,27 @@ func pageNameFromPath(pagePath string) string {
 	return strings.TrimPrefix(name, "pages/")
 }
 
-func parsePageTemplates(layouts []namedTemplateSrc, pageName, pageSrc string, catalog *i18n.Catalog) (*template.Template, error) {
+func parsePageTemplates(layouts, partials []namedTemplateSrc, pageName, pageSrc string, catalog *i18n.Catalog) (*template.Template, error) {
 	root := template.New("_amarra").Funcs(templateFuncs(catalog))
-	for _, layout := range layouts {
-		if _, err := root.New("layout:" + layout.name).Parse(layout.src); err != nil {
-			return nil, fmt.Errorf("layout %s: %w", layout.name, err)
-		}
+	if err := parseNamedSet(root, "layout", layouts); err != nil {
+		return nil, err
+	}
+	if err := parseNamedSet(root, "partial", partials); err != nil {
+		return nil, err
 	}
 	if _, err := root.New("page:" + pageName).Parse(pageSrc); err != nil {
 		return nil, err
 	}
 	return root, nil
+}
+
+func parseNamedSet(root *template.Template, kind string, srcs []namedTemplateSrc) error {
+	for _, src := range srcs {
+		if _, err := root.New(kind + ":" + src.name).Parse(src.src); err != nil {
+			return fmt.Errorf("%s %s: %w", kind, src.name, err)
+		}
+	}
+	return nil
 }
 
 // templateFuncs copies the merge in pkg/cais/render.go so jobsui/devlog can

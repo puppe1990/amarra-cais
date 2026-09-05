@@ -737,8 +737,8 @@ func TestCLI_NewMainUsesTemplateHotReload(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(air), `"html"`) {
-		t.Error(".air.toml should not rebuild on html; templates reload from disk in development")
+	if !strings.Contains(string(air), `"html"`) {
+		t.Error(".air.toml include_ext must include html so air rebuilds (and re-embeds) templates")
 	}
 }
 

@@ -187,3 +187,41 @@ func TestLoad_unknownComponentFailsBoot(t *testing.T) {
 		t.Fatal("expected boot error")
 	}
 }
+
+func TestLoad_parsesPartials(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html":       &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":        &fstest.MapFile{Data: []byte(`{{ define "content" }}{{ template "greeting" . }}{{ end }}`)},
+		"partials/greeting.html": &fstest.MapFile{Data: []byte(`{{ define "greeting" }}hi{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home"}, cais.Config{})
+	if rr.Code != 200 {
+		t.Fatalf("code %d body %q", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "hi") {
+		t.Fatalf("body %q", rr.Body.String())
+	}
+}
+
+func TestLoad_expandsComponentsInPartials(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html":       &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":        &fstest.MapFile{Data: []byte(`{{ define "content" }}{{ template "cta" . }}{{ end }}`)},
+		"partials/cta.html":      &fstest.MapFile{Data: []byte(`{{ define "cta" }}<.button type="submit">Go</.button>{{ end }}`)},
+		"components/button.html": &fstest.MapFile{Data: []byte(`<button type="{{ .Type }}">{{ .Inner }}</button>`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home"}, cais.Config{})
+	if !strings.Contains(rr.Body.String(), `<button type="submit">Go</button>`) {
+		t.Fatalf("body %q", rr.Body.String())
+	}
+}
