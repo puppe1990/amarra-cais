@@ -7,6 +7,7 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 )
 
@@ -16,6 +17,10 @@ func amarraData(r *http.Request, site meta.Site, extra map[string]any) map[strin
 		"Site":      s,
 		"CSRFToken": s.CSRFToken,
 		"Flash":     s.Flash,
+	}
+	if cat := i18n.CatalogFromRequest(r); cat != nil {
+		data["Locale"] = cat.Locale()
+		data["HTMLLang"] = cat.HTMLLang()
 	}
 	for k, v := range extra {
 		data[k] = v

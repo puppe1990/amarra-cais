@@ -87,6 +87,34 @@ func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
 	}
 }
 
+func TestScaffoldNewApp_includesLocaleToggle(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "localeapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "localeapp",
+		ModulePath: "github.com/puppe1990/localeapp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	layout, err := os.ReadFile(filepath.Join(appDir, "web/templates/layouts/app.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(layout), `<.locale-toggle`) {
+		t.Error("layouts/app.html should include <.locale-toggle />")
+	}
+	routes, err := os.ReadFile(filepath.Join(appDir, "internal/app/routes.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(routes), `r.Post("/locale"`) {
+		t.Error("routes.go should register POST /locale")
+	}
+	if _, err := os.Stat(filepath.Join(appDir, "internal/handlers/locale.go")); err != nil {
+		t.Errorf("missing locale handler: %v", err)
+	}
+}
+
 func TestScaffoldNewApp_htmlFirstNoInertia(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "demo")

@@ -6,7 +6,7 @@ const tplLayoutTitleDesc = `{{"{{"}} define "title" {{"}}"}}{{.AppName}}{{"{{"}}
 
 const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
 <!doctype html>
-<html lang="{{"{{"}} htmlLang {{"}}"}}">
+<html lang="{{"{{"}} if .HTMLLang {{"}}"}}{{"{{"}} .HTMLLang {{"}}"}}{{"{{"}} else {{"}}"}}{{"{{"}} htmlLang {{"}}"}}{{"{{"}} end {{"}}"}}">
   <head>
     <meta charset="UTF-8" />
     <script>
@@ -57,7 +57,8 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
             `
 
 const tplLayoutNavFull = `<!-- cais:nav -->
-            {{"{{"}} template "nav_links" . {{"}}"}}`
+            {{"{{"}} template "nav_links" . {{"}}"}}
+            <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />`
 
 const tplLayoutNavEmpty = `<!-- cais:nav -->`
 

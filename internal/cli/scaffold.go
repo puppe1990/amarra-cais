@@ -52,6 +52,8 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		"internal/handlers/dashboard.go":             tplDashboardHandler,
 		"internal/handlers/dashboard_test.go":        tplDashboardTest,
 		"internal/handlers/viewdata.go":              tplViewData,
+		"internal/handlers/locale.go":                tplLocaleHandler,
+		"internal/handlers/locale_test.go":           tplLocaleTest,
 		"internal/handlers/helpers_test.go":          tplHelpersTest,
 		"internal/models/contact.go":                 tplContactModel,
 		"internal/store/store.go":                    tplStore,
@@ -142,6 +144,8 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		delete(files, "internal/handlers/auth_test.go")
 		delete(files, "internal/handlers/auth_signup_test.go")
 		delete(files, "internal/handlers/auth_reset_test.go")
+		delete(files, "internal/handlers/locale.go")
+		delete(files, "internal/handlers/locale_test.go")
 		delete(files, "internal/models/contact.go")
 		delete(files, "internal/models/user.go")
 		delete(files, "internal/store/migrations/001_contacts.sql")

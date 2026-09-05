@@ -35,6 +35,7 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	r.Get("/reset-password", auth.ResetPassword)
 	r.Post("/reset-password", resetLimit.Middleware(http.HandlerFunc(auth.ResetPasswordPost)).ServeHTTP)
 	r.Post("/logout", auth.LogoutPost)
+	r.Post("/locale", handlers.PostLocale(cfg))
 	r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
 }
 
