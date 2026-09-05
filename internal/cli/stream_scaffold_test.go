@@ -70,13 +70,28 @@ func TestScaffoldStreamChat_CreatesFiles(t *testing.T) {
 	handler := string(chatBody)
 	for _, want := range []string{
 		`pkg/cais/chat`,
-		`chat.WriteStream`,
+		`stream.WriteOp`,
 		`chat.MessageBubble`,
-		`chat.WriteMessage`,
+		`view.Write`,
 	} {
 		if !strings.Contains(handler, want) {
 			t.Errorf("chat.go missing %q", want)
 		}
+	}
+	if strings.Contains(handler, "deps.Renderer") || strings.Contains(handler, "*cais.Renderer") {
+		t.Error("chat handler should use view.Renderer, not cais.Renderer")
+	}
+
+	page, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/chat.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pageBody := string(page)
+	if strings.Contains(pageBody, "hx-ext") || strings.Contains(pageBody, "hxChatForm") {
+		t.Error("chat page should not use hx-ext or hxChatForm")
+	}
+	if !strings.Contains(pageBody, "data-amarra") {
+		t.Error("chat page missing data-amarra stream hook")
 	}
 
 	testBody, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/chat_test.go"))
@@ -85,7 +100,7 @@ func TestScaffoldStreamChat_CreatesFiles(t *testing.T) {
 	}
 	tests := string(testBody)
 	for _, want := range []string{
-		`testutil.AssertChatMarkers`,
+		`data-amarra-stream`,
 		`TestChatHandler_Show_NotFound_Returns404`,
 		`TestChatHandler_PostMessage_ReturnsUserBubble`,
 	} {

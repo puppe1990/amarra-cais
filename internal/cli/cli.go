@@ -79,7 +79,8 @@ Usage:
   amarra-cais new <app> [dir] --minimal   Slim app (home only)
   amarra-cais new <app> [dir] --blank     Empty app (no starter content)
   amarra-cais new <app> [dir] --module <path>   Override go module path
-  amarra-cais g [--dry-run] handler <name>      Generate handler + test + page template
+  amarra-cais g [--dry-run] handler <name>      Generate handler + test + HTML page
+  amarra-cais g [--dry-run] component <name>    Generate HTML component with {{ .Inner }} slot
   amarra-cais g [--dry-run] resource <name> [--fields title:string,url:url] [--public] [--paginate] [--no-seed] [--force] [--admin-auth session|bearer]
   amarra-cais g [--dry-run] model <name> [--fields title:string,url:url]
   amarra-cais g [--dry-run] page <name>         Generate page template only
@@ -111,8 +112,8 @@ Usage:
   amarra-cais jobs retry|discard <id>
   amarra-cais jobs prune [--older 24h]
   amarra-cais routes [--verbose]    List HTTP routes from internal/app/routes.go
-  amarra-cais destroy [--dry-run] resource|handler|model <name>
-                             Remove generated resource, handler, or model files
+  amarra-cais destroy [--dry-run] resource|handler|model|component <name>
+                             Remove generated resource, handler, model, or component files
   amarra-cais destroy [--dry-run] auth             Remove login/auth scaffolding
   amarra-cais destroy [--dry-run] migration <name> Remove a generated SQL migration file
   amarra-cais version               Print Cais framework version
@@ -238,7 +239,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
-		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|migration|resource|model|stream|job|console|auth|ci> [name]")
+		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|component|migration|resource|model|stream|job|console|auth|ci> [name]")
 	}
 
 	kind := args[0]
@@ -277,6 +278,11 @@ func (c *CLI) cmdGenerate(args []string) error {
 			return fmt.Errorf("usage: amarra-cais g stream chat")
 		}
 		genErr = scaffoldStreamChat(cwd, streamOpts{dryRun: dryRun})
+	case "component":
+		if len(args) < 2 {
+			return fmt.Errorf("usage: amarra-cais g component <name>")
+		}
+		genErr = scaffoldComponent(cwd, args[1], dryRun)
 	case "handler", "page", "migration", "resource", "model":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais g %s <name>", kind)
@@ -305,7 +311,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 			genErr = scaffoldModel(cwd, name, opts)
 		}
 	default:
-		return fmt.Errorf("unknown generator %q (use handler, page, migration, resource, model, stream, auth, ci, app, or console)", kind)
+		return fmt.Errorf("unknown generator %q (use handler, page, component, migration, resource, model, stream, auth, ci, app, or console)", kind)
 	}
 	if genErr != nil {
 		return genErr

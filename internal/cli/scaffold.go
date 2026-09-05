@@ -192,6 +192,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 
 func scaffoldHandler(dir, name string, dryRun bool) error {
 	data := dataForHandler(name)
+	data.ModulePath = readModulePath(dir)
 	files := map[string]string{
 		filepath.Join("internal/handlers", data.Snake+".go"):      tplGenericHandler,
 		filepath.Join("internal/handlers", data.Snake+"_test.go"): tplGenericHandlerTest,

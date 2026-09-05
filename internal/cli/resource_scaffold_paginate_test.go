@@ -81,10 +81,13 @@ func TestScaffoldResource_Paginate(t *testing.T) {
 		t.Fatal(err)
 	}
 	partialBody := string(partial)
-	for _, needle := range []string{`<table`, `HasPrev`, `NextPage`} {
+	for _, needle := range []string{`<table`, `HasPrev`, `NextPage`, `linkTo`} {
 		if !strings.Contains(partialBody, needle) {
 			t.Errorf("admin index partial missing %q", needle)
 		}
+	}
+	if strings.Contains(partialBody, "hxPaginate") {
+		t.Error("paginated admin should not use hxPaginate")
 	}
 }
 

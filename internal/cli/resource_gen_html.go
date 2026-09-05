@@ -34,21 +34,18 @@ func buildAdminFormHTML(data scaffoldData) string {
 	}
 	return fmt.Sprintf(`{{ define "title" }}{{ if .IsNew }}New %s{{ else }}Edit %s{{ end }}{{ end }} {{ define "content" }}
 <div class="max-w-md mx-auto">
-  <a href="/admin/%s" class="text-sm text-indigo-600 hover:underline mb-4 inline-block">← Back</a>
+  {{ linkTo "/admin/%s" "← Back" }}
   <h1 class="text-3xl font-bold text-slate-900 mb-6">{{ if .IsNew }}New %s{{ else }}Edit %s{{ end }}</h1>
-  <form id="admin-%s-form" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4" method="post"
-    action="{{ if .IsNew }}/admin/%s{{ else }}/admin/%s/{{ .Item.ID }}{{ end }}"
-    {{ if .IsNew }}{{ hxForm "/admin/%s" "#admin-%s-errors" "" }}{{ else }}{{ hxForm (printf "/admin/%s/%%d" .Item.ID) "#admin-%s-errors" "" }}{{ end }}>
+  {{ $action := "/admin/%s" }}{{ if not .IsNew }}{{ $action = printf "/admin/%s/%%d" .Item.ID }}{{ end }}
+  <.form action="{{ $action }}" method="post">
     <div id="admin-%s-errors"></div>
     {{ csrfField .CSRFToken }}
 %s
-    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-xl transition">
-      {{ if .IsNew }}Create{{ else }}Save{{ end }}
-    </button>
-  </form>
+    <.button type="submit">{{ if .IsNew }}Create{{ else }}Save{{ end }}</.button>
+  </.form>
 </div>
 {{ end }}
-`, data.Title, data.Title, data.Plural, data.Title, data.Title, data.Snake, data.Plural, data.Plural, data.Plural, data.Snake, data.Plural, data.Snake, data.Snake, fields.String())
+`, data.Title, data.Title, data.Plural, data.Title, data.Title, data.Plural, data.Plural, data.Snake, fields.String())
 }
 
 func buildAdminFormErrorsPartial(data scaffoldData) string {
@@ -76,18 +73,18 @@ func buildAdminPaginationBlock(data scaffoldData) string {
 	}
 	return fmt.Sprintf(`    <div class="flex items-center justify-between px-6 py-4 border-t bg-slate-50">
       {{ if .HasPrev }}
-      <a href="/admin/%s?page={{ .PrevPage }}" {{ hxPaginate (printf "/admin/%s?page=%%d" .PrevPage) "#admin-%s" }} class="text-indigo-600 hover:underline">← Previous</a>
+      {{ linkTo (printf "/admin/%s?page=%%d" .PrevPage) "← Previous" }}
       {{ else }}
       <span></span>
       {{ end }}
       <span class="text-sm text-slate-500">Page {{ .Page }}</span>
       {{ if .HasNext }}
-      <a href="/admin/%s?page={{ .NextPage }}" {{ hxPaginate (printf "/admin/%s?page=%%d" .NextPage) "#admin-%s" }} class="text-indigo-600 hover:underline">Next →</a>
+      {{ linkTo (printf "/admin/%s?page=%%d" .NextPage) "Next →" }}
       {{ else }}
       <span></span>
       {{ end }}
     </div>
-`, data.Plural, data.Plural, data.Plural, data.Plural, data.Plural, data.Plural)
+`, data.Plural, data.Plural)
 }
 
 func buildAdminIndexPanel(data scaffoldData) string {
@@ -99,9 +96,12 @@ func buildAdminIndexPanel(data scaffoldData) string {
         <tr class="hover:bg-slate-50">
           <td class="px-6 py-4 font-medium">{{ .%s }}</td>
           <td class="px-6 py-4 text-right space-x-3">
-            <a href="/admin/%s/{{ .ID }}" class="text-indigo-600 hover:underline">View</a>
-            <a href="/admin/%s/{{ .ID }}/edit" class="text-slate-600 hover:underline">Edit</a>
-            <button type="button" class="text-red-600 hover:underline" hx-post="/admin/%s/{{ .ID }}/delete" hx-target="closest tr" hx-swap="delete" hx-confirm="Delete this item?" data-cais-optimistic="remove">Delete</button>
+            {{ linkTo (printf "/admin/%s/%%d" .ID) "View" }}
+            {{ linkTo (printf "/admin/%s/%%d/edit" .ID) "Edit" }}
+            <.form action="{{ printf "/admin/%s/%%d/delete" .ID }}" method="post">
+              {{ csrfField $.CSRFToken }}
+              <.button type="submit">Delete</.button>
+            </.form>
           </td>
         </tr>
         {{ else }}
@@ -131,11 +131,11 @@ func buildAdminIndexHTML(data scaffoldData) string {
 <div class="max-w-3xl mx-auto">
   <div class="flex items-center justify-between mb-8">
     <h1 class="text-3xl font-bold text-slate-900">%s</h1>
-    <a href="/admin/%s/new" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-xl transition shadow-sm">+ New</a>
+    {{ linkTo "/admin/%s/new" "+ New" }}
   </div>
-  <div id="admin-%s" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+  <amarra-frame id="admin-%s" class="block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 %s
-  </div>
+  </amarra-frame>
 </div>
 {{ end }}
 `, data.Title, data.Title, data.Plural, data.Plural, panel)
@@ -160,17 +160,24 @@ func buildAdminShowHTML(data scaffoldData) string {
 	}
 	return fmt.Sprintf(`{{ define "title" }}%s{{ end }} {{ define "content" }}
 <div class="max-w-md mx-auto">
-  <a href="/admin/%s" class="text-sm text-indigo-600 hover:underline mb-4 inline-block">← Back</a>
+  {{ linkTo "/admin/%s" "← Back" }}
   <h1 class="text-3xl font-bold text-slate-900 mb-6">%s</h1>
   <dl class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
 %s  </dl>
   <div class="mt-6 flex gap-3">
-    <a href="/admin/%s/{{ .Item.ID }}/edit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-xl transition shadow-sm">Edit</a>
-    <button type="button" class="text-red-600 hover:underline py-2 px-4" hx-post="/admin/%s/{{ .Item.ID }}/delete" hx-target="closest .max-w-md" hx-swap="delete" hx-confirm="Delete this item?" data-cais-optimistic="remove">Delete</button>
+    {{ linkTo (printf "/admin/%s/%%d/edit" .Item.ID) "Edit" }}
+    <.form action="{{ printf "/admin/%s/%%d/delete" .Item.ID }}" method="post">
+      {{ csrfField .CSRFToken }}
+      <.button type="submit">Delete</.button>
+    </.form>
   </div>
 </div>
 {{ end }}
 `, data.Title, data.Plural, data.Title, fields.String(), data.Plural, data.Plural)
+}
+
+func publicToggleForm(data scaffoldData, f FieldDef) string {
+	return fmt.Sprintf(`<.form action="{{ printf "/%s/%%d/toggle" .ID }}" method="post">{{ csrfField $.CSRFToken }}<button type="submit" class="cursor-pointer inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}Pending{{ end }}</button></.form>`, data.Plural, f.Pascal, f.Pascal, f.Pascal)
 }
 
 func buildPublicListItemHTML(data scaffoldData) string {
@@ -197,7 +204,7 @@ func buildPublicListItemHTML(data scaffoldData) string {
 		}
 		switch f.GoType {
 		case "bool":
-			meta = append(meta, fmt.Sprintf(`<span hx-post="/%s/{{ .ID }}/toggle" {{ hxMorphOuter }} hx-target="this" data-cais-optimistic="toggle" class="cursor-pointer inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}Pending{{ end }}</span>`, data.Plural, f.Pascal, f.Pascal, f.Pascal))
+			meta = append(meta, publicToggleForm(data, f))
 		case "int64", "*int64", "float64", "*float64":
 			meta = append(meta, fmt.Sprintf(`<span class="text-sm text-slate-500">%s: {{ .%s }}</span>`, f.Pascal, f.Pascal))
 		}
@@ -224,18 +231,18 @@ func buildPublicPaginationBlock(data scaffoldData) string {
 	}
 	return fmt.Sprintf(`  <div class="flex items-center justify-between mt-6">
     {{ if .HasPrev }}
-    <a href="/%s?page={{ .PrevPage }}" {{ hxPaginate (printf "/%s?page=%%d" .PrevPage) "#%s-panel" }} class="text-indigo-600 hover:underline">← Previous</a>
+    {{ linkTo (printf "/%s?page=%%d" .PrevPage) "← Previous" }}
     {{ else }}
     <span></span>
     {{ end }}
     <span class="text-sm text-slate-500">Page {{ .Page }}</span>
     {{ if .HasNext }}
-    <a href="/%s?page={{ .NextPage }}" {{ hxPaginate (printf "/%s?page=%%d" .NextPage) "#%s-panel" }} class="text-indigo-600 hover:underline">Next →</a>
+    {{ linkTo (printf "/%s?page=%%d" .NextPage) "Next →" }}
     {{ else }}
     <span></span>
     {{ end }}
   </div>
-`, data.Plural, data.Plural, data.Plural, data.Plural, data.Plural, data.Plural)
+`, data.Plural, data.Plural)
 }
 
 func buildPublicListPanel(data scaffoldData) string {
@@ -277,11 +284,11 @@ func buildPublicListHTML(data scaffoldData) string {
 	}
 	listBlock := buildPublicListPanel(data)
 	if data.Paginate {
-		listBlock = fmt.Sprintf(`  <div id="%s-panel">
+		listBlock = fmt.Sprintf(`  <amarra-frame id="%s-panel">
 {{ template "%s_list" . }}
-  </div>`, data.Plural, data.Plural)
+  </amarra-frame>`, data.Plural, data.Plural)
 	} else {
-		listBlock = "  " + listBlock
+		listBlock = fmt.Sprintf("  <amarra-frame id=\"%s-panel\">\n%s  </amarra-frame>\n", data.Plural, listBlock)
 	}
 	return fmt.Sprintf(`{{ define "title" }}%s{{ end }} {{ define "content" }}
 <div class="max-w-2xl mx-auto">
@@ -297,6 +304,6 @@ func buildPublicTogglePartial(data scaffoldData) string {
 	if boolField == nil {
 		return ""
 	}
-	return fmt.Sprintf(`{{- define "%s_toggle" -}}<span hx-post="/%s/{{ .ID }}/toggle" {{ hxMorphOuter }} hx-target="this" data-cais-optimistic="toggle" class="cursor-pointer inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}Pending{{ end }}</span>{{- end -}}
-`, data.Plural, data.Plural, boolField.Pascal, boolField.Pascal, boolField.Pascal)
+	return fmt.Sprintf(`{{- define "%s_toggle" -}}%s{{- end -}}
+`, data.Plural, publicToggleForm(data, *boolField))
 }

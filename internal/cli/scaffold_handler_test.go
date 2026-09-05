@@ -1,11 +1,37 @@
 package cli
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestGenerateHandler_writesHTMLNotSvelte(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := filepath.Join(t.TempDir(), "app")
+	if err := scaffoldNewApp(dir, scaffoldData{AppName: "app", ModulePath: "example.com/app"}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+	if err := (&CLI{Out: io.Discard}).Run([]string{"g", "handler", "settings"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/templates/pages/settings.html")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/src/pages/Settings.svelte")); err == nil {
+		t.Fatal("svelte page should not exist")
+	}
+	src, _ := os.ReadFile(filepath.Join(dir, "internal/handlers/settings.go"))
+	if strings.Contains(string(src), "inertia") {
+		t.Fatal("handler still references inertia")
+	}
+	if !strings.Contains(string(src), "view.Write") {
+		t.Fatal("handler missing view.Write")
+	}
+}
 
 func TestScaffoldHandler_AfterResourceRoutesCompile(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")

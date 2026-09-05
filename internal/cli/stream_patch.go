@@ -177,8 +177,17 @@ func patchRoutesForStreamChat(dir string, dryRun bool) error {
 		return nil
 	}
 
+	if !strings.Contains(content, frameworkModule+"/pkg/cais/middleware") {
+		content = strings.Replace(content,
+			`"`+frameworkModule+`/pkg/cais"`,
+			`"`+frameworkModule+`/pkg/cais"
+	"`+frameworkModule+`/pkg/cais/middleware"`,
+			1,
+		)
+	}
+
 	insert := `
-	chat := handlers.NewChatHandler(deps.Renderer, deps.Store, deps.Site, deps.Catalog, cfg)
+	chat := handlers.NewChatHandler(deps.Views, deps.Store, deps.Site, deps.Catalog, cfg)
 	r.Group(middleware.RequireAuth("/login"), func(g *cais.Router) {
 		g.Get("/chat", chat.List)
 		g.Post("/chat", chat.Create)
@@ -218,7 +227,7 @@ func patchLayoutNavForStreamChat(dir string, dryRun bool) error {
 		navLink = `    <a href="/chat" use:inertia class="underline">Chat</a>
 `
 	} else {
-		navLink = `          <a href="/chat" data-cais-nav="/chat" hx-boost="true" hx-target="#cais-main" hx-select="#cais-main" hx-push-url="true" hx-swap="morph:innerHTML" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100">Chat</a>
+		navLink = `          <a href="/chat" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100">Chat</a>
 `
 	}
 	content = strings.Replace(content, marker, navLink+marker, 1)

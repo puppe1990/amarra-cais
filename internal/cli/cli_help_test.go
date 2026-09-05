@@ -54,6 +54,17 @@ func TestCLI_Help_IncludesResource(t *testing.T) {
 	}
 }
 
+func TestCLI_Help_IncludesComponent(t *testing.T) {
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	if err := c.Run([]string{"help"}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "component") {
+		t.Error("help missing g component")
+	}
+}
+
 func TestCLI_Help_IncludesModuleFlag(t *testing.T) {
 	var buf bytes.Buffer
 	c := &CLI{Out: &buf}

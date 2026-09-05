@@ -31,6 +31,36 @@ func TestScaffoldMinimalApp_hasNoAuthOrphans(t *testing.T) {
 	}
 }
 
+func TestDestroyHandler_removesLeftoverSvelte(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "leftover")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "leftover",
+		ModulePath: "github.com/puppe1990/leftover",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldHandler(appDir, "settings", false); err != nil {
+		t.Fatal(err)
+	}
+	svelte := filepath.Join(appDir, "web/src/pages/Settings.svelte")
+	if err := os.MkdirAll(filepath.Dir(svelte), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(svelte, []byte("<h1>old</h1>"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := destroyHandler(appDir, "settings", false, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(appDir, "web/templates/pages/settings.html")); err == nil {
+		t.Error("expected settings.html removed")
+	}
+	if _, err := os.Stat(svelte); err == nil {
+		t.Error("expected leftover Settings.svelte removed")
+	}
+}
+
 func TestDestroyResource_removesGeneratedFiles(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "destapp")

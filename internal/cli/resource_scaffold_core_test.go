@@ -1,11 +1,45 @@
 package cli
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestGenerateResource_writesHTMLNotSvelte(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := filepath.Join(t.TempDir(), "app")
+	if err := scaffoldNewApp(dir, scaffoldData{AppName: "app", ModulePath: "example.com/app"}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+	if err := (&CLI{Out: io.Discard}).Run([]string{"g", "resource", "item", "--fields", "name:string", "--no-seed"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/src/pages/AdminItems.svelte")); err == nil {
+		t.Fatal("svelte admin page should not exist")
+	}
+	form, err := os.ReadFile(filepath.Join(dir, "web/templates/pages/admin_item_form.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	formBody := string(form)
+	if !strings.Contains(formBody, "<.form") && !strings.Contains(formBody, "csrfField") {
+		t.Fatal("admin form should use <.form or csrfField")
+	}
+	if strings.Contains(formBody, "hxForm") {
+		t.Fatal("admin form still uses hxForm")
+	}
+	index, err := os.ReadFile(filepath.Join(dir, "web/templates/pages/admin_items.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(index), "<amarra-frame") {
+		t.Fatal("admin list should wrap table in amarra-frame")
+	}
+}
 
 func TestScaffoldResource_CreatesCRUD(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")

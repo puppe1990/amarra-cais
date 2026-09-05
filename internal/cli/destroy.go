@@ -127,6 +127,7 @@ func destroyHandler(dir, name string, dryRun, force bool) error {
 		filepath.Join("internal/handlers", data.Snake+".go"),
 		filepath.Join("internal/handlers", data.Snake+"_test.go"),
 		filepath.Join("web/templates/pages", data.Snake+".html"),
+		filepath.Join("web/src/pages", data.Pascal+".svelte"),
 	}
 	if err := removeGeneratedFiles(dir, files, dryRun, force); err != nil {
 		return err
@@ -365,7 +366,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
-		return fmt.Errorf("usage: amarra-cais destroy [--dry-run] <resource|handler|model|auth|migration> [name]")
+		return fmt.Errorf("usage: amarra-cais destroy [--dry-run] <resource|handler|model|component|auth|migration> [name]")
 	}
 
 	cwd, err := os.Getwd()
@@ -379,7 +380,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 	kind := args[0]
 	var genErr error
 	switch kind {
-	case "resource", "handler", "model", "migration":
+	case "resource", "handler", "model", "migration", "component":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais destroy [--dry-run] %s <name>", kind)
 		}
@@ -393,6 +394,8 @@ func (c *CLI) cmdDestroy(args []string) error {
 			genErr = destroyModel(cwd, name, dryRun, force)
 		case "migration":
 			genErr = destroyMigration(cwd, name, dryRun)
+		case "component":
+			genErr = destroyComponent(cwd, name, dryRun, force)
 		}
 		if genErr != nil {
 			return genErr
@@ -412,7 +415,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 			_, _ = fmt.Fprintln(c.Out, "=> Removed auth")
 		}
 	default:
-		return fmt.Errorf("unknown destroy target %q (use resource, handler, model, auth, or migration)", kind)
+		return fmt.Errorf("unknown destroy target %q (use resource, handler, model, component, auth, or migration)", kind)
 	}
 	return nil
 }
