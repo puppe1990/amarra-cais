@@ -4,7 +4,10 @@ import { wsURL, liveRoot, eventName, formPayload, applyLiveMessage } from "./liv
 
 test("wsURL uses ws and query", () => {
   assert.equal(
-    wsURL({ protocol: "http:", host: "localhost:8080" }, { view: "counter", topic: "counter:home" }),
+    wsURL(
+      { protocol: "http:", host: "localhost:8080" },
+      { view: "counter", topic: "counter:home" }
+    ),
     "ws://localhost:8080/amarra/live?view=counter&topic=counter%3Ahome"
   );
   assert.equal(
@@ -14,8 +17,17 @@ test("wsURL uses ws and query", () => {
 });
 
 test("liveRoot finds amarra-live ancestor", () => {
-  const root = { getAttribute: () => "counter", closest(sel) { return sel === "[amarra-live]" ? root : null; } };
-  const child = { closest(sel) { return sel === "[amarra-live]" ? root : null; } };
+  const root = {
+    getAttribute: () => "counter",
+    closest(sel) {
+      return sel === "[amarra-live]" ? root : null;
+    },
+  };
+  const child = {
+    closest(sel) {
+      return sel === "[amarra-live]" ? root : null;
+    },
+  };
   assert.equal(liveRoot(child), root);
   assert.equal(liveRoot(null), null);
 });
