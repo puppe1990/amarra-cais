@@ -1,6 +1,7 @@
 package view
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"log"
@@ -13,26 +14,33 @@ import (
 type Page struct {
 	Layout string // default "app"
 	Name   string // "home", "items/index"
-	Frame  string // optional define name "frame:cart"
+	Frame  string // frame id (e.g. "cart"); fragment only when Amarra-Frame is set
 	Data   any
 	Status int
 }
 
 // Write renders a full layout+page, a Drive document (layout kept so JS can
 // morph #amarra-main), or a Frame fragment (frame:<id> only — no shell).
+// Status is committed only after the template executes so a missing page/frame
+// cannot stick a 422 on a 500 error body.
 func Write(w http.ResponseWriter, r *http.Request, rec *Renderer, p Page, cfg cais.Config) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if p.Status != 0 {
-		w.WriteHeader(p.Status)
-	}
 	tmpl, err := rec.lookupPage(p.Name)
 	if err != nil {
 		writeRenderError(w, err, cfg)
 		return
 	}
 	name := writeTemplateName(r, p)
-	if err := tmpl.ExecuteTemplate(w, name, p.Data); err != nil {
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, name, p.Data); err != nil {
 		writeRenderError(w, err, cfg)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if p.Status != 0 {
+		w.WriteHeader(p.Status)
+	}
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		log.Printf("write html: %v", err)
 	}
 }
 
@@ -49,16 +57,12 @@ func (rec *Renderer) lookupPage(name string) (*template.Template, error) {
 	return tmpl, nil
 }
 
-// writeTemplateName prefers Amarra-Frame, then Page.Frame, else the layout.
-// Frame names are sibling {{ define "frame:<id>" }} in the page file —
-// html/template rejects nested define inside content.
+// writeTemplateName uses Amarra-Frame when present; otherwise the layout.
+// html/template rejects nested define inside content — frames are sibling
+// {{ define "frame:<id>" }} in the page file.
 func writeTemplateName(r *http.Request, p Page) string {
-	frameID := amarra.FrameID(r)
-	if frameID == "" {
-		frameID = p.Frame
-	}
-	if frameID != "" {
-		return "frame:" + frameID
+	if id := amarra.FrameID(r); id != "" {
+		return "frame:" + id
 	}
 	if p.Layout == "" {
 		return "app"

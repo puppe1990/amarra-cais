@@ -70,6 +70,78 @@ func TestWrite_frame(t *testing.T) {
 	}
 }
 
+func TestWrite_pageFrameWithoutHeaderRendersLayout(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	Write(rr, req, rec, Page{Layout: "app", Name: "home", Frame: "box", Data: map[string]string{"Title": "Hi"}}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, `id="amarra-main"`) || !strings.Contains(body, "<h1>Hi</h1>") {
+		t.Fatalf("full page missing layout: %q", body)
+	}
+	if !strings.Contains(body, `id="amarra-nav"`) {
+		t.Fatalf("got fragment only: %q", body)
+	}
+}
+
+func TestWrite_missingFrame_doesNotKeepStatus(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(amarra.HeaderFrame, "nope")
+	Write(rr, req, rec, Page{Name: "home", Status: 422, Data: map[string]string{"Title": "Hi"}}, cais.Config{Env: "production"})
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("code %d, want 500", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "internal server error") {
+		t.Fatalf("body %q", body)
+	}
+	if strings.Contains(body, "nope") || strings.Contains(body, "no such template") {
+		t.Fatalf("leaked template error: %q", body)
+	}
+}
+
+func TestWrite_missingPage_development(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Name: "missing"}, cais.Config{Env: "development"})
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("code %d, want 500", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "not found") {
+		t.Fatalf("should show error details, got %q", rr.Body.String())
+	}
+}
+
+func TestWrite_missingPage_production(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Name: "missing"}, cais.Config{Env: "production"})
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("code %d, want 500", rr.Code)
+	}
+	body := rr.Body.String()
+	if strings.Contains(body, "not found") || strings.Contains(body, "missing") {
+		t.Fatalf("should not leak page name, got %q", body)
+	}
+	if !strings.Contains(body, "internal server error") {
+		t.Fatalf("body %q", body)
+	}
+}
+
 func TestLoad_expandsComponents(t *testing.T) {
 	fsys := fstest.MapFS{
 		"layouts/app.html":       &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
