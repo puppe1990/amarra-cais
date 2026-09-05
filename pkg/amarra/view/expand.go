@@ -70,11 +70,7 @@ func dynamicAttrExpr(value string) (string, bool) {
 }
 
 func rewriteComponentBody(body string, attrs []componentAttr, inner string) string {
-	for _, attr := range attrs {
-		pascal := attrPascal(attr.Name)
-		re := regexp.MustCompile(`\{\{\s*\.` + regexp.QuoteMeta(pascal) + `\s*\}\}`)
-		body = re.ReplaceAllLiteralString(body, "{{ $"+attr.Name+" }}")
-	}
+	body = rewriteAttrIdents(body, attrs)
 	return innerAction.ReplaceAllLiteralString(body, inner)
 }
 

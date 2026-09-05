@@ -73,11 +73,14 @@ func Load(fsys fs.FS, catalog *i18n.Catalog) (*Renderer, error) {
 }
 
 func loadComponentSources(fsys fs.FS) (map[string]string, error) {
+	components, err := readShippedComponents()
+	if err != nil {
+		return nil, err
+	}
 	paths, err := fs.Glob(fsys, "components/*.html")
 	if err != nil {
 		return nil, err
 	}
-	components := make(map[string]string, len(paths))
 	for _, p := range paths {
 		raw, err := fs.ReadFile(fsys, p)
 		if err != nil {
@@ -155,5 +158,8 @@ func templateFuncs(catalog *i18n.Catalog) template.FuncMap {
 		extra[k] = v
 	}
 	extra["formatMoney"] = money.FormatBRL
+	for k, v := range helperFuncs() {
+		extra[k] = v
+	}
 	return i18n.MergeFuncs(catalog, extra)
 }

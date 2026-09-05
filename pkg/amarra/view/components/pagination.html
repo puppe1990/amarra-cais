@@ -1,0 +1,13 @@
+<nav class="flex items-center justify-between">
+  {{ if .HasPrev }}
+  <a href="?page={{ .PrevPage }}" data-amarra-drive="true" class="text-indigo-600 hover:underline">← Previous</a>
+  {{ else }}
+  <span></span>
+  {{ end }}
+  <span class="text-sm text-slate-500">Page {{ .Page }}</span>
+  {{ if .HasNext }}
+  <a href="?page={{ .NextPage }}" data-amarra-drive="true" class="text-indigo-600 hover:underline">Next →</a>
+  {{ else }}
+  <span></span>
+  {{ end }}
+</nav>

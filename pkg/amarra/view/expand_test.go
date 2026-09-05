@@ -109,3 +109,84 @@ func TestExpandAll_nestedSameAttrDoesNotLeak(t *testing.T) {
 		t.Errorf("parent title leaked/overwritten: %q", out)
 	}
 }
+
+func TestExpandAll_ifAttrUsesDollar(t *testing.T) {
+	components := map[string]string{
+		"input": `{{ if .Error }}<p>{{ .Error }}</p>{{ end }}`,
+	}
+	got, err := ExpandAll(`<.input error="invalid" />`, components)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl, err := template.New("t").Parse(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, map[string]any{}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "invalid") {
+		t.Fatalf("if .Error not rewritten to $error: expanded=%q out=%q", got, buf.String())
+	}
+}
+
+func TestExpandAll_withAndPipelineUseDollar(t *testing.T) {
+	components := map[string]string{
+		"badge": `{{ with .Label }}<b>{{ . }}</b>{{ end }}{{ if eq .Kind "warn" }}!{{ end }}`,
+	}
+	got, err := ExpandAll(`<.badge label="Hi" kind="warn" />`, components)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl, err := template.New("t").Parse(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, map[string]any{}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "<b>Hi</b>") || !strings.Contains(out, "!") {
+		t.Fatalf("with/pipeline not rewritten: expanded=%q out=%q", got, out)
+	}
+}
+
+func TestExpandAll_rangeAttrUsesDollar(t *testing.T) {
+	components := map[string]string{
+		"list": `{{ range .Items }}<li>{{ . }}</li>{{ end }}`,
+	}
+	got, err := ExpandAll(`<.list items="{{ .Names }}" />`, components)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl, err := template.New("t").Parse(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, map[string]any{"Names": []string{"a", "b"}}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "<li>a</li>") || !strings.Contains(out, "<li>b</li>") {
+		t.Fatalf("range .Items not rewritten to $items: expanded=%q out=%q", got, out)
+	}
+}
+
+func TestExpandAll_unspecifiedIdentStaysDot(t *testing.T) {
+	components := map[string]string{
+		"flash": `{{ if .Flash }}{{ .Flash }}{{ end }}`,
+	}
+	got, err := ExpandAll(`<.flash />`, components)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got, ".Flash") {
+		t.Fatalf("page .Flash was rewritten: %q", got)
+	}
+	if strings.Contains(got, "$flash") || strings.Contains(got, "$Flash") {
+		t.Fatalf("unexpected attr rewrite: %q", got)
+	}
+}
