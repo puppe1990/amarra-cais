@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+
 	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
 )
 
@@ -67,7 +68,7 @@ func TestHandler_missingView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("code %d, want 400", resp.StatusCode)
 	}
@@ -88,7 +89,7 @@ func TestLive_joinAndInc(t *testing.T) {
 	s := httptest.NewServer(testHub().Handler())
 	t.Cleanup(s.Close)
 	c := dialLive(t, s, "counter", "tok")
-	defer c.Close(websocket.StatusNormalClosure, "")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
 
 	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "tok"})
 	ok := readJSON(t, c)
@@ -111,7 +112,7 @@ func TestLive_csrfRejects(t *testing.T) {
 	s := httptest.NewServer(testHub().Handler())
 	t.Cleanup(s.Close)
 	c := dialLive(t, s, "counter", "tok")
-	defer c.Close(websocket.StatusNormalClosure, "")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
 	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "nope"})
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -125,7 +126,7 @@ func TestLive_unknownEventStaysUp(t *testing.T) {
 	s := httptest.NewServer(testHub().Handler())
 	t.Cleanup(s.Close)
 	c := dialLive(t, s, "counter", "tok")
-	defer c.Close(websocket.StatusNormalClosure, "")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
 	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "tok"})
 	_ = readJSON(t, c)
 	writeJSON(t, c, inMsg{Type: typeEvent, Event: "nope", Ref: "9"})
@@ -146,7 +147,7 @@ func TestLive_maxConns(t *testing.T) {
 	s := httptest.NewServer(h.Handler())
 	t.Cleanup(s.Close)
 	c1 := dialLive(t, s, "counter", "tok")
-	defer c1.Close(websocket.StatusNormalClosure, "")
+	defer func() { _ = c1.Close(websocket.StatusNormalClosure, "") }()
 	writeJSON(t, c1, inMsg{Type: typeJoin, CSRF: "tok"})
 	_ = readJSON(t, c1)
 
@@ -170,8 +171,8 @@ func TestLive_broadcast(t *testing.T) {
 	t.Cleanup(s.Close)
 	c1 := dialLive(t, s, "counter", "tok")
 	c2 := dialLive(t, s, "counter", "tok")
-	defer c1.Close(websocket.StatusNormalClosure, "")
-	defer c2.Close(websocket.StatusNormalClosure, "")
+	defer func() { _ = c1.Close(websocket.StatusNormalClosure, "") }()
+	defer func() { _ = c2.Close(websocket.StatusNormalClosure, "") }()
 	writeJSON(t, c1, inMsg{Type: typeJoin, CSRF: "tok"})
 	writeJSON(t, c2, inMsg{Type: typeJoin, CSRF: "tok"})
 	_ = readJSON(t, c1)
@@ -191,7 +192,7 @@ func TestLive_panicCloses(t *testing.T) {
 	s := httptest.NewServer(h.Handler())
 	t.Cleanup(s.Close)
 	c := dialLive(t, s, "boom", "tok")
-	defer c.Close(websocket.StatusNormalClosure, "")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
 	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "tok"})
 	_ = readJSON(t, c)
 	writeJSON(t, c, inMsg{Type: typeEvent, Event: "inc", Ref: "1"})
