@@ -259,8 +259,8 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	if !strings.Contains(appGoBody, "Views     *view.Renderer") {
 		t.Error("app.go should wire *view.Renderer in Deps")
 	}
-	if !strings.Contains(appGoBody, `r.Handle("/amarra/live", live.Handler())`) {
-		t.Error("app.New must register live.Handler at /amarra/live")
+	if !strings.Contains(appGoBody, `r.Handle("GET /amarra/live", live.Handler())`) {
+		t.Error("app.New must register live.Handler as GET /amarra/live")
 	}
 	if !strings.Contains(appGoBody, "jobsui.Register") {
 		t.Error("app.go should mount the localhost /jobs dashboard")

@@ -38,6 +38,27 @@ func TestRegister_NonConflictingWildcardOK(t *testing.T) {
 	r.Get("/users/me", func(http.ResponseWriter, *http.Request) {})
 }
 
+func TestHandle_allMethodsConflictsWithGetRoot(t *testing.T) {
+	r := NewRouter()
+	r.Get("/", func(http.ResponseWriter, *http.Request) {})
+	defer func() {
+		rec := recover()
+		if rec == nil {
+			t.Fatal("expected panic registering all-method /amarra/live after GET /")
+		}
+		if !strings.Contains(fmt.Sprint(rec), "/amarra/live") {
+			t.Errorf("panic should mention /amarra/live, got: %v", rec)
+		}
+	}()
+	r.Handle("/amarra/live", http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+}
+
+func TestHandle_getLiveDoesNotConflictWithGetRoot(t *testing.T) {
+	r := NewRouter()
+	r.Get("/", func(http.ResponseWriter, *http.Request) {})
+	r.Handle("GET /amarra/live", http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+}
+
 func TestPatternsConflict_servemuxExamples(t *testing.T) {
 	cases := []struct {
 		a, b    string

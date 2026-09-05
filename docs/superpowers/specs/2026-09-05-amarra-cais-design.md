@@ -21,19 +21,19 @@ Cais v0.11.x stays the Inertia product. Apps generated there do not migrate auto
 
 ## Identity
 
-| Layer | Name | Role |
-| --- | --- | --- |
-| Forked framework | **amarra-cais** | CLI, router, session, CSRF, jobs, SQLite, PWA, generators |
-| Front library | **Amarra** | Views, Drive, Frame, Stream, Live, Hook |
-| Frozen line | **Cais v0.11.x** | Inertia + Svelte |
+| Layer            | Name             | Role                                                      |
+| ---------------- | ---------------- | --------------------------------------------------------- |
+| Forked framework | **amarra-cais**  | CLI, router, session, CSRF, jobs, SQLite, PWA, generators |
+| Front library    | **Amarra**       | Views, Drive, Frame, Stream, Live, Hook                   |
+| Frozen line      | **Cais v0.11.x** | Inertia + Svelte                                          |
 
-| Surface | Value |
-| --- | --- |
-| GitHub / Go module | `github.com/puppe1990/amarra-cais` |
-| CLI binary | `amarra-cais` (does not overwrite `cais`) |
-| JS bundle | `/static/js/amarra.js` |
-| Core packages (copied) | `github.com/puppe1990/amarra-cais/pkg/cais` |
-| Front packages | `github.com/puppe1990/amarra-cais/pkg/amarra` |
+| Surface                | Value                                         |
+| ---------------------- | --------------------------------------------- |
+| GitHub / Go module     | `github.com/puppe1990/amarra-cais`            |
+| CLI binary             | `amarra-cais` (does not overwrite `cais`)     |
+| JS bundle              | `/static/js/amarra.js`                        |
+| Core packages (copied) | `github.com/puppe1990/amarra-cais/pkg/cais`   |
+| Front packages         | `github.com/puppe1990/amarra-cais/pkg/amarra` |
 
 Do not rename every internal `pkg/cais/*` type in slice A. Docs and CLI copy say **amarra-cais** for the framework and **Amarra** for templates, `amarra-click`, and JS.
 
@@ -67,11 +67,11 @@ Public HTML contract: `data-amarra-*`, `amarra-click` / `amarra-change` / `amarr
 
 Handlers do not check `HX-Request`. They call `view.Write`.
 
-| Generator | Runtime |
-| --- | --- |
-| `amarra-cais new`, `g handler`, `g resource`, `g auth` | Drive + Frame + Hook |
-| `amarra-cais g stream chat` | Stream (SSE) in slice A; Live on the same generator in slice B |
-| Live dashboard / counters | `amarra.Live` registered explicitly |
+| Generator                                              | Runtime                                                        |
+| ------------------------------------------------------ | -------------------------------------------------------------- |
+| `amarra-cais new`, `g handler`, `g resource`, `g auth` | Drive + Frame + Hook                                           |
+| `amarra-cais g stream chat`                            | Stream (SSE) in slice A; Live on the same generator in slice B |
+| Live dashboard / counters                              | `amarra.Live` registered explicitly                            |
 
 CRUD does not open a WebSocket.
 
@@ -135,8 +135,17 @@ web/templates/
 
 ```html
 {{/* components/button.html — attrs: type, class, click */}}
-<button type="{{ .Type }}" class="{{ .Class }}"
-  {{ if .Click }}amarra-click="{{ .Click }}"{{ end }}>
+<button
+  type="{{ .Type }}"
+  class="{{ .Class }}"
+  {{
+  if
+  .Click
+  }}amarra-click="{{ .Click }}"
+  {{
+  end
+  }}
+>
   {{ .Inner }}
 </button>
 ```
@@ -156,16 +165,16 @@ These are HTML attributes. `amarra.js` listens. Live Go dispatches the event nam
 
 ### Helpers
 
-| Rails / Phoenix | Amarra |
-| --- | --- |
-| `form_with` | `<.form>` (injects CSRF) |
-| `f.text_field` | `<.input>` |
-| `link_to` | `{{ linkTo "/x" "Label" }}` (Drive) |
-| `render "form"` | `{{ render "items/_form" . }}` |
-| `render @items` | `{{ renderEach "item_row" .Items }}` |
-| `yield` / `content_for` | layout `{{ template "content" . }}` |
-| `<.flash>` | `<.flash />` |
-| `phx-click` | `amarra-click` |
+| Rails / Phoenix         | Amarra                               |
+| ----------------------- | ------------------------------------ |
+| `form_with`             | `<.form>` (injects CSRF)             |
+| `f.text_field`          | `<.input>`                           |
+| `link_to`               | `{{ linkTo "/x" "Label" }}` (Drive)  |
+| `render "form"`         | `{{ render "items/_form" . }}`       |
+| `render @items`         | `{{ renderEach "item_row" .Items }}` |
+| `yield` / `content_for` | layout `{{ template "content" . }}`  |
+| `<.flash>`              | `<.flash />`                         |
+| `phx-click`             | `amarra-click`                       |
 
 ### Shipped kit
 
@@ -229,19 +238,19 @@ input.css, tailwind.config.js
 
 ### CLI map
 
-| Command | Slice A behavior |
-| --- | --- |
-| `amarra-cais new` | Amarra scaffold (full / `--minimal` / `--blank`) |
-| `g handler` | Go handler + `pages/X.html` + HTML test |
-| `g resource` | Drive/Frame CRUD, `_form` partial, kit components |
-| `g auth` | HTML auth pages + Amarra forms |
-| `g component` | `components/X.html` + render test |
-| `g stream chat` | Stream SSE (Live in slice B on the same generator) |
-| `dev` | air + Tailwind watch. No Vite |
-| `install` | `go mod tidy` + npm only for Tailwind/postcss |
-| `build` | `go build` + CSS. No SPA `npm run build` |
-| `doctor` | `amarra.js`, templates, PWA; fail if Vite/Inertia present |
-| `pwa` | `InstallForAmarra`: network-first HTML + `amarra.js`; no `/static/build/` |
+| Command           | Slice A behavior                                                          |
+| ----------------- | ------------------------------------------------------------------------- |
+| `amarra-cais new` | Amarra scaffold (full / `--minimal` / `--blank`)                          |
+| `g handler`       | Go handler + `pages/X.html` + HTML test                                   |
+| `g resource`      | Drive/Frame CRUD, `_form` partial, kit components                         |
+| `g auth`          | HTML auth pages + Amarra forms                                            |
+| `g component`     | `components/X.html` + render test                                         |
+| `g stream chat`   | Stream SSE (Live in slice B on the same generator)                        |
+| `dev`             | air + Tailwind watch. No Vite                                             |
+| `install`         | `go mod tidy` + npm only for Tailwind/postcss                             |
+| `build`           | `go build` + CSS. No SPA `npm run build`                                  |
+| `doctor`          | `amarra.js`, templates, PWA; fail if Vite/Inertia present                 |
+| `pwa`             | `InstallForAmarra`: network-first HTML + `amarra.js`; no `/static/build/` |
 
 `link`, `jobs`, `db`, `console`, `routes`, `destroy` stay. Destroy deletes `.html` and routes, not `.svelte`.
 
@@ -273,11 +282,11 @@ Invalid form: **no redirect**. Same page/frame, status **422**, `.Errors` on `<.
 
 **Where state lives**
 
-| Channel | State |
-| --- | --- |
-| Drive / Frame | HTTP + SQLite. Server forgets after the response |
-| Stream | Same, plus a read SSE connection |
-| Live | Struct on the connection goroutine. Full page reload remounts |
+| Channel       | State                                                         |
+| ------------- | ------------------------------------------------------------- |
+| Drive / Frame | HTTP + SQLite. Server forgets after the response              |
+| Stream        | Same, plus a read SSE connection                              |
+| Live          | Struct on the connection goroutine. Full page reload remounts |
 
 Resource handlers never see Live. They only `view.Write` + store.
 
@@ -285,20 +294,20 @@ Resource handlers never see Live. They only `view.Write` + store.
 
 ## Errors
 
-| Case | Behavior |
-| --- | --- |
-| Field validation | 422, same view, per-field errors, focus first invalid |
-| Business rule (duplicate, FK, forbidden) | Flash `alert` + 303, or 403/404 error page. Product copy, not SQLite text |
-| Template/preprocessor failure | Fail at **boot** when parse can see it. Request-time execute: 500 with template error in dev; generic 500 + log in prod (`SanitizeErrors`) |
-| Drive 401 / login 303 | JS follows redirect |
-| Drive 5xx | Rollback optimistic UI + toast |
-| Offline | Toast, no silent retry |
-| Bad CSRF | 403 + reload |
-| SSE drop | Backoff reconnect; malformed event logged and skipped; after N failures, chat UI warning (no infinite spinner) |
-| Live WS drop | Reconnect + `Mount`. UI may flash. Hub full → 503 on upgrade; page still works over HTTP |
-| Unknown Live event | Log + `{error}` on the socket; connection stays up |
-| Panic in Live `Handle` | Recover goroutine, close WS, log stack |
-| Hook throw | `console.error` + toast; Drive keeps running |
+| Case                                     | Behavior                                                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Field validation                         | 422, same view, per-field errors, focus first invalid                                                                                      |
+| Business rule (duplicate, FK, forbidden) | Flash `alert` + 303, or 403/404 error page. Product copy, not SQLite text                                                                  |
+| Template/preprocessor failure            | Fail at **boot** when parse can see it. Request-time execute: 500 with template error in dev; generic 500 + log in prod (`SanitizeErrors`) |
+| Drive 401 / login 303                    | JS follows redirect                                                                                                                        |
+| Drive 5xx                                | Rollback optimistic UI + toast                                                                                                             |
+| Offline                                  | Toast, no silent retry                                                                                                                     |
+| Bad CSRF                                 | 403 + reload                                                                                                                               |
+| SSE drop                                 | Backoff reconnect; malformed event logged and skipped; after N failures, chat UI warning (no infinite spinner)                             |
+| Live WS drop                             | Reconnect + `Mount`. UI may flash. Hub full → 503 on upgrade; page still works over HTTP                                                   |
+| Unknown Live event                       | Log + `{error}` on the socket; connection stays up                                                                                         |
+| Panic in Live `Handle`                   | Recover goroutine, close WS, log stack                                                                                                     |
+| Hook throw                               | `console.error` + toast; Drive keeps running                                                                                               |
 
 This design does **not** include: offline POST queue, automatic POST retry (would double-create), Phoenix diffs to hide Live reconnect flicker, Inertia-style `Error.svelte`.
 

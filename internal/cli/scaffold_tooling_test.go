@@ -7,8 +7,7 @@ import (
 	"testing"
 )
 
-func TestScaffoldTooling_CITriggersMainAndMaster(t *testing.T) {
-	// #147
+func TestScaffoldTooling_CITriggersMain(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "ciapp")
 	if err := scaffoldNewApp(appDir, scaffoldData{
@@ -22,11 +21,11 @@ func TestScaffoldTooling_CITriggersMainAndMaster(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := string(ci)
-	if !strings.Contains(body, "main") || !strings.Contains(body, "master") {
-		t.Errorf("ci.yml should trigger on main and master, got:\n%s", body)
+	if !strings.Contains(body, "branches: [main]") {
+		t.Errorf("ci.yml should trigger on main, got:\n%s", body)
 	}
-	if !strings.Contains(body, "branches: [main, master]") {
-		t.Errorf("ci.yml missing branches: [main, master], got:\n%s", body)
+	if strings.Contains(body, "master") {
+		t.Errorf("ci.yml should not trigger on master, got:\n%s", body)
 	}
 }
 

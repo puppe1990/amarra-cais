@@ -18,30 +18,30 @@
 
 ## File Map
 
-| File | Responsibility |
-| --- | --- |
-| `cmd/amarra-cais/main.go` | CLI entry (renamed from `cmd/cais`) |
-| `pkg/cais/boot/version.go` | Module path `github.com/puppe1990/amarra-cais` |
-| `pkg/amarra/view/expand.go` | `<.component>` preprocessor |
-| `pkg/amarra/view/renderer.go` | Load templates, execute layouts/pages/components |
-| `pkg/amarra/view/write.go` | `Write` full / Drive / Frame |
-| `pkg/amarra/view/helpers.go` | `linkTo`, `render`, `renderEach`, `fieldError` |
-| `pkg/amarra/view/kit.go` | Parse shipped `form`/`input`/`button`/`flash`/`nav`/`pagination`/`modal` |
-| `pkg/amarra/view/components/*.html` | Shipped kit sources |
-| `pkg/amarra/drive.go` | `IsDrive`, header `Amarra-Drive` |
-| `pkg/amarra/frame.go` | `FrameID`, header `Amarra-Frame` |
-| `pkg/amarra/stream/stream.go` | Moved from `pkg/cais/stream` + named ops |
-| `pkg/amarra/live/live.go` | `Handler` → 501 |
-| `pkg/amarra/js/drive.mjs` | Click/submit fetch + morph |
-| `pkg/amarra/js/frame.mjs` | `<amarra-frame>` fetches |
-| `pkg/amarra/js/stream.mjs` | SSE / HTTP ops |
-| `pkg/amarra/js/hook.mjs` | CSRF header, toast, focus, optimistic |
-| `pkg/amarra/js/morph.mjs` | Idiomorph wrapper |
-| `pkg/amarra/js/entry.mjs` | Boot |
-| `pkg/cais/pwa/assets/amarra.js` | esbuild IIFE output |
-| `internal/cli/*.go` | `amarra-cais` help, scaffold, generators, doctor, dev |
-| `scripts/js-build.mjs` | Bundle `entry.mjs` → `amarra.js` |
-| `scripts/smoke-scaffold.sh` | `amarra-cais new` + `GET /` HTML |
+| File                                | Responsibility                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------ |
+| `cmd/amarra-cais/main.go`           | CLI entry (renamed from `cmd/cais`)                                      |
+| `pkg/cais/boot/version.go`          | Module path `github.com/puppe1990/amarra-cais`                           |
+| `pkg/amarra/view/expand.go`         | `<.component>` preprocessor                                              |
+| `pkg/amarra/view/renderer.go`       | Load templates, execute layouts/pages/components                         |
+| `pkg/amarra/view/write.go`          | `Write` full / Drive / Frame                                             |
+| `pkg/amarra/view/helpers.go`        | `linkTo`, `render`, `renderEach`, `fieldError`                           |
+| `pkg/amarra/view/kit.go`            | Parse shipped `form`/`input`/`button`/`flash`/`nav`/`pagination`/`modal` |
+| `pkg/amarra/view/components/*.html` | Shipped kit sources                                                      |
+| `pkg/amarra/drive.go`               | `IsDrive`, header `Amarra-Drive`                                         |
+| `pkg/amarra/frame.go`               | `FrameID`, header `Amarra-Frame`                                         |
+| `pkg/amarra/stream/stream.go`       | Moved from `pkg/cais/stream` + named ops                                 |
+| `pkg/amarra/live/live.go`           | `Handler` → 501                                                          |
+| `pkg/amarra/js/drive.mjs`           | Click/submit fetch + morph                                               |
+| `pkg/amarra/js/frame.mjs`           | `<amarra-frame>` fetches                                                 |
+| `pkg/amarra/js/stream.mjs`          | SSE / HTTP ops                                                           |
+| `pkg/amarra/js/hook.mjs`            | CSRF header, toast, focus, optimistic                                    |
+| `pkg/amarra/js/morph.mjs`           | Idiomorph wrapper                                                        |
+| `pkg/amarra/js/entry.mjs`           | Boot                                                                     |
+| `pkg/cais/pwa/assets/amarra.js`     | esbuild IIFE output                                                      |
+| `internal/cli/*.go`                 | `amarra-cais` help, scaffold, generators, doctor, dev                    |
+| `scripts/js-build.mjs`              | Bundle `entry.mjs` → `amarra.js`                                         |
+| `scripts/smoke-scaffold.sh`         | `amarra-cais new` + `GET /` HTML                                         |
 
 ---
 
@@ -752,12 +752,39 @@ import assert from "node:assert/strict";
 import { shouldInterceptClick, driveHeaders } from "./drive.mjs";
 
 test("shouldInterceptClick ignores new tab and download", () => {
-  assert.equal(shouldInterceptClick({ href: "/x", target: "_blank", download: false, origin: "http://a", locationOrigin: "http://a" }), false);
-  assert.equal(shouldInterceptClick({ href: "/x", target: "", download: true, origin: "http://a", locationOrigin: "http://a" }), false);
+  assert.equal(
+    shouldInterceptClick({
+      href: "/x",
+      target: "_blank",
+      download: false,
+      origin: "http://a",
+      locationOrigin: "http://a",
+    }),
+    false
+  );
+  assert.equal(
+    shouldInterceptClick({
+      href: "/x",
+      target: "",
+      download: true,
+      origin: "http://a",
+      locationOrigin: "http://a",
+    }),
+    false
+  );
 });
 
 test("shouldInterceptClick allows same-origin GET link", () => {
-  assert.equal(shouldInterceptClick({ href: "http://a/x", target: "", download: false, origin: "http://a", locationOrigin: "http://a" }), true);
+  assert.equal(
+    shouldInterceptClick({
+      href: "http://a/x",
+      target: "",
+      download: false,
+      origin: "http://a",
+      locationOrigin: "http://a",
+    }),
+    true
+  );
 });
 
 test("driveHeaders sets Amarra-Drive and CSRF", () => {
@@ -1163,7 +1190,7 @@ Expected: FAIL (doctor still wants Inertia or HTMX).
 
 - [ ] **Step 3: Implement**
 
-- `hasViteApp` remains for *legacy* detection only; `startViteWatch` already no-ops when false. `cmdDev` must not require `node_modules` for Vite; still run Tailwind watch if `input.css` exists.
+- `hasViteApp` remains for _legacy_ detection only; `startViteWatch` already no-ops when false. `cmdDev` must not require `node_modules` for Vite; still run Tailwind watch if `input.css` exists.
 - `cmdInstall`: `go mod tidy`; `npm install` only if `package.json` exists; **do not** `npm run build` Vite.
 - `cmdBuild`: skip `runViteBuild`; require `web/static/css/styles.css` (existing CSS check).
 - `runDoctor`: remove Inertia/Vite/HTMX/sse-ext as the default path. Add `checkAmarraJS` (`web/static/js/amarra.js`) and `checkAmarraLayout` (`#amarra-main` in `layouts/app.html`). If `vite.config.js` exists: fail with hint “this is Cais v0.11 Inertia; amarra-cais does not support it”.
@@ -1250,22 +1277,22 @@ Tag when publishing: `v0.1.0`. Do not tag until smoke is green on a clean `amarr
 
 ## Self-review (plan vs spec)
 
-| Spec section | Task |
-| --- | --- |
-| Identity / module / CLI `amarra-cais` | 1 |
-| Amarra Views preprocessor + kit | 2, 4 |
-| `view.Write` Drive/Frame | 3 |
-| Stream named ops | 5 |
-| Live stub 501 | 6 |
-| `amarra.js` Drive/Frame/Stream/Hook | 7 |
-| PWA `InstallForAmarra` | 8 |
-| `new` HTML scaffold, no Inertia | 9 |
-| generators + destroy | 10 |
-| dev/install/build/doctor | 11 |
-| smoke + docs | 12 |
-| 422 / CSRF / flash | 9 (handlers + kit); Drive 422 morph in 7 |
-| Slice B Live hub | **not this plan** |
-| jobsui rewrite | **not this plan** |
-| `{@x}` / templ / named slots | out of spec |
+| Spec section                          | Task                                     |
+| ------------------------------------- | ---------------------------------------- |
+| Identity / module / CLI `amarra-cais` | 1                                        |
+| Amarra Views preprocessor + kit       | 2, 4                                     |
+| `view.Write` Drive/Frame              | 3                                        |
+| Stream named ops                      | 5                                        |
+| Live stub 501                         | 6                                        |
+| `amarra.js` Drive/Frame/Stream/Hook   | 7                                        |
+| PWA `InstallForAmarra`                | 8                                        |
+| `new` HTML scaffold, no Inertia       | 9                                        |
+| generators + destroy                  | 10                                       |
+| dev/install/build/doctor              | 11                                       |
+| smoke + docs                          | 12                                       |
+| 422 / CSRF / flash                    | 9 (handlers + kit); Drive 422 morph in 7 |
+| Slice B Live hub                      | **not this plan**                        |
+| jobsui rewrite                        | **not this plan**                        |
+| `{@x}` / templ / named slots          | out of spec                              |
 
 No TBD in tasks. Types: `view.Page`, `HeaderDrive`, `HeaderFrame`, `stream.Op`, `live.Handler` are consistent across tasks.
