@@ -18,7 +18,7 @@ This repository is the **framework + CLI** only. Generate apps with `amarra-cais
 | Meta     | Open Graph / Twitter via `pkg/cais/meta`                              |
 | Core     | Router, session, CSRF, jobs, SQLite in `pkg/cais/`                    |
 
-The browser does not mount a SPA. Handlers call `view.Write`. Drive morphs `#amarra-main`. There is no Vite, Svelte, or Inertia in generated apps.
+The browser does not mount a SPA. Handlers call `view.Write`. Drive morphs `#amarra-main`. There is no Vite, Svelte, or Inertia in generated apps. Migrating a Cais Inertia app is a UI rewrite — see [docs/migrate-inertia.md](docs/migrate-inertia.md).
 
 ## Quick start
 

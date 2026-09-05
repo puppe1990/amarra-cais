@@ -263,6 +263,9 @@ func TestDoctor_FailsWhenViteConfigExists(t *testing.T) {
 	if !strings.Contains(out, "amarra-cais does not support") {
 		t.Errorf("expected unsupported hint, got:\n%s", out)
 	}
+	if !strings.Contains(out, "docs/migrate-inertia.md") {
+		t.Errorf("FixHint should point at docs/migrate-inertia.md, got:\n%s", out)
+	}
 }
 
 func TestDoctor_AllOK(t *testing.T) {
