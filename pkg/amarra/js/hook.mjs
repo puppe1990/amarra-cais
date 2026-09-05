@@ -1,12 +1,14 @@
 import { register, scan, dispatchLivePush, reset } from "./hook_registry.mjs";
 import { clipboard } from "./hook_clipboard.mjs";
 import { password } from "./hook_password.mjs";
+import { reveal } from "./hook_reveal.mjs";
 import { theme } from "./hook_theme.mjs";
 
 export { register, scan, dispatchLivePush, reset };
 
 register("clipboard", clipboard);
 register("password", password);
+register("reveal", reveal);
 register("theme", theme);
 
 const ON_CLASSES = ["bg-green-50", "text-green-700"];
@@ -114,6 +116,7 @@ export function start(opts = {}) {
 
   register("clipboard", clipboard);
   register("password", password);
+  register("reveal", reveal);
   register("theme", theme);
   scan(doc);
 
