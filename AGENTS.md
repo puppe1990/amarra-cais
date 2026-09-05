@@ -199,7 +199,21 @@ Drive requests still render the layout so JS can morph `#amarra-main`. Frame req
 </.form>
 {{ linkTo "/items/1" "Delete" (dict "method" "delete" "confirm" "Delete this item?") }}
 <div amarra-hook="clipboard" data-amarra-copy="hi">Copy</div>
+<.input type="password" name="password" />
+<button type="button" amarra-hook="password" data-amarra-password-for="#password">Show</button>
+<button type="button" amarra-hook="theme" data-amarra-theme-color="#f5f5f4" data-amarra-theme-color-off="#0f172a">Theme</button>
 {{ end }}
+```
+
+Shipped `amarra-hook` builtins: `clipboard`, `password` (toggle `type` + `aria-pressed`), `theme` (toggle `html.light`, persist `localStorage["amarra-theme"]`, optional `theme-color` meta). Put this FOUC snippet in the layout `<head>` before CSS so a stored light theme does not flash dark:
+
+```html
+<script>
+  try {
+    if (localStorage.getItem("amarra-theme") === "light")
+      document.documentElement.classList.add("light");
+  } catch (e) {}
+</script>
 ```
 
 Shipped kit (override in `web/templates/components/`): `form`, `input`, `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken` and `data-amarra-drive="true"`.

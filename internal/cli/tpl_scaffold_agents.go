@@ -55,7 +55,8 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"```\n\n" +
 	"Pages define a content block plus kit tags `<.form>` / `<.input>` / `<.button>` / `<.flash />`.\n" +
 	"Drive morphs `#amarra-main` (`data-amarra-drive`, `linkTo`, `<.form>`). Do not check `HX-Request`.\n" +
-	"Password fields: `fieldPassword` (eye show/hide).\n" +
+	"Password fields: `fieldPassword` (eye show/hide via `amarra-hook=\"password\"`).\n" +
+	"Shipped hooks: `clipboard`, `password`, `theme` (`html.light` + `localStorage[\"amarra-theme\"]`; FOUC snippet in layout head).\n" +
 	"Parse bodies with `httpx.ParseFormOrJSON`.\n\n" +
 	"## Auth, CSRF, flash\n\n" +
 	"- Session middleware: `LoadSession` + `Flash` + `CSRF(cfg)`\n" +
