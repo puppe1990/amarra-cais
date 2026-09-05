@@ -7,6 +7,8 @@ import {
   applyOptimistic,
   rollbackOptimistic,
   start,
+  register,
+  reset,
 } from "./hook.mjs";
 
 test("csrfTokenFromMeta reads meta content", () => {
@@ -94,6 +96,47 @@ test("applyFocus focuses matching selector", () => {
 
 test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
+});
+
+test("start scans amarra-hook and rescans after amarra:morphed", () => {
+  reset();
+  const events = [];
+  register("clip", {
+    connect(el) {
+      events.push("connect:" + el.id);
+    },
+    updated(el) {
+      events.push("updated:" + el.id);
+    },
+  });
+  const btn = {
+    id: "btn",
+    getAttribute(n) {
+      return n === "amarra-hook" ? "clip" : null;
+    },
+    hasAttribute(n) {
+      return n === "amarra-hook";
+    },
+  };
+  const listeners = {};
+  const doc = {
+    listeners,
+    documentElement: { dataset: {} },
+    addEventListener(type, fn) {
+      (listeners[type] ??= []).push(fn);
+    },
+    dispatchEvent(ev) {
+      for (const fn of listeners[ev.type] || []) fn(ev);
+      return true;
+    },
+    querySelectorAll(sel) {
+      return sel === "[amarra-hook]" ? [btn] : [];
+    },
+  };
+  start({ document: doc });
+  assert.deepEqual(events, ["connect:btn"]);
+  doc.dispatchEvent(new CustomEvent("amarra:morphed"));
+  assert.deepEqual(events, ["connect:btn", "updated:btn"]);
 });
 
 test("amarra:drive-error rolls back optimistic UI from start()", () => {

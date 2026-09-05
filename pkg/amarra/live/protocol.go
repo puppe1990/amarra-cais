@@ -20,9 +20,13 @@ type inMsg struct {
 }
 
 type outMsg struct {
-	Type    string `json:"type"`
-	HTML    string `json:"html,omitempty"`
-	Target  string `json:"target,omitempty"`
-	Ref     string `json:"ref,omitempty"`
-	Message string `json:"message,omitempty"`
+	Type     string     `json:"type"`
+	HTML     string     `json:"html,omitempty"`
+	Target   string     `json:"target,omitempty"`
+	Ref      string     `json:"ref,omitempty"`
+	Message  string     `json:"message,omitempty"`
+	Patch    string     `json:"patch,omitempty"`
+	Navigate string     `json:"navigate,omitempty"`
+	Ops      []StreamOp `json:"ops,omitempty"`
+	Pushes   []Push     `json:"pushes,omitempty"`
 }

@@ -204,6 +204,54 @@ func TestLive_panicCloses(t *testing.T) {
 	}
 }
 
+type patchStreamView struct {
+	sock Socket
+}
+
+func (v *patchStreamView) Mount(_ context.Context, sock Socket) error {
+	v.sock = sock
+	return nil
+}
+
+func (v *patchStreamView) Handle(_ context.Context, ev Event) error {
+	if ev.Name != "inc" {
+		return fmt.Errorf("unknown event %s", ev.Name)
+	}
+	v.sock.Patch("/counter?n=1")
+	v.sock.Stream("append", "log", "<li>1</li>")
+	v.sock.Push("tick", map[string]int{"n": 1})
+	return nil
+}
+
+func (v *patchStreamView) Render() Rendered {
+	return Rendered{Target: "count", HTML: "<span>1</span>"}
+}
+
+func TestLive_patchStreamPush(t *testing.T) {
+	h := NewHub(Config{OriginPatterns: []string{"*"}})
+	h.Register("fancy", func() View { return &patchStreamView{} })
+	s := httptest.NewServer(h.Handler())
+	t.Cleanup(s.Close)
+	c := dialLive(t, s, "fancy", "tok")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
+	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "tok"})
+	_ = readJSON(t, c)
+	writeJSON(t, c, inMsg{Type: typeEvent, Event: "inc", Ref: "1"})
+	morph := readJSON(t, c)
+	if morph.Type != typeMorph {
+		t.Fatalf("morph = %+v", morph)
+	}
+	if morph.Patch != "/counter?n=1" {
+		t.Fatalf("patch = %q", morph.Patch)
+	}
+	if len(morph.Ops) != 1 || morph.Ops[0].Kind != "append" || morph.Ops[0].Target != "log" {
+		t.Fatalf("ops = %+v", morph.Ops)
+	}
+	if len(morph.Pushes) != 1 || morph.Pushes[0].Event != "tick" {
+		t.Fatalf("pushes = %+v", morph.Pushes)
+	}
+}
+
 func TestLive_handlerEmptyHubUnknownView(t *testing.T) {
 	var hits atomic.Int32
 	h := Handler()

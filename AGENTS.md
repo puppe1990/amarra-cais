@@ -51,45 +51,45 @@ Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go
 
 ## Structure
 
-| Directory                 | Responsibility                                                                           |
-| ------------------------- | ---------------------------------------------------------------------------------------- |
-| `pkg/cais/`               | Framework: config, router, render, middleware, sessions, jobs                            |
-| `pkg/amarra/view/`        | HTML views: `Load`, `<.component>` expand, kit, `view.Write`                             |
-| `pkg/amarra/`             | Drive/Frame headers (`IsDrive`, `FrameID`)                                               |
-| `pkg/amarra/stream/`      | Named SSE ops (`append`, `prepend`, `replace`, `morph`, `remove`, `toast`)               |
-| `pkg/amarra/live/`        | Live WebSocket hub (`Mount`/`Handle`/`Render`, in-process broadcast)                     |
-| `pkg/amarra/js/`          | Drive / Frame / Stream / Hook sources; esbuild → `pkg/cais/pwa/assets/amarra.js`         |
-| `pkg/cais/httpx/`         | Render and redirect helpers for handlers                                                 |
-| `pkg/cais/meta/`          | Open Graph / Twitter preview (`Site`, `PreviewHTML`)                                     |
-| `pkg/cais/session/`       | Cookie sessions (`SignIn`, `SignOut`, `Store`)                                           |
-| `pkg/cais/boot/`          | Rails-style startup banner                                                               |
-| `pkg/cais/devlog/`        | Development log buffer + `/logs` viewer                                                  |
-| `pkg/cais/sqllog/`        | SQL query logging wrapper (`Wrap`, `EnabledForEnv`)                                      |
-| `pkg/cais/console/`       | Interactive REPL (yaegi + SQL)                                                           |
-| `pkg/cais/csrf/`          | CSRF tokens (double-submit cookie)                                                       |
-| `pkg/cais/validate/`      | Form field validation helpers                                                            |
-| `pkg/cais/forms/`         | Template helpers (`csrfField`, `fieldError`, `makeField`, `fieldInput`, `fieldPassword`) |
-| `pkg/cais/dotenv/`        | `.env` parser (`Parse`, `LoadFile`) used by `cais.Load()`                                |
-| `pkg/cais/i18n/`          | Locale catalogs (`LOCALE` env, `t` template func)                                        |
-| `pkg/cais/testutil/`      | Test helpers (`NewRenderer`, `NewRequest`, `AssertHTMLContains`, `AssertChatMarkers`)    |
-| `pkg/cais/pwa/`           | Default PWA assets (`InstallForAmarra` ships `amarra.js`)                                |
-| `pkg/cais/cache/`         | In-memory TTL cache + stable `Key`/`Hash` for ETags                                      |
-| `pkg/cais/pagination/`    | Offset/limit helpers for list pages                                                      |
-| `pkg/cais/stream/`        | Legacy SSE relay (prefer `pkg/amarra/stream` in new code)                                |
-| `pkg/cais/chat/`          | Chat bubbles, tool UI (`LiveBubble`, `MessageBubble`)                                    |
-| `pkg/cais/middleware/`    | CSRF, sessions, auth, rate limits, security headers                                      |
-| `pkg/cais/passwordreset/` | Password-reset tokens + notifier interface                                               |
-| `pkg/cais/sqlite/`        | WAL, busy timeout, foreign keys (`Configure`)                                            |
-| `pkg/cais/netutil/`       | Health payload + LAN URLs for mobile testing                                             |
-| `pkg/cais/migrate/`       | `schema_migrations` runner (idempotent on boot)                                          |
-| `pkg/cais/flash/`         | One-shot flash cookies                                                                   |
-| `pkg/cais/jobs/`          | SQLite background job queue                                                              |
-| `pkg/cais/jobsui/`        | Localhost `/jobs` dashboard (counts, failed retry/discard, recurring)                    |
-| `pkg/cais/testdata/`      | Fixture HTML (legacy HTMX layouts + chat_sse partials for framework tests)               |
-| `pkg/cais/htmx.go`        | Leftover HTMX helpers — not the public generated-app contract                            |
-| `internal/cli/`           | Generators (`amarra-cais new`, `g`, `destroy`) — **HTML + Amarra scaffolds**             |
-| `cmd/amarra-cais/`        | CLI entry point                                                                          |
-| `cmd/pwagen/`             | Write PWA assets into a target directory                                                 |
+| Directory                 | Responsibility                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `pkg/cais/`               | Framework: config, router, render, middleware, sessions, jobs                                                |
+| `pkg/amarra/view/`        | HTML views: `Load`, `<.component>` expand, kit (`form`/`input`/`select`/`textarea`/`checkbox`), `view.Write` |
+| `pkg/amarra/`             | Drive/Frame headers (`IsDrive`, `FrameID`)                                                                   |
+| `pkg/amarra/stream/`      | Named SSE ops (`append`, `prepend`, `replace`, `morph`, `remove`, `toast`)                                   |
+| `pkg/amarra/live/`        | Live WebSocket hub (`Mount`/`Handle`/`Render`, in-process broadcast)                                         |
+| `pkg/amarra/js/`          | Drive / Frame / Stream / Hook sources; esbuild → `pkg/cais/pwa/assets/amarra.js`                             |
+| `pkg/cais/httpx/`         | Render and redirect helpers for handlers                                                                     |
+| `pkg/cais/meta/`          | Open Graph / Twitter preview (`Site`, `PreviewHTML`)                                                         |
+| `pkg/cais/session/`       | Cookie sessions (`SignIn`, `SignOut`, `Store`)                                                               |
+| `pkg/cais/boot/`          | Rails-style startup banner                                                                                   |
+| `pkg/cais/devlog/`        | Development log buffer + `/logs` viewer                                                                      |
+| `pkg/cais/sqllog/`        | SQL query logging wrapper (`Wrap`, `EnabledForEnv`)                                                          |
+| `pkg/cais/console/`       | Interactive REPL (yaegi + SQL)                                                                               |
+| `pkg/cais/csrf/`          | CSRF tokens (double-submit cookie)                                                                           |
+| `pkg/cais/validate/`      | Form field validation helpers                                                                                |
+| `pkg/cais/forms/`         | Template helpers (`csrfField`, `fieldError`, `makeField`, `fieldInput`, `fieldPassword`)                     |
+| `pkg/cais/dotenv/`        | `.env` parser (`Parse`, `LoadFile`) used by `cais.Load()`                                                    |
+| `pkg/cais/i18n/`          | Locale catalogs (`LOCALE` env, `t` template func)                                                            |
+| `pkg/cais/testutil/`      | Test helpers (`NewRenderer`, `NewRequest`, `AssertHTMLContains`, `AssertChatMarkers`)                        |
+| `pkg/cais/pwa/`           | Default PWA assets (`InstallForAmarra` ships `amarra.js`)                                                    |
+| `pkg/cais/cache/`         | In-memory TTL cache + stable `Key`/`Hash` for ETags                                                          |
+| `pkg/cais/pagination/`    | Offset/limit helpers for list pages                                                                          |
+| `pkg/cais/stream/`        | Legacy SSE relay (prefer `pkg/amarra/stream` in new code)                                                    |
+| `pkg/cais/chat/`          | Chat bubbles, tool UI (`LiveBubble`, `MessageBubble`)                                                        |
+| `pkg/cais/middleware/`    | CSRF, sessions, auth, rate limits, security headers                                                          |
+| `pkg/cais/passwordreset/` | Password-reset tokens + notifier interface                                                                   |
+| `pkg/cais/sqlite/`        | WAL, busy timeout, foreign keys (`Configure`)                                                                |
+| `pkg/cais/netutil/`       | Health payload + LAN URLs for mobile testing                                                                 |
+| `pkg/cais/migrate/`       | `schema_migrations` runner (idempotent on boot)                                                              |
+| `pkg/cais/flash/`         | One-shot flash cookies                                                                                       |
+| `pkg/cais/jobs/`          | SQLite background job queue                                                                                  |
+| `pkg/cais/jobsui/`        | Localhost `/jobs` dashboard (counts, failed retry/discard, recurring)                                        |
+| `pkg/cais/testdata/`      | Fixture HTML (legacy HTMX layouts + chat_sse partials for framework tests)                                   |
+| `pkg/cais/htmx.go`        | Leftover HTMX helpers — not the public generated-app contract                                                |
+| `internal/cli/`           | Generators (`amarra-cais new`, `g`, `destroy`) — **HTML + Amarra scaffolds**                                 |
+| `cmd/amarra-cais/`        | CLI entry point                                                                                              |
+| `cmd/pwagen/`             | Write PWA assets into a target directory                                                                     |
 
 This repo is **framework + CLI only** (no dogfood app). Apps live outside; create with `amarra-cais new`.
 
@@ -189,23 +189,26 @@ http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 
 Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only.
 
-**Public HTML contract** (`amarra.js`): `data-amarra-drive`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-hook` / `amarra-live`, `<amarra-frame>`. HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
+**Public HTML contract** (`amarra.js`): `data-amarra-drive`, `data-amarra-confirm`, `data-amarra-method`, `data-amarra-disable-with`, `data-amarra-frame`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-debounce` / `amarra-hook` / `amarra-live`, `<amarra-frame loading="lazy">`. HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
 
 ```html
 {{ define "content" }}
 <.form action="/items" method="post">
-  {{ csrfField .CSRFToken }}
   <.input name="title" label="Title" value="{{ .Item.Title }}" error="{{ fieldError .Errors "title" }}" />
   <.button type="submit">Save</.button>
 </.form>
+{{ linkTo "/items/1" "Delete" (dict "method" "delete" "confirm" "Delete this item?") }}
+<div amarra-hook="clipboard" data-amarra-copy="hi">Copy</div>
 {{ end }}
 ```
 
-Shipped kit (override in `web/templates/components/`): `form`, `input`, `button`, `flash`, `nav`, `pagination`, `modal`. One slot: `.Inner`. Self-closing `<.flash />` is allowed.
+Shipped kit (override in `web/templates/components/`): `form`, `input`, `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken` and `data-amarra-drive="true"`.
 
-`{{ linkTo "/x" "Label" }}` emits a Drive-enabled `<a data-amarra-drive="true">`. `<.form>` injects `data-amarra-drive="true"`.
+`{{ linkTo "/x" "Label" }}` emits a Drive-enabled `<a>`. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
 
-**Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only.
+**Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only. `sock.Patch`, `sock.Stream`, and `sock.Push` ride on the morph message.
+
+**Stream HTTP:** `stream.WriteHTTP(w, stream.Op{Kind: "append", Target: "list", HTML: row})` with `Content-Type: text/vnd.amarra-stream` applies ops instead of morphing `#amarra-main`.
 
 **Frontend TDD** — framework JS only:
 

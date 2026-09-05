@@ -1,6 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { wsURL, liveRoot, eventName, formPayload, applyLiveMessage } from "./live.mjs";
+import {
+  wsURL,
+  liveRoot,
+  eventName,
+  formPayload,
+  applyLiveMessage,
+  debounceWait,
+  setLoading,
+} from "./live.mjs";
 
 test("wsURL uses ws and query", () => {
   assert.equal(
@@ -58,6 +66,75 @@ test("formPayload flattens FormData", () => {
     }
   }
   assert.deepEqual(formPayload({}, FD), { title: "hi", csrf_token: "x" });
+});
+
+test("applyLiveMessage applies ops, patch, and pushes", () => {
+  const ops = [];
+  const pushes = [];
+  let patched = "";
+  const root = {
+    querySelector() {
+      return null;
+    },
+  };
+  applyLiveMessage(
+    {
+      type: "morph",
+      html: "",
+      ops: [{ kind: "append", target: "log", html: "<li>1</li>" }],
+      patch: "/counter?n=1",
+      pushes: [{ event: "tick", payload: { n: 1 } }],
+    },
+    root,
+    () => {},
+    {
+      applyOp(op) {
+        ops.push(op);
+      },
+      dispatchPush(event, payload) {
+        pushes.push([event, payload]);
+      },
+      history: {
+        pushState(_s, _t, url) {
+          patched = url;
+        },
+      },
+    }
+  );
+  assert.deepEqual(ops, [{ kind: "append", target: "log", html: "<li>1</li>" }]);
+  assert.equal(patched, "/counter?n=1");
+  assert.deepEqual(pushes, [["tick", { n: 1 }]]);
+});
+
+test("debounceWait reads amarra-debounce ms", () => {
+  assert.equal(
+    debounceWait({
+      getAttribute(n) {
+        return n === "amarra-debounce" ? "300" : null;
+      },
+    }),
+    300
+  );
+  assert.equal(debounceWait({ getAttribute: () => null }), 0);
+});
+
+test("setLoading toggles amarra-click-loading and amarra-loading", () => {
+  const classes = (initial = []) => {
+    const set = new Set(initial);
+    return {
+      add: (c) => set.add(c),
+      remove: (c) => set.delete(c),
+      contains: (c) => set.has(c),
+    };
+  };
+  const el = { classList: classes() };
+  const root = { classList: classes() };
+  setLoading(el, root, true);
+  assert.equal(el.classList.contains("amarra-click-loading"), true);
+  assert.equal(root.classList.contains("amarra-loading"), true);
+  setLoading(el, root, false);
+  assert.equal(el.classList.contains("amarra-click-loading"), false);
+  assert.equal(root.classList.contains("amarra-loading"), false);
 });
 
 test("applyLiveMessage morphs target id", () => {

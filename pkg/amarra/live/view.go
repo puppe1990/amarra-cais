@@ -19,12 +19,29 @@ type Rendered struct {
 	HTML   string
 }
 
+// StreamOp is a Phoenix-style collection mutation sent with a morph.
+type StreamOp struct {
+	Kind   string `json:"kind"`
+	Target string `json:"target,omitempty"`
+	HTML   string `json:"html,omitempty"`
+}
+
+// Push is a server-to-hook event (Phoenix push_event).
+type Push struct {
+	Event   string          `json:"event"`
+	Payload json.RawMessage `json:"payload,omitempty"`
+}
+
 // Socket is the per-connection bag a View sees during Mount/Handle.
 type Socket interface {
 	Topic() string
 	Param(key string) string
 	Assign(key string, val any)
 	Get(key string) any
+	Patch(url string)
+	Navigate(url string)
+	Push(event string, payload any)
+	Stream(kind, target, html string)
 }
 
 // View is one Live session. Hub calls Mount once, then Handle for each event,
@@ -36,10 +53,14 @@ type View interface {
 }
 
 type memSocket struct {
-	mu     sync.RWMutex
-	topic  string
-	params map[string]string
-	assign map[string]any
+	mu       sync.RWMutex
+	topic    string
+	params   map[string]string
+	assign   map[string]any
+	patch    string
+	navigate string
+	pushes   []Push
+	ops      []StreamOp
 }
 
 func (s *memSocket) Topic() string { return s.topic }
@@ -67,4 +88,42 @@ func (s *memSocket) Get(key string) any {
 		return nil
 	}
 	return s.assign[key]
+}
+
+func (s *memSocket) Patch(url string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.patch = url
+}
+
+func (s *memSocket) Navigate(url string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.navigate = url
+}
+
+func (s *memSocket) Push(event string, payload any) {
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		raw = nil
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.pushes = append(s.pushes, Push{Event: event, Payload: raw})
+}
+
+func (s *memSocket) Stream(kind, target, html string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ops = append(s.ops, StreamOp{Kind: kind, Target: target, HTML: html})
+}
+
+func (s *memSocket) drain() (patch, nav string, pushes []Push, ops []StreamOp) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	patch, nav = s.patch, s.navigate
+	pushes, ops = s.pushes, s.ops
+	s.patch, s.navigate = "", ""
+	s.pushes, s.ops = nil, nil
+	return
 }

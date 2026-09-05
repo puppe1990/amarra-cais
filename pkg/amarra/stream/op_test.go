@@ -42,6 +42,31 @@ func TestWriteOp_toast(t *testing.T) {
 	}
 }
 
+func TestWriteOp_beforeAndAfter(t *testing.T) {
+	rr := httptest.NewRecorder()
+	if err := WriteOp(rr, Op{Kind: "before", Target: "item-1", HTML: "<li>n</li>"}); err != nil {
+		t.Fatal(err)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "event: before") || !strings.Contains(body, "id: item-1") {
+		t.Fatalf("%q", body)
+	}
+}
+
+func TestWriteHTTP_setsStreamContentType(t *testing.T) {
+	rr := httptest.NewRecorder()
+	if err := WriteHTTP(rr, Op{Kind: "append", Target: "list", HTML: "<li>x</li>"}); err != nil {
+		t.Fatal(err)
+	}
+	ct := rr.Header().Get("Content-Type")
+	if !strings.Contains(ct, "vnd.amarra-stream") {
+		t.Fatalf("content-type %q", ct)
+	}
+	if !strings.Contains(rr.Body.String(), "event: append") {
+		t.Fatalf("%q", rr.Body.String())
+	}
+}
+
 func TestWriteOp_remove(t *testing.T) {
 	rr := httptest.NewRecorder()
 	if err := WriteOp(rr, Op{Kind: "remove", Target: "item-1"}); err != nil {

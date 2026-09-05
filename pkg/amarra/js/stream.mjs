@@ -1,6 +1,15 @@
 import { morph } from "./morph.mjs";
 
-const STREAM_KINDS = ["append", "prepend", "replace", "morph", "remove", "toast"];
+const STREAM_KINDS = [
+  "append",
+  "prepend",
+  "replace",
+  "morph",
+  "remove",
+  "toast",
+  "before",
+  "after",
+];
 
 export function parseSSE(chunk) {
   const events = [];
@@ -54,6 +63,12 @@ export function applyOp(op, doc, opts = {}) {
     case "prepend":
       insertHTML(el, "afterbegin", html);
       break;
+    case "before":
+      insertHTML(el, "beforebegin", html);
+      break;
+    case "after":
+      insertHTML(el, "afterend", html);
+      break;
     case "replace":
       el.outerHTML = html;
       break;
@@ -102,6 +117,15 @@ function sseEnvelope(kind, data) {
     .split("\n")
     .map((line) => `data: ${line}`);
   return `event: ${kind}\n${lines.join("\n")}\n\n`;
+}
+
+export function isStreamResponse(headers) {
+  if (!headers) return false;
+  const ct =
+    typeof headers.get === "function"
+      ? headers.get("content-type")
+      : headers["content-type"] || headers["Content-Type"];
+  return String(ct || "").includes("vnd.amarra-stream");
 }
 
 function insertHTML(el, pos, html) {

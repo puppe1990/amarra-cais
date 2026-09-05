@@ -767,7 +767,7 @@
     extractMainHTML: () => extractMainHTML,
     shouldInterceptClick: () => shouldInterceptClick,
     shouldInterceptSubmit: () => shouldInterceptSubmit,
-    start: () => start2,
+    start: () => start3,
     visit: () => visit
   });
 
@@ -789,10 +789,96 @@
     applyFocus: () => applyFocus,
     applyOptimistic: () => applyOptimistic,
     csrfTokenFromMeta: () => csrfTokenFromMeta,
+    dispatchLivePush: () => dispatchLivePush,
+    register: () => register,
+    reset: () => reset,
     rollbackOptimistic: () => rollbackOptimistic,
+    scan: () => scan,
     showToast: () => showToast,
     start: () => start
   });
+
+  // pkg/amarra/js/hook_registry.mjs
+  var defs = /* @__PURE__ */ new Map();
+  var mounted = /* @__PURE__ */ new Map();
+  function register(name, def) {
+    if (!name || !def) return;
+    defs.set(name, def);
+  }
+  function reset() {
+    defs.clear();
+    mounted.clear();
+  }
+  function scan(root) {
+    if (!root) return;
+    const found = collect(root);
+    const seen = new Set(found);
+    for (const el of found) {
+      const name = el.getAttribute?.("amarra-hook") || "";
+      const def = defs.get(name);
+      const cur = mounted.get(el);
+      if (cur && cur.name === name) {
+        def?.updated?.(el);
+        continue;
+      }
+      if (cur) {
+        cur.def.disconnect?.(el);
+        mounted.delete(el);
+      }
+      if (!def) continue;
+      mounted.set(el, { name, def });
+      def.connect?.(el);
+    }
+    for (const [el, cur] of [...mounted]) {
+      if (seen.has(el)) continue;
+      cur.def.disconnect?.(el);
+      mounted.delete(el);
+    }
+  }
+  function dispatchLivePush(event, payload) {
+    for (const [el, cur] of mounted) {
+      cur.def.handleEvent?.(event, payload, el);
+    }
+  }
+  function collect(root) {
+    const out = [];
+    if (root.hasAttribute?.("amarra-hook")) out.push(root);
+    const list = root.querySelectorAll?.("[amarra-hook]");
+    if (list) {
+      for (const el of list) out.push(el);
+    }
+    return out;
+  }
+
+  // pkg/amarra/js/hook_clipboard.mjs
+  var CLICK = "_amarraClipboardClick";
+  function makeClipboard(writeText) {
+    return {
+      connect(el) {
+        if (!el || typeof el.addEventListener !== "function") return;
+        const fn = (ev) => {
+          ev?.preventDefault?.();
+          const text = el.getAttribute?.("data-amarra-copy") ?? "";
+          writeText?.(text);
+        };
+        el[CLICK] = fn;
+        el.addEventListener("click", fn);
+      },
+      disconnect(el) {
+        const fn = el?.[CLICK];
+        if (!fn || typeof el.removeEventListener !== "function") return;
+        el.removeEventListener("click", fn);
+        delete el[CLICK];
+      }
+    };
+  }
+  var clipboard = makeClipboard((text) => {
+    const write = globalThis.navigator?.clipboard?.writeText;
+    if (typeof write === "function") return write.call(globalThis.navigator.clipboard, text);
+  });
+
+  // pkg/amarra/js/hook.mjs
+  register("clipboard", clipboard);
   var ON_CLASSES = ["bg-green-50", "text-green-700"];
   var OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
   var TOAST_MS = 2e3;
@@ -884,6 +970,8 @@
     if (!doc || typeof doc.addEventListener !== "function") return;
     if (doc.documentElement?.dataset?.amarraHook === "true") return;
     if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
+    register("clipboard", clipboard);
+    scan(doc);
     let optimistic = null;
     doc.addEventListener("amarra:toast", (ev) => {
       showToast(ev.detail?.message ?? "", doc, opts);
@@ -891,6 +979,7 @@
     doc.addEventListener("amarra:morphed", () => {
       optimistic = null;
       afterMorph(doc);
+      scan(doc);
     });
     doc.addEventListener("amarra:drive-error", () => {
       rollbackOptimistic(optimistic);
@@ -913,6 +1002,313 @@
   function setClasses(el, add, remove) {
     remove.forEach((c) => el.classList?.remove(c));
     add.forEach((c) => el.classList?.add(c));
+  }
+
+  // pkg/amarra/js/frame.mjs
+  var frame_exports = {};
+  __export(frame_exports, {
+    define: () => define,
+    frameHeaders: () => frameHeaders,
+    frameTarget: () => frameTarget,
+    loadFrame: () => loadFrame,
+    observeLazy: () => observeLazy,
+    visitIntoFrame: () => visitIntoFrame
+  });
+  function frameHeaders(id, csrfToken) {
+    const headers = {
+      "Amarra-Frame": String(id ?? ""),
+      Accept: "text/html"
+    };
+    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+    return headers;
+  }
+  function frameTarget(el) {
+    return el?.getAttribute?.("data-amarra-frame") || "";
+  }
+  async function visitIntoFrame(el, href, opts = {}) {
+    const id = frameTarget(el);
+    if (!id || id === "_top") return false;
+    const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
+    const frame = doc?.getElementById?.(id) || null;
+    if (!frame) return false;
+    const prev = frame.getAttribute?.("src");
+    if (typeof frame.setAttribute === "function") frame.setAttribute("src", href);
+    const tag = frame.tagName ? String(frame.tagName).toUpperCase() : "";
+    if (tag === "AMARRA-FRAME" && prev !== href) return true;
+    await loadFrame(frame, { ...opts, document: doc });
+    return true;
+  }
+  function observeLazy(el, opts = {}) {
+    const IO = opts.IntersectionObserver ?? globalThis.IntersectionObserver;
+    if (typeof IO !== "function") {
+      return loadFrame(el, opts);
+    }
+    const io = new IO((entries) => {
+      if (!entries?.some?.((e) => e.isIntersecting)) return;
+      io.disconnect();
+      void loadFrame(el, opts);
+    });
+    io.observe(el);
+    return io;
+  }
+  async function loadFrame(el, opts = {}) {
+    if (!el) return;
+    const src = el.getAttribute?.("src");
+    if (!src) return;
+    const id = el.getAttribute?.("id") || el.id || "";
+    const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
+    const csrfToken = opts.csrfToken ?? csrfTokenFromMeta(opts.document ?? (typeof document !== "undefined" ? document : ""));
+    const res = await fetchFn(src, {
+      headers: frameHeaders(id, csrfToken),
+      credentials: "same-origin",
+      redirect: "follow"
+    });
+    const html = await res.text();
+    (opts.morphFn ?? morph)(el, html);
+    const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
+    if (doc && typeof doc.dispatchEvent === "function") {
+      doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
+    }
+    if (el.hasAttribute?.("amarra-push") && opts.history?.pushState) {
+      opts.history.pushState({ amarra: true }, "", src);
+    }
+  }
+  function define(opts = {}) {
+    const registry = opts.customElements ?? (typeof customElements !== "undefined" ? customElements : null);
+    const Base = opts.HTMLElement ?? (typeof HTMLElement !== "undefined" ? HTMLElement : null);
+    if (!registry || !Base || typeof registry.define !== "function") return false;
+    if (typeof registry.get === "function" && registry.get("amarra-frame")) return true;
+    class AmarraFrame extends Base {
+      connectedCallback() {
+        if (!this.getAttribute("src")) return;
+        if (this.getAttribute("loading") === "lazy") {
+          observeLazy(this, opts);
+          return;
+        }
+        loadFrame(this, opts);
+      }
+      static get observedAttributes() {
+        return ["src"];
+      }
+      attributeChangedCallback(name, prev, next) {
+        if (name === "src" && next && prev !== next) loadFrame(this, opts);
+      }
+    }
+    registry.define("amarra-frame", AmarraFrame);
+    return true;
+  }
+
+  // pkg/amarra/js/stream.mjs
+  var stream_exports = {};
+  __export(stream_exports, {
+    applyOp: () => applyOp,
+    connect: () => connect,
+    isStreamResponse: () => isStreamResponse,
+    parseSSE: () => parseSSE,
+    start: () => start2
+  });
+  var STREAM_KINDS = [
+    "append",
+    "prepend",
+    "replace",
+    "morph",
+    "remove",
+    "toast",
+    "before",
+    "after"
+  ];
+  function parseSSE(chunk) {
+    const events = [];
+    const text = String(chunk ?? "").replace(/\r\n/g, "\n");
+    for (const block of text.split("\n\n")) {
+      if (!block.trim()) continue;
+      let kind = "message";
+      let target;
+      const dataLines = [];
+      for (const line of block.split("\n")) {
+        if (!line || line.startsWith(":")) continue;
+        if (line.startsWith("event:")) {
+          kind = line.slice(6).trim();
+          continue;
+        }
+        if (line.startsWith("id:")) {
+          const rest = line.slice(3);
+          target = rest.startsWith(" ") ? rest.slice(1) : rest;
+          continue;
+        }
+        if (line.startsWith("data:")) {
+          const rest = line.slice(5);
+          dataLines.push(rest.startsWith(" ") ? rest.slice(1) : rest);
+        }
+      }
+      const op = { kind, html: dataLines.join("\n") };
+      if (target) op.target = target;
+      events.push(op);
+    }
+    return events;
+  }
+  function applyOp(op, doc, opts = {}) {
+    if (!op) return;
+    if (op.kind === "toast") {
+      if (doc && typeof doc.dispatchEvent === "function") {
+        doc.dispatchEvent(
+          new CustomEvent("amarra:toast", { bubbles: true, detail: { message: op.html ?? "" } })
+        );
+      }
+      return;
+    }
+    const id = op.target || opts.defaultTarget;
+    const el = id && doc?.getElementById ? doc.getElementById(id) : null;
+    if (!el) return;
+    const html = op.html ?? "";
+    switch (op.kind) {
+      case "append":
+        insertHTML(el, "beforeend", html);
+        break;
+      case "prepend":
+        insertHTML(el, "afterbegin", html);
+        break;
+      case "before":
+        insertHTML(el, "beforebegin", html);
+        break;
+      case "after":
+        insertHTML(el, "afterend", html);
+        break;
+      case "replace":
+        el.outerHTML = html;
+        break;
+      case "morph":
+        (opts.morphFn ?? morph)(el, html);
+        break;
+      case "remove":
+        el.remove?.();
+        break;
+    }
+  }
+  function connect(url, opts = {}) {
+    const ES = opts.EventSource ?? (typeof EventSource !== "undefined" ? EventSource : null);
+    if (!ES || !url) return null;
+    const src = new ES(url);
+    const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
+    for (const kind of STREAM_KINDS) {
+      src.addEventListener(kind, (ev) => {
+        for (const op of parseSSE(sseEnvelope(kind, ev.data))) {
+          applyOp(op, doc, opts);
+        }
+      });
+    }
+    return src;
+  }
+  function start2(opts = {}) {
+    const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
+    if (!doc) return;
+    const nodes = typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("[data-amarra-stream]") : [];
+    for (const el of nodes) {
+      const url = el.getAttribute?.("data-amarra-stream");
+      if (!url) continue;
+      connect(url, {
+        ...opts,
+        document: doc,
+        defaultTarget: el.getAttribute?.("data-amarra-target") || opts.defaultTarget
+      });
+    }
+  }
+  function sseEnvelope(kind, data) {
+    const lines = String(data ?? "").split("\n").map((line) => `data: ${line}`);
+    return `event: ${kind}
+${lines.join("\n")}
+
+`;
+  }
+  function isStreamResponse(headers) {
+    if (!headers) return false;
+    const ct = typeof headers.get === "function" ? headers.get("content-type") : headers["content-type"] || headers["Content-Type"];
+    return String(ct || "").includes("vnd.amarra-stream");
+  }
+  function insertHTML(el, pos, html) {
+    if (typeof el.insertAdjacentHTML === "function") {
+      el.insertAdjacentHTML(pos, html);
+      return;
+    }
+    if (pos === "afterbegin") el.innerHTML = html + (el.innerHTML || "");
+    else el.innerHTML = (el.innerHTML || "") + html;
+  }
+
+  // pkg/amarra/js/drive_head.mjs
+  function extractTitle(html) {
+    const m = String(html ?? "").match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+    return m ? m[1].trim() : null;
+  }
+  function applyHead(doc, html) {
+    if (!doc) return;
+    const title = extractTitle(html);
+    if (title != null) doc.title = title;
+    const token = csrfTokenFromMeta(html);
+    if (!token) return;
+    const meta = doc.querySelector?.('meta[name="csrf-token"]');
+    if (!meta) return;
+    if (typeof meta.setAttribute === "function") meta.setAttribute("content", token);
+    else meta.content = token;
+  }
+  function showProgress(doc) {
+    if (!doc?.createElement || !doc.body) return;
+    let bar = doc.getElementById?.("amarra-progress");
+    if (!bar) {
+      bar = doc.createElement("div");
+      bar.id = "amarra-progress";
+      bar.setAttribute("role", "progressbar");
+      bar.style.cssText = "position:fixed;top:0;left:0;right:0;height:2px;background:#c9893a;z-index:9999";
+      doc.body.appendChild(bar);
+    }
+    bar.hidden = false;
+  }
+  function hideProgress(doc) {
+    const bar = doc?.getElementById?.("amarra-progress");
+    if (bar) bar.hidden = true;
+  }
+
+  // pkg/amarra/js/drive_form.mjs
+  function confirmOk(el, confirmFn) {
+    const msg = el?.getAttribute?.("data-amarra-confirm");
+    if (!msg) return true;
+    const fn = confirmFn ?? (typeof globalThis.confirm === "function" ? globalThis.confirm.bind(globalThis) : () => true);
+    return !!fn(msg);
+  }
+  function requestMethod(el, fallback = "GET") {
+    const attr = el?.getAttribute?.("data-amarra-method");
+    if (attr) return String(attr).toUpperCase();
+    const hidden = el?.querySelector?.('input[name="_method"]');
+    if (hidden?.value) return String(hidden.value).toUpperCase();
+    return String(fallback || "GET").toUpperCase();
+  }
+  function disableSubmit(el) {
+    if (!el) return null;
+    const prev = { el, disabled: !!el.disabled, text: el.textContent };
+    el.disabled = true;
+    const withText = el.getAttribute?.("data-amarra-disable-with");
+    if (withText) el.textContent = withText;
+    return prev;
+  }
+  function restoreSubmit(prev) {
+    if (!prev?.el) return;
+    prev.el.disabled = prev.disabled;
+    if (prev.text != null) prev.el.textContent = prev.text;
+  }
+
+  // pkg/amarra/js/drive_restore.mjs
+  function captureScroll(history, y) {
+    if (!history?.replaceState) return;
+    const prev = history.state && typeof history.state === "object" ? history.state : {};
+    history.replaceState({ ...prev, amarra: true, scrollY: y ?? 0 }, "");
+  }
+  function restoreScroll(win, state) {
+    const y = state?.scrollY;
+    if (typeof y !== "number") return;
+    win?.scrollTo?.(0, y);
+  }
+  function focusFirstInvalid(doc) {
+    const el = doc?.querySelector?.('[aria-invalid="true"], [data-amarra-invalid]');
+    if (el && typeof el.focus === "function") el.focus();
   }
 
   // pkg/amarra/js/drive.mjs
@@ -968,7 +1364,8 @@
     location,
     history,
     document: doc,
-    push = true
+    push = true,
+    window: win
   } = {}) {
     if (status === 401 || status === 403) {
       location?.reload?.();
@@ -980,10 +1377,16 @@
     }
     const fragment = extractMainHTML(html);
     if (fragment == null) return { action: "ignore" };
+    applyHead(doc, html);
     if (main) (morphFn ?? morph)(main, fragment);
     if (status === 200 && push && url && history?.pushState) {
-      if (!location?.href || url !== location.href) history.pushState({ amarra: true }, "", url);
+      if (!location?.href || url !== location.href) {
+        history.pushState({ amarra: true, scrollY: 0 }, "", url);
+      }
+      win?.scrollTo?.(0, 0);
     }
+    if (status === 200 && !push) restoreScroll(win, history?.state);
+    if (status === 422) focusFirstInvalid(doc);
     if (doc && typeof doc.dispatchEvent === "function") {
       doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
     }
@@ -991,30 +1394,42 @@
   }
   async function visit(url, opts = {}) {
     const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
-    const res = await fetchFn(url, {
-      method: opts.method ?? "GET",
-      headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
-      body: opts.body,
-      redirect: "follow",
-      credentials: "same-origin"
-    });
-    const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-    const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
     const doc = opts.document;
-    const html = res.status === 401 || res.status === 403 ? "" : await res.text();
-    return applyDriveResponse({
-      status: res.status,
-      html,
-      url: res.url || url,
-      main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
-      morphFn: opts.morphFn,
-      location,
-      history,
-      document: doc,
-      push: opts.push !== false
-    });
+    showProgress(doc);
+    try {
+      const res = await fetchFn(url, {
+        method: opts.method ?? "GET",
+        headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
+        body: opts.body,
+        redirect: "follow",
+        credentials: "same-origin"
+      });
+      const win = opts.window ?? (typeof window !== "undefined" ? window : null);
+      const location = opts.location ?? win?.location ?? null;
+      const history = opts.history ?? win?.history ?? null;
+      if (opts.push !== false) captureScroll(history, win?.scrollY ?? 0);
+      const html = res.status === 401 || res.status === 403 ? "" : await res.text();
+      if (isStreamResponse(res.headers)) {
+        for (const op of parseSSE(html)) applyOp(op, doc, opts);
+        return { action: "stream" };
+      }
+      return applyDriveResponse({
+        status: res.status,
+        html,
+        url: res.url || url,
+        main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
+        morphFn: opts.morphFn,
+        location,
+        history,
+        document: doc,
+        push: opts.push !== false,
+        window: win
+      });
+    } finally {
+      hideProgress(doc);
+    }
   }
-  function start2(opts = {}) {
+  function start3(opts = {}) {
     const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
     if (!doc || typeof doc.addEventListener !== "function") return;
     if (doc.documentElement?.dataset?.amarraDrive === "true") return;
@@ -1046,8 +1461,14 @@
       })) {
         return;
       }
+      if (!confirmOk(a, opts.confirm)) return;
+      const method = requestMethod(a, "GET");
       event.preventDefault();
-      void visit(resolved?.href ?? href, shared).catch(() => emitDriveError(doc));
+      const hrefURL = resolved?.href ?? href;
+      void (async () => {
+        if (await visitIntoFrame(a, hrefURL, shared)) return;
+        await visit(hrefURL, { ...shared, method });
+      })().catch(() => emitDriveError(doc));
     });
     doc.addEventListener("submit", (event) => {
       if (event.defaultPrevented) return;
@@ -1066,14 +1487,17 @@
       })) {
         return;
       }
+      if (!confirmOk(form, opts.confirm) || !confirmOk(submitter, opts.confirm)) return;
+      const verb = requestMethod(form, method);
       event.preventDefault();
       const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
-      const url = method === "GET" ? withQuery(rawAction, fd) : rawAction;
+      const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+      const disabled = disableSubmit(submitter);
       void visit(url, {
         ...shared,
-        method,
-        body: method === "GET" ? void 0 : fd
-      }).catch(() => emitDriveError(doc));
+        method: verb,
+        body: verb === "GET" ? void 0 : fd
+      }).catch(() => emitDriveError(doc)).finally(() => restoreSubmit(disabled));
     });
     if (typeof window !== "undefined" && opts.popstate !== false) {
       window.addEventListener("popstate", () => {
@@ -1186,181 +1610,15 @@
     return action.includes("?") ? `${action}&${q}` : `${action}?${q}`;
   }
 
-  // pkg/amarra/js/frame.mjs
-  var frame_exports = {};
-  __export(frame_exports, {
-    define: () => define,
-    frameHeaders: () => frameHeaders,
-    loadFrame: () => loadFrame
-  });
-  function frameHeaders(id, csrfToken) {
-    const headers = {
-      "Amarra-Frame": String(id ?? ""),
-      Accept: "text/html"
-    };
-    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
-    return headers;
-  }
-  async function loadFrame(el, opts = {}) {
-    if (!el) return;
-    const src = el.getAttribute?.("src");
-    if (!src) return;
-    const id = el.getAttribute?.("id") || el.id || "";
-    const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
-    const csrfToken = opts.csrfToken ?? csrfTokenFromMeta(opts.document ?? (typeof document !== "undefined" ? document : ""));
-    const res = await fetchFn(src, {
-      headers: frameHeaders(id, csrfToken),
-      credentials: "same-origin",
-      redirect: "follow"
-    });
-    const html = await res.text();
-    (opts.morphFn ?? morph)(el, html);
-    if (el.hasAttribute?.("amarra-push") && opts.history?.pushState) {
-      opts.history.pushState({ amarra: true }, "", src);
-    }
-  }
-  function define(opts = {}) {
-    const registry = opts.customElements ?? (typeof customElements !== "undefined" ? customElements : null);
-    const Base = opts.HTMLElement ?? (typeof HTMLElement !== "undefined" ? HTMLElement : null);
-    if (!registry || !Base || typeof registry.define !== "function") return false;
-    if (typeof registry.get === "function" && registry.get("amarra-frame")) return true;
-    class AmarraFrame extends Base {
-      connectedCallback() {
-        if (this.getAttribute("src")) loadFrame(this, opts);
-      }
-      static get observedAttributes() {
-        return ["src"];
-      }
-      attributeChangedCallback(name, prev, next) {
-        if (name === "src" && next && prev !== next) loadFrame(this, opts);
-      }
-    }
-    registry.define("amarra-frame", AmarraFrame);
-    return true;
-  }
-
-  // pkg/amarra/js/stream.mjs
-  var stream_exports = {};
-  __export(stream_exports, {
-    applyOp: () => applyOp,
-    connect: () => connect,
-    parseSSE: () => parseSSE,
-    start: () => start3
-  });
-  var STREAM_KINDS = ["append", "prepend", "replace", "morph", "remove", "toast"];
-  function parseSSE(chunk) {
-    const events = [];
-    const text = String(chunk ?? "").replace(/\r\n/g, "\n");
-    for (const block of text.split("\n\n")) {
-      if (!block.trim()) continue;
-      let kind = "message";
-      let target;
-      const dataLines = [];
-      for (const line of block.split("\n")) {
-        if (!line || line.startsWith(":")) continue;
-        if (line.startsWith("event:")) {
-          kind = line.slice(6).trim();
-          continue;
-        }
-        if (line.startsWith("id:")) {
-          const rest = line.slice(3);
-          target = rest.startsWith(" ") ? rest.slice(1) : rest;
-          continue;
-        }
-        if (line.startsWith("data:")) {
-          const rest = line.slice(5);
-          dataLines.push(rest.startsWith(" ") ? rest.slice(1) : rest);
-        }
-      }
-      const op = { kind, html: dataLines.join("\n") };
-      if (target) op.target = target;
-      events.push(op);
-    }
-    return events;
-  }
-  function applyOp(op, doc, opts = {}) {
-    if (!op) return;
-    if (op.kind === "toast") {
-      if (doc && typeof doc.dispatchEvent === "function") {
-        doc.dispatchEvent(
-          new CustomEvent("amarra:toast", { bubbles: true, detail: { message: op.html ?? "" } })
-        );
-      }
-      return;
-    }
-    const id = op.target || opts.defaultTarget;
-    const el = id && doc?.getElementById ? doc.getElementById(id) : null;
-    if (!el) return;
-    const html = op.html ?? "";
-    switch (op.kind) {
-      case "append":
-        insertHTML(el, "beforeend", html);
-        break;
-      case "prepend":
-        insertHTML(el, "afterbegin", html);
-        break;
-      case "replace":
-        el.outerHTML = html;
-        break;
-      case "morph":
-        (opts.morphFn ?? morph)(el, html);
-        break;
-      case "remove":
-        el.remove?.();
-        break;
-    }
-  }
-  function connect(url, opts = {}) {
-    const ES = opts.EventSource ?? (typeof EventSource !== "undefined" ? EventSource : null);
-    if (!ES || !url) return null;
-    const src = new ES(url);
-    const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
-    for (const kind of STREAM_KINDS) {
-      src.addEventListener(kind, (ev) => {
-        for (const op of parseSSE(sseEnvelope(kind, ev.data))) {
-          applyOp(op, doc, opts);
-        }
-      });
-    }
-    return src;
-  }
-  function start3(opts = {}) {
-    const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
-    if (!doc) return;
-    const nodes = typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("[data-amarra-stream]") : [];
-    for (const el of nodes) {
-      const url = el.getAttribute?.("data-amarra-stream");
-      if (!url) continue;
-      connect(url, {
-        ...opts,
-        document: doc,
-        defaultTarget: el.getAttribute?.("data-amarra-target") || opts.defaultTarget
-      });
-    }
-  }
-  function sseEnvelope(kind, data) {
-    const lines = String(data ?? "").split("\n").map((line) => `data: ${line}`);
-    return `event: ${kind}
-${lines.join("\n")}
-
-`;
-  }
-  function insertHTML(el, pos, html) {
-    if (typeof el.insertAdjacentHTML === "function") {
-      el.insertAdjacentHTML(pos, html);
-      return;
-    }
-    if (pos === "afterbegin") el.innerHTML = html + (el.innerHTML || "");
-    else el.innerHTML = (el.innerHTML || "") + html;
-  }
-
   // pkg/amarra/js/live.mjs
   var live_exports = {};
   __export(live_exports, {
     applyLiveMessage: () => applyLiveMessage,
+    debounceWait: () => debounceWait,
     eventName: () => eventName,
     formPayload: () => formPayload,
     liveRoot: () => liveRoot,
+    setLoading: () => setLoading,
     start: () => start4,
     wsURL: () => wsURL
   });
@@ -1391,16 +1649,37 @@ ${lines.join("\n")}
     }
     return data;
   }
-  function applyLiveMessage(msg, root, morphFn = morph) {
+  function debounceWait(el) {
+    const n = parseInt(el?.getAttribute?.("amarra-debounce") || "0", 10);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+  function setLoading(el, root, on) {
+    const op = on ? "add" : "remove";
+    el?.classList?.[op]?.("amarra-click-loading");
+    root?.classList?.[op]?.("amarra-loading");
+  }
+  function applyLiveMessage(msg, root, morphFn = morph, extras = {}) {
     if (!msg || !root) return;
     if (msg.type !== "ok" && msg.type !== "morph") return;
     const html = msg.html ?? "";
-    if (msg.target) {
-      const el = root.querySelector?.(`#${cssEscape(msg.target)}`) || root;
-      morphFn(el, html);
-      return;
+    if (html !== "") {
+      if (msg.target) {
+        const el = root.querySelector?.(`#${cssEscape(msg.target)}`) || root;
+        morphFn(el, html);
+      } else {
+        morphFn(root, html);
+      }
     }
-    morphFn(root, html);
+    const opFn = extras.applyOp ?? applyOp;
+    const doc = extras.document ?? root.ownerDocument;
+    for (const op of msg.ops || []) opFn(op, doc, extras);
+    if (msg.patch) extras.history?.pushState?.({}, "", msg.patch);
+    if (msg.navigate && extras.location) extras.location.href = msg.navigate;
+    const pushFn = extras.dispatchPush ?? dispatchLivePush;
+    for (const p of msg.pushes || []) pushFn(p.event, p.payload);
+    if (doc && typeof doc.dispatchEvent === "function") {
+      doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
+    }
   }
   function cssEscape(id) {
     if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(id);
@@ -1433,7 +1712,13 @@ ${lines.join("\n")}
         } catch {
           return;
         }
-        applyLiveMessage(msg, root, opts.morphFn);
+        applyLiveMessage(msg, root, opts.morphFn, {
+          document: doc,
+          history: opts.history ?? (typeof window !== "undefined" ? window.history : null),
+          location
+        });
+        setLoading(root._amarraPending, root, false);
+        root._amarraPending = null;
       });
       ws.addEventListener("close", () => {
         sockets.delete(root);
@@ -1454,7 +1739,18 @@ ${lines.join("\n")}
       const ws = sockets.get(root);
       if (!ws || ws.readyState !== 1) return false;
       const payload = extra ?? {};
-      ws.send(JSON.stringify({ type: "event", event: name, payload, ref: String(Date.now()) }));
+      const send = () => {
+        setLoading(el, root, true);
+        root._amarraPending = el;
+        ws.send(JSON.stringify({ type: "event", event: name, payload, ref: String(Date.now()) }));
+      };
+      const wait = debounceWait(el);
+      if (wait) {
+        clearTimeout(el._amarraDebounce);
+        el._amarraDebounce = setTimeout(send, wait);
+        return true;
+      }
+      send();
       return true;
     }
     doc.addEventListener(
@@ -1495,13 +1791,14 @@ ${lines.join("\n")}
   function boot() {
     if (typeof window === "undefined") return;
     start();
-    start2();
-    define();
     start3();
+    define();
+    start2();
     start4();
     window.amarra = {
       drive: drive_exports,
-      live: live_exports
+      live: live_exports,
+      hook: hook_exports
     };
   }
   if (typeof window !== "undefined") {

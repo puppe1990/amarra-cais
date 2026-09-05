@@ -1,5 +1,10 @@
 import { morph } from "./morph.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
+import { visitIntoFrame } from "./frame.mjs";
+import { applyOp, isStreamResponse, parseSSE } from "./stream.mjs";
+import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
+import { confirmOk, disableSubmit, requestMethod, restoreSubmit } from "./drive_form.mjs";
+import { captureScroll, focusFirstInvalid, restoreScroll } from "./drive_restore.mjs";
 
 export function shouldInterceptClick({
   href,
@@ -58,6 +63,7 @@ export function applyDriveResponse({
   history,
   document: doc,
   push = true,
+  window: win,
 } = {}) {
   if (status === 401 || status === 403) {
     location?.reload?.();
@@ -70,10 +76,16 @@ export function applyDriveResponse({
 
   const fragment = extractMainHTML(html);
   if (fragment == null) return { action: "ignore" };
+  applyHead(doc, html);
   if (main) (morphFn ?? morph)(main, fragment);
   if (status === 200 && push && url && history?.pushState) {
-    if (!location?.href || url !== location.href) history.pushState({ amarra: true }, "", url);
+    if (!location?.href || url !== location.href) {
+      history.pushState({ amarra: true, scrollY: 0 }, "", url);
+    }
+    win?.scrollTo?.(0, 0);
   }
+  if (status === 200 && !push) restoreScroll(win, history?.state);
+  if (status === 422) focusFirstInvalid(doc);
   if (doc && typeof doc.dispatchEvent === "function") {
     doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
   }
@@ -82,28 +94,40 @@ export function applyDriveResponse({
 
 export async function visit(url, opts = {}) {
   const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
-  const res = await fetchFn(url, {
-    method: opts.method ?? "GET",
-    headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
-    body: opts.body,
-    redirect: "follow",
-    credentials: "same-origin",
-  });
-  const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-  const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
   const doc = opts.document;
-  const html = res.status === 401 || res.status === 403 ? "" : await res.text();
-  return applyDriveResponse({
-    status: res.status,
-    html,
-    url: res.url || url,
-    main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
-    morphFn: opts.morphFn,
-    location,
-    history,
-    document: doc,
-    push: opts.push !== false,
-  });
+  showProgress(doc);
+  try {
+    const res = await fetchFn(url, {
+      method: opts.method ?? "GET",
+      headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
+      body: opts.body,
+      redirect: "follow",
+      credentials: "same-origin",
+    });
+    const win = opts.window ?? (typeof window !== "undefined" ? window : null);
+    const location = opts.location ?? win?.location ?? null;
+    const history = opts.history ?? win?.history ?? null;
+    if (opts.push !== false) captureScroll(history, win?.scrollY ?? 0);
+    const html = res.status === 401 || res.status === 403 ? "" : await res.text();
+    if (isStreamResponse(res.headers)) {
+      for (const op of parseSSE(html)) applyOp(op, doc, opts);
+      return { action: "stream" };
+    }
+    return applyDriveResponse({
+      status: res.status,
+      html,
+      url: res.url || url,
+      main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
+      morphFn: opts.morphFn,
+      location,
+      history,
+      document: doc,
+      push: opts.push !== false,
+      window: win,
+    });
+  } finally {
+    hideProgress(doc);
+  }
 }
 
 export function start(opts = {}) {
@@ -142,8 +166,14 @@ export function start(opts = {}) {
     ) {
       return;
     }
+    if (!confirmOk(a, opts.confirm)) return;
+    const method = requestMethod(a, "GET");
     event.preventDefault();
-    void visit(resolved?.href ?? href, shared).catch(() => emitDriveError(doc));
+    const hrefURL = resolved?.href ?? href;
+    void (async () => {
+      if (await visitIntoFrame(a, hrefURL, shared)) return;
+      await visit(hrefURL, { ...shared, method });
+    })().catch(() => emitDriveError(doc));
   });
 
   doc.addEventListener("submit", (event) => {
@@ -175,14 +205,19 @@ export function start(opts = {}) {
     ) {
       return;
     }
+    if (!confirmOk(form, opts.confirm) || !confirmOk(submitter, opts.confirm)) return;
+    const verb = requestMethod(form, method);
     event.preventDefault();
     const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
-    const url = method === "GET" ? withQuery(rawAction, fd) : rawAction;
+    const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+    const disabled = disableSubmit(submitter);
     void visit(url, {
       ...shared,
-      method,
-      body: method === "GET" ? undefined : fd,
-    }).catch(() => emitDriveError(doc));
+      method: verb,
+      body: verb === "GET" ? undefined : fd,
+    })
+      .catch(() => emitDriveError(doc))
+      .finally(() => restoreSubmit(disabled));
   });
 
   if (typeof window !== "undefined" && opts.popstate !== false) {

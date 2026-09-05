@@ -10,6 +10,38 @@ export function frameHeaders(id, csrfToken) {
   return headers;
 }
 
+export function frameTarget(el) {
+  return el?.getAttribute?.("data-amarra-frame") || "";
+}
+
+export async function visitIntoFrame(el, href, opts = {}) {
+  const id = frameTarget(el);
+  if (!id || id === "_top") return false;
+  const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
+  const frame = doc?.getElementById?.(id) || null;
+  if (!frame) return false;
+  const prev = frame.getAttribute?.("src");
+  if (typeof frame.setAttribute === "function") frame.setAttribute("src", href);
+  const tag = frame.tagName ? String(frame.tagName).toUpperCase() : "";
+  if (tag === "AMARRA-FRAME" && prev !== href) return true;
+  await loadFrame(frame, { ...opts, document: doc });
+  return true;
+}
+
+export function observeLazy(el, opts = {}) {
+  const IO = opts.IntersectionObserver ?? globalThis.IntersectionObserver;
+  if (typeof IO !== "function") {
+    return loadFrame(el, opts);
+  }
+  const io = new IO((entries) => {
+    if (!entries?.some?.((e) => e.isIntersecting)) return;
+    io.disconnect();
+    void loadFrame(el, opts);
+  });
+  io.observe(el);
+  return io;
+}
+
 export async function loadFrame(el, opts = {}) {
   if (!el) return;
   const src = el.getAttribute?.("src");
@@ -26,6 +58,10 @@ export async function loadFrame(el, opts = {}) {
   });
   const html = await res.text();
   (opts.morphFn ?? morph)(el, html);
+  const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
+  if (doc && typeof doc.dispatchEvent === "function") {
+    doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
+  }
   if (el.hasAttribute?.("amarra-push") && opts.history?.pushState) {
     opts.history.pushState({ amarra: true }, "", src);
   }
@@ -40,7 +76,12 @@ export function define(opts = {}) {
 
   class AmarraFrame extends Base {
     connectedCallback() {
-      if (this.getAttribute("src")) loadFrame(this, opts);
+      if (!this.getAttribute("src")) return;
+      if (this.getAttribute("loading") === "lazy") {
+        observeLazy(this, opts);
+        return;
+      }
+      loadFrame(this, opts);
     }
 
     static get observedAttributes() {

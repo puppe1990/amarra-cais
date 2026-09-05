@@ -136,8 +136,7 @@ func (c *conn) readLoop(ctx context.Context, r *http.Request, cancel context.Can
 				return
 			}
 			joined = true
-			out := c.view.Render()
-			c.write(ctx, outMsg{Type: typeOK, HTML: out.HTML, Target: out.Target})
+			c.writeRendered(ctx, typeOK, c.view.Render(), "")
 		case typeEvent:
 			if !joined {
 				c.write(ctx, outMsg{Type: typeError, Message: "join first"})
@@ -187,11 +186,24 @@ func (c *conn) dispatch(ctx context.Context, ev Event) {
 		c.write(ctx, outMsg{Type: typeError, Message: err.Error(), Ref: ev.Ref})
 		return
 	}
-	out := c.view.Render()
-	c.write(ctx, outMsg{Type: typeMorph, HTML: out.HTML, Target: out.Target, Ref: ev.Ref})
+	c.writeRendered(ctx, typeMorph, c.view.Render(), ev.Ref)
 	if ev.Ref != "" {
 		c.write(ctx, outMsg{Type: typeAck, Ref: ev.Ref})
 	}
+}
+
+func (c *conn) writeRendered(ctx context.Context, kind string, out Rendered, ref string) {
+	patch, nav, pushes, ops := c.sock.drain()
+	c.write(ctx, outMsg{
+		Type:     kind,
+		HTML:     out.HTML,
+		Target:   out.Target,
+		Ref:      ref,
+		Patch:    patch,
+		Navigate: nav,
+		Ops:      ops,
+		Pushes:   pushes,
+	})
 }
 
 func (c *conn) write(ctx context.Context, msg outMsg) {
