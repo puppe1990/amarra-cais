@@ -789,10 +789,96 @@
     applyFocus: () => applyFocus,
     applyOptimistic: () => applyOptimistic,
     csrfTokenFromMeta: () => csrfTokenFromMeta,
+    dispatchLivePush: () => dispatchLivePush,
+    register: () => register,
+    reset: () => reset,
     rollbackOptimistic: () => rollbackOptimistic,
+    scan: () => scan,
     showToast: () => showToast,
     start: () => start
   });
+
+  // pkg/amarra/js/hook_registry.mjs
+  var defs = /* @__PURE__ */ new Map();
+  var mounted = /* @__PURE__ */ new Map();
+  function register(name, def) {
+    if (!name || !def) return;
+    defs.set(name, def);
+  }
+  function reset() {
+    defs.clear();
+    mounted.clear();
+  }
+  function scan(root) {
+    if (!root) return;
+    const found = collect(root);
+    const seen = new Set(found);
+    for (const el of found) {
+      const name = el.getAttribute?.("amarra-hook") || "";
+      const def = defs.get(name);
+      const cur = mounted.get(el);
+      if (cur && cur.name === name) {
+        def?.updated?.(el);
+        continue;
+      }
+      if (cur) {
+        cur.def.disconnect?.(el);
+        mounted.delete(el);
+      }
+      if (!def) continue;
+      mounted.set(el, { name, def });
+      def.connect?.(el);
+    }
+    for (const [el, cur] of [...mounted]) {
+      if (seen.has(el)) continue;
+      cur.def.disconnect?.(el);
+      mounted.delete(el);
+    }
+  }
+  function dispatchLivePush(event, payload) {
+    for (const [el, cur] of mounted) {
+      cur.def.handleEvent?.(event, payload, el);
+    }
+  }
+  function collect(root) {
+    const out = [];
+    if (root.hasAttribute?.("amarra-hook")) out.push(root);
+    const list = root.querySelectorAll?.("[amarra-hook]");
+    if (list) {
+      for (const el of list) out.push(el);
+    }
+    return out;
+  }
+
+  // pkg/amarra/js/hook_clipboard.mjs
+  var CLICK = "_amarraClipboardClick";
+  function makeClipboard(writeText) {
+    return {
+      connect(el) {
+        if (!el || typeof el.addEventListener !== "function") return;
+        const fn = (ev) => {
+          ev?.preventDefault?.();
+          const text = el.getAttribute?.("data-amarra-copy") ?? "";
+          writeText?.(text);
+        };
+        el[CLICK] = fn;
+        el.addEventListener("click", fn);
+      },
+      disconnect(el) {
+        const fn = el?.[CLICK];
+        if (!fn || typeof el.removeEventListener !== "function") return;
+        el.removeEventListener("click", fn);
+        delete el[CLICK];
+      }
+    };
+  }
+  var clipboard = makeClipboard((text) => {
+    const write = globalThis.navigator?.clipboard?.writeText;
+    if (typeof write === "function") return write.call(globalThis.navigator.clipboard, text);
+  });
+
+  // pkg/amarra/js/hook.mjs
+  register("clipboard", clipboard);
   var ON_CLASSES = ["bg-green-50", "text-green-700"];
   var OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
   var TOAST_MS = 2e3;
@@ -884,6 +970,8 @@
     if (!doc || typeof doc.addEventListener !== "function") return;
     if (doc.documentElement?.dataset?.amarraHook === "true") return;
     if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
+    register("clipboard", clipboard);
+    scan(doc);
     let optimistic = null;
     doc.addEventListener("amarra:toast", (ev) => {
       showToast(ev.detail?.message ?? "", doc, opts);
@@ -891,6 +979,7 @@
     doc.addEventListener("amarra:morphed", () => {
       optimistic = null;
       afterMorph(doc);
+      scan(doc);
     });
     doc.addEventListener("amarra:drive-error", () => {
       rollbackOptimistic(optimistic);
@@ -1501,7 +1590,8 @@ ${lines.join("\n")}
     start4();
     window.amarra = {
       drive: drive_exports,
-      live: live_exports
+      live: live_exports,
+      hook: hook_exports
     };
   }
   if (typeof window !== "undefined") {

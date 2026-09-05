@@ -20,6 +20,7 @@ export function boot() {
   window.amarra = {
     drive,
     live,
+    hook,
   };
 }
 

@@ -1,3 +1,10 @@
+import { register, scan, dispatchLivePush, reset } from "./hook_registry.mjs";
+import { clipboard } from "./hook_clipboard.mjs";
+
+export { register, scan, dispatchLivePush, reset };
+
+register("clipboard", clipboard);
+
 const ON_CLASSES = ["bg-green-50", "text-green-700"];
 const OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
 const TOAST_MS = 2000;
@@ -101,6 +108,9 @@ export function start(opts = {}) {
   if (doc.documentElement?.dataset?.amarraHook === "true") return;
   if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
 
+  register("clipboard", clipboard);
+  scan(doc);
+
   let optimistic = null;
 
   doc.addEventListener("amarra:toast", (ev) => {
@@ -110,6 +120,7 @@ export function start(opts = {}) {
   doc.addEventListener("amarra:morphed", () => {
     optimistic = null;
     afterMorph(doc);
+    scan(doc);
   });
 
   doc.addEventListener("amarra:drive-error", () => {
