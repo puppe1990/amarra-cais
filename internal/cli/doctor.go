@@ -212,7 +212,7 @@ func checkUnsupportedVite(dir string) *doctorCheck {
 	return &doctorCheck{
 		Name:    "vite.config.js",
 		Detail:  "this is Cais v0.11 Inertia; amarra-cais does not support it",
-		FixHint: "remove vite.config.js — Amarra apps use HTML + amarra.js, not Vite/Inertia",
+		FixHint: "see docs/migrate-inertia.md — Amarra has no Inertia mode; rewrite pages to HTML + view.Write",
 	}
 }
 
