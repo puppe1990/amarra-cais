@@ -6,7 +6,7 @@ SSE event contract (source of truth):
   event: thinking → targets #chat-thinking (outerHTML) — indicator
 
 Clients (JS + HTMX) must key behavior off the event name + stable data attrs,
-not inner presentation class names. See pkg/cais/stream.WriteEvent.
+not inner presentation class names. See pkg/amarra/stream.WriteEvent.
 */}}
 <div class="cais-chat-messages-wrap relative flex-1 min-h-0 flex flex-col">
   <div id="chat-messages" class="cais-chat-messages flex-1 overflow-y-auto overflow-x-hidden max-w-full overscroll-contain py-3 min-h-0" data-cais-chat="true">

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/puppe1990/amarra-cais/pkg/amarra/stream"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/stream"
 )
 
 func TestLogger_RailsStyleRequestLog(t *testing.T) {

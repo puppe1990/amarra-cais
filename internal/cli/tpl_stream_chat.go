@@ -33,12 +33,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/puppe1990/amarra-cais/pkg/amarra/stream"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/chat"
 	"github.com/puppe1990/amarra-cais/pkg/cais/httpx"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
-	"github.com/puppe1990/amarra-cais/pkg/cais/stream"
 	"github.com/puppe1990/amarra-cais/pkg/cais/validate"
 
 	"{{.ModulePath}}/internal/models"

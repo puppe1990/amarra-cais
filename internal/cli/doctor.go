@@ -352,7 +352,7 @@ func checkSSEWriteTimeout(dir string) doctorCheck {
 		Name:     "SSE WriteTimeout",
 		Optional: true,
 		Detail:   fmt.Sprintf("WriteTimeout: %s*time.Second kills long-lived SSE connections", m[1]),
-		FixHint:  "set WriteTimeout: 0 in internal/app/app.go (see pkg/cais/stream)",
+		FixHint:  "set WriteTimeout: 0 in internal/app/app.go (see pkg/amarra/stream)",
 	}
 }
 
