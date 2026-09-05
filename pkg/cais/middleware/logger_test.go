@@ -1,0 +1,199 @@
+package middleware
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/cais/pkg/cais/stream"
+)
+
+func TestLogger_RailsStyleRequestLog(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/login", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	out := buf.String()
+	if !strings.Contains(out, "Started GET \"/login\" for 127.0.0.1 at ") {
+		t.Errorf("missing Started line with timestamp, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Completed 200 OK in") || !strings.Contains(out, " at ") {
+		t.Errorf("missing Completed line with timestamp, got:\n%s", out)
+	}
+}
+
+func TestLogger_SkipsJobsDashboard(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	for _, path := range []string{"/jobs", "/jobs/3/retry"} {
+		buf.Reset()
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+		if buf.Len() != 0 {
+			t.Errorf("expected no log for %s, got:\n%s", path, buf.String())
+		}
+	}
+}
+
+func TestLogger_SkipsStaticAssets(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/static/css/styles.css", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if buf.Len() != 0 {
+		t.Errorf("expected no log for static asset, got:\n%s", buf.String())
+	}
+}
+
+func TestLogger_JSONInProduction(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{Env: "production"}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	req.RemoteAddr = "10.0.0.2:443"
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 JSON lines, got:\n%s", buf.String())
+	}
+	var completed map[string]any
+	if err := json.Unmarshal([]byte(lines[1]), &completed); err != nil {
+		t.Fatal(err)
+	}
+	if completed["status"].(float64) != 200 {
+		t.Errorf("status = %v", completed["status"])
+	}
+}
+
+func TestLogger_TextInProductionWhenConfigured(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{Env: "production", LogFormat: "text"}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/login", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if !strings.Contains(buf.String(), "Started GET") {
+		t.Fatalf("got:\n%s", buf.String())
+	}
+}
+
+func TestLogger_JSONInDevelopment(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{Env: "development"}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/login", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 JSON lines, got:\n%s", buf.String())
+	}
+	for i, phase := range []string{"started", "completed"} {
+		var got map[string]any
+		if err := json.Unmarshal([]byte(lines[i]), &got); err != nil {
+			t.Fatalf("line %d: invalid JSON: %v", i, err)
+		}
+		if got["kind"] != "request" || got["phase"] != phase {
+			t.Errorf("line %d = %v", i, got)
+		}
+	}
+}
+
+type flushSpy struct {
+	httptest.ResponseRecorder
+	n int
+}
+
+func (f *flushSpy) Flush() {
+	f.n++
+}
+
+func TestLogger_PreservesFlusherForSSE(t *testing.T) {
+	var buf bytes.Buffer
+	spy := &flushSpy{}
+	handler := LoggerWithWriter(cais.Config{}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Apps should use stream.Flush — not http.Flusher assertions on w.
+		if err := stream.Flush(w); err != nil {
+			t.Fatalf("stream.Flush: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/chat/stream", nil)
+	handler.ServeHTTP(spy, req)
+
+	if spy.n != 1 {
+		t.Errorf("Flush() calls = %d, want 1", spy.n)
+	}
+}
+
+func TestLogger_SkipsCompletedLogForSSEStreamPath(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		stream.RelaySSE(w)
+		_, _ = w.Write([]byte("event: message\ndata: ok\n\n"))
+		_ = stream.Flush(w)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/chat/abc/stream", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	out := buf.String()
+	if !strings.Contains(out, "Started GET") {
+		t.Errorf("expected Started log, got:\n%s", out)
+	}
+	if strings.Contains(out, "Completed") {
+		t.Errorf("SSE stream path should not log Completed (misleading duration), got:\n%s", out)
+	}
+}
+
+func TestLogger_SlowRequestMarksDuration(t *testing.T) {
+	var buf bytes.Buffer
+	handler := LoggerWithWriter(cais.Config{}, &buf, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(2 * time.Millisecond)
+		w.WriteHeader(http.StatusCreated)
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/login", nil)
+	req.RemoteAddr = "10.0.0.1:80"
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if !strings.Contains(buf.String(), "Completed 201 Created in") {
+		t.Fatalf("got:\n%s", buf.String())
+	}
+}

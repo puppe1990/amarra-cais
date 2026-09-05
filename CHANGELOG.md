@@ -1,0 +1,371 @@
+# Changelog
+
+All notable changes to the Cais framework are documented here.
+
+Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
+
+## Unreleased
+
+## [0.11.0] - 2026-08-28
+
+### Added
+
+- `GET /jobs` queue dashboard (`pkg/cais/jobsui`) — localhost only, all envs; retry/discard failed jobs; job detail; kind filter; prune finished; worker heartbeats (#185).
+- Jobs inspect APIs: `List` (status/queue/kind), `Get`, `RetryFailed`, `Discard`, `ListScheduled`, `CountByQueue`, `PruneFinished`, `TouchWorker` / `ListLiveWorkers`, `RequeueOrphaned` (#185).
+- Worker heartbeat (`job_workers`) so `/jobs` shows live processes; `RequeueOrphaned` skips in-flight jobs of live workers (#185).
+- Built-in `PruneFinished` job (daily 04:00 UTC when a worker runs) plus `cais jobs prune [--older 24h]` (#185).
+- `cais jobs retry|discard <id>`; `cais jobs status` prints workers (#185).
+- `cais routes` lists `/jobs` when `jobsui.Register` is in `app.go` (#185).
+- Boot banner lists `http://127.0.0.1:<port>/jobs` (#185).
+- `cais doctor` checks `jobsui.Register` in `app.go` (#185).
+- Dashboard warns when two workers share one SQLite file (#185).
+
+## [0.10.0] - 2026-08-25
+
+### Fixed
+
+- `cais g auth` compiles on minimal/blank apps: routes patched via the AST helper, `errors` import ordered correctly, dev demo user seeded so generated auth tests pass (#166).
+- SSE `WriteEvent` splits multi-line payloads into `data:` lines — newlines in chat HTML no longer truncate events or let user text forge extra SSE events (#167).
+- `cais destroy` unpatches via `go/ast`: exact statement/name removal only; user comments, custom `/admin/<plural>` routes and lookalike methods survive (#168).
+- `ClientIP` walks `X-Forwarded-For` right-to-left; leftmost entries were spoofable to evade rate limits (#170).
+- `mail.SMTPSender.Send` rejects CRLF header injection and invalid recipients via `net/mail.ParseAddress` (#171).
+- Jobs stranded in `running` by a crashed worker are requeued on worker boot (`Store.RequeueStuck`) (#172).
+- CSRF cookie uses the `__Host-cais_csrf` prefix when secure (production); generated Inertia apps pick the matching `xsrfCookieName` per Vite `PROD` (#173).
+- Low-severity batch: atomic devlog default buffer, mutex-guarded jobs `Registry`, recurring enqueue + `last_run` in one transaction, cache sweep past 1024 keys, rune-safe `chat.Truncate`, `Recover` logs stack traces, destroy/stream patches propagate I/O errors (#174).
+
+### Added
+
+- `cais destroy resource|model|handler` warns before deleting files modified since generation. Generators record SHA-256 hashes in `.cais-generated.json`; `--force` overrides (#169).
+
+### Changed
+
+- `middleware.Flash` takes a config (`Flash(cfg)`) so flash deletion cookies mirror the production `Secure` flag (#174).
+
+## [0.9.0] - 2026-08-25
+
+### Added
+
+- `pkg/cais/i18n` — per-request catalog: `NormalizeLocale`, `CatalogForRequest` (`?lang=` then `cais_locale` cookie then fallback), `LocaleMiddleware`, `CatalogFromRequest`, `SetCookie`. Accept-Language stays out of scope (#160).
+- Locale tags `es` and `zh` in `normalizeLocale`.
+- `cais.Load()` reads `.env` when present (`pkg/cais/dotenv`); does not override process env (tests, systemd, CI). Doctor shares the same parser (#153).
+- `cais doctor` warns (fails when `CI=true` / `GITHUB_ACTIONS=true`) if `go.mod` still has a local `cais link` replace; `cais link` says not to commit it (#154).
+- `cais new` ships `AGENTS.md` with the app (#150).
+- Auth pages use shared `AuthLayout` (centered) by default (#151).
+- Password inputs default to show/hide eye (#137).
+- `cais routes` / router panic hint when two ServeMux patterns collide (#145).
+
+### Changed
+
+- Scaffold handlers are **Inertia-only** (no HTMX HTML fallbacks in home/contact/auth/dashboard templates) (#138).
+- `cais g auth` writes Svelte pages (`Login`/`Signup`/…) instead of `web/templates/pages/*.html`.
+- `cais destroy auth` removes Svelte auth pages (and leftover HTMX login HTML if present).
+- Framework repo is CLI + `pkg/cais` only — smoke production boots a scaffolded app via `cais new` (#138).
+- Flash on Inertia redirects uses `flash.Set` cookies, not `inertia.SetFlash` (#143).
+- Scaffold `go.mod` default pin when CLI is `dev`: `v0.9.0`.
+
+### Fixed
+
+- `cais doctor` fails (not a warning) when an Inertia app has no `web/static/build/assets/main.js` — scaffold `.gitkeep` is not a bundle (#159).
+- `cais build` / Vite step fails if `npm run build` did not emit `web/static/build/assets/main.js` (#159).
+- `cais new --help` / `-h` print usage and do not create a directory; unknown flags error instead of becoming the app name (#158).
+- Fresh `cais new` apps pass their own CI: goimports local-prefixes, unused `bootstrap()`, console `log.Fatal` after defer, Prettier on Vite JS configs (#157, #152).
+- `cais doctor` / install / server detect unbuilt `styles.css` and auto-build on install/server (#144).
+
+### Removed
+
+- **Dogfood app** from this repository (`cmd/server`, `internal/app|handlers|store|models|db`, `web/` SPA) (#138).
+- Root Vite/Svelte/Tailwind dogfood tooling (apps bring their own via `cais new`).
+
+## [0.8.1] - 2026-07-27
+
+### Added
+
+- `cais doctor` — **cais CLI version** check: warn when installed binary is older than `go.mod` or predates Vite watch (`≥ 0.8.0`)
+- `cais dev` — warn on CLI/module version mismatch; explicit SPA-not-watched message if Vite watch did not start
+- `pkg/cais/pwa.SyncServiceWorker` — migrate existing apps to network-first `/static/build/` + `/static/css/`
+- `cais pwa` — always re-syncs `sw.js` (Inertia apps use `InstallForInertia`); prints migration message
+- Docs: Svelte 5 + `useForm` reactive-write footgun (local state + assign on submit)
+- README: reinstall CLI after tag (`go install …@v0.8.1`)
+
+### Changed
+
+- Dev banner lists Vite (`build --watch`) alongside air/Tailwind so stale CLIs are obvious
+- Scaffold `go.mod` default pin when CLI is `dev`: `v0.8.1`
+
+### Fixed
+
+- Packaging gap after #128: vite watch + network-first SW were on `main` only until this tag (#132)
+- Existing apps stuck on cache-first SW can upgrade with `cais pwa` without hand-editing (#135)
+
+## [0.8.0] - 2026-07-12
+
+### Added
+
+- `internal/cli/frontend.go` — detect Vite apps; `cais build` runs `npm run build` when present
+- `cais dev` and `make dev` — initial Vite build plus `vite build --watch` for Svelte pages
+- `cais g resource` on Inertia scaffolds — Svelte admin CRUD (`Admin*.svelte`), Inertia handlers, and public list pages instead of HTMX templates
+- `web/src/components/AppLayout.svelte` — shared nav, flash, and slot for Inertia pages
+- `cais new` scaffolds `AppLayout` with `<!-- cais:nav -->` marker for public resource link patching
+- Home handler passes translated `labels` props to the Svelte home page (i18n keys + formatted subtitle)
+- Pre-commit hook runs `npm run test:fe` on `*.{js,mjs,svelte}` changes
+
+### Changed
+
+- `AGENTS.md` — Inertia + Svelte conventions, Vite build path, expanded CLI generator layout table
+- `home.stack` locale — `Go · Inertia · Svelte · SQLite` (was HTMX/Tailwind)
+- Public nav patching prefers `AppLayout.svelte` over `Home.svelte` on Inertia apps
+- Dogfood app removes legacy HTMX page templates (`web/templates/pages/*.html`)
+
+## [0.7.0] - 2026-07-05
+
+### Added
+
+- **Inertia + Svelte default frontend** — `cais new` scaffolds gonertia, Vite, and Svelte 5 pages (`Home`, `Contact`, `Login`, `Dashboard`, auth flows)
+- `cais g handler` / `cais g page` — generate Svelte pages in `web/src/pages/`
+- Inertia integration tests (`X-Inertia: true`, validation 422, redirect 303) in `internal/app/app_test.go`
+- Vitest + Testing Library for Svelte pages (`npm run test:fe`)
+- CI builds Vite assets before `go test`
+- `pkg/cais/cache`: `Key(parts ...any)` and `Hash(v any)` — stable key building and short content hashing. Helps avoid embedding full lists (e.g. 80 sessions) in cache keys for list pages.
+- `pkg/cais/httpx`: `NotModified(w, r, etag)` and `SetETag(w, etag)` — simple ETag / 304 conditional response support for cacheable pages and lists.
+
+### Added
+
+- `pkg/cais/chat`: `Truncate`, `SafeMessageBubble`, `TrimForDisplay`, `MaxMessageChars` — server-side safety and perf for large/polluted agent histories (addresses loading 1-2s, 500s on huge turns)
+- `cais g stream chat` scaffold now demonstrates TrimForDisplay + SafeMessageBubble in Show/ListMessages/Stream
+- `pkg/cais/chat`: `UnsafeLiveHTML` + `UnsafeMessageHTML` + `WriteUnsafe*` helpers — enables first-class streaming agent UIs with rich pre-rendered content (Markdown, media) in #chat-live and #chat-stream without duplicating bubble wrappers in the app.
+- `pkg/cais/sqlite` package docs — WAL / busy_timeout guidance for SSE chat apps
+- README — `testutil` chat assertion examples
+- `cais.js`: remove optimistic user bubbles on SSE error/close + when assistant streaming starts; `window.caisRemoveOptimisticUserBubble` (better rollback during streaming for #86)
+- `pkg/cais/chat`: `DetailBubbleWithTitle`, `ToolCallBubble`, `ToolResultBubble` — basic primitives for tool-calling, permissions flows and distinguishing tool output (#87)
+- `pkg/cais/chat`: `SelectWindowWithLastUser` — robust history window with pinned last user (for #85)
+
+### Added
+
+- `testutil.AssertHTMLContains` / `testutil.AssertChatMarkers` — chat handler HTML assertions
+- `cais dev` auto-bumps PWA `CACHE_VERSION` when `sw.js` is present
+- `cais doctor --mobile` — chat enter-submit JS (`bindChatEnterSubmit`) and chat form CSS checks
+- `cais g stream chat` handler tests — Show 404, PostMessage user bubble, `AssertChatMarkers`
+
+### Added
+
+- `cais.js` `bindChatEnterSubmit` — delegated Enter-to-send on `form[data-cais-chat-form]` (Shift+Enter newline)
+- `cais.js` `dedupOptimisticUserBubble` — drops optimistic user bubble when server partial already includes it
+- Chat form submit CSS — `inline-flex` button + scoped `htmx-indicator` / `htmx-request-hide` swap
+
+### Changed
+
+- `hxChatForm` no longer uses inline `hx-on:keydown` or `this.reset()` — input clear and Enter handled in `cais.js`
+- `cais g stream chat` submit button uses `htmx-request-hide` + `htmx-indicator` pattern
+- `cais g stream chat` uses mobile `cais-chat-shell` layout (sticky footer, viewport height)
+- `#chat-messages` includes `overflow-x-hidden` — `cais doctor --mobile` warns when missing
+- `finalizeChatStream` runs after `#chat-history` swaps; `pruneEmptyChatNodes` removes empty SSE slots
+
+### Added
+
+- `chat.DetailBubble` — collapsible tool/log output for agent streams
+
+### Added
+
+- `hxChatForm` calls `window.caisFinalizeChatStream` before submit to merge SSE stream slots
+- `cais doctor --mobile` — chat agent JS finalize check and `#chat-messages` scroll container check
+- `cais g stream chat` demo uses `pkg/cais/chat` — `event: stream` typing preview + timestamped `event: message`
+- Scaffold `input.css` — generic chat styles (`.cais-chat-scroll-down`, `.cais-msg-time`, `.cais-thinking-dots`)
+- `cais.js` agent chat module — `finalizeChatStream`, device-local timestamps, stick-to-bottom scroll, poll guard (opt-in `data-cais-chat`)
+- `chat_sse_agent.html` partial — multi-slot agent chat (`#chat-history` + `#chat-stream` + `#chat-live`, `data-cais-chat`)
+- `pkg/cais/chat` — generic SSE chat HTML helpers (`LiveBubble`, `MessageBubble`, `ThinkingHTML`, `WriteStream`, `WriteMessage`)
+- `pkg/cais/stream` — `Flush`, `RelaySSE`, and `RelayAndCopy` for HTMX SSE through middleware-wrapped `ResponseWriter`s
+- Logger skips misleading `Completed` log line for `/stream` and `/event` paths
+- `cais.js` reconnects SSE after `hx-boost` swaps (`data-cais-sse-persist`, `htmx:sseClose` handler)
+- `hxChatForm` template helper — Enter-to-send chat forms with thinking indicator
+- `chat_sse.html` partial — `#chat-thinking` indicator and optional `data-cais-poll-url` fallback
+- `cais g stream chat` — conversations + messages migration, SSE handler, HTMX chat UI
+- `netutil.HealthPayload` — `/health` exposes `lan_urls` for mobile testing
+- `cais doctor --mobile` — chat SSE pattern, SSE reconnect JS, health `lan_urls` checks
+- `{{ flashMessage .Flash }}` template helper in `pkg/cais/forms`
+- `cais pwa [--bump]` — refresh PWA assets; `--bump` increments `CACHE_VERSION` in `sw.js`
+- `cais doctor --mobile` — flash template, Google Fonts CSP, and PWA cache version checks
+- `boot.Print` LAN URL line via `pkg/cais/netutil`
+- `cais.PortBusy` and dev-server warning when the configured port is already in use
+- `cais.StringParams` — ergonomic two-param routes without nested `StringParam` callbacks
+- `cais.IntStringParams` — int + string path params in one wrapper
+- `cais link [path] [--unlink]` — go.mod `replace` for local framework development
+- Scaffold partial `chat_sse.html` — append-only SSE chat pattern (`#chat-history` + `#chat-sse`)
+- `cais doctor` warns when `sse-ext.min.js` is installed but `WriteTimeout > 0`
+
+### Changed
+
+- Scaffold and reference app default `WriteTimeout: 0` so long-lived SSE connections are not killed at 30s
+- Scaffold uses system font stack (no Google Fonts `@import`) to avoid CSP console errors
+- Scaffold layouts use `{{ flashMessage .Flash }}` instead of struct stringification
+
+## [0.6.0] - 2026-07-04
+
+### Added
+
+- `pkg/cais/barcode` — Open Food Facts lookup client
+- `pkg/cais/money` — `FormatBRL` for cent-based prices
+- `middleware.LoadUserStats` / `UserStatsFrom` — gamification chrome in layouts
+- `meta.Site.LoggedIn` — session flag for layout auth chrome
+- `Config` security knobs: `PERMISSIONS_POLICY`, `CSP_MEDIA_SRC`, `CSP_CONNECT_SRC` (camera + barcode scan in PWA)
+- `Router.StaticForEnv` — `no-store` for static assets in development
+- `NewRendererForEnv` — disk template reload in development
+- Scaffold partials: `icons.html`, `nav_links.html` on `cais new`
+
+### Removed
+
+- `cais g app supermarket` and `internal/cli/app_templates/supermarket/` — app UI belongs in apps, not the framework
+- `pkg/cais/ui` — nav/icon HTML helpers (use app templates instead)
+
+## [0.5.0] - 2026-07-03
+
+### Added
+
+#### HTMX UX (app shell)
+
+- `pkg/cais/ui` — `navTab`, `makeNavTab`, `icon` helpers; `Site.ActiveNav` for tab highlighting
+- `pkg/cais/htmxattrs` — `hxForm`, `hxDelete`, `hxBoostLink`, `hxPaginate`, `hxMorphOuter`
+- Idiomorph extension bundled for `hx-swap="morph"` (`hx-ext="morph"` on layout body)
+- Supermarket-style scaffold layout with `#cais-nav`, `#cais-main`, and hx-boost navigation
+- Resource generator HTMX admin CRUD (inline delete, form partials, `RenderPageOrPartial` on 422)
+- HTMX pagination with morph swap for admin and public lists (`--paginate`)
+- `float` / `float?` field type in `cais g resource`
+- `cais.SetToast`, `SetFocus`, `SetRetarget`, `SetTrigger` response header helpers
+
+#### Security & sessions
+
+- Session expiry in SQLite (`expires_at`, 7-day TTL, reject expired `Get`)
+- `session.PruneExpired()` and `cais db prune-sessions`
+- Secure cookies in production (`Config.CookieSecure()`, `session.CookieOptionsFromConfig`)
+- Security headers middleware (`middleware.SecurityHeaders`) — CSP, HSTS, X-Frame-Options, Referrer-Policy
+- Per-IP rate limiting (`middleware.NewRateLimiter`) on login and contact POST routes
+- Trusted proxy support (`TRUSTED_PROXIES`, `middleware.ClientIP`)
+- Production error sanitization (`Config.SanitizeErrors()`, `httpx.RenderOrError`)
+- CSRF protection (`middleware.CSRF`, `meta.WithCSRF`, double-submit cookie)
+- Session auth scaffold (`cais g auth`, login/logout, protected dashboard)
+- Flash messages (`pkg/cais/flash`, `middleware.Flash`, one-shot redirect feedback)
+
+#### HTMX & UI
+
+- `httpx.RenderPageOrPartial` for HTMX-aware form responses
+- `cais.js` — CSRF header injection, focus restore, optimistic toggles
+- HTMX swap/loading CSS utilities (`.htmx-swapping`, `.htmx-settling`, `.htmx-request-hide`)
+- `cais.SetTrigger` and `cais.SetRetarget` response helpers
+- Optimistic bool toggles in generated resource admin (`data-cais-optimistic="toggle"`)
+- Contact form HTMX polish (loading indicator, swap transitions)
+
+#### Forms & validation
+
+- `validate.FieldErrors` map with `Add`, `Has`, `First`, `Any`
+- `validate.MinLength` and `validate.MaxLength`
+- `pkg/cais/forms` — `csrfField`, `fieldError`, `makeField`, `fieldInput` template helpers
+- `forms.FieldData` for labeled inputs, textareas, and checkboxes with inline errors
+- `fieldSelect`, `makeSelectField`, `makeSelectFieldPtr` for foreign-key dropdowns
+- Resource generator `category_id:references` and `category:belongs_to` field types (FK migration, `ListCategoryOptions`, admin select)
+
+#### Router & render
+
+- `Router.Put` and `Router.Patch` methods
+- Partials parsed into the page template tree (`{{ template "name" . }}` works in pages and layouts)
+- `pkg/cais/pagination` — offset/limit helpers for list pages
+- `pkg/cais/cache` — in-memory TTL cache (`New`, `Get`, `Set`, `Delete`)
+
+#### i18n
+
+- `pkg/cais/i18n` — key-based locale catalogs (`LOCALE=en` default, `LOCALE=pt` supported)
+- Template funcs `t`, `htmlLang`, `ogLocale` registered on the renderer
+- i18n wired through scaffolds, handlers, and `meta` OG locale defaults
+
+#### Background jobs
+
+- `pkg/cais/jobs` — SQLite-backed queue (enqueue, delay, worker, dispatcher)
+- Recurring cron scheduler (`recurring_tasks`, `jobs.RunScheduler`)
+- `cais jobs work [--queues ...] [--concurrency N]` and `cais jobs status`
+- `cais g job <name> [--cron "0 3 * * *"]` — scaffolds handler, registry, and `cmd/worker`
+- Built-in `PruneSessions` job handler
+- Jobs migration (`003_jobs.sql`, `004_recurring_tasks.sql`)
+
+#### CLI — generators
+
+- `cais g resource` defaults to session auth (`--admin-auth session|bearer`)
+- `cais g resource --paginate` — admin index pagination (25/page, HTMX controls)
+- `cais g resource --force` — overwrite existing generated files
+- Resource admin show page (handler, template, route, tests)
+- `cais g model` — model struct + migration + store methods (no handlers/UI)
+- `cais g --dry-run` on all generators (resource, model, handler, page, migration, auth, console, ci, job)
+- `cais destroy [--dry-run]` — resource, handler, model, auth, migration (unpatch routes, store, seeds, nav)
+- `cais g ci` — add GitHub Actions, pre-commit, golangci-lint, Prettier to existing apps
+- `cais new --module <path>` — override Go module path
+- Nav marker `<!-- cais:nav -->` for reliable public link patching
+- AST-based route patching (`internal/cli/patch`) via `insertBeforeFunctionEnd`
+- `nextMigrationFile` — sequential migration numbering across generators
+- Migration `-- up` / `-- down` sections in generated SQL files
+- Welcome screen and i18n catalogs in `cais new` scaffolds
+
+#### CLI — database & tooling
+
+- Versioned migrations (`pkg/cais/migrate`, `cais db migrate`, `cais db status`)
+- `cais db rollback` — roll back last migration (runs `-- down` SQL when present)
+- `cais db seed` and `cais db seed --list`
+- `cais routes` and `cais routes --verbose` (handler names + middleware)
+- `cais version` — print framework version
+- `cais doctor` — production readiness checks (`ADMIN_TOKEN`, `APP_URL`, CI tooling hints)
+- Smoke scaffold test (`scripts/smoke-scaffold.sh`, `generate_smoke_test.go`)
+- App-level integration tests: login → dashboard (flash) → logout; contact validation with CSRF (`internal/app/app_test.go`)
+
+#### Config & health
+
+- `validate.Email`, `validate.URL`, `validate.Required`
+- `APP_URL` required in production (`cfg.Validate()`)
+- DB-aware `/health` endpoint (503 `degraded` when SQLite is down)
+- SQLite production defaults (`PRAGMA foreign_keys=ON`, WAL)
+
+### Changed
+
+- Admin auth requires `ADMIN_TOKEN` in production; Bearer header only (no query params)
+- Generated resource admin routes use `RequireAuth` by default instead of `AdminAuth`
+- Reference app aligned with `cais new` output (routes.go, auth, dashboard, contact validation)
+- Blank app scaffold includes `Recover`, `SecurityHeaders`, server timeouts, and `/health`
+- Contact scaffold uses `validate.FieldErrors` with name validation
+- Auth migration template includes `expires_at` column (7-day default)
+- `pwa.FS()` returns `(fs.FS, error)` instead of panicking on failure
+- README, AGENTS.md, and `.env.example` synced with all new commands and env vars
+- Jobs documentation in README and AGENTS (`cais g job`, `cais jobs work/status`, deploy notes)
+- CSP `'unsafe-inline'` tradeoff documented (required for HTMX and inline service-worker script)
+
+### Security
+
+- Removed admin token via query string
+- Constant-time admin token comparison
+- Rate limiter bucket cleanup for stale entries
+- Flash cookies use `HttpOnly` and `Secure` in production
+
+### Fixed
+
+- `cais g auth` migration includes session expiry column on fresh installs
+- Local `CAIS_REPLACE` resolves from cwd for remote app directories
+- Generated `dashboard_test` scaffold includes `cais` import
+- AST route patch preserves `cais.IntParam(...)` lines through gofmt
+- CAIS startup banner renders block Unicode logo clearly (no longer reads as "COTS")
+
+### Deprecated
+
+- `middleware.TokenAuth` — use `AdminAuth(cfg)` instead; scheduled for removal in a future release
+
+## [0.4.7] - 2026-07-01
+
+### Added
+
+- Default OG preview and fullscreen PWA (`pkg/cais/meta`, `pkg/cais/pwa`)
+- Go on Cais hero image and harbor PNG icon in scaffold assets
+
+### Fixed
+
+- Startup banner redrawn to spell CAIS clearly with block Unicode art
+
+## [0.4.0] - 2026-07-01
+
+### Added
+
+- Interactive console REPL (`cais console`, `pkg/cais/console`) with SQL, history, reload, and typed bindings
+- `/logs` development log viewer (`pkg/cais/devlog`, HTMX auto-refresh, localhost only)
+- Cais-branded air startup banner (`pkg/cais/boot`)

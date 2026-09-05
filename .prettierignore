@@ -1,0 +1,8 @@
+node_modules/
+bin/
+tmp/
+data/
+pkg/cais/pwa/assets/
+pkg/cais/testdata/
+package-lock.json
+go.sum

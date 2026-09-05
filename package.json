@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "prettier": "^3.5.3"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "js:build": "node scripts/js-build.mjs",
+    "js:test": "node --test 'pkg/cais/js/**/*.test.mjs'"
+  }
+}

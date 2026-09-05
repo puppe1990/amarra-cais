@@ -1,0 +1,665 @@
+package cli
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestCLI_NewMinimalCreatesSlimApp(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "slim")
+
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "slim",
+		ModulePath: "github.com/puppe1990/slim",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, path := range []string{
+		"internal/handlers/home.go",
+		"go.mod",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
+			t.Errorf("missing %s: %v", path, err)
+		}
+	}
+
+	for _, path := range []string{
+		"internal/handlers/contact.go",
+		"internal/handlers/dashboard.go",
+		"internal/store/migrations/001_contacts.sql",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
+			t.Errorf("minimal app should not have %s", path)
+		}
+	}
+}
+
+func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	for _, tc := range []struct {
+		name           string
+		minimal, blank bool
+	}{
+		{"full", false, false},
+		{"minimal", true, false},
+		{"blank", false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			appDir := filepath.Join(t.TempDir(), tc.name)
+			if err := scaffoldNewApp(appDir, scaffoldData{
+				AppName:    tc.name,
+				ModulePath: "github.com/puppe1990/" + tc.name,
+			}, tc.minimal, tc.blank); err != nil {
+				t.Fatal(err)
+			}
+			body, err := os.ReadFile(filepath.Join(appDir, "AGENTS.md"))
+			if err != nil {
+				t.Fatalf("missing AGENTS.md: %v", err)
+			}
+			text := string(body)
+			for _, needle := range []string{
+				"TDD",
+				"Inertia",
+				"flash.Set",
+				"cais g",
+				"internal/handlers",
+				"web/src/pages",
+				tc.name, // AppName rendered into title
+			} {
+				if !strings.Contains(text, needle) {
+					t.Errorf("AGENTS.md missing %q", needle)
+				}
+			}
+		})
+	}
+}
+
+func TestCLI_NewCreatesApp(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "myapp")
+
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "myapp",
+		ModulePath: "github.com/puppe1990/myapp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, path := range []string{
+		"go.mod",
+		"cmd/server/main.go",
+		"internal/i18n/en.go",
+		"internal/i18n/pt.go",
+		".env.example",
+		"internal/handlers/dashboard.go",
+		"internal/handlers/inertia_test.go",
+		"web/templates/app.html",
+		"web/src/main.js",
+		"web/src/pages/Home.svelte",
+		"web/src/pages/Contact.svelte",
+		"web/src/pages/Dashboard.svelte",
+		"web/src/pages/Login.svelte",
+		"vite.config.js",
+		"svelte.config.js",
+		"package.json",
+		"web/static/manifest.webmanifest",
+		"web/static/js/sw.js",
+		"web/static/img/go-on-cais.jpg",
+		"web/static/og.png",
+		"web/static/icons/icon.png",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
+			t.Errorf("missing %s: %v", path, err)
+		}
+	}
+
+	for _, path := range []string{
+		"web/static/js/htmx.min.js",
+		"web/static/js/cais.js",
+		"web/templates/pages/home.html",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
+			t.Errorf("HTMX scaffold artifact should not exist: %s", path)
+		}
+	}
+
+	appGo, err := os.ReadFile(filepath.Join(appDir, "internal/app/app.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	appGoBody := string(appGo)
+	if !strings.Contains(appGoBody, "Inertia   *inertia.Inertia") {
+		t.Error("app.go should wire gonertia Inertia in Deps")
+	}
+	if !strings.Contains(appGoBody, "deps.Inertia, err = inertia.New") {
+		t.Error("app.New must assign fallback Inertia onto deps.Inertia before registerRoutes")
+	}
+	if !strings.Contains(appGoBody, "jobsui.Register") {
+		t.Error("app.go should mount the localhost /jobs dashboard")
+	}
+
+	storeGo, err := os.ReadFile(filepath.Join(appDir, "internal/store/store.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(storeGo), "DB() *sql.DB") {
+		t.Error("Store interface should expose DB() for jobsui.Register")
+	}
+
+	gomod, err := os.ReadFile(filepath.Join(appDir, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	gomodBody := string(gomod)
+	if !strings.Contains(gomodBody, "gonertia") {
+		t.Error("go.mod should require gonertia")
+	}
+	if strings.Contains(gomodBody, "v0.1.0") {
+		t.Error("go.mod must not pin broken cais@v0.1.0")
+	}
+	if !strings.Contains(gomodBody, "github.com/puppe1990/cais v"+defaultScaffoldCaisVersion) &&
+		!strings.Contains(gomodBody, "github.com/puppe1990/cais v") {
+		t.Errorf("go.mod should require a current cais version, got:\n%s", gomodBody)
+	}
+
+	mainJS, err := os.ReadFile(filepath.Join(appDir, "web/src/main.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	mainBody := string(mainJS)
+	for _, needle := range []string{
+		`import { mount } from 'svelte'`,
+		`mount(App, { target: el, props })`,
+		`xsrfCookieName: import.meta.env.PROD ? '__Host-cais_csrf' : 'cais_csrf'`,
+		`xsrfHeaderName: 'X-CSRF-Token'`,
+	} {
+		if !strings.Contains(mainBody, needle) {
+			t.Errorf("web/src/main.js missing %q", needle)
+		}
+	}
+	if strings.Contains(mainBody, "new App(") {
+		t.Error("web/src/main.js must not use Svelte 4 new App() constructor")
+	}
+
+	login, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Login.svelte"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loginBody := string(login)
+	if strings.Contains(loginBody, "$form") {
+		t.Error("Login.svelte must not use $form store syntax (Inertia 3 useForm is not a store)")
+	}
+	if !strings.Contains(loginBody, "form.post('/login')") || !strings.Contains(loginBody, "bind:value={form.email}") {
+		t.Error("Login.svelte should bind form fields without $ prefix")
+	}
+	if !strings.Contains(loginBody, "PasswordInput") {
+		t.Error("Login.svelte should use PasswordInput with eye toggle")
+	}
+	if _, err := os.Stat(filepath.Join(appDir, "web/src/components/PasswordInput.svelte")); err != nil {
+		t.Error("scaffold should include web/src/components/PasswordInput.svelte")
+	}
+
+	auth, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/auth.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(auth), "httpx.ParseFormOrJSON") {
+		t.Error("auth handler should use httpx.ParseFormOrJSON for Inertia JSON posts")
+	}
+	if strings.Contains(string(auth), "r.ParseForm()") {
+		t.Error("auth handler must not call r.ParseForm() alone (breaks JSON bodies)")
+	}
+
+	appHTML, err := os.ReadFile(filepath.Join(appDir, "web/templates/app.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(appHTML), "<title>myapp</title>") {
+		t.Error("app.html should include a default <title>")
+	}
+
+	dash, err := os.ReadFile(filepath.Join(appDir, "web/src/pages/Dashboard.svelte"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	dashBody := string(dash)
+	if strings.Contains(dashBody, `action="/logout" use:inertia`) || strings.Contains(dashBody, `use:inertia>\n    <button`) {
+		t.Error("Dashboard logout must not use use:inertia on a POST form")
+	}
+	if !strings.Contains(dashBody, `router.post('/logout')`) {
+		t.Error("Dashboard logout should call router.post('/logout')")
+	}
+	if !strings.Contains(dashBody, "<svelte:head>") {
+		t.Error("Dashboard should set document title via svelte:head")
+	}
+
+	pkg, err := os.ReadFile(filepath.Join(appDir, "package.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(pkg), "@inertiajs/svelte") {
+		t.Error("package.json should include @inertiajs/svelte")
+	}
+
+	css, err := os.ReadFile(filepath.Join(appDir, "input.css"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(css), "fonts.googleapis.com") {
+		t.Error("input.css should not import Google Fonts (CSP blocked)")
+	}
+}
+
+func TestScaffoldNewApp_i18nIncludesSignupKeys(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "i18napp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "i18napp",
+		ModulePath: "github.com/puppe1990/i18napp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	en, err := os.ReadFile(filepath.Join(appDir, "internal/i18n/en.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{
+		`"auth.signup_prompt"`,
+		`"auth.signup_title"`,
+		`"auth.signup_submit"`,
+		`"auth.login_prompt"`,
+		`"auth.email_taken"`,
+	} {
+		if !strings.Contains(string(en), key) {
+			t.Errorf("internal/i18n/en.go missing %s", key)
+		}
+	}
+}
+
+func TestScaffold_InputCSSIncludesHTMXStyles(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "styles")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "styles",
+		ModulePath: "github.com/puppe1990/styles",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	css, err := os.ReadFile(filepath.Join(appDir, "input.css"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(css)
+	for _, needle := range []string{
+		".htmx-swapping", ".htmx-settling", ".htmx-indicator", ".no-scrollbar",
+		".cais-toast-enter", ".cais-skeleton",
+		".cais-chat-scroll-down", ".cais-msg-time", ".cais-thinking-dots",
+	} {
+		if !strings.Contains(body, needle) {
+			t.Errorf("input.css missing %q", needle)
+		}
+	}
+	tailwind, err := os.ReadFile(filepath.Join(appDir, "tailwind.config.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(tailwind), "fonts.googleapis.com") {
+		t.Error("tailwind.config.js should not reference Google Fonts")
+	}
+	if !strings.Contains(string(tailwind), "system-ui") {
+		t.Error("tailwind.config.js should use system font stack")
+	}
+}
+
+func TestScaffold_IncludesQualityTooling(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+
+	for _, tc := range []struct {
+		name           string
+		minimal, blank bool
+	}{
+		{"full", false, false},
+		{"minimal", true, false},
+		{"blank", false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			appDir := filepath.Join(t.TempDir(), tc.name)
+			if err := scaffoldNewApp(appDir, scaffoldData{
+				AppName:    tc.name,
+				ModulePath: "github.com/puppe1990/" + tc.name,
+			}, tc.minimal, tc.blank); err != nil {
+				t.Fatal(err)
+			}
+
+			for _, path := range []string{
+				".github/workflows/ci.yml",
+				".pre-commit-config.yaml",
+				".golangci.yml",
+				".prettierrc.json",
+				".prettierignore",
+			} {
+				if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
+					t.Errorf("missing %s: %v", path, err)
+				}
+			}
+
+			makefile, err := os.ReadFile(filepath.Join(appDir, "Makefile"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			body := string(makefile)
+			for _, target := range []string{"lint:", "format-check:", "pre-commit-install:", "ci:"} {
+				if !strings.Contains(body, target) {
+					t.Errorf("Makefile missing target %s", target)
+				}
+			}
+
+			golangci, err := os.ReadFile(filepath.Join(appDir, ".golangci.yml"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(golangci), "github.com/puppe1990/"+tc.name) {
+				t.Error(".golangci.yml missing module local-prefix")
+			}
+
+			ci, err := os.ReadFile(filepath.Join(appDir, ".github/workflows/ci.yml"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			ciBody := string(ci)
+			for _, needle := range []string{"go test", "golangci-lint", "prettier", "npm test"} {
+				if !strings.Contains(ciBody, needle) {
+					t.Errorf("ci.yml missing %q", needle)
+				}
+			}
+
+			pkg, err := os.ReadFile(filepath.Join(appDir, "package.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(pkg), `"test"`) {
+				t.Error("package.json missing test script")
+			}
+		})
+	}
+}
+
+func TestScaffoldNewApp_ContactHandlerValidatesName(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "contactapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "contactapp",
+		ModulePath: "github.com/puppe1990/contactapp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/contact.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(body)
+	if !strings.Contains(s, `errs.Add("name"`) {
+		t.Errorf("contact handler missing name validation: %s", s)
+	}
+	if !strings.Contains(s, `contact.name_required`) {
+		t.Errorf("contact handler missing name_required i18n key: %s", s)
+	}
+}
+
+func TestScaffoldBlankApp_IncludesSecurityMiddleware(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "blankapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{AppName: "blankapp", ModulePath: "github.com/puppe1990/blankapp"}, false, true); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := os.ReadFile(filepath.Join(appDir, "internal/app/app.go"))
+	s := string(body)
+	for _, want := range []string{
+		"middleware.Recover",
+		"middleware.SecurityHeaders(cfg)",
+		"ReadHeaderTimeout",
+		"ReadTimeout",
+		"r.Static",
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("blank app missing %q in app.go", want)
+		}
+	}
+}
+
+func TestScaffoldBlankApp_IncludesSessionMiddleware(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "blankapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{AppName: "blankapp", ModulePath: "github.com/puppe1990/blankapp"}, false, true); err != nil {
+		t.Fatal(err)
+	}
+	appGo, _ := os.ReadFile(filepath.Join(appDir, "internal/app/app.go"))
+	s := string(appGo)
+	for _, want := range []string{
+		"middleware.LoadSession(deps.Store.Sessions())",
+		"r.Use(middleware.Flash(cfg))",
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("blank app missing %q in app.go", want)
+		}
+	}
+	storeGo, _ := os.ReadFile(filepath.Join(appDir, "internal/store/store.go"))
+	if !strings.Contains(string(storeGo), "Sessions() session.Store") {
+		t.Error("blank store missing Sessions() on interface")
+	}
+}
+
+func TestCLI_NewBlankCreatesEmptyApp(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "empty")
+
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "empty",
+		ModulePath: "github.com/puppe1990/empty",
+	}, false, true); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, path := range []string{
+		"go.mod",
+		"cmd/server/main.go",
+		"internal/app/app.go",
+		"internal/app/routes.go",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
+			t.Errorf("missing %s: %v", path, err)
+		}
+	}
+
+	for _, path := range []string{
+		"internal/handlers/home.go",
+		"web/templates/app.html",
+		"web/src/pages/Home.svelte",
+		"web/src/main.js",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
+			t.Errorf("blank app missing inertia file %s: %v", path, err)
+		}
+	}
+
+	for _, path := range []string{
+		"internal/handlers/contact.go",
+		"internal/handlers/dashboard.go",
+		"internal/models/contact.go",
+		"internal/store/migrations/001_contacts.sql",
+		"web/src/pages/Contact.svelte",
+		"web/static/js/htmx.min.js",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
+			t.Errorf("blank app should not have %s", path)
+		}
+	}
+
+	routesBody, err := os.ReadFile(filepath.Join(appDir, "internal/app/routes.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(routesBody), "home.ServeHTTP") {
+		t.Error("blank app routes should register welcome home handler")
+	}
+}
+
+func TestScaffoldNewApp_CustomModule(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "myapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "myapp",
+		ModulePath: "github.com/acme/myapp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(appDir, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(body), "module github.com/acme/myapp") {
+		t.Errorf("go.mod missing custom module path: %s", body)
+	}
+}
+
+func TestCLI_New_CustomModule(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	root := t.TempDir()
+	appDir := filepath.Join(root, "myapp")
+
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	if err := c.Run([]string{"new", "myapp", appDir, "--module", "github.com/acme/myapp"}); err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := os.ReadFile(filepath.Join(appDir, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(body), "module github.com/acme/myapp") {
+		t.Errorf("go.mod missing custom module path: %s", body)
+	}
+}
+
+func TestCLI_New_CustomModule_DefaultWhenOmitted(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	root := t.TempDir()
+	appDir := filepath.Join(root, "cool-app")
+
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	if err := c.Run([]string{"new", "cool-app", appDir}); err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := os.ReadFile(filepath.Join(appDir, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(body), "module github.com/puppe1990/coolapp") {
+		t.Errorf("go.mod missing default module path: %s", body)
+	}
+}
+
+func TestCLI_New_ModuleRequiresValue(t *testing.T) {
+	c := &CLI{Out: os.Stdout}
+	if err := c.Run([]string{"new", "myapp", "--module"}); err == nil {
+		t.Fatal("expected error for --module without value")
+	}
+}
+
+func TestCLI_New_unknownFlag_errors(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := t.TempDir()
+	t.Chdir(dir)
+
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	err := c.Run([]string{"new", "--seed"})
+	if err == nil {
+		t.Fatal("expected error for unknown flag --seed")
+	}
+	if !strings.Contains(err.Error(), "unknown flag --seed") {
+		t.Errorf("error = %v, want unknown flag --seed", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "--seed")); err == nil {
+		t.Fatal("unknown flag must not create a --seed directory")
+	}
+}
+
+func TestParseNewArgs_bareHelpIsAppName(t *testing.T) {
+	opts, err := parseNewArgs([]string{"help"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opts.name != "help" || opts.dir != "help" {
+		t.Errorf("got name=%q dir=%q, want help", opts.name, opts.dir)
+	}
+}
+
+func TestParseNewArgs_knownFlags(t *testing.T) {
+	opts, err := parseNewArgs([]string{"myapp", "outdir", "--minimal", "--blank", "--module", "github.com/acme/x"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opts.name != "myapp" || opts.dir != "outdir" {
+		t.Errorf("got name=%q dir=%q, want myapp/outdir", opts.name, opts.dir)
+	}
+	if !opts.minimal || !opts.blank || opts.module != "github.com/acme/x" {
+		t.Errorf("got %+v, want minimal+blank with custom module", opts)
+	}
+}
+
+func TestCLI_NewMainUsesTemplateHotReload(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "hotreload")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "hotreload",
+		ModulePath: "github.com/puppe1990/hotreload",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	mainGo, err := os.ReadFile(filepath.Join(appDir, "cmd/server/main.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(mainGo)
+	if !strings.Contains(body, "NewRendererForEnv") {
+		t.Error("main.go should use NewRendererForEnv for development template hot reload")
+	}
+	air, err := os.ReadFile(filepath.Join(appDir, ".air.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(air), `"html"`) {
+		t.Error(".air.toml should not rebuild on html; templates reload from disk in development")
+	}
+}
+
+func TestCLI_NewIncludesInertiaAndVite(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "full")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "full",
+		ModulePath: "github.com/puppe1990/full",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{
+		"web/templates/app.html",
+		"vite.config.js",
+		"web/src/pages/Home.svelte",
+		"svelte.config.js",
+		".air.toml",
+	} {
+		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
+			t.Errorf("missing %s: %v", path, err)
+		}
+	}
+}
