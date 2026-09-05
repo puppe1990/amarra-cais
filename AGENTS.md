@@ -201,11 +201,16 @@ Drive requests still render the layout so JS can morph `#amarra-main`. Frame req
 <div amarra-hook="clipboard" data-amarra-copy="hi">Copy</div>
 <.input type="password" name="password" />
 <button type="button" amarra-hook="password" data-amarra-password-for="#password">Show</button>
+<select amarra-hook="reveal" data-amarra-reveal-show="access_keys" data-amarra-reveal-target="#aws-keys">
+  <option value="default_chain">Default chain</option>
+  <option value="access_keys">Access keys</option>
+</select>
+<div id="aws-keys" hidden>…keys…</div>
 <button type="button" amarra-hook="theme" data-amarra-theme-color="#f5f5f4" data-amarra-theme-color-off="#0f172a">Theme</button>
 {{ end }}
 ```
 
-Shipped `amarra-hook` builtins: `clipboard`, `password` (toggle `type` + `aria-pressed`), `theme` (toggle `html.light`, persist `localStorage["amarra-theme"]`, optional `theme-color` meta). Put this FOUC snippet in the layout `<head>` before CSS so a stored light theme does not flash dark:
+Shipped `amarra-hook` builtins: `clipboard`, `password` (toggle `type` + `aria-pressed`), `reveal` (show/hide a target when the control value matches, no Drive round-trip), `theme` (toggle `html.light`, persist `localStorage["amarra-theme"]`, optional `theme-color` meta). Put this FOUC snippet in the layout `<head>` before CSS so a stored light theme does not flash dark:
 
 ```html
 <script>
