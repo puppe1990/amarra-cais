@@ -25,7 +25,7 @@ func qualityToolingFiles() map[string]string {
 
 // defaultScaffoldCaisVersion is used when the CLI is built from source ((devel)).
 // Keep aligned with the latest published tag so `amarra-cais new` resolves without a local replace.
-const defaultScaffoldCaisVersion = "0.1.0"
+const defaultScaffoldCaisVersion = "0.0.1"
 
 func scaffoldModuleVersion() string {
 	v := strings.TrimPrefix(frameworkVersion(), "v")
