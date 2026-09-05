@@ -98,6 +98,43 @@ test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });
 
+test("start registers reveal builtin", () => {
+  reset();
+  const click = {};
+  const target = { hidden: true };
+  const sel = {
+    value: "access_keys",
+    getAttribute(n) {
+      if (n === "amarra-hook") return "reveal";
+      if (n === "data-amarra-reveal-show") return "access_keys";
+      if (n === "data-amarra-reveal-target") return "#aws-keys";
+      return null;
+    },
+    hasAttribute(n) {
+      return n === "amarra-hook";
+    },
+    addEventListener(type, fn) {
+      (click[type] ??= []).push(fn);
+    },
+    removeEventListener() {},
+    ownerDocument: {
+      querySelector(s) {
+        return s === "#aws-keys" ? target : null;
+      },
+    },
+  };
+  const doc = {
+    documentElement: { dataset: {} },
+    addEventListener() {},
+    querySelectorAll(s) {
+      return s === "[amarra-hook]" ? [sel] : [];
+    },
+  };
+  start({ document: doc });
+  assert.equal(target.hidden, false);
+  assert.ok(click.change?.length, "reveal hook should bind change");
+});
+
 test("start registers password and theme builtins", () => {
   reset();
   const click = {};

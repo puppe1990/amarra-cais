@@ -919,6 +919,45 @@
   }
   var password = makePassword();
 
+  // pkg/amarra/js/hook_reveal.mjs
+  var SYNC = "_amarraRevealSync";
+  function makeReveal(findTarget) {
+    const resolve = findTarget ?? defaultFind2;
+    return {
+      connect(el) {
+        if (!el || typeof el.addEventListener !== "function") return;
+        const fn = () => {
+          const match = el.getAttribute?.("data-amarra-reveal-show") ?? "";
+          const sel = el.getAttribute?.("data-amarra-reveal-target") ?? "";
+          const target = resolve(sel, el);
+          if (!target) return;
+          target.hidden = el.value !== match;
+        };
+        el[SYNC] = fn;
+        el.addEventListener("change", fn);
+        el.addEventListener("click", fn);
+        fn();
+      },
+      disconnect(el) {
+        const fn = el?.[SYNC];
+        if (!fn || typeof el.removeEventListener !== "function") return;
+        el.removeEventListener("change", fn);
+        el.removeEventListener("click", fn);
+        delete el[SYNC];
+      }
+    };
+  }
+  function defaultFind2(sel, el) {
+    if (!sel) return null;
+    const root = el?.ownerDocument ?? globalThis.document;
+    try {
+      return root?.querySelector?.(sel) ?? null;
+    } catch {
+      return null;
+    }
+  }
+  var reveal = makeReveal();
+
   // pkg/amarra/js/hook_theme.mjs
   var CLICK3 = "_amarraThemeClick";
   var DEFAULT_KEY = "amarra-theme";
@@ -977,6 +1016,7 @@
   // pkg/amarra/js/hook.mjs
   register("clipboard", clipboard);
   register("password", password);
+  register("reveal", reveal);
   register("theme", theme);
   var ON_CLASSES = ["bg-green-50", "text-green-700"];
   var OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
@@ -1071,6 +1111,7 @@
     if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
     register("clipboard", clipboard);
     register("password", password);
+    register("reveal", reveal);
     register("theme", theme);
     scan(doc);
     let optimistic = null;
