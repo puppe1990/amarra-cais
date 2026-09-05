@@ -16,15 +16,27 @@ const (
 	CookieMaxAge = 86400 * 365
 )
 
+// CookieSettings names the locale cookie. Empty Name uses CookieName.
+type CookieSettings struct {
+	Name     string
+	Secure   bool
+	HTTPOnly bool
+}
+
 // CatalogForRequest picks a catalog from the request then fallback.
 // Order: ?lang= query, cais_locale cookie, fallback, DefaultLocale, DefaultCatalog.
 // Tags are normalized (pt-BR → pt) and must be keys in catalogs (allow-list).
 // Unknown tags skip to the next source. Accept-Language is ignored.
 func CatalogForRequest(r *http.Request, catalogs map[string]*Catalog, fallback string) *Catalog {
+	return CatalogForRequestNamed(r, catalogs, fallback, CookieName)
+}
+
+// CatalogForRequestNamed is CatalogForRequest with a product-prefixed cookie (cifra_locale).
+func CatalogForRequestNamed(r *http.Request, catalogs map[string]*Catalog, fallback, cookieName string) *Catalog {
 	if c := catalogFromQuery(r, catalogs); c != nil {
 		return c
 	}
-	if c := catalogFromCookie(r, catalogs); c != nil {
+	if c := catalogFromCookieNamed(r, catalogs, cookieName); c != nil {
 		return c
 	}
 	if c := catalogForTag(fallback, catalogs); c != nil {
@@ -40,9 +52,14 @@ func CatalogForRequest(r *http.Request, catalogs map[string]*Catalog, fallback s
 // context. It is read-only: ?lang= is not written to cais_locale here; apps
 // persist a language switch via SetCookie on a dedicated /locale route.
 func LocaleMiddleware(catalogs map[string]*Catalog, fallback string) func(http.Handler) http.Handler {
+	return LocaleMiddlewareNamed(catalogs, fallback, CookieName)
+}
+
+// LocaleMiddlewareNamed resolves the catalog using a named locale cookie.
+func LocaleMiddlewareNamed(catalogs map[string]*Catalog, fallback, cookieName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cat := CatalogForRequest(r, catalogs, fallback)
+			cat := CatalogForRequestNamed(r, catalogs, fallback, cookieName)
 			ctx := context.WithValue(r.Context(), catalogCtxKey{}, cat)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -60,18 +77,26 @@ func CatalogFromRequest(r *http.Request) *Catalog {
 
 // SetCookie writes cais_locale for app language-switcher handlers (GET /locale?lang=).
 func SetCookie(w http.ResponseWriter, locale string, secure bool) {
+	SetCookieOpts(w, locale, CookieSettings{Secure: secure, HTTPOnly: true})
+}
+
+// SetCookieOpts writes the locale cookie with a custom name and HttpOnly flag.
+func SetCookieOpts(w http.ResponseWriter, locale string, opts CookieSettings) {
 	if strings.TrimSpace(locale) == "" {
 		return
 	}
-	tag := NormalizeLocale(locale)
+	name := strings.TrimSpace(opts.Name)
+	if name == "" {
+		name = CookieName
+	}
 	http.SetCookie(w, &http.Cookie{
-		Name:     CookieName,
-		Value:    tag,
+		Name:     name,
+		Value:    NormalizeLocale(locale),
 		Path:     "/",
 		MaxAge:   CookieMaxAge,
 		SameSite: http.SameSiteLaxMode,
-		HttpOnly: true,
-		Secure:   secure,
+		HttpOnly: opts.HTTPOnly,
+		Secure:   opts.Secure,
 	})
 }
 
@@ -82,11 +107,15 @@ func catalogFromQuery(r *http.Request, catalogs map[string]*Catalog) *Catalog {
 	return catalogForTag(r.URL.Query().Get("lang"), catalogs)
 }
 
-func catalogFromCookie(r *http.Request, catalogs map[string]*Catalog) *Catalog {
+func catalogFromCookieNamed(r *http.Request, catalogs map[string]*Catalog, cookieName string) *Catalog {
 	if r == nil {
 		return nil
 	}
-	cookie, err := r.Cookie(CookieName)
+	name := strings.TrimSpace(cookieName)
+	if name == "" {
+		name = CookieName
+	}
+	cookie, err := r.Cookie(name)
 	if err != nil {
 		return nil
 	}

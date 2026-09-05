@@ -155,6 +155,39 @@ func TestSetCookie_secureFlag(t *testing.T) {
 	}
 }
 
+func TestSetCookieOpts_customNameAndHTTPOnly(t *testing.T) {
+	rr := httptest.NewRecorder()
+	SetCookieOpts(rr, "pt", CookieSettings{Name: "cifra_locale", Secure: true, HTTPOnly: false})
+	var got *http.Cookie
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == "cifra_locale" {
+			got = c
+			break
+		}
+	}
+	if got == nil {
+		t.Fatal("cifra_locale cookie missing")
+	}
+	if got.Value != "pt" {
+		t.Errorf("Value = %q, want pt", got.Value)
+	}
+	if !got.Secure {
+		t.Error("Secure = false, want true")
+	}
+	if got.HttpOnly {
+		t.Error("HttpOnly = true, want false")
+	}
+}
+
+func TestCatalogForRequest_namedCookie(t *testing.T) {
+	req := newLocaleRequest(t, "/")
+	req.AddCookie(&http.Cookie{Name: "cifra_locale", Value: "pt"})
+	got := CatalogForRequestNamed(req, requestCatalogs(), "en", "cifra_locale")
+	assertLocale(t, got, "pt")
+	ignored := CatalogForRequest(req, requestCatalogs(), "en")
+	assertLocale(t, ignored, "en")
+}
+
 func TestSetCookie_emptyLocaleSkipped(t *testing.T) {
 	rr := httptest.NewRecorder()
 	SetCookie(rr, "", false)
