@@ -5,6 +5,12 @@ import { parseSSE, applyOp, start } from "./stream.mjs";
 test("parseSSE reads named event and html data", () => {
   const ops = parseSSE("event: append\ndata: <p>x</p>\n\n");
   assert.deepEqual(ops, [{ kind: "append", html: "<p>x</p>" }]);
+  assert.equal(ops[0].target, undefined);
+});
+
+test("parseSSE reads SSE id field as stream op target", () => {
+  const ops = parseSSE("id: chat-live\nevent: morph\ndata: <p>x</p>\n\n");
+  assert.deepEqual(ops, [{ kind: "morph", html: "<p>x</p>", target: "chat-live" }]);
 });
 
 test("parseSSE joins multiline data", () => {

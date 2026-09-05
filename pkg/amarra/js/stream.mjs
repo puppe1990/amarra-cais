@@ -8,6 +8,7 @@ export function parseSSE(chunk) {
   for (const block of text.split("\n\n")) {
     if (!block.trim()) continue;
     let kind = "message";
+    let target;
     const dataLines = [];
     for (const line of block.split("\n")) {
       if (!line || line.startsWith(":")) continue;
@@ -15,12 +16,19 @@ export function parseSSE(chunk) {
         kind = line.slice(6).trim();
         continue;
       }
+      if (line.startsWith("id:")) {
+        const rest = line.slice(3);
+        target = rest.startsWith(" ") ? rest.slice(1) : rest;
+        continue;
+      }
       if (line.startsWith("data:")) {
         const rest = line.slice(5);
         dataLines.push(rest.startsWith(" ") ? rest.slice(1) : rest);
       }
     }
-    events.push({ kind, html: dataLines.join("\n") });
+    const op = { kind, html: dataLines.join("\n") };
+    if (target) op.target = target;
+    events.push(op);
   }
   return events;
 }
