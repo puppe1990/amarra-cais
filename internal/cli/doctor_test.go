@@ -331,7 +331,7 @@ func TestDoctor_QualityToolingWarnsWhenMissing(t *testing.T) {
 	if !strings.Contains(out, "[warn] quality tooling") {
 		t.Errorf("expected quality tooling warning, got:\n%s", out)
 	}
-	if !strings.Contains(out, "cais g ci") {
+	if !strings.Contains(out, "amarra-cais g ci") {
 		t.Errorf("expected fix hint, got:\n%s", out)
 	}
 }
@@ -452,8 +452,8 @@ func TestDoctor_SeedsInfoWhenPresent(t *testing.T) {
 	if !strings.Contains(out, "[info] db seeds") {
 		t.Errorf("expected seeds info, got:\n%s", out)
 	}
-	if !strings.Contains(out, "cais db seed") {
-		t.Errorf("expected cais db seed hint, got:\n%s", out)
+	if !strings.Contains(out, "amarra-cais db seed") {
+		t.Errorf("expected amarra-cais db seed hint, got:\n%s", out)
 	}
 }
 

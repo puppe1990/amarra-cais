@@ -46,7 +46,7 @@ func requireViteMainJS(dir string) error {
 	if _, err := os.Stat(path); err != nil {
 		hint := "npm run build did not emit " + viteMainJSRel
 		if _, nmErr := os.Stat(filepath.Join(dir, "node_modules")); nmErr != nil {
-			return fmt.Errorf("%s: %w (run cais install if node_modules is missing)", hint, err)
+			return fmt.Errorf("%s: %w (run amarra-cais install if node_modules is missing)", hint, err)
 		}
 		return fmt.Errorf("%s: %w", hint, err)
 	}
@@ -65,7 +65,7 @@ func startViteWatch(dir string) (*exec.Cmd, error) {
 		return nil, nil
 	}
 	if _, err := os.Stat(filepath.Join(dir, "node_modules")); err != nil {
-		return nil, fmt.Errorf("node_modules missing — run cais install before cais dev")
+		return nil, fmt.Errorf("node_modules missing — run amarra-cais install before amarra-cais dev")
 	}
 	cmd := exec.Command("npm", viteWatchArgs()...)
 	cmd.Dir = dir

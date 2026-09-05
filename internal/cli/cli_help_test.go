@@ -38,6 +38,9 @@ func TestCLI_Help_UsesAmarraCais(t *testing.T) {
 	if strings.Contains(out, "  cais new") {
 		t.Error("help still documents cais new")
 	}
+	if !strings.Contains(out, "../amarra-cais") {
+		t.Error("help missing sibling ../amarra-cais")
+	}
 }
 
 func TestCLI_Help_IncludesResource(t *testing.T) {

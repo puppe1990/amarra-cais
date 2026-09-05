@@ -15,7 +15,7 @@ import (
 
 func (c *CLI) cmdDB(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: cais db <migrate|status|rollback|prune-sessions|seed>")
+		return fmt.Errorf("usage: amarra-cais db <migrate|status|rollback|prune-sessions|seed>")
 	}
 	switch args[0] {
 	case "migrate":

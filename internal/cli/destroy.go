@@ -365,7 +365,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
-		return fmt.Errorf("usage: cais destroy [--dry-run] <resource|handler|model|auth|migration> [name]")
+		return fmt.Errorf("usage: amarra-cais destroy [--dry-run] <resource|handler|model|auth|migration> [name]")
 	}
 
 	cwd, err := os.Getwd()
@@ -381,7 +381,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 	switch kind {
 	case "resource", "handler", "model", "migration":
 		if len(args) < 2 {
-			return fmt.Errorf("usage: cais destroy [--dry-run] %s <name>", kind)
+			return fmt.Errorf("usage: amarra-cais destroy [--dry-run] %s <name>", kind)
 		}
 		name := args[1]
 		switch kind {
@@ -402,7 +402,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 		}
 	case "auth":
 		if len(args) > 1 {
-			return fmt.Errorf("usage: cais destroy [--dry-run] auth")
+			return fmt.Errorf("usage: amarra-cais destroy [--dry-run] auth")
 		}
 		genErr = destroyAuth(cwd, dryRun)
 		if genErr != nil {

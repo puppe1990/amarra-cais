@@ -71,7 +71,10 @@ func TestPrintLinkMessage_warnsNotToCommit(t *testing.T) {
 	if !strings.Contains(out, "do not commit this replace") {
 		t.Fatalf("expected commit warning, got:\n%s", out)
 	}
-	if !strings.Contains(out, "cais link --unlink") {
+	if !strings.Contains(out, "amarra-cais link --unlink") {
 		t.Fatalf("expected unlink hint, got:\n%s", out)
+	}
+	if strings.Contains(out, "run cais test") {
+		t.Errorf("still documents run cais test: %q", out)
 	}
 }

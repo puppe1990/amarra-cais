@@ -56,11 +56,11 @@ func (c *CLI) cmdInstall() error {
 	if _, err := os.Stat(filepath.Join(dir, cssInput)); err == nil {
 		_, _ = fmt.Fprintln(c.Out, "→ tailwind build (styles.css)")
 		if err := runTailwindBuild(dir, false); err != nil {
-			_, _ = fmt.Fprintf(c.Out, "⚠ css build failed: %v (run: cais css)\n", err)
+			_, _ = fmt.Fprintf(c.Out, "⚠ css build failed: %v (run: amarra-cais css)\n", err)
 		}
 	}
 
-	_, _ = fmt.Fprintln(c.Out, "Done. Run: cais dev")
+	_, _ = fmt.Fprintln(c.Out, "Done. Run: amarra-cais dev")
 	return nil
 }
 
@@ -120,14 +120,14 @@ func (c *CLI) cmdDev() error {
 	if hasViteApp(dir) {
 		_, _ = fmt.Fprintln(c.Out, "→ vite build (initial) — Svelte/Inertia → web/static/build/")
 		if err := runViteBuild(dir); err != nil {
-			return fmt.Errorf("vite build: %w (run cais install if node_modules is missing)", err)
+			return fmt.Errorf("vite build: %w (run amarra-cais install if node_modules is missing)", err)
 		}
 	}
 
 	if bumped, v, err := maybeBumpDevCache(dir); err != nil {
 		return fmt.Errorf("sw cache bump: %w", err)
 	} else if bumped {
-		_, _ = fmt.Fprintf(c.Out, "=> PWA cache bumped to v%d (cais dev)\n", v)
+		_, _ = fmt.Fprintf(c.Out, "=> PWA cache bumped to v%d (amarra-cais dev)\n", v)
 	}
 
 	watch := exec.Command("npx", "tailwindcss", "-i", cssInput, "-o", cssOutput, "--watch")
@@ -151,7 +151,7 @@ func (c *CLI) cmdDev() error {
 	warnPortInUse(c.Out, dir)
 	warnCLIVersionMismatch(c.Out, dir)
 	if hasViteApp(dir) && !viteWatching {
-		_, _ = fmt.Fprintln(c.Out, "⚠ SPA not watched — upgrade cais CLI or run: npx vite build --watch")
+		_, _ = fmt.Fprintln(c.Out, "⚠ SPA not watched — upgrade amarra-cais CLI or run: npx vite build --watch")
 	}
 
 	if air := findAir(); air != "" {
@@ -200,10 +200,10 @@ func ensureStylesCSS(w io.Writer, dir string) error {
 	}
 	_, _ = fmt.Fprintln(w, "→ tailwind build (styles.css missing or empty)")
 	if err := runTailwindBuild(dir, false); err != nil {
-		return fmt.Errorf("styles.css not ready: %w — run: cais css", err)
+		return fmt.Errorf("styles.css not ready: %w — run: amarra-cais css", err)
 	}
 	if !stylesCSSReady(dir) {
-		return fmt.Errorf("%s still empty after build — run: cais css", cssOutput)
+		return fmt.Errorf("%s still empty after build — run: amarra-cais css", cssOutput)
 	}
 	return nil
 }

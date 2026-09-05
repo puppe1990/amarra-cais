@@ -16,7 +16,7 @@ import (
 
 func (c *CLI) cmdJobs(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: cais jobs <work|status|retry|discard|prune>")
+		return fmt.Errorf("usage: amarra-cais jobs <work|status|retry|discard|prune>")
 	}
 	switch args[0] {
 	case "work":
@@ -81,7 +81,7 @@ func (c *CLI) printLiveWorkers(ctx context.Context, store *jobs.Store) error {
 		return err
 	}
 	if len(live) == 0 {
-		_, _ = fmt.Fprintln(c.Out, "=> Workers    none (start with cais jobs work)")
+		_, _ = fmt.Fprintln(c.Out, "=> Workers    none (start with amarra-cais jobs work)")
 		return nil
 	}
 	_, _ = fmt.Fprintln(c.Out, "=> Workers")
@@ -168,7 +168,7 @@ func (c *CLI) withJobStore(fn func(*jobs.Store) error) error {
 
 func parseJobID(args []string) (int64, error) {
 	if len(args) != 1 {
-		return 0, fmt.Errorf("usage: cais jobs retry|discard <id>")
+		return 0, fmt.Errorf("usage: amarra-cais jobs retry|discard <id>")
 	}
 	id, err := strconv.ParseInt(args[0], 10, 64)
 	if err != nil || id < 1 {

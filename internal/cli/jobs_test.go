@@ -33,8 +33,15 @@ func TestCLI_JobsStatusEmpty(t *testing.T) {
 	if err := c.cmdJobsStatus(); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "ready:") {
-		t.Fatalf("output = %q", buf.String())
+	out := buf.String()
+	if !strings.Contains(out, "ready:") {
+		t.Fatalf("output = %q", out)
+	}
+	if !strings.Contains(out, "amarra-cais jobs work") {
+		t.Errorf("empty workers hint missing amarra-cais jobs work: %q", out)
+	}
+	if strings.Contains(out, "with cais jobs") {
+		t.Errorf("empty workers hint still documents cais jobs: %q", out)
 	}
 }
 

@@ -56,7 +56,7 @@ func checkPWACacheVersion(dir string) doctorCheck {
 			Name:     "PWA cache version",
 			Optional: true,
 			Detail:   "legacy sw.js without CACHE_VERSION",
-			FixHint:  "run cais pwa to refresh assets, then cais pwa --bump before phone testing",
+			FixHint:  "run amarra-cais pwa to refresh assets, then amarra-cais pwa --bump before phone testing",
 		}
 	}
 	// SPA + Tailwind use stable paths; cache-first for /static/build keeps stale main.js.
@@ -65,7 +65,7 @@ func checkPWACacheVersion(dir string) doctorCheck {
 			Name:     "PWA cache version",
 			Optional: true,
 			Detail:   "sw.js missing network-first for /static/build/ (stale SPA after vite rebuild)",
-			FixHint:  "cais pwa  # migrates sw.js; then cais pwa --bump on phones",
+			FixHint:  "amarra-cais pwa  # migrates sw.js; then amarra-cais pwa --bump on phones",
 		}
 	}
 	return doctorCheck{Name: "PWA cache version", OK: true, Detail: "CACHE_VERSION + network-first /static/build — bump after HTML/template changes"}
@@ -96,7 +96,7 @@ func checkChatSSEPattern(dir string) doctorCheck {
 		Name:     "chat SSE pattern",
 		Optional: true,
 		Detail:   "chat_sse.html missing: " + strings.Join(missing, ", "),
-		FixHint:  "run cais pwa or copy chat_sse.html from Cais scaffold",
+		FixHint:  "run amarra-cais pwa or copy chat_sse.html from Cais scaffold",
 	}
 }
 
@@ -114,7 +114,7 @@ func checkSSEReconnectJS(dir string) doctorCheck {
 		Name:     "SSE reconnect",
 		Optional: true,
 		Detail:   "cais-core.js missing hx-boost SSE reconnect helpers",
-		FixHint:  "run cais pwa to refresh cais-core.js from framework",
+		FixHint:  "run amarra-cais pwa to refresh cais-core.js from framework",
 	}
 }
 
@@ -159,7 +159,7 @@ func checkChatAgentJS(dir string) doctorCheck {
 		Name:     "chat agent JS",
 		Optional: true,
 		Detail:   "agent chat partial present but cais-chat.js missing finalizeChatStream",
-		FixHint:  "run cais pwa to refresh cais-chat.js from framework",
+		FixHint:  "run amarra-cais pwa to refresh cais-chat.js from framework",
 	}
 }
 
@@ -243,7 +243,7 @@ func checkChatEnterSubmitJS(dir string) doctorCheck {
 		Name:     "chat enter-submit JS",
 		Optional: true,
 		Detail:   "chat form present but cais-chat.js missing bindChatEnterSubmit",
-		FixHint:  "run cais pwa to refresh cais.js from framework",
+		FixHint:  "run amarra-cais pwa to refresh cais.js from framework",
 	}
 }
 
@@ -273,7 +273,7 @@ func checkChatFormCSS(dir string) doctorCheck {
 		Name:     "chat form CSS",
 		Optional: true,
 		Detail:   "input.css missing: " + strings.Join(missing, ", "),
-		FixHint:  "run cais css after updating input.css from Cais scaffold",
+		FixHint:  "run amarra-cais css after updating input.css from Cais scaffold",
 	}
 }
 

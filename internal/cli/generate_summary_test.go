@@ -32,10 +32,10 @@ func TestCLI_GenerateResource_printsNextSteps(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := buf.String()
-	if !strings.Contains(out, "cais db migrate") {
+	if !strings.Contains(out, "amarra-cais db migrate") {
 		t.Errorf("missing migrate hint: %q", out)
 	}
-	if !strings.Contains(out, "cais test") {
+	if !strings.Contains(out, "amarra-cais test") {
 		t.Errorf("missing test hint: %q", out)
 	}
 }

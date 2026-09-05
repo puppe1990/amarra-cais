@@ -60,7 +60,7 @@ func (c *CLI) cmdPWA(args []string) error {
 	}
 	if legacySW {
 		_, _ = fmt.Fprintf(c.Out, "→ sw.js updated (network-first /static/build/ + /static/css/, CACHE_VERSION=%d)\n", ver)
-		_, _ = fmt.Fprintln(c.Out, "  tip: cais pwa --bump after deploy so installed PWAs drop old caches")
+		_, _ = fmt.Fprintln(c.Out, "  tip: amarra-cais pwa --bump after deploy so installed PWAs drop old caches")
 	} else {
 		_, _ = fmt.Fprintf(c.Out, "→ sw.js network-first for SPA (CACHE_VERSION=%d)\n", ver)
 	}

@@ -147,7 +147,7 @@ func patchJobRecurringSeed(dir string, data scaffoldData, opts jobOpts, dryRun b
 	path := filepath.Join(dir, "internal/db/seeds.go")
 	body, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("internal/db/seeds.go not found — run cais new first")
+		return fmt.Errorf("internal/db/seeds.go not found — run amarra-cais new first")
 	}
 	content := string(body)
 	needle := fmt.Sprintf(`Kind: %q`, data.Pascal)

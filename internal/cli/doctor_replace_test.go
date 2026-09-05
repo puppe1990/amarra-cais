@@ -86,7 +86,7 @@ func TestRunDoctor_caisReplaceWarnsLocally(t *testing.T) {
 	if !strings.Contains(out, "[warn] cais replace") {
 		t.Fatalf("expected warn, got:\n%s", out)
 	}
-	if !strings.Contains(out, "cais link --unlink") {
+	if !strings.Contains(out, "amarra-cais link --unlink") {
 		t.Fatalf("expected unlink hint, got:\n%s", out)
 	}
 }

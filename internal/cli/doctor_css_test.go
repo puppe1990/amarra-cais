@@ -13,8 +13,8 @@ func TestCheckCSS_missing(t *testing.T) {
 	if c.OK {
 		t.Fatal("expected FAIL when styles.css missing")
 	}
-	if !strings.Contains(c.FixHint, "cais css") {
-		t.Errorf("FixHint = %q, want cais css", c.FixHint)
+	if !strings.Contains(c.FixHint, "amarra-cais css") {
+		t.Errorf("FixHint = %q, want amarra-cais css", c.FixHint)
 	}
 }
 

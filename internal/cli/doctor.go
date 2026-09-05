@@ -114,7 +114,7 @@ func checkCaisDep(dir string) doctorCheck {
 	}
 	content := string(data)
 	if !strings.Contains(content, frameworkModule) {
-		return doctorCheck{Name: "cais dependency", Detail: "missing " + frameworkModule, FixHint: "cais new or add require in go.mod"}
+		return doctorCheck{Name: "cais dependency", Detail: "missing " + frameworkModule, FixHint: "amarra-cais new or add require in go.mod"}
 	}
 	if strings.Contains(content, "replace "+frameworkModule) {
 		return doctorCheck{Name: "cais dependency", OK: true, Detail: "local replace active"}
@@ -133,7 +133,7 @@ func checkLocalCaisReplace(dir string) *doctorCheck {
 		Name:     "cais replace",
 		Optional: optional,
 		Detail:   "go.mod has a local cais replace — CI clones will not see that path",
-		FixHint:  "cais link --unlink   # before commit/push",
+		FixHint:  "amarra-cais link --unlink   # before commit/push",
 	}
 }
 
@@ -190,7 +190,7 @@ func checkCLIVersion(dir string) doctorCheck {
 		return doctorCheck{
 			Name:     name,
 			Optional: true,
-			Detail:   fmt.Sprintf("CLI v%s is older than go.mod v%s — generators and cais dev may lack features", formatSemver(cli), formatSemver(mod)),
+			Detail:   fmt.Sprintf("CLI v%s is older than go.mod v%s — generators and amarra-cais dev may lack features", formatSemver(cli), formatSemver(mod)),
 			FixHint:  fmt.Sprintf("go install %s/cmd/amarra-cais@v%s", frameworkModule, formatSemver(mod)),
 		}
 	}
@@ -231,7 +231,7 @@ func checkInertiaFrontend(dir string) doctorCheck {
 		return doctorCheck{
 			Name:    "Inertia frontend",
 			Detail:  "missing web/templates/app.html",
-			FixHint: "re-run cais new or restore app.html from Cais Inertia scaffold",
+			FixHint: "re-run amarra-cais new or restore app.html from Cais Inertia scaffold",
 		}
 	}
 	content := string(data)
@@ -269,7 +269,7 @@ func checkInertiaFrontend(dir string) doctorCheck {
 		return doctorCheck{
 			Name:    "Inertia frontend",
 			Detail:  "missing: " + strings.Join(missing, ", "),
-			FixHint: "cais install && npm run build; ensure gonertia is in go.mod",
+			FixHint: "amarra-cais install && npm run build; ensure gonertia is in go.mod",
 		}
 	}
 	return doctorCheck{Name: "Inertia frontend", OK: true, Detail: "app.html + Svelte pages + gonertia"}
@@ -281,7 +281,7 @@ func checkViteConfig(dir string) doctorCheck {
 		return doctorCheck{
 			Name:    "vite.config.js",
 			Detail:  "missing",
-			FixHint: "re-run cais new or restore vite.config.js from Cais Inertia scaffold",
+			FixHint: "re-run amarra-cais new or restore vite.config.js from Cais Inertia scaffold",
 		}
 	}
 	pkgPath := filepath.Join(dir, "package.json")
@@ -293,14 +293,14 @@ func checkViteConfig(dir string) doctorCheck {
 		return doctorCheck{
 			Name:    "vite.config.js",
 			Detail:  "package.json missing @inertiajs/svelte",
-			FixHint: "cais install",
+			FixHint: "amarra-cais install",
 		}
 	}
 	// Scaffold writes web/static/build/.gitkeep, so Stat(buildDir) is not a bundle (#159).
 	if _, err := os.Stat(filepath.Join(dir, viteMainJSRel)); err != nil {
-		hint := "npm run build (or cais build)"
+		hint := "npm run build (or amarra-cais build)"
 		if _, nmErr := os.Stat(filepath.Join(dir, "node_modules")); nmErr != nil {
-			hint = "cais install && npm run build"
+			hint = "amarra-cais install && npm run build"
 		}
 		return doctorCheck{
 			Name:    "vite.config.js",
@@ -317,7 +317,7 @@ func checkHTMX(dir string) doctorCheck {
 		return doctorCheck{
 			Name:    "htmx.min.js",
 			Detail:  "missing",
-			FixHint: "re-run cais new or copy from Cais web/static/js/htmx.min.js",
+			FixHint: "re-run amarra-cais new or copy from Cais web/static/js/htmx.min.js",
 		}
 	}
 	return doctorCheck{Name: "htmx.min.js", OK: true}
@@ -376,7 +376,7 @@ func checkSSEExt(dir string) doctorCheck {
 		return doctorCheck{
 			Name:    "sse-ext.min.js",
 			Detail:  "missing",
-			FixHint: "re-run cais new, cais pwa, or copy from Cais web/static/js/sse-ext.min.js",
+			FixHint: "re-run amarra-cais new, amarra-cais pwa, or copy from Cais web/static/js/sse-ext.min.js",
 		}
 	}
 	return doctorCheck{Name: "sse-ext.min.js", OK: true}
@@ -406,14 +406,14 @@ func checkDeployLayout(dir string) doctorCheck {
 		return doctorCheck{
 			Name:    "deploy layout",
 			Detail:  "missing web/static",
-			FixHint: "run cais css && make pwa; deploy needs web/static beside the binary",
+			FixHint: "run amarra-cais css && make pwa; deploy needs web/static beside the binary",
 		}
 	}
 	if _, err := os.Stat(manifest); err != nil {
 		return doctorCheck{
 			Name:    "deploy layout",
 			Detail:  "missing manifest.webmanifest",
-			FixHint: "run make pwa from the Cais framework or cais new",
+			FixHint: "run make pwa from the Cais framework or amarra-cais new",
 		}
 	}
 	return doctorCheck{Name: "deploy layout", OK: true, Detail: "web/static ready for systemd deploy"}
@@ -426,7 +426,7 @@ func checkQualityTooling(dir string) doctorCheck {
 			Name:     "quality tooling",
 			Optional: true,
 			Detail:   "CI/pre-commit not configured",
-			FixHint:  "cais g ci",
+			FixHint:  "amarra-cais g ci",
 		}
 	}
 	return doctorCheck{Name: "quality tooling", OK: true}
@@ -435,13 +435,13 @@ func checkQualityTooling(dir string) doctorCheck {
 func checkCSS(dir string) doctorCheck {
 	path := filepath.Join(dir, cssOutput)
 	if _, err := os.Stat(path); err != nil {
-		return doctorCheck{Name: "tailwind css", Detail: "styles.css missing", FixHint: "cais css"}
+		return doctorCheck{Name: "tailwind css", Detail: "styles.css missing", FixHint: "amarra-cais css"}
 	}
 	if !stylesCSSReady(dir) {
 		return doctorCheck{
 			Name:    "tailwind css",
 			Detail:  "styles.css empty or not built (app will look unstyled)",
-			FixHint: "cais css",
+			FixHint: "amarra-cais css",
 		}
 	}
 	return doctorCheck{Name: "tailwind css", OK: true}
@@ -477,6 +477,6 @@ func checkSeedsInfo(dir string) *doctorCheck {
 		Name:   "db seeds",
 		OK:     true,
 		Info:   true,
-		Detail: "run cais db seed for catalog data (idempotent; safe in production)",
+		Detail: "run amarra-cais db seed for catalog data (idempotent; safe in production)",
 	}
 }

@@ -7,6 +7,21 @@ import (
 	"testing"
 )
 
+func TestPatchJobRecurringSeed_missingSeedsHintsAmarraCais(t *testing.T) {
+	dir := t.TempDir()
+	err := patchJobRecurringSeed(dir, scaffoldData{Pascal: "SendWelcome"}, jobOpts{Cron: "0 3 * * *"}, false)
+	if err == nil {
+		t.Fatal("expected error when seeds.go is missing")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "amarra-cais new") {
+		t.Errorf("missing amarra-cais new hint: %q", msg)
+	}
+	if strings.Contains(msg, "run cais new") {
+		t.Errorf("still documents run cais new: %q", msg)
+	}
+}
+
 func TestScaffoldJob_createsWorkerAndHandler(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "jobapp")

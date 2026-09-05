@@ -64,7 +64,7 @@ func (c *CLI) cmdLink(args []string) error {
 		replacePath = findLocalCaisReplace(dir)
 	}
 	if replacePath == "" {
-		return fmt.Errorf("could not find local Cais checkout — pass path: cais link ../Cais")
+		return fmt.Errorf("could not find local Cais checkout — pass path: amarra-cais link ../amarra-cais")
 	}
 
 	if err := setGoModReplace(dir, replacePath); err != nil {
@@ -77,5 +77,5 @@ func (c *CLI) cmdLink(args []string) error {
 func printLinkMessage(w io.Writer, replacePath string) {
 	_, _ = fmt.Fprintf(w, "→ linked %s => %s\n", frameworkModule, replacePath)
 	_, _ = fmt.Fprintln(w, "  do not commit this replace — CI clones cannot resolve the local path")
-	_, _ = fmt.Fprintln(w, "  run cais test to verify; cais link --unlink to restore remote module before push")
+	_, _ = fmt.Fprintln(w, "  run amarra-cais test to verify; amarra-cais link --unlink to restore remote module before push")
 }

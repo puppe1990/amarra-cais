@@ -7,6 +7,24 @@ import (
 	"testing"
 )
 
+func TestFindCaisSiblingFrom_amarraCaisDir(t *testing.T) {
+	root := t.TempDir()
+	fw := filepath.Join(root, "amarra-cais")
+	app := filepath.Join(root, "demo")
+	for _, d := range []string{fw, app} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(fw, "go.mod"), []byte("module github.com/puppe1990/amarra-cais\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got := findCaisSiblingFrom(app)
+	if got != fw {
+		t.Fatalf("findCaisSiblingFrom = %q, want %q", got, fw)
+	}
+}
+
 func TestPatchGoModReplace_CaisAppsLayout(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	t.Setenv("CAIS_REPLACE", "")

@@ -30,7 +30,7 @@ func findCaisSiblingFrom(start string) string {
 		if parent == dir {
 			return ""
 		}
-		for _, name := range []string{"Cais", "cais"} {
+		for _, name := range []string{"amarra-cais", "Cais", "cais"} {
 			candidate := filepath.Join(parent, name)
 			if _, err := os.Stat(filepath.Join(candidate, "go.mod")); err != nil {
 				continue
