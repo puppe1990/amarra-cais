@@ -5,13 +5,10 @@
 ## 1. Pin the framework and drop gonertia
 
 ```bash
-go get github.com/puppe1990/amarra-cais@latest   # pin a release tag when you can
-go get github.com/puppe1990/cais@none            # if the module path still points at Cais
+go get github.com/puppe1990/amarra-cais@v0.1.0
 ```
 
 Remove `github.com/hotwire-go/gonertia` (or `inertia-go`) from `go.mod`. Delete `vite.config.js`, `svelte.config.js`, `web/src/`, and `web/static/build/`. The CLI binary is `amarra-cais`; it does not overwrite `cais`.
-
-Until a tagged release includes Live + Drive polish, `go get github.com/puppe1990/amarra-cais@main` or `amarra-cais link` against a checkout.
 
 ## 2. Load views once at boot
 
