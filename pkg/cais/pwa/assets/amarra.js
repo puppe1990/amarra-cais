@@ -1065,6 +1065,22 @@
     if (prev.text != null) prev.el.textContent = prev.text;
   }
 
+  // pkg/amarra/js/drive_restore.mjs
+  function captureScroll(history, y) {
+    if (!history?.replaceState) return;
+    const prev = history.state && typeof history.state === "object" ? history.state : {};
+    history.replaceState({ ...prev, amarra: true, scrollY: y ?? 0 }, "");
+  }
+  function restoreScroll(win, state) {
+    const y = state?.scrollY;
+    if (typeof y !== "number") return;
+    win?.scrollTo?.(0, y);
+  }
+  function focusFirstInvalid(doc) {
+    const el = doc?.querySelector?.('[aria-invalid="true"], [data-amarra-invalid]');
+    if (el && typeof el.focus === "function") el.focus();
+  }
+
   // pkg/amarra/js/drive.mjs
   function shouldInterceptClick({
     href,
@@ -1118,7 +1134,8 @@
     location,
     history,
     document: doc,
-    push = true
+    push = true,
+    window: win
   } = {}) {
     if (status === 401 || status === 403) {
       location?.reload?.();
@@ -1133,8 +1150,13 @@
     applyHead(doc, html);
     if (main) (morphFn ?? morph)(main, fragment);
     if (status === 200 && push && url && history?.pushState) {
-      if (!location?.href || url !== location.href) history.pushState({ amarra: true }, "", url);
+      if (!location?.href || url !== location.href) {
+        history.pushState({ amarra: true, scrollY: 0 }, "", url);
+      }
+      win?.scrollTo?.(0, 0);
     }
+    if (status === 200 && !push) restoreScroll(win, history?.state);
+    if (status === 422) focusFirstInvalid(doc);
     if (doc && typeof doc.dispatchEvent === "function") {
       doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
     }
@@ -1152,8 +1174,10 @@
         redirect: "follow",
         credentials: "same-origin"
       });
-      const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-      const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
+      const win = opts.window ?? (typeof window !== "undefined" ? window : null);
+      const location = opts.location ?? win?.location ?? null;
+      const history = opts.history ?? win?.history ?? null;
+      if (opts.push !== false) captureScroll(history, win?.scrollY ?? 0);
       const html = res.status === 401 || res.status === 403 ? "" : await res.text();
       return applyDriveResponse({
         status: res.status,
@@ -1164,7 +1188,8 @@
         location,
         history,
         document: doc,
-        push: opts.push !== false
+        push: opts.push !== false,
+        window: win
       });
     } finally {
       hideProgress(doc);

@@ -2,6 +2,7 @@ import { morph } from "./morph.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
 import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
 import { confirmOk, disableSubmit, requestMethod, restoreSubmit } from "./drive_form.mjs";
+import { captureScroll, focusFirstInvalid, restoreScroll } from "./drive_restore.mjs";
 
 export function shouldInterceptClick({
   href,
@@ -60,6 +61,7 @@ export function applyDriveResponse({
   history,
   document: doc,
   push = true,
+  window: win,
 } = {}) {
   if (status === 401 || status === 403) {
     location?.reload?.();
@@ -75,8 +77,13 @@ export function applyDriveResponse({
   applyHead(doc, html);
   if (main) (morphFn ?? morph)(main, fragment);
   if (status === 200 && push && url && history?.pushState) {
-    if (!location?.href || url !== location.href) history.pushState({ amarra: true }, "", url);
+    if (!location?.href || url !== location.href) {
+      history.pushState({ amarra: true, scrollY: 0 }, "", url);
+    }
+    win?.scrollTo?.(0, 0);
   }
+  if (status === 200 && !push) restoreScroll(win, history?.state);
+  if (status === 422) focusFirstInvalid(doc);
   if (doc && typeof doc.dispatchEvent === "function") {
     doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
   }
@@ -95,8 +102,10 @@ export async function visit(url, opts = {}) {
       redirect: "follow",
       credentials: "same-origin",
     });
-    const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-    const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
+    const win = opts.window ?? (typeof window !== "undefined" ? window : null);
+    const location = opts.location ?? win?.location ?? null;
+    const history = opts.history ?? win?.history ?? null;
+    if (opts.push !== false) captureScroll(history, win?.scrollY ?? 0);
     const html = res.status === 401 || res.status === 403 ? "" : await res.text();
     return applyDriveResponse({
       status: res.status,
@@ -108,6 +117,7 @@ export async function visit(url, opts = {}) {
       history,
       document: doc,
       push: opts.push !== false,
+      window: win,
     });
   } finally {
     hideProgress(doc);
