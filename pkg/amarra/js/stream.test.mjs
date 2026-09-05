@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseSSE, applyOp, start } from "./stream.mjs";
+import { parseSSE, applyOp, start, isStreamResponse } from "./stream.mjs";
 
 test("parseSSE reads named event and html data", () => {
   const ops = parseSSE("event: append\ndata: <p>x</p>\n\n");
@@ -40,6 +40,23 @@ function node(html = "") {
     },
   };
 }
+
+test("applyOp before and after insert around the target", () => {
+  const item = node("x");
+  item.insertAdjacentHTML = function insertAdjacentHTML(pos, s) {
+    this.pos = pos;
+    this.inserted = s;
+  };
+  const doc = {
+    getElementById(id) {
+      return id === "item" ? item : null;
+    },
+  };
+  applyOp({ kind: "before", target: "item", html: "<li>n</li>" }, doc);
+  assert.equal(item.pos, "beforebegin");
+  applyOp({ kind: "after", target: "item", html: "<li>z</li>" }, doc);
+  assert.equal(item.pos, "afterend");
+});
 
 test("applyOp append prepend replace morph remove", () => {
   const list = node("<li>a</li>");
@@ -90,6 +107,18 @@ test("applyOp toast dispatches amarra:toast", () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].type, "amarra:toast");
   assert.equal(events[0].detail.message, "Saved!");
+});
+
+test("isStreamResponse detects vnd.amarra-stream", () => {
+  assert.equal(isStreamResponse({ "content-type": "text/vnd.amarra-stream; charset=utf-8" }), true);
+  assert.equal(
+    isStreamResponse({
+      get(name) {
+        return name === "content-type" ? "text/html" : null;
+      },
+    }),
+    false
+  );
 });
 
 test("start is a no-op without a document", () => {

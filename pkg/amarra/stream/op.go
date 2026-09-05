@@ -16,6 +16,19 @@ type Op struct {
 	HTML   string
 }
 
+// ContentType is the HTTP body Turbo-stream equivalent for Drive visits.
+const ContentType = "text/vnd.amarra-stream"
+
+func WriteHTTP(w http.ResponseWriter, ops ...Op) error {
+	w.Header().Set("Content-Type", ContentType+"; charset=utf-8")
+	for _, op := range ops {
+		if err := WriteOp(w, op); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func WriteOp(w http.ResponseWriter, op Op) error {
 	if id := sseFieldID(op.Target); id != "" {
 		if _, err := fmt.Fprintf(w, "id: %s\n", id); err != nil {

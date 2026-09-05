@@ -230,6 +230,36 @@ test("applyDriveResponse does not morph when #amarra-main is missing", () => {
   assert.equal(pushed, false);
 });
 
+test("visit applies amarra-stream HTTP bodies instead of morphing main", async () => {
+  const list = {
+    innerHTML: "<li>a</li>",
+    insertAdjacentHTML(pos, s) {
+      if (pos === "beforeend") this.innerHTML += s;
+    },
+  };
+  const doc = {
+    querySelector: () => ({ innerHTML: "old" }),
+    getElementById: (id) => (id === "list" ? list : null),
+    dispatchEvent() {
+      return true;
+    },
+  };
+  await visit("http://a/items", {
+    fetchFn: async () => ({
+      status: 200,
+      url: "http://a/items",
+      headers: { get: (n) => (n === "content-type" ? "text/vnd.amarra-stream" : null) },
+      text: async () => "event: append\nid: list\ndata: <li>b</li>\n\n",
+    }),
+    document: doc,
+    morphFn() {
+      throw new Error("should not morph");
+    },
+    history: { pushState() {}, replaceState() {} },
+  });
+  assert.equal(list.innerHTML, "<li>a</li><li>b</li>");
+});
+
 test("visit emits amarra:drive-error on 404 and 500", async () => {
   const events = [];
   const main = { innerHTML: "old" };

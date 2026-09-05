@@ -1,6 +1,7 @@
 import { morph } from "./morph.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
 import { visitIntoFrame } from "./frame.mjs";
+import { applyOp, isStreamResponse, parseSSE } from "./stream.mjs";
 import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
 import { confirmOk, disableSubmit, requestMethod, restoreSubmit } from "./drive_form.mjs";
 import { captureScroll, focusFirstInvalid, restoreScroll } from "./drive_restore.mjs";
@@ -108,6 +109,10 @@ export async function visit(url, opts = {}) {
     const history = opts.history ?? win?.history ?? null;
     if (opts.push !== false) captureScroll(history, win?.scrollY ?? 0);
     const html = res.status === 401 || res.status === 403 ? "" : await res.text();
+    if (isStreamResponse(res.headers)) {
+      for (const op of parseSSE(html)) applyOp(op, doc, opts);
+      return { action: "stream" };
+    }
     return applyDriveResponse({
       status: res.status,
       html,
