@@ -101,9 +101,65 @@ func TestKit_flashReadsPageData(t *testing.T) {
 	}
 }
 
+func TestKit_shippedFormInjectsCSRF(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/login.html": &fstest.MapFile{Data: []byte(`{{ define "content" }}<.form action="/login" method="post"><.button type="submit">Go</.button></.form>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "login",
+		Data: map[string]any{"CSRFToken": "tok"},
+	}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, `name="csrf_token"`) || !strings.Contains(body, `value="tok"`) {
+		t.Fatalf("shipped form missing csrf: %q", body)
+	}
+}
+
+func TestKit_inputMarksInvalid(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.input name="email" label="Email" error="required" />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, `aria-invalid="true"`) {
+		t.Fatalf("invalid input missing aria-invalid: %q", body)
+	}
+}
+
+func TestKit_selectTextareaCheckbox(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.select name="role" label="Role"><option>admin</option></.select><.textarea name="bio" label="Bio">hi</.textarea><.checkbox name="ok" label="OK" checked="checked" />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{`<select`, `name="role"`, `<textarea`, `name="bio"`, `hi`, `type="checkbox"`, `name="ok"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("missing %q in %s", want, body)
+		}
+	}
+}
+
 func TestShippedComponents_includesKitStems(t *testing.T) {
 	got := ShippedComponents()
-	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal"} {
+	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox"} {
 		if _, ok := got[stem]; !ok {
 			t.Errorf("missing shipped component %s", stem)
 		}
