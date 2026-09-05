@@ -3,13 +3,7 @@ const CACHE = "cais-static-v" + CACHE_VERSION;
 
 const PRECACHE = [
   "/static/css/styles.css",
-  "/static/js/htmx.min.js",
-  "/static/js/idiomorph-ext.min.js",
-  "/static/js/sse-ext.min.js",
-  "/static/js/cais-core.js",
-  "/static/js/cais-chat.js",
-  "/static/js/html5-qrcode.min.js",
-  "/static/js/scan.js",
+  "/static/js/amarra.js",
   "/static/manifest.webmanifest",
   "/static/icons/icon-192.png",
   "/static/icons/icon-512.png",
@@ -34,10 +28,10 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Network-first for SPA bundles and Tailwind CSS: stable paths like
-// /static/build/assets/main.js must pick up vite/tailwind rebuilds without
-// requiring a CACHE_VERSION bump or hard refresh.
-function networkFirst(request) {
+// Network-first for HTML Drive, amarra.js, and Tailwind CSS so template
+// and runtime updates show without a CACHE_VERSION bump. Other /static/
+// assets stay cache-first. Navigations fall back to offline.html.
+function networkFirst(request, fallbackURL) {
   return fetch(request)
     .then((response) => {
       if (response && response.ok) {
@@ -46,7 +40,13 @@ function networkFirst(request) {
       }
       return response;
     })
-    .catch(() => caches.match(request).then((cached) => cached || Response.error()));
+    .catch(() =>
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        if (!fallbackURL) return Response.error();
+        return caches.match(fallbackURL).then((fb) => fb || Response.error());
+      })
+    );
 }
 
 function cacheFirst(request) {
@@ -70,7 +70,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/static/build/") || url.pathname.startsWith("/static/css/")) {
+  if (url.pathname === "/static/js/amarra.js" || url.pathname.startsWith("/static/css/")) {
     event.respondWith(networkFirst(request));
     return;
   }
@@ -80,11 +80,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (request.headers.get("accept")?.includes("text/html")) {
-    event.respondWith(
-      fetch(request).catch(() =>
-        caches.match("/static/offline.html").then((cached) => cached || Response.error())
-      )
-    );
+  if (request.mode === "navigate" || request.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(networkFirst(request, "/static/offline.html"));
   }
 });

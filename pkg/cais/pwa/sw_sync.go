@@ -8,16 +8,21 @@ import (
 	"strings"
 )
 
-// HasNetworkFirstSPA reports whether sw.js uses network-first for SPA build
-// assets (/static/build/). False for legacy cache-first-all-/static/ workers.
+// HasNetworkFirstSPA reports whether sw.js uses network-first for the Amarra
+// runtime (/static/js/amarra.js). /static/build/ still counts so leftover
+// Inertia workers are not treated as cache-first-all until the next pwa sync.
 func HasNetworkFirstSPA(swBody string) bool {
-	return strings.Contains(swBody, "/static/build/") &&
-		(strings.Contains(swBody, "networkFirst") || strings.Contains(swBody, "network-first"))
+	hasNF := strings.Contains(swBody, "networkFirst") || strings.Contains(swBody, "network-first")
+	if !hasNF {
+		return false
+	}
+	return strings.Contains(swBody, "/static/js/amarra.js") ||
+		strings.Contains(swBody, "/static/build/")
 }
 
 // SyncServiceWorker overwrites web/static/js/sw.js with the embedded current
-// template (network-first for /static/build/ and /static/css/). Preserves the
-// existing CACHE_VERSION when present so a follow-up bump is optional.
+// template (network-first for HTML, /static/js/amarra.js, and /static/css/).
+// Preserves the existing CACHE_VERSION when present so a follow-up bump is optional.
 // Returns true when the file was written or strategy upgraded.
 func SyncServiceWorker(appDir string) (updated bool, version int, err error) {
 	path := filepath.Join(appDir, "web", "static", "js", "sw.js")

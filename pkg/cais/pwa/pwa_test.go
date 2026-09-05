@@ -28,7 +28,7 @@ func TestServiceWorker_networkFirstForSPABuild(t *testing.T) {
 	}
 	content := string(data)
 	for _, want := range []string{
-		`/static/build/`,
+		`/static/js/amarra.js`,
 		`/static/css/`,
 		`function networkFirst`,
 		`function cacheFirst`,
@@ -38,10 +38,8 @@ func TestServiceWorker_networkFirstForSPABuild(t *testing.T) {
 			t.Errorf("sw.js missing %q", want)
 		}
 	}
-	// Must not treat all /static/ as pure cache-first without build exception.
-	if !strings.Contains(content, "startsWith(\"/static/build/\")") &&
-		!strings.Contains(content, `startsWith("/static/build/")`) {
-		t.Error("sw.js should network-first /static/build/ paths")
+	if strings.Contains(content, "/static/build/") {
+		t.Error("sw.js should not treat /static/build/ as the SPA bundle path")
 	}
 }
 
@@ -100,6 +98,51 @@ func TestCaisJS_hasChatAgentModule(t *testing.T) {
 		if !strings.Contains(content, want) {
 			t.Errorf("cais-chat.js missing chat agent helper %q", want)
 		}
+	}
+}
+
+func TestInstallForAmarra_writesAmarraJS(t *testing.T) {
+	dir := t.TempDir()
+	if err := InstallForAmarra(dir, "Demo"); err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []string{
+		"web/static/js/amarra.js",
+		"web/static/js/sw.js",
+		"web/static/offline.html",
+		"web/static/manifest.webmanifest",
+	} {
+		if _, err := os.Stat(filepath.Join(dir, rel)); err != nil {
+			t.Errorf("missing %s: %v", rel, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/static/js/htmx.min.js")); err == nil {
+		t.Error("htmx should not be installed")
+	}
+	for _, rel := range []string{
+		"web/static/js/sse-ext.min.js",
+		"web/static/js/idiomorph-ext.min.js",
+		"web/static/js/cais.js",
+		"web/static/js/cais-core.js",
+	} {
+		if _, err := os.Stat(filepath.Join(dir, rel)); err == nil {
+			t.Errorf("%s should not be installed", rel)
+		}
+	}
+
+	sw, err := os.ReadFile(filepath.Join(dir, "web/static/js/sw.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(sw)
+	if !strings.Contains(body, "/static/js/amarra.js") {
+		t.Error("sw.js should network-first /static/js/amarra.js")
+	}
+	if !strings.Contains(body, "function networkFirst") {
+		t.Error("sw.js missing networkFirst")
+	}
+	if strings.Contains(body, "/static/build/") {
+		t.Error("sw.js should not treat /static/build/ as the SPA bundle path")
 	}
 }
 

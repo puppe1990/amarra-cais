@@ -19,7 +19,7 @@ func TestHasNetworkFirstSPA(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !HasNetworkFirstSPA(string(modern)) {
-		t.Error("embedded sw.js should be network-first for /static/build/")
+		t.Error("embedded sw.js should be network-first for /static/js/amarra.js")
 	}
 }
 
