@@ -43,13 +43,9 @@ func (c *CLI) cmdPWA(args []string) error {
 	}
 
 	_, _ = fmt.Fprintln(c.Out, "→ writing PWA assets")
-	// Inertia apps: icons/manifest/SW without HTMX JS dump. HTMX apps: full InstallTo.
-	// Install* uses SyncServiceWorker so CACHE_VERSION is preserved and strategy migrates (#135).
-	if isInertiaApp(dir) {
-		err = pwa.InstallForInertia(dir, name)
-	} else {
-		err = pwa.InstallTo(dir, name)
-	}
+	// HTML Amarra apps: amarra.js + network-first SW. Never dump HTMX/Inertia bundles.
+	// InstallForAmarra uses SyncServiceWorker so CACHE_VERSION is preserved (#135).
+	err = pwa.InstallForAmarra(dir, name)
 	if err != nil {
 		return err
 	}

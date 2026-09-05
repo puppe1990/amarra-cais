@@ -82,12 +82,6 @@ func (c *CLI) cmdBuild(args []string) error {
 	if err := runTailwindBuild(dir, false); err != nil {
 		return err
 	}
-	if hasViteApp(dir) {
-		_, _ = fmt.Fprintln(c.Out, "→ vite build")
-		if err := runViteBuild(dir); err != nil {
-			return fmt.Errorf("vite build: %w", err)
-		}
-	}
 	_, _ = fmt.Fprintln(c.Out, "→ go build")
 	return runGoBuild(dir, opts)
 }
@@ -114,13 +108,9 @@ func (c *CLI) cmdDev() error {
 		return err
 	}
 
-	if err := runTailwindBuild(dir, false); err != nil {
-		return err
-	}
-	if hasViteApp(dir) {
-		_, _ = fmt.Fprintln(c.Out, "→ vite build (initial) — Svelte/Inertia → web/static/build/")
-		if err := runViteBuild(dir); err != nil {
-			return fmt.Errorf("vite build: %w (run amarra-cais install if node_modules is missing)", err)
+	if _, err := os.Stat(filepath.Join(dir, cssInput)); err == nil {
+		if err := runTailwindBuild(dir, false); err != nil {
+			return err
 		}
 	}
 
@@ -130,29 +120,14 @@ func (c *CLI) cmdDev() error {
 		_, _ = fmt.Fprintf(c.Out, "=> PWA cache bumped to v%d (amarra-cais dev)\n", v)
 	}
 
-	watch := exec.Command("npx", "tailwindcss", "-i", cssInput, "-o", cssOutput, "--watch")
-	watch.Dir = dir
-	watch.Stdout = os.Stdout
-	watch.Stderr = os.Stderr
-	if err := watch.Start(); err != nil {
-		return fmt.Errorf("tailwind watch: %w", err)
+	stopWatchers, err := startDevAssetWatchers(dir)
+	if err != nil {
+		return err
 	}
-	defer func() { _ = watch.Process.Kill() }()
-
-	viteWatching := false
-	if viteWatch, err := startViteWatch(dir); err != nil {
-		return fmt.Errorf("vite watch: %w", err)
-	} else if viteWatch != nil {
-		viteWatching = true
-		_, _ = fmt.Fprintln(c.Out, "→ vite build --watch (rebuilds on web/src/** changes)")
-		defer func() { _ = viteWatch.Process.Kill() }()
-	}
+	defer stopWatchers()
 
 	warnPortInUse(c.Out, dir)
 	warnCLIVersionMismatch(c.Out, dir)
-	if hasViteApp(dir) && !viteWatching {
-		_, _ = fmt.Fprintln(c.Out, "⚠ SPA not watched — upgrade amarra-cais CLI or run: npx vite build --watch")
-	}
 
 	if air := findAir(); air != "" {
 		boot.PrintDevBanner(c.Out, boot.CaisVersion())
@@ -163,8 +138,34 @@ func (c *CLI) cmdDev() error {
 	return runCmd(dir, "go", "run", "./cmd/server")
 }
 
-// warnCLIVersionMismatch prints when the installed CLI is older than go.mod
-// or predates vite watch (see checkCLIVersion / issue #133).
+// startDevAssetWatchers starts Tailwind --watch when input.css exists.
+// Vite is never required: HTML apps have no vite.config.js, and leftover
+// Inertia apps must not block amarra-cais dev on node_modules.
+func startDevAssetWatchers(dir string) (func(), error) {
+	var procs []*os.Process
+	stop := func() {
+		for _, p := range procs {
+			if p != nil {
+				_ = p.Kill()
+			}
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, cssInput)); err != nil {
+		return stop, nil
+	}
+	watch := exec.Command("npx", "tailwindcss", "-i", cssInput, "-o", cssOutput, "--watch")
+	watch.Dir = dir
+	watch.Stdout = os.Stdout
+	watch.Stderr = os.Stderr
+	if err := watch.Start(); err != nil {
+		stop()
+		return nil, fmt.Errorf("tailwind watch: %w", err)
+	}
+	procs = append(procs, watch.Process)
+	return stop, nil
+}
+
+// warnCLIVersionMismatch prints when the installed CLI is older than go.mod.
 func warnCLIVersionMismatch(w io.Writer, dir string) {
 	c := checkCLIVersion(dir)
 	if c.OK || c.Info {

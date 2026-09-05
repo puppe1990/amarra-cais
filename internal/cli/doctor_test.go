@@ -166,18 +166,15 @@ func TestDoctor_MobileChecks_chatSSEAndReconnect(t *testing.T) {
 		"[ok] health lan_urls",
 		"[ok] CSP fonts",
 		"[ok] PWA cache version",
+		"amarra.js",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("expected %q in doctor --mobile output, got:\n%s", want, out)
 		}
 	}
-	for _, skipped := range []string{
-		"chat SSE pattern",
-		"SSE reconnect",
-		"chat agent JS",
-	} {
-		if !strings.Contains(out, skipped) {
-			t.Errorf("expected %q check in doctor --mobile output, got:\n%s", skipped, out)
+	for _, leftover := range []string{"SSE reconnect", "cais-core.js", "cais-chat.js", "htmx.min.js"} {
+		if strings.Contains(out, leftover) {
+			t.Errorf("mobile doctor must not require %q, got:\n%s", leftover, out)
 		}
 	}
 }
@@ -191,10 +188,9 @@ func TestDoctor_MobileWarnsMultiSlotWithoutFinalize(t *testing.T) {
 	}, true, false); err != nil {
 		t.Fatal(err)
 	}
-	// Amarra scaffolds have no chat partials or cais.js — agent chat check is skipped.
 	out := runDoctorOutputMobile(t, dir)
-	if !strings.Contains(out, "chat agent JS") {
-		t.Errorf("expected chat agent JS check in output, got:\n%s", out)
+	if !strings.Contains(out, "amarra.js") {
+		t.Errorf("expected amarra.js check in output, got:\n%s", out)
 	}
 	if strings.Contains(out, "[warn] chat agent JS") {
 		t.Errorf("Amarra scaffold should not warn on chat agent JS, got:\n%s", out)
@@ -210,6 +206,63 @@ func runDoctorOutputMobile(t *testing.T, dir string) string {
 		t.Fatalf("doctor --mobile failed: %v\n%s", err, buf.String())
 	}
 	return buf.String()
+}
+
+func TestDoctor_requiresAmarraJS(t *testing.T) {
+	unsetCIEnv(t)
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := t.TempDir()
+	if err := scaffoldNewApp(dir, scaffoldData{
+		AppName:    "ok",
+		ModulePath: "github.com/puppe1990/ok",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	writeBuiltStylesCSS(t, dir)
+
+	var buf bytes.Buffer
+	if err := runDoctor(&buf, dir, doctorOptions{}); err != nil {
+		t.Fatalf("runDoctor: %v\n%s", err, buf.String())
+	}
+	out := buf.String()
+	if !strings.Contains(out, "amarra.js") {
+		t.Errorf("expected amarra.js ok, got:\n%s", out)
+	}
+	if strings.Contains(out, "[FAIL] Inertia frontend") {
+		t.Errorf("must not fail Inertia frontend, got:\n%s", out)
+	}
+}
+
+func TestDoctor_FailsWhenViteConfigExists(t *testing.T) {
+	unsetCIEnv(t)
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := t.TempDir()
+	if err := scaffoldNewApp(dir, scaffoldData{
+		AppName:    "viteleftover",
+		ModulePath: "github.com/puppe1990/viteleftover",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	writeBuiltStylesCSS(t, dir)
+	if err := os.WriteFile(filepath.Join(dir, "vite.config.js"), []byte("export default {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := runDoctor(&buf, dir, doctorOptions{})
+	if err == nil {
+		t.Fatalf("runDoctor should fail with vite.config.js, output:\n%s", buf.String())
+	}
+	out := buf.String()
+	if !strings.Contains(out, "[FAIL] vite.config.js") {
+		t.Errorf("expected FAIL vite.config.js, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Cais v0.11 Inertia") {
+		t.Errorf("expected Cais v0.11 Inertia hint, got:\n%s", out)
+	}
+	if !strings.Contains(out, "amarra-cais does not support") {
+		t.Errorf("expected unsupported hint, got:\n%s", out)
+	}
 }
 
 func TestDoctor_AllOK(t *testing.T) {
@@ -258,45 +311,6 @@ func TestDoctor_FailsWhenAmarraJSMissing(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "[FAIL] Amarra frontend") {
 		t.Errorf("expected FAIL Amarra frontend, got:\n%s", buf.String())
-	}
-}
-
-func TestDoctor_FailsWhenViteMainJSMissing(t *testing.T) {
-	unsetCIEnv(t)
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "vite.config.js"), []byte("export default {}\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"dependencies":{"@inertiajs/svelte":"3.0.0"},"scripts":{"build":"vite build"}}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	c := checkViteConfig(dir)
-	if c.OK {
-		t.Fatalf("vite check should fail without assets/main.js, got %+v", c)
-	}
-	if c.Optional {
-		t.Fatalf("missing Vite main.js must not be optional, got %+v", c)
-	}
-}
-
-func TestDoctor_ViteOKWhenMainJSPresent(t *testing.T) {
-	unsetCIEnv(t)
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "vite.config.js"), []byte("export default {}\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"dependencies":{"@inertiajs/svelte":"3.0.0"},"scripts":{"build":"vite build"}}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	writeBuiltViteMainJS(t, dir)
-
-	c := checkViteConfig(dir)
-	if !c.OK {
-		t.Fatalf("vite check should pass with assets/main.js, got %+v", c)
-	}
-	if c.Optional {
-		t.Fatalf("ok vite check should not be optional, got %+v", c)
 	}
 }
 
@@ -522,19 +536,6 @@ func writeStylesCSSBody(t *testing.T, dir string) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(path, []byte("*,::before{box-sizing:border-box}.text-stone-900{color:#1c1917}"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-}
-
-// writeBuiltViteMainJS plants a dummy Inertia bundle so passing doctor tests stay green.
-// Scaffold writes web/static/build/.gitkeep, so Stat(buildDir) is not a bundle (#159).
-func writeBuiltViteMainJS(t *testing.T, dir string) {
-	t.Helper()
-	path := filepath.Join(dir, "web/static/build/assets/main.js")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte("/* test vite bundle */\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -90,14 +90,14 @@ Usage:
   amarra-cais g [--dry-run] auth                Add login/logout and protect dashboard
   amarra-cais g [--dry-run] console             Scaffold cmd/console/main.go
   amarra-cais g [--dry-run] ci                  Add GitHub Actions CI, pre-commit, lint, Prettier
-  amarra-cais install               npm install + go mod tidy
+  amarra-cais install               npm install (if package.json) + go mod tidy
   amarra-cais css                   Build Tailwind CSS
-  amarra-cais dev                   Hot reload (air + tailwind + vite build --watch)
+  amarra-cais dev                   Hot reload (air + tailwind)
   amarra-cais build [--os linux] [--arch amd64] [-o path]
                                Build bin/server (cross-compile for deploy)
   amarra-cais server                Run the app (go run ./cmd/server)
   amarra-cais test                  Run tests (go test ./...)
-  amarra-cais doctor [--mobile]     Check app setup (htmx, air, go.mod, PWA/mobile)
+  amarra-cais doctor [--mobile]     Check app setup (amarra.js, air, go.mod, PWA/mobile)
   amarra-cais pwa [--bump]          Write or refresh PWA assets; --bump invalidates SW cache
   amarra-cais link [path] [--unlink]  Add go.mod replace for local Cais dev (default: sibling ../amarra-cais or ../Cais)
   amarra-cais console               Interactive app console (Go REPL + SQL)

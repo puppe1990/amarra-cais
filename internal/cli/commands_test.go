@@ -42,6 +42,23 @@ func TestCLI_Dev_requiresCaisApp(t *testing.T) {
 	}
 }
 
+func TestStartDevAssetWatchers_skipsViteWithoutNodeModules(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "vite.config.js"), []byte("export default {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"scripts":{"build":"vite build","css":"tailwindcss"}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stop, err := startDevAssetWatchers(dir)
+	if err != nil {
+		t.Fatalf("dev must not require Vite node_modules: %v", err)
+	}
+	if stop != nil {
+		stop()
+	}
+}
+
 func TestCLI_Build_requiresCaisApp(t *testing.T) {
 	c := &CLI{Out: os.Stdout}
 	if err := c.Run([]string{"build"}); err == nil {

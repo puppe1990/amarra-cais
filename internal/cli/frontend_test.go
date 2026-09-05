@@ -34,6 +34,16 @@ func TestHasViteApp_falseWithoutConfig(t *testing.T) {
 	}
 }
 
+func TestHasViteApp_falseOnHtmlScaffold(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"scripts":{"css":"tailwindcss"}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if hasViteApp(dir) {
+		t.Fatal("html app must not look like Vite")
+	}
+}
+
 func TestHasViteApp_trueWithConfigAndBuildScript(t *testing.T) {
 	dir := t.TempDir()
 	writeMinimalCaisApp(t, dir, true)

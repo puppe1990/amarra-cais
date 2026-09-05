@@ -65,6 +65,31 @@ func TestCLI_Help_IncludesComponent(t *testing.T) {
 	}
 }
 
+func TestCLI_Help_DevIsAirAndTailwind(t *testing.T) {
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	if err := c.Run([]string{"help"}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	var devLine string
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "amarra-cais dev") {
+			devLine = line
+			break
+		}
+	}
+	if devLine == "" {
+		t.Fatal("help missing amarra-cais dev")
+	}
+	if !strings.Contains(devLine, "air") || !strings.Contains(devLine, "tailwind") {
+		t.Errorf("dev help should be air + tailwind, got %q", devLine)
+	}
+	if strings.Contains(strings.ToLower(devLine), "vite") {
+		t.Errorf("dev help must not mention vite: %q", devLine)
+	}
+}
+
 func TestCLI_Help_IncludesModuleFlag(t *testing.T) {
 	var buf bytes.Buffer
 	c := &CLI{Out: &buf}

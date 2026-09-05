@@ -31,6 +31,12 @@ func TestDoctor_MobileOKOnFreshScaffold(t *testing.T) {
 	if !strings.Contains(out, "[ok] CSP fonts") {
 		t.Errorf("expected CSP fonts ok, got:\n%s", out)
 	}
+	if !strings.Contains(out, "amarra.js") {
+		t.Errorf("mobile doctor should check amarra.js, got:\n%s", out)
+	}
+	if strings.Contains(out, "cais.js") || strings.Contains(out, "htmx.min.js") {
+		t.Errorf("mobile doctor must not require cais.js/htmx, got:\n%s", out)
+	}
 }
 
 func TestDoctor_MobileWarnsGoogleFonts(t *testing.T) {

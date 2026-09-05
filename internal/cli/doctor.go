@@ -28,13 +28,10 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 		checkGoMod(dir),
 		checkCaisDep(dir),
 		checkCLIVersion(dir),
+		checkAmarraFrontend(dir),
 	}
-	if isInertiaApp(dir) {
-		checks = append(checks, checkInertiaFrontend(dir), checkViteConfig(dir))
-	} else if isAmarraApp(dir) {
-		checks = append(checks, checkAmarraFrontend(dir))
-	} else {
-		checks = append(checks, checkHTMX(dir), checkSSEExt(dir))
+	if c := checkUnsupportedVite(dir); c != nil {
+		checks = append(checks, *c)
 	}
 	checks = append(checks,
 		checkSSEWriteTimeout(dir),
@@ -60,11 +57,8 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 		checks = append(checks,
 			checkFlashTemplate(dir),
 			checkGoogleFonts(dir),
+			checkAmarraJS(dir),
 			checkPWACacheVersion(dir),
-			checkChatSSEPattern(dir),
-			checkSSEReconnectJS(dir),
-			checkChatAgentJS(dir),
-			checkChatEnterSubmitJS(dir),
 			checkChatFormCSS(dir),
 			checkChatScrollContainer(dir),
 			checkHealthLANURLs(dir),
@@ -200,19 +194,6 @@ func checkCLIVersionAt(dir, cliRaw string) doctorCheck {
 		}
 	}
 
-	// Vite apps need CLI ≥ minViteWatchVersion for amarra-cais dev vite build --watch.
-	if hasViteApp(dir) {
-		floor := parseSemverCore(minViteWatchVersion)
-		if compareSemverCore(cli, floor) < 0 {
-			return doctorCheck{
-				Name:     name,
-				Optional: true,
-				Detail:   fmt.Sprintf("CLI v%s predates vite build --watch (need ≥ v%s) — SPA will not rebuild on web/src changes", formatSemver(cli), minViteWatchVersion),
-				FixHint:  fmt.Sprintf("go install %s/cmd/amarra-cais@v%s  # or @latest after release", frameworkModule, minViteWatchVersion),
-			}
-		}
-	}
-
 	detail := "CLI v" + formatSemver(cli)
 	if mod.OK {
 		detail += " · go.mod v" + formatSemver(mod)
@@ -224,14 +205,27 @@ func formatSemver(s semverCore) string {
 	return fmt.Sprintf("%d.%d.%d", s.Major, s.Minor, s.Patch)
 }
 
-func isInertiaApp(dir string) bool {
-	_, err := os.Stat(filepath.Join(dir, "vite.config.js"))
-	return err == nil
+func checkUnsupportedVite(dir string) *doctorCheck {
+	if _, err := os.Stat(filepath.Join(dir, "vite.config.js")); err != nil {
+		return nil
+	}
+	return &doctorCheck{
+		Name:    "vite.config.js",
+		Detail:  "this is Cais v0.11 Inertia; amarra-cais does not support it",
+		FixHint: "remove vite.config.js — Amarra apps use HTML + amarra.js, not Vite/Inertia",
+	}
 }
 
-func isAmarraApp(dir string) bool {
-	_, err := os.Stat(filepath.Join(dir, "web/templates/layouts/app.html"))
-	return err == nil
+func checkAmarraJS(dir string) doctorCheck {
+	path := filepath.Join(dir, "web/static/js/amarra.js")
+	if _, err := os.Stat(path); err != nil {
+		return doctorCheck{
+			Name:    "amarra.js",
+			Detail:  "missing web/static/js/amarra.js",
+			FixHint: "amarra-cais pwa",
+		}
+	}
+	return doctorCheck{Name: "amarra.js", OK: true}
 }
 
 func checkAmarraFrontend(dir string) doctorCheck {
@@ -265,105 +259,6 @@ func checkAmarraFrontend(dir string) doctorCheck {
 		}
 	}
 	return doctorCheck{Name: "Amarra frontend", OK: true, Detail: "layouts/app.html + amarra.js"}
-}
-
-func checkInertiaFrontend(dir string) doctorCheck {
-	appHTML := filepath.Join(dir, "web/templates/app.html")
-	data, err := os.ReadFile(appHTML)
-	if err != nil {
-		return doctorCheck{
-			Name:    "Inertia frontend",
-			Detail:  "missing web/templates/app.html",
-			FixHint: "re-run amarra-cais new or restore app.html from Cais Inertia scaffold",
-		}
-	}
-	content := string(data)
-	missing := []string{}
-	for _, want := range []string{`{{ .inertia }}`, `{{ .inertiaHead }}`, `/static/build`} {
-		if !strings.Contains(content, want) {
-			missing = append(missing, want)
-		}
-	}
-	mainJS := filepath.Join(dir, "web/src/main.js")
-	if _, err := os.Stat(mainJS); err != nil {
-		missing = append(missing, "web/src/main.js")
-	}
-	pagesDir := filepath.Join(dir, "web/src/pages")
-	entries, err := os.ReadDir(pagesDir)
-	if err != nil {
-		missing = append(missing, "web/src/pages/")
-	} else {
-		hasSvelte := false
-		for _, e := range entries {
-			if !e.IsDir() && strings.HasSuffix(e.Name(), ".svelte") {
-				hasSvelte = true
-				break
-			}
-		}
-		if !hasSvelte {
-			missing = append(missing, "web/src/pages/*.svelte")
-		}
-	}
-	gomod, err := os.ReadFile(filepath.Join(dir, "go.mod"))
-	if err != nil || !strings.Contains(string(gomod), "gonertia") {
-		missing = append(missing, "gonertia in go.mod")
-	}
-	if len(missing) > 0 {
-		return doctorCheck{
-			Name:    "Inertia frontend",
-			Detail:  "missing: " + strings.Join(missing, ", "),
-			FixHint: "amarra-cais install && npm run build; ensure gonertia is in go.mod",
-		}
-	}
-	return doctorCheck{Name: "Inertia frontend", OK: true, Detail: "app.html + Svelte pages + gonertia"}
-}
-
-func checkViteConfig(dir string) doctorCheck {
-	path := filepath.Join(dir, "vite.config.js")
-	if _, err := os.Stat(path); err != nil {
-		return doctorCheck{
-			Name:    "vite.config.js",
-			Detail:  "missing",
-			FixHint: "re-run amarra-cais new or restore vite.config.js from Cais Inertia scaffold",
-		}
-	}
-	pkgPath := filepath.Join(dir, "package.json")
-	data, err := os.ReadFile(pkgPath)
-	if err != nil {
-		return doctorCheck{Name: "vite.config.js", OK: true, Detail: "present (package.json unreadable)"}
-	}
-	if !strings.Contains(string(data), "@inertiajs/svelte") {
-		return doctorCheck{
-			Name:    "vite.config.js",
-			Detail:  "package.json missing @inertiajs/svelte",
-			FixHint: "amarra-cais install",
-		}
-	}
-	// Scaffold writes web/static/build/.gitkeep, so Stat(buildDir) is not a bundle (#159).
-	if _, err := os.Stat(filepath.Join(dir, viteMainJSRel)); err != nil {
-		hint := "npm run build (or amarra-cais build)"
-		if _, nmErr := os.Stat(filepath.Join(dir, "node_modules")); nmErr != nil {
-			hint = "amarra-cais install && npm run build"
-		}
-		return doctorCheck{
-			Name:    "vite.config.js",
-			Detail:  "missing " + viteMainJSRel + " — Inertia will render a blank page",
-			FixHint: hint,
-		}
-	}
-	return doctorCheck{Name: "vite.config.js", OK: true, Detail: "Vite + @inertiajs/svelte configured"}
-}
-
-func checkHTMX(dir string) doctorCheck {
-	path := filepath.Join(dir, "web/static/js/htmx.min.js")
-	if _, err := os.Stat(path); err != nil {
-		return doctorCheck{
-			Name:    "htmx.min.js",
-			Detail:  "missing",
-			FixHint: "re-run amarra-cais new or copy from Cais web/static/js/htmx.min.js",
-		}
-	}
-	return doctorCheck{Name: "htmx.min.js", OK: true}
 }
 
 var (
@@ -411,18 +306,6 @@ func checkJobsUI(dir string) doctorCheck {
 		Detail:   "missing jobsui.Register — queue viewer not mounted",
 		FixHint:  "add jobsui.Register(r, deps.Store.DB()) in app.New (after routes)",
 	}
-}
-
-func checkSSEExt(dir string) doctorCheck {
-	path := filepath.Join(dir, "web/static/js/sse-ext.min.js")
-	if _, err := os.Stat(path); err != nil {
-		return doctorCheck{
-			Name:    "sse-ext.min.js",
-			Detail:  "missing",
-			FixHint: "re-run amarra-cais new, amarra-cais pwa, or copy from Cais web/static/js/sse-ext.min.js",
-		}
-	}
-	return doctorCheck{Name: "sse-ext.min.js", OK: true}
 }
 
 func checkAir() doctorCheck {
