@@ -1,5 +1,6 @@
 import { morph } from "./morph.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
+import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
 
 export function shouldInterceptClick({
   href,
@@ -70,6 +71,7 @@ export function applyDriveResponse({
 
   const fragment = extractMainHTML(html);
   if (fragment == null) return { action: "ignore" };
+  applyHead(doc, html);
   if (main) (morphFn ?? morph)(main, fragment);
   if (status === 200 && push && url && history?.pushState) {
     if (!location?.href || url !== location.href) history.pushState({ amarra: true }, "", url);
@@ -82,28 +84,33 @@ export function applyDriveResponse({
 
 export async function visit(url, opts = {}) {
   const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
-  const res = await fetchFn(url, {
-    method: opts.method ?? "GET",
-    headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
-    body: opts.body,
-    redirect: "follow",
-    credentials: "same-origin",
-  });
-  const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-  const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
   const doc = opts.document;
-  const html = res.status === 401 || res.status === 403 ? "" : await res.text();
-  return applyDriveResponse({
-    status: res.status,
-    html,
-    url: res.url || url,
-    main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
-    morphFn: opts.morphFn,
-    location,
-    history,
-    document: doc,
-    push: opts.push !== false,
-  });
+  showProgress(doc);
+  try {
+    const res = await fetchFn(url, {
+      method: opts.method ?? "GET",
+      headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
+      body: opts.body,
+      redirect: "follow",
+      credentials: "same-origin",
+    });
+    const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
+    const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
+    const html = res.status === 401 || res.status === 403 ? "" : await res.text();
+    return applyDriveResponse({
+      status: res.status,
+      html,
+      url: res.url || url,
+      main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
+      morphFn: opts.morphFn,
+      location,
+      history,
+      document: doc,
+      push: opts.push !== false,
+    });
+  } finally {
+    hideProgress(doc);
+  }
 }
 
 export function start(opts = {}) {

@@ -91,6 +91,23 @@ test("extractMainHTML pulls #amarra-main inner HTML", () => {
   assert.equal(extractMainHTML(html).trim(), "<p>hi</p>");
 });
 
+test("applyDriveResponse updates title from the response", () => {
+  const main = { innerHTML: "old" };
+  const doc = { title: "old", querySelector: () => null };
+  applyDriveResponse({
+    status: 200,
+    html: `<html><head><title>Items</title></head><body><main id="amarra-main"><p>n</p></main></body></html>`,
+    url: "http://a/x",
+    main,
+    document: doc,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: { pushState() {} },
+  });
+  assert.equal(doc.title, "Items");
+});
+
 test("applyDriveResponse morphs on 200 and pushState", () => {
   const main = { innerHTML: "old" };
   const pushed = [];

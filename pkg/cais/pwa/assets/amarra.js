@@ -1004,6 +1004,39 @@
     add.forEach((c) => el.classList?.add(c));
   }
 
+  // pkg/amarra/js/drive_head.mjs
+  function extractTitle(html) {
+    const m = String(html ?? "").match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+    return m ? m[1].trim() : null;
+  }
+  function applyHead(doc, html) {
+    if (!doc) return;
+    const title = extractTitle(html);
+    if (title != null) doc.title = title;
+    const token = csrfTokenFromMeta(html);
+    if (!token) return;
+    const meta = doc.querySelector?.('meta[name="csrf-token"]');
+    if (!meta) return;
+    if (typeof meta.setAttribute === "function") meta.setAttribute("content", token);
+    else meta.content = token;
+  }
+  function showProgress(doc) {
+    if (!doc?.createElement || !doc.body) return;
+    let bar = doc.getElementById?.("amarra-progress");
+    if (!bar) {
+      bar = doc.createElement("div");
+      bar.id = "amarra-progress";
+      bar.setAttribute("role", "progressbar");
+      bar.style.cssText = "position:fixed;top:0;left:0;right:0;height:2px;background:#c9893a;z-index:9999";
+      doc.body.appendChild(bar);
+    }
+    bar.hidden = false;
+  }
+  function hideProgress(doc) {
+    const bar = doc?.getElementById?.("amarra-progress");
+    if (bar) bar.hidden = true;
+  }
+
   // pkg/amarra/js/drive.mjs
   function shouldInterceptClick({
     href,
@@ -1069,6 +1102,7 @@
     }
     const fragment = extractMainHTML(html);
     if (fragment == null) return { action: "ignore" };
+    applyHead(doc, html);
     if (main) (morphFn ?? morph)(main, fragment);
     if (status === 200 && push && url && history?.pushState) {
       if (!location?.href || url !== location.href) history.pushState({ amarra: true }, "", url);
@@ -1080,28 +1114,33 @@
   }
   async function visit(url, opts = {}) {
     const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
-    const res = await fetchFn(url, {
-      method: opts.method ?? "GET",
-      headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
-      body: opts.body,
-      redirect: "follow",
-      credentials: "same-origin"
-    });
-    const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-    const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
     const doc = opts.document;
-    const html = res.status === 401 || res.status === 403 ? "" : await res.text();
-    return applyDriveResponse({
-      status: res.status,
-      html,
-      url: res.url || url,
-      main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
-      morphFn: opts.morphFn,
-      location,
-      history,
-      document: doc,
-      push: opts.push !== false
-    });
+    showProgress(doc);
+    try {
+      const res = await fetchFn(url, {
+        method: opts.method ?? "GET",
+        headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
+        body: opts.body,
+        redirect: "follow",
+        credentials: "same-origin"
+      });
+      const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
+      const history = opts.history ?? (typeof window !== "undefined" ? window.history : null);
+      const html = res.status === 401 || res.status === 403 ? "" : await res.text();
+      return applyDriveResponse({
+        status: res.status,
+        html,
+        url: res.url || url,
+        main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
+        morphFn: opts.morphFn,
+        location,
+        history,
+        document: doc,
+        push: opts.push !== false
+      });
+    } finally {
+      hideProgress(doc);
+    }
   }
   function start2(opts = {}) {
     const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
