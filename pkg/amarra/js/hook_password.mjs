@@ -33,7 +33,11 @@ export function makePassword(findInput) {
 function defaultFind(sel, el) {
   if (!sel) return null;
   const root = el?.ownerDocument ?? globalThis.document;
-  return root?.querySelector?.(sel) ?? null;
+  try {
+    return root?.querySelector?.(sel) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export const password = makePassword();

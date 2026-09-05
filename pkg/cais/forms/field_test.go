@@ -104,6 +104,8 @@ func TestFieldInput_passwordUsesToggle(t *testing.T) {
 		`type="password"`,
 		`cais-password-wrap`,
 		`data-cais-password-toggle`,
+		`amarra-hook="password"`,
+		`data-amarra-password-for="#password"`,
 	} {
 		if !strings.Contains(html, needle) {
 			t.Errorf("FieldInput(password) missing %q:\n%s", needle, html)

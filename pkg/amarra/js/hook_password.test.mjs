@@ -40,6 +40,18 @@ test("password hook toggles input type and aria-pressed on click and unbinds on 
   assert.equal((el.listeners.click || []).length, 0);
 });
 
+test("password hook ignores invalid selectors instead of throwing", () => {
+  const hook = makePassword();
+  const el = button("#");
+  el.ownerDocument = {
+    querySelector() {
+      throw new Error("not a valid selector");
+    },
+  };
+  hook.connect(el);
+  assert.doesNotThrow(() => el.listeners.click[0]());
+});
+
 test("password hook toggles show/hide icons when present", () => {
   const input = { type: "password" };
   const showIcon = { classList: classSet() };
