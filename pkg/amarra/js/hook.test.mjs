@@ -98,6 +98,63 @@ test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });
 
+test("start registers password and theme builtins", () => {
+  reset();
+  const click = {};
+  const input = { type: "password" };
+  const html = {
+    classList: {
+      contains: () => false,
+      add() {},
+      remove() {},
+    },
+  };
+  const passwordBtn = {
+    getAttribute(n) {
+      if (n === "amarra-hook") return "password";
+      if (n === "data-amarra-password-for") return "#password";
+      return null;
+    },
+    hasAttribute(n) {
+      return n === "amarra-hook";
+    },
+    addEventListener(type, fn) {
+      (click[type] ??= []).push(fn);
+    },
+    removeEventListener() {},
+    setAttribute() {},
+    ownerDocument: {
+      querySelector(sel) {
+        return sel === "#password" ? input : null;
+      },
+    },
+  };
+  const themeBtn = {
+    getAttribute(n) {
+      return n === "amarra-hook" ? "theme" : null;
+    },
+    hasAttribute(n) {
+      return n === "amarra-hook";
+    },
+    addEventListener(type, fn) {
+      (click["theme-" + type] ??= []).push(fn);
+    },
+    removeEventListener() {},
+  };
+  const doc = {
+    documentElement: { dataset: {}, classList: html.classList },
+    addEventListener() {},
+    querySelectorAll(sel) {
+      return sel === "[amarra-hook]" ? [passwordBtn, themeBtn] : [];
+    },
+  };
+  start({ document: doc });
+  assert.ok(click.click?.length, "password hook should bind click");
+  click.click[0]();
+  assert.equal(input.type, "text");
+  assert.ok(click["theme-click"]?.length, "theme hook should bind click");
+});
+
 test("start scans amarra-hook and rescans after amarra:morphed", () => {
   reset();
   const events = [];

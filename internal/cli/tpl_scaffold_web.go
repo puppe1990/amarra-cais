@@ -9,6 +9,11 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
 <html lang="{{"{{"}} htmlLang {{"}}"}}">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      try {
+        if (localStorage.getItem("amarra-theme") === "light") document.documentElement.classList.add("light");
+      } catch (e) {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     {{"{{"}} if .CSRFToken {{"}}"}}<meta name="csrf-token" content="{{"{{"}} .CSRFToken {{"}}"}}" />{{"{{"}} end {{"}}"}}
     <title>{{"{{"}} if .Title {{"}}"}}{{"{{"}} .Title {{"}}"}} · {{.AppName}}{{"{{"}} else {{"}}"}}{{.AppName}}{{"{{"}} end {{"}}"}}</title>

@@ -25,7 +25,9 @@ func FieldPassword(f FieldData) template.HTML {
 	if f.Required {
 		b.WriteString(` required`)
 	}
-	b.WriteString(` /><button type="button" class="cais-password-toggle" data-cais-password-toggle aria-label="Show password"><span data-cais-password-icon="show">`)
+	b.WriteString(` /><button type="button" class="cais-password-toggle" data-cais-password-toggle amarra-hook="password" data-amarra-password-for="#`)
+	b.WriteString(template.HTMLEscapeString(f.Name))
+	b.WriteString(`" aria-pressed="false" aria-label="Show password"><span data-cais-password-icon="show">`)
 	b.WriteString(passwordEyeShow)
 	b.WriteString(`</span><span data-cais-password-icon="hide" class="hidden">`)
 	b.WriteString(passwordEyeHide)

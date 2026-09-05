@@ -70,6 +70,8 @@ func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
 				"amarra-cais g",
 				"internal/handlers",
 				"web/templates/pages",
+				`amarra-hook="password"`,
+				`localStorage.getItem("amarra-theme")`,
 				tc.name, // AppName rendered into title
 			} {
 				if !strings.Contains(text, needle) {
@@ -329,6 +331,9 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	}
 	if strings.Contains(layoutBody, "hx-ext") || strings.Contains(layoutBody, "htmx") {
 		t.Error("layouts/app.html must not load htmx")
+	}
+	if !strings.Contains(layoutBody, `localStorage.getItem("amarra-theme")`) {
+		t.Error("layouts/app.html should include the theme FOUC snippet before CSS")
 	}
 
 	dash, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/dashboard.html"))

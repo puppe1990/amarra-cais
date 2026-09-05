@@ -84,6 +84,19 @@ func TestFieldPassword_rendersToggleButton(t *testing.T) {
 	}
 }
 
+func TestFieldPassword_usesAmarraPasswordHook(t *testing.T) {
+	html := string(FieldPassword(MakeField("password", "Password", "", "password", true, nil)))
+	for _, needle := range []string{
+		`amarra-hook="password"`,
+		`data-amarra-password-for="#password"`,
+		`aria-pressed="false"`,
+	} {
+		if !strings.Contains(html, needle) {
+			t.Errorf("FieldPassword missing %q:\n%s", needle, html)
+		}
+	}
+}
+
 func TestFieldInput_passwordUsesToggle(t *testing.T) {
 	// Default: any fieldInput with type password gets the eye toggle (no need for fieldPassword).
 	html := string(FieldInput(MakeField("password", "Password", "", "password", true, nil)))
@@ -91,6 +104,8 @@ func TestFieldInput_passwordUsesToggle(t *testing.T) {
 		`type="password"`,
 		`cais-password-wrap`,
 		`data-cais-password-toggle`,
+		`amarra-hook="password"`,
+		`data-amarra-password-for="#password"`,
 	} {
 		if !strings.Contains(html, needle) {
 			t.Errorf("FieldInput(password) missing %q:\n%s", needle, html)

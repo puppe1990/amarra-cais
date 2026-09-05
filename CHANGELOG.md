@@ -11,7 +11,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - Amarra Live WebSocket hub at `GET /amarra/live` (`Mount`/`Handle`/`Render`, CSRF join, MaxConns, idle ping, in-process `Broadcast`).
 - JS auto-connect for `[amarra-live]`; `amarra-click` / `change` / `submit` inside the live root go over WS.
 - `amarra-cais g live <name>` counter view; `amarra-cais g stream chat --live`.
-- Stimulus-shaped `amarra-hook` registry (`connect` / `updated` / `disconnect` / `handleEvent`) plus a clipboard builtin.
+- Stimulus-shaped `amarra-hook` registry (`connect` / `updated` / `disconnect` / `handleEvent`) plus clipboard, password reveal, and color-scheme builtins (#5).
 - Drive: title/CSRF head merge, progress bar, `data-amarra-confirm`, `data-amarra-method` / `_method`, `data-amarra-disable-with`, 422 `aria-invalid` focus, scroll restore.
 - Frame: `data-amarra-frame` targeting from links, `loading="lazy"`.
 - Stream: `stream.WriteHTTP` (`text/vnd.amarra-stream`) and `before` / `after` ops.
