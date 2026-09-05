@@ -37,6 +37,28 @@ const CACHE = "cais-static-v" + CACHE_VERSION;
 	}
 }
 
+func TestBumpCacheVersion_missingConstHintsAmarraCais(t *testing.T) {
+	dir := t.TempDir()
+	jsDir := filepath.Join(dir, "web/static/js")
+	if err := os.MkdirAll(jsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(jsDir, "sw.js"), []byte("self.addEventListener('fetch', () => {});"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := BumpCacheVersion(dir)
+	if err == nil {
+		t.Fatal("expected error when CACHE_VERSION is missing")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "amarra-cais pwa") {
+		t.Errorf("missing amarra-cais pwa hint: %q", msg)
+	}
+	if strings.Contains(msg, "run cais pwa") {
+		t.Errorf("still documents run cais pwa: %q", msg)
+	}
+}
+
 func TestWriteStatic_includesCacheVersion(t *testing.T) {
 	dir := t.TempDir()
 	if err := WriteStatic(dir, DefaultConfig("Test")); err != nil {

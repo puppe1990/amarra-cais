@@ -65,7 +65,7 @@ func TestRegister_LocalhostShowsQueueCounts(t *testing.T) {
 		t.Fatalf("status = %d body=%s", rr.Code, rr.Body.String())
 	}
 	body := rr.Body.String()
-	for _, want := range []string{"Cais Jobs", "Ping", "ready", "failed"} {
+	for _, want := range []string{"Cais Jobs", "Ping", "ready", "failed", "amarra-cais g job"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("body missing %q:\n%s", want, body)
 		}
@@ -165,7 +165,7 @@ func TestRegister_WorkerHintWhenReadyAndIdle(t *testing.T) {
 		t.Fatal(err)
 	}
 	rr := getLocal(t, newJobsRouter(t, db), "/jobs")
-	if !strings.Contains(rr.Body.String(), "cais jobs work") {
+	if !strings.Contains(rr.Body.String(), "amarra-cais jobs work") {
 		t.Fatalf("expected worker hint, body:\n%s", rr.Body.String())
 	}
 }
@@ -222,7 +222,7 @@ func TestRegister_ShowsLiveWorkerAndHidesHint(t *testing.T) {
 	}
 	rr := getLocal(t, newJobsRouter(t, db), "/jobs")
 	body := rr.Body.String()
-	if strings.Contains(body, "cais jobs work") {
+	if strings.Contains(body, "amarra-cais jobs work") {
 		t.Fatal("should not hint to start a worker when one is live")
 	}
 	if !strings.Contains(body, "w1") || !strings.Contains(body, "box") {

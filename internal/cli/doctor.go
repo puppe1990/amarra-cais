@@ -163,13 +163,16 @@ func extractCaisVersion(content string) string {
 // checkCLIVersion warns when the installed cais binary is older than go.mod
 // (or too old for Vite watch). Optional: does not fail doctor.
 func checkCLIVersion(dir string) doctorCheck {
+	return checkCLIVersionAt(dir, frameworkVersion())
+}
+
+func checkCLIVersionAt(dir, cliRaw string) doctorCheck {
 	const name = "cais CLI version"
 	data, err := os.ReadFile(filepath.Join(dir, "go.mod"))
 	if err != nil {
 		return doctorCheck{Name: name, OK: true, Detail: "skipped (no go.mod)"}
 	}
 	content := string(data)
-	cliRaw := frameworkVersion()
 	cli := parseSemverCore(cliRaw)
 	if !cli.OK {
 		// Source/dev build — assume current.
@@ -195,7 +198,7 @@ func checkCLIVersion(dir string) doctorCheck {
 		}
 	}
 
-	// Vite apps need CLI ≥ 0.8.0 for cais dev vite build --watch (#128).
+	// Vite apps need CLI ≥ minViteWatchVersion for amarra-cais dev vite build --watch.
 	if hasViteApp(dir) {
 		floor := parseSemverCore(minViteWatchVersion)
 		if compareSemverCore(cli, floor) < 0 {

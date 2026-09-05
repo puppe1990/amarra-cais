@@ -55,6 +55,30 @@ require github.com/puppe1990/amarra-cais v0.8.0
 	}
 }
 
+func TestCheckCLIVersion_v010ViteAppDoesNotWarnCaisFloor(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module app\n\nrequire github.com/puppe1990/amarra-cais v0.1.0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "vite.config.js"), []byte("export default {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"scripts":{"build":"vite build"}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	c := checkCLIVersionAt(dir, "0.1.0")
+	if !c.OK {
+		t.Fatalf("CLI 0.1.0 on a Vite app should not warn, got %+v", c)
+	}
+	if strings.Contains(c.Detail, "predates vite") {
+		t.Errorf("CLI 0.1.0 must not warn that it predates vite watch: %+v", c)
+	}
+	if strings.Contains(c.FixHint, "@v0.8.0") {
+		t.Errorf("must not FixHint @v0.8.0: %+v", c)
+	}
+}
+
 func TestCheckCLIVersion_warnsWhenCLIOlderThanMod(t *testing.T) {
 	// Unit-test the comparison path with synthetic versions via extract + parse.
 	mod := parseSemverCore("0.8.1")

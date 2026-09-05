@@ -101,10 +101,10 @@ const pageHTML = `<!DOCTYPE html>
       {{if .Kind}}<a href="/jobs" class="muted">clear</a>{{end}}
     </form>
     {{if .WorkerHint}}
-    <div class="hint">Ready jobs are waiting. Start a worker with <code>cais jobs work</code>.</div>
+    <div class="hint">Ready jobs are waiting. Start a worker with <code>amarra-cais jobs work</code>.</div>
     {{end}}
     {{if .MultiWorker}}
-    <div class="hint">{{len .Workers}} workers are live on one SQLite file — writes serialize. Run a single <code>cais jobs work</code>.</div>
+    <div class="hint">{{len .Workers}} workers are live on one SQLite file — writes serialize. Run a single <code>amarra-cais jobs work</code>.</div>
     {{end}}
     <section>
       <h2>Workers</h2>
@@ -209,7 +209,7 @@ const pageHTML = `<!DOCTYPE html>
         <tr><td>{{.Kind}}</td><td><code>{{.Cron}}</code></td><td>{{.Queue}}</td><td class="muted">{{lastRun .LastRun}}</td></tr>
         {{end}}
       </table>
-      {{else}}<p class="empty">No recurring tasks. <code>cais g job</code> with <code>--cron</code> adds one.</p>{{end}}
+      {{else}}<p class="empty">No recurring tasks. <code>amarra-cais g job</code> with <code>--cron</code> adds one.</p>{{end}}
     </section>
     <section>
       <h2>Finished (latest)</h2>

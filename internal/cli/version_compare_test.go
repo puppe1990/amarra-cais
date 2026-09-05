@@ -36,7 +36,7 @@ func TestCompareSemverCore(t *testing.T) {
 	if compareSemverCore(a, a) != 0 {
 		t.Error("equal versions")
 	}
-	if compareSemverCore(parseSemverCore("0.8.0"), parseSemverCore(minViteWatchVersion)) != 0 {
-		t.Error("0.8.0 should equal minViteWatchVersion")
+	if compareSemverCore(parseSemverCore("0.1.0"), parseSemverCore(minViteWatchVersion)) != 0 {
+		t.Error("0.1.0 should equal minViteWatchVersion")
 	}
 }

@@ -19,7 +19,7 @@ func BumpCacheVersion(appDir string) (int, error) {
 	}
 	m := cacheVersionRe.FindStringSubmatch(string(data))
 	if m == nil {
-		return 0, fmt.Errorf("sw.js missing const CACHE_VERSION — run cais pwa or make pwa")
+		return 0, fmt.Errorf("sw.js missing const CACHE_VERSION — run amarra-cais pwa or make pwa")
 	}
 	cur, err := strconv.Atoi(m[1])
 	if err != nil {

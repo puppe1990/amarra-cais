@@ -66,5 +66,5 @@ func compareSemverCore(a, b semverCore) int {
 	return 0
 }
 
-// minViteWatchVersion is the first release with cais dev → vite build --watch (#128).
-const minViteWatchVersion = "0.8.0"
+// minViteWatchVersion is the first amarra-cais release (vite watch ships from 0.1.0).
+const minViteWatchVersion = "0.1.0"
