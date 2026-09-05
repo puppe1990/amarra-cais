@@ -1037,6 +1037,34 @@
     if (bar) bar.hidden = true;
   }
 
+  // pkg/amarra/js/drive_form.mjs
+  function confirmOk(el, confirmFn) {
+    const msg = el?.getAttribute?.("data-amarra-confirm");
+    if (!msg) return true;
+    const fn = confirmFn ?? (typeof globalThis.confirm === "function" ? globalThis.confirm.bind(globalThis) : () => true);
+    return !!fn(msg);
+  }
+  function requestMethod(el, fallback = "GET") {
+    const attr = el?.getAttribute?.("data-amarra-method");
+    if (attr) return String(attr).toUpperCase();
+    const hidden = el?.querySelector?.('input[name="_method"]');
+    if (hidden?.value) return String(hidden.value).toUpperCase();
+    return String(fallback || "GET").toUpperCase();
+  }
+  function disableSubmit(el) {
+    if (!el) return null;
+    const prev = { el, disabled: !!el.disabled, text: el.textContent };
+    el.disabled = true;
+    const withText = el.getAttribute?.("data-amarra-disable-with");
+    if (withText) el.textContent = withText;
+    return prev;
+  }
+  function restoreSubmit(prev) {
+    if (!prev?.el) return;
+    prev.el.disabled = prev.disabled;
+    if (prev.text != null) prev.el.textContent = prev.text;
+  }
+
   // pkg/amarra/js/drive.mjs
   function shouldInterceptClick({
     href,
@@ -1174,8 +1202,10 @@
       })) {
         return;
       }
+      if (!confirmOk(a, opts.confirm)) return;
+      const method = requestMethod(a, "GET");
       event.preventDefault();
-      void visit(resolved?.href ?? href, shared).catch(() => emitDriveError(doc));
+      void visit(resolved?.href ?? href, { ...shared, method }).catch(() => emitDriveError(doc));
     });
     doc.addEventListener("submit", (event) => {
       if (event.defaultPrevented) return;
@@ -1194,14 +1224,17 @@
       })) {
         return;
       }
+      if (!confirmOk(form, opts.confirm) || !confirmOk(submitter, opts.confirm)) return;
+      const verb = requestMethod(form, method);
       event.preventDefault();
       const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
-      const url = method === "GET" ? withQuery(rawAction, fd) : rawAction;
+      const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+      const disabled = disableSubmit(submitter);
       void visit(url, {
         ...shared,
-        method,
-        body: method === "GET" ? void 0 : fd
-      }).catch(() => emitDriveError(doc));
+        method: verb,
+        body: verb === "GET" ? void 0 : fd
+      }).catch(() => emitDriveError(doc)).finally(() => restoreSubmit(disabled));
     });
     if (typeof window !== "undefined" && opts.popstate !== false) {
       window.addEventListener("popstate", () => {

@@ -53,7 +53,15 @@ function clickEvent(anchor, extras = {}) {
   };
 }
 
-function fakeAnchor({ href, resolvedHref, target = "", download = false, skip = false }) {
+function fakeAnchor({
+  href,
+  resolvedHref,
+  target = "",
+  download = false,
+  skip = false,
+  confirm = null,
+  method = null,
+} = {}) {
   return {
     tagName: "A",
     href: resolvedHref ?? href,
@@ -62,11 +70,15 @@ function fakeAnchor({ href, resolvedHref, target = "", download = false, skip = 
     getAttribute(name) {
       if (name === "href") return href;
       if (name === "target") return target;
+      if (name === "data-amarra-confirm") return confirm;
+      if (name === "data-amarra-method") return method;
       return null;
     },
     hasAttribute(name) {
       if (name === "download") return download;
       if (name === "data-amarra-skip") return skip;
+      if (name === "data-amarra-confirm") return !!confirm;
+      if (name === "data-amarra-method") return !!method;
       return false;
     },
     closest(sel) {
@@ -247,6 +259,39 @@ test("start does not intercept skip, blank, dialog, or cross-origin forms", asyn
 
   await Promise.resolve();
   assert.equal(fetches.length, 0);
+});
+
+test("start skips navigation when confirm is cancelled", async () => {
+  const doc = fakeDocument();
+  const location = { href: "http://a/page", origin: "http://a" };
+  const { fetches, fetchFn } = recordingFetch();
+  start({
+    document: doc,
+    location,
+    fetchFn,
+    popstate: false,
+    morphFn() {},
+    confirm: () => false,
+  });
+  const ev = clickEvent(fakeAnchor({ href: "/x", resolvedHref: "http://a/x", confirm: "Delete?" }));
+  fire(doc, ev);
+  await Promise.resolve();
+  assert.equal(fetches.length, 0);
+  assert.equal(ev.defaultPrevented, false);
+});
+
+test("start uses data-amarra-method on links", async () => {
+  const doc = fakeDocument();
+  const location = { href: "http://a/page", origin: "http://a" };
+  const { fetches, fetchFn } = recordingFetch();
+  start({ document: doc, location, fetchFn, popstate: false, morphFn() {}, confirm: () => true });
+  const ev = clickEvent(
+    fakeAnchor({ href: "/items/1", resolvedHref: "http://a/items/1", method: "delete" })
+  );
+  fire(doc, ev);
+  await Promise.resolve();
+  assert.equal(fetches.length, 1);
+  assert.equal(fetches[0].method, "DELETE");
 });
 
 test("start includes submitter and formaction in the Drive POST", async () => {

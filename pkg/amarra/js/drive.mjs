@@ -1,6 +1,7 @@
 import { morph } from "./morph.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
 import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
+import { confirmOk, disableSubmit, requestMethod, restoreSubmit } from "./drive_form.mjs";
 
 export function shouldInterceptClick({
   href,
@@ -149,8 +150,10 @@ export function start(opts = {}) {
     ) {
       return;
     }
+    if (!confirmOk(a, opts.confirm)) return;
+    const method = requestMethod(a, "GET");
     event.preventDefault();
-    void visit(resolved?.href ?? href, shared).catch(() => emitDriveError(doc));
+    void visit(resolved?.href ?? href, { ...shared, method }).catch(() => emitDriveError(doc));
   });
 
   doc.addEventListener("submit", (event) => {
@@ -182,14 +185,19 @@ export function start(opts = {}) {
     ) {
       return;
     }
+    if (!confirmOk(form, opts.confirm) || !confirmOk(submitter, opts.confirm)) return;
+    const verb = requestMethod(form, method);
     event.preventDefault();
     const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
-    const url = method === "GET" ? withQuery(rawAction, fd) : rawAction;
+    const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+    const disabled = disableSubmit(submitter);
     void visit(url, {
       ...shared,
-      method,
-      body: method === "GET" ? undefined : fd,
-    }).catch(() => emitDriveError(doc));
+      method: verb,
+      body: verb === "GET" ? undefined : fd,
+    })
+      .catch(() => emitDriveError(doc))
+      .finally(() => restoreSubmit(disabled));
   });
 
   if (typeof window !== "undefined" && opts.popstate !== false) {
