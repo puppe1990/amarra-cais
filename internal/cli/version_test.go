@@ -2,9 +2,30 @@ package cli
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
+
+func TestDefaultScaffoldCaisVersion_is010(t *testing.T) {
+	if defaultScaffoldCaisVersion != "0.1.0" {
+		t.Errorf("defaultScaffoldCaisVersion = %q, want 0.1.0 so amarra-cais new pins the tagged release", defaultScaffoldCaisVersion)
+	}
+}
+
+func TestREADME_goInstallPinsV010(t *testing.T) {
+	body, err := os.ReadFile("../../README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(body)
+	if !strings.Contains(text, "amarra-cais@v0.1.0") {
+		t.Error("README go install should pin @v0.1.0")
+	}
+	if strings.Contains(text, "amarra-cais@v0.0.3") {
+		t.Error("README still pins @v0.0.3")
+	}
+}
 
 func TestCLI_Version(t *testing.T) {
 	var buf bytes.Buffer
