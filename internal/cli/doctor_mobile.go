@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/puppe1990/amarra-cais/pkg/cais/pwa"
 )
 
 func checkFlashTemplate(dir string) doctorCheck {
@@ -59,21 +61,16 @@ func checkPWACacheVersion(dir string) doctorCheck {
 			FixHint:  "run amarra-cais pwa to refresh assets, then amarra-cais pwa --bump before phone testing",
 		}
 	}
-	// SPA + Tailwind use stable paths; cache-first for /static/build keeps stale main.js.
-	if !pwaHasNetworkFirstSPA(body) {
+	// Amarra.js + CSS use stable paths; cache-first would keep a stale runtime.
+	if !pwa.HasNetworkFirstSPA(body) {
 		return doctorCheck{
 			Name:     "PWA cache version",
 			Optional: true,
-			Detail:   "sw.js missing network-first for /static/build/ (stale SPA after vite rebuild)",
+			Detail:   "sw.js missing network-first for /static/js/amarra.js",
 			FixHint:  "amarra-cais pwa  # migrates sw.js; then amarra-cais pwa --bump on phones",
 		}
 	}
-	return doctorCheck{Name: "PWA cache version", OK: true, Detail: "CACHE_VERSION + network-first /static/build — bump after HTML/template changes"}
-}
-
-func pwaHasNetworkFirstSPA(body string) bool {
-	return strings.Contains(body, "/static/build/") &&
-		(strings.Contains(body, "networkFirst") || strings.Contains(body, "network-first"))
+	return doctorCheck{Name: "PWA cache version", OK: true, Detail: "CACHE_VERSION + network-first /static/js/amarra.js — bump after HTML/template changes"}
 }
 
 func checkChatSSEPattern(dir string) doctorCheck {

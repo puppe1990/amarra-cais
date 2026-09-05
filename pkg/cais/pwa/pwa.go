@@ -84,6 +84,7 @@ func RegisterScriptForEnv(env string) string {
 }
 
 // WriteStatic writes default PWA assets into web/static for an app.
+// Includes amarra.js so the shared SW PRECACHE cache.addAll does not 404.
 func WriteStatic(appDir string, cfg Config) error {
 	if cfg.ThemeColor == "" {
 		cfg.ThemeColor = ThemeColor
@@ -109,6 +110,7 @@ func WriteStatic(appDir string, cfg Config) error {
 	}
 
 	for _, pair := range []struct{ src, dst string }{
+		{"assets/amarra.js", "js/amarra.js"},
 		{"assets/htmx.min.js", "js/htmx.min.js"},
 		{"assets/idiomorph-ext.min.js", "js/idiomorph-ext.min.js"},
 		{"assets/sse-ext.min.js", "js/sse-ext.min.js"},
@@ -144,6 +146,7 @@ func InstallTo(appDir, name string) error {
 }
 
 // WriteStaticInertia writes PWA assets for Inertia+Svelte apps (no HTMX JS bundles).
+// Copies amarra.js so the shared SW PRECACHE cache.addAll does not 404.
 func WriteStaticInertia(appDir string, cfg Config) error {
 	if cfg.ThemeColor == "" {
 		cfg.ThemeColor = ThemeColor
@@ -167,6 +170,7 @@ func WriteStaticInertia(appDir string, cfg Config) error {
 	}
 
 	for _, pair := range []struct{ src, dst string }{
+		{"assets/amarra.js", "js/amarra.js"},
 		{"assets/offline.html", "offline.html"},
 		{"assets/icon.png", "icons/icon.png"},
 		{"assets/go-on-cais.jpg", "img/go-on-cais.jpg"},

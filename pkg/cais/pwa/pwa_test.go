@@ -146,6 +146,19 @@ func TestInstallForAmarra_writesAmarraJS(t *testing.T) {
 	}
 }
 
+func TestWriteStaticInertia_writesAmarraJS(t *testing.T) {
+	dir := t.TempDir()
+	if err := WriteStaticInertia(dir, DefaultConfig("app")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/static/js/amarra.js")); err != nil {
+		t.Errorf("missing amarra.js: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/static/js/htmx.min.js")); err == nil {
+		t.Error("htmx should not be installed")
+	}
+}
+
 func TestWriteStatic(t *testing.T) {
 	dir := t.TempDir()
 	if err := WriteStatic(dir, DefaultConfig("My App")); err != nil {
@@ -171,6 +184,7 @@ func TestWriteStatic(t *testing.T) {
 
 	for _, path := range []string{
 		"web/static/js/sw.js",
+		"web/static/js/amarra.js",
 		"web/static/js/htmx.min.js",
 		"web/static/js/idiomorph-ext.min.js",
 		"web/static/js/sse-ext.min.js",

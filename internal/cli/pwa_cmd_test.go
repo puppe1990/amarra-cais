@@ -44,8 +44,11 @@ if (url.pathname.startsWith("/static/")) {
 		t.Fatal(err)
 	}
 	s := string(body)
-	if !strings.Contains(s, "/static/build/") || !strings.Contains(s, "networkFirst") {
-		t.Errorf("sw.js not migrated to network-first SPA:\n%s", s)
+	if !strings.Contains(s, "/static/js/amarra.js") || !strings.Contains(s, "networkFirst") {
+		t.Errorf("sw.js not migrated to network-first amarra.js:\n%s", s)
+	}
+	if strings.Contains(s, "/static/build/") {
+		t.Errorf("sw.js should not treat /static/build/ as the SPA bundle path:\n%s", s)
 	}
 	if !strings.Contains(s, "CACHE_VERSION = 3") {
 		t.Errorf("should preserve CACHE_VERSION=3, got:\n%s", s)
