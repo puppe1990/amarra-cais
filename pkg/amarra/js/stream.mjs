@@ -20,15 +20,7 @@ export function parseSSE(chunk) {
         dataLines.push(rest.startsWith(" ") ? rest.slice(1) : rest);
       }
     }
-    const raw = dataLines.join("\n");
-    const op = { kind, html: raw };
-    const parsed = parseOpJSON(raw);
-    if (parsed) {
-      if (parsed.html != null) op.html = parsed.html;
-      if (parsed.target != null) op.target = String(parsed.target);
-      if (parsed.kind != null) op.kind = String(parsed.kind);
-    }
-    events.push(op);
+    events.push({ kind, html: dataLines.join("\n") });
   }
   return events;
 }
@@ -102,17 +94,6 @@ function sseEnvelope(kind, data) {
     .split("\n")
     .map((line) => `data: ${line}`);
   return `event: ${kind}\n${lines.join("\n")}\n\n`;
-}
-
-function parseOpJSON(raw) {
-  const s = String(raw ?? "").trim();
-  if (!s.startsWith("{")) return null;
-  try {
-    const value = JSON.parse(s);
-    return value && typeof value === "object" ? value : null;
-  } catch {
-    return null;
-  }
 }
 
 function insertHTML(el, pos, html) {

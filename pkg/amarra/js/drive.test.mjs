@@ -181,3 +181,72 @@ test("visit sends drive headers and follows redirects", async () => {
 test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });
+
+test("extractMainHTML uses matching depth not lastIndexOf", () => {
+  const html = `<main id="amarra-main"><section><main class="inner">x</main></section><p>y</p></main><main>other</main>`;
+  assert.equal(extractMainHTML(html), `<section><main class="inner">x</main></section><p>y</p>`);
+});
+
+test("extractMainHTML returns null when marker is missing", () => {
+  assert.equal(extractMainHTML("<html><body><p>foreign</p></body></html>"), null);
+});
+
+test("applyDriveResponse does not morph when #amarra-main is missing", () => {
+  const main = { innerHTML: "old" };
+  let pushed = false;
+  const result = applyDriveResponse({
+    status: 200,
+    html: "<p>foreign</p>",
+    url: "http://a/x",
+    main,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: {
+      pushState() {
+        pushed = true;
+      },
+    },
+  });
+  assert.equal(result.action, "ignore");
+  assert.equal(main.innerHTML, "old");
+  assert.equal(pushed, false);
+});
+
+test("visit emits amarra:drive-error on 404 and 500", async () => {
+  const events = [];
+  const main = { innerHTML: "old" };
+  const doc = {
+    querySelector: (sel) => (sel === "#amarra-main" ? main : null),
+    dispatchEvent(ev) {
+      events.push(ev.type);
+      return true;
+    },
+  };
+  const fetchStatus = (status) => async () => ({
+    status,
+    url: "http://a/x",
+    text: async () => "nope",
+  });
+  await visit("http://a/x", {
+    fetchFn: fetchStatus(500),
+    document: doc,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: { pushState() {} },
+  });
+  await visit("http://a/x", {
+    fetchFn: fetchStatus(404),
+    document: doc,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: { pushState() {} },
+  });
+  assert.equal(main.innerHTML, "old");
+  assert.deepEqual(
+    events.filter((t) => t === "amarra:drive-error"),
+    ["amarra:drive-error", "amarra:drive-error"]
+  );
+});

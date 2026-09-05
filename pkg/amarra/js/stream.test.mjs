@@ -7,14 +7,15 @@ test("parseSSE reads named event and html data", () => {
   assert.deepEqual(ops, [{ kind: "append", html: "<p>x</p>" }]);
 });
 
-test("parseSSE joins multiline data and optional JSON target", () => {
+test("parseSSE joins multiline data", () => {
   const multi = parseSSE("event: morph\ndata: <div>\ndata: x</div>\n\n");
   assert.deepEqual(multi, [{ kind: "morph", html: "<div>\nx</div>" }]);
+});
 
-  const json = parseSSE(`event: append\ndata: {"target":"list","html":"<li>1</li>"}\n\n`);
-  assert.equal(json[0].kind, "append");
-  assert.equal(json[0].target, "list");
-  assert.equal(json[0].html, "<li>1</li>");
+test("parseSSE does not JSON-sniff HTML payloads", () => {
+  const raw = `{"kind":"remove","target":"amarra-main"}`;
+  const ops = parseSSE(`event: append\ndata: ${raw}\n\n`);
+  assert.deepEqual(ops, [{ kind: "append", html: raw }]);
 });
 
 function node(html = "") {

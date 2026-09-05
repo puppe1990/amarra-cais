@@ -95,3 +95,34 @@ test("applyFocus focuses matching selector", () => {
 test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });
+
+test("amarra:drive-error rolls back optimistic UI from start()", () => {
+  const listeners = {};
+  const el = {
+    classList: classList(["bg-slate-100", "text-slate-600"]),
+    querySelector: () => null,
+    closest() {
+      return this;
+    },
+    getAttribute() {
+      return "toggle";
+    },
+    setAttribute() {},
+  };
+  const doc = {
+    listeners,
+    documentElement: { dataset: {} },
+    addEventListener(type, fn, _opts) {
+      (listeners[type] ??= []).push(fn);
+    },
+    dispatchEvent(ev) {
+      for (const fn of listeners[ev.type] || []) fn(ev);
+      return true;
+    },
+  };
+  start({ document: doc });
+  for (const fn of listeners.click) fn({ target: el });
+  assert.equal(el.classList.contains("bg-green-50"), true);
+  doc.dispatchEvent(new CustomEvent("amarra:drive-error"));
+  assert.equal(el.classList.contains("bg-slate-100"), true);
+});
