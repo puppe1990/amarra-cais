@@ -138,6 +138,37 @@ func TestKit_inputMarksInvalid(t *testing.T) {
 	}
 }
 
+func TestKit_localeTogglePostsToLocale(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.locale-toggle current="pt" />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"CSRFToken": "tok"},
+	}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{
+		`action="/locale"`,
+		`data-amarra-drive="true"`,
+		`name="csrf_token"`,
+		`value="tok"`,
+		`name="locale"`,
+		`value="en"`,
+		`value="pt"`,
+		`aria-pressed="true"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("locale-toggle missing %q in %s", want, body)
+		}
+	}
+}
+
 func TestKit_selectTextareaCheckbox(t *testing.T) {
 	fsys := fstest.MapFS{
 		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},

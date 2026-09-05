@@ -21,6 +21,7 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 	"github.com/puppe1990/amarra-cais/pkg/cais/netutil"
 
+	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
 )
 
@@ -58,6 +59,11 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 	r.Use(middleware.CSRF(cfg))
 	r.Use(middleware.LoadSession(deps.Store.Sessions()))
 	r.Use(middleware.Flash(cfg))
+	catalogs := map[string]*i18n.Catalog{
+		"en": appi18n.NewCatalog("en"),
+		"pt": appi18n.NewCatalog("pt"),
+	}
+	r.Use(i18n.LocaleMiddleware(catalogs, cfg.Locale))
 	buf := devlog.Prepare(cfg.Env)
 	if buf != nil {
 		r.Use(middleware.LoggerTo(cfg, devlog.MirrorDefault(log.Writer())))

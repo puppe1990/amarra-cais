@@ -221,7 +221,7 @@ Shipped `amarra-hook` builtins: `clipboard`, `password` (toggle `type` + `aria-p
 </script>
 ```
 
-Shipped kit (override in `web/templates/components/`): `form`, `input`, `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken` and `data-amarra-drive="true"`.
+Shipped kit (override in `web/templates/components/`): `form`, `input`, `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`, `locale-toggle`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken` and `data-amarra-drive="true"`.
 
 `{{ linkTo "/x" "Label" }}` emits a Drive-enabled `<a>`. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
 
