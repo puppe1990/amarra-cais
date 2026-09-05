@@ -343,7 +343,7 @@ const tplChatPage = `{{"{{"}} define "content" {{"}}"}}
   <div id="chat-messages" class="flex-1 overflow-y-auto py-3 min-h-0" data-amarra-stream="{{"{{"}} .StreamURL {{"}}"}}" data-amarra-target="chat-history">
     <div id="chat-history" class="flex flex-col gap-3">
       {{"{{"}}- range .Messages {{"}}"}}
-      <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-indigo-600 text-white self-end{{"{{"}}end{{"}}"}}">
+      <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
         <p class="text-sm whitespace-pre-wrap">{{"{{"}} .Content {{"}}"}}</p>
       </div>
       {{"{{"}}- end {{"}}"}}
@@ -360,7 +360,7 @@ const tplChatPage = `{{"{{"}} define "content" {{"}}"}}
 `
 
 const tplMessagePartial = `{{"{{"}} define "message" {{"}}"}}
-<div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-indigo-600 text-white self-end{{"{{"}}end{{"}}"}}">
+<div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
   <p class="text-sm whitespace-pre-wrap">{{"{{"}} .Content {{"}}"}}</p>
 </div>
 {{"{{"}} end {{"}}"}}
@@ -368,7 +368,7 @@ const tplMessagePartial = `{{"{{"}} define "message" {{"}}"}}
 
 const tplChatHistoryPartial = `{{"{{"}} define "chat_history" {{"}}"}}
 {{"{{"}} range .Messages {{"}}"}}
-<div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-indigo-600 text-white self-end{{"{{"}}end{{"}}"}}">
+<div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
   <p class="text-sm whitespace-pre-wrap">{{"{{"}} .Content {{"}}"}}</p>
 </div>
 {{"{{"}} end {{"}}"}}

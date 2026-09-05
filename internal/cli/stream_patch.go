@@ -222,14 +222,9 @@ func patchLayoutNavForStreamChat(dir string, dryRun bool) error {
 	if !strings.Contains(content, marker) {
 		marker = "</nav>"
 	}
-	var navLink string
-	if inertia {
-		navLink = `    <a href="/chat" use:inertia class="underline">Chat</a>
+	_ = inertia
+	navLink := `          <a href="/chat" data-amarra-drive="true" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">Chat</a>
 `
-	} else {
-		navLink = `          <a href="/chat" data-amarra-drive="true" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100">Chat</a>
-`
-	}
 	content = strings.Replace(content, marker, navLink+marker, 1)
 	rel := strings.TrimPrefix(path, dir+string(os.PathSeparator))
 	return updateScaffoldFile(path, []byte(content), rel, dryRun)

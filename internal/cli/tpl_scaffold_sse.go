@@ -10,7 +10,7 @@ const tplPartialChatSSE = `{{"{{"}}- define "chat_sse" -{{"}}"}}
 >
   <div id="chat-history" class="flex flex-col gap-3 min-h-[12rem]">
     {{"{{"}}- range .Messages {{"}}"}}
-    <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-indigo-600 text-white self-end{{"{{"}}end{{"}}"}}">
+    <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
       <p class="text-sm whitespace-pre-wrap">{{"{{"}} .Content {{"}}"}}</p>
     </div>
     {{"{{"}}- end {{"}}"}}
@@ -34,7 +34,7 @@ const tplPartialChatSSEAgent = `{{"{{"}}- define "chat_sse_agent" -{{"}}"}}
     <div class="flex flex-col gap-3 min-h-full justify-end">
       <div id="chat-history" class="flex flex-col gap-3">
         {{"{{"}}- range .Messages {{"}}"}}
-        <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-indigo-600 text-white self-end{{"{{"}}end{{"}}"}}">
+        <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
           <p class="text-sm whitespace-pre-wrap">{{"{{"}} .Content {{"}}"}}</p>
         </div>
         {{"{{"}}- end {{"}}"}}

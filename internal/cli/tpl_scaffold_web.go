@@ -157,10 +157,10 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
 `
 
 const tplPageContact = `{{"{{"}} define "content" {{"}}"}}
-<div class="w-full max-w-md mx-auto p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs">
-  <div class="mb-4 pb-4 border-b border-slate-100">
-    <h2 class="text-lg font-black tracking-tight text-slate-900 font-display">{{"{{"}} t "contact.heading" {{"}}"}}</h2>
-    <p class="text-[11px] text-slate-500 font-medium mt-1">{{"{{"}} t "contact.title" {{"}}"}}</p>
+<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+  <div class="mb-5 pb-4 border-b border-foam/10">
+    <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "contact.heading" {{"}}"}}</h2>
+    <p class="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] text-copper">{{"{{"}} t "contact.title" {{"}}"}}</p>
   </div>
   <.form action="/contact" method="post">
     {{"{{"}} csrfField .CSRFToken {{"}}"}}
@@ -173,12 +173,12 @@ const tplPageContact = `{{"{{"}} define "content" {{"}}"}}
 `
 
 const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
-<div class="w-full max-w-4xl mx-auto p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs">
-  <div class="mb-4 pb-4 border-b border-slate-100">
-    <h2 class="text-lg font-black tracking-tight text-slate-900 font-display">{{"{{"}} t "dashboard.title" {{"}}"}}</h2>
+<div class="w-full max-w-4xl mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+  <div class="mb-5 pb-4 border-b border-foam/10">
+    <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "dashboard.title" {{"}}"}}</h2>
   </div>
-  <p>{{"{{"}} t "dashboard.contacts" {{"}}"}} {{"{{"}} .TotalContacts {{"}}"}}</p>
-  <p>{{"{{"}} t "dashboard.env" {{"}}"}} {{"{{"}} .Env {{"}}"}}</p>
+  <p class="text-foam/80">{{"{{"}} t "dashboard.contacts" {{"}}"}} {{"{{"}} .TotalContacts {{"}}"}}</p>
+  <p class="mt-2 text-foam/80">{{"{{"}} t "dashboard.env" {{"}}"}} {{"{{"}} .Env {{"}}"}}</p>
   <.form action="/logout" method="post">
     {{"{{"}} csrfField .CSRFToken {{"}}"}}
     <.button type="submit">{{"{{"}} t "auth.logout" {{"}}"}}</.button>

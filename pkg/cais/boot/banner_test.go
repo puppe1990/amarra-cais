@@ -11,10 +11,13 @@ func TestPrintDevBanner_ShowsCaisVersion(t *testing.T) {
 	PrintDevBanner(&buf, "0.4.2")
 
 	out := buf.String()
-	for _, want := range []string{"Cais", "v0.4.2", "hot reload", "Tailwind", "Vite"} {
+	for _, want := range []string{"Cais", "v0.4.2", "hot reload", "Tailwind"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("banner missing %q:\n%s", want, out)
 		}
+	}
+	if strings.Contains(out, "Vite") {
+		t.Fatalf("banner must not mention Vite:\n%s", out)
 	}
 }
 

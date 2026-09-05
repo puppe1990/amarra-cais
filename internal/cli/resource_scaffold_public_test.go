@@ -69,6 +69,12 @@ func TestScaffoldResource_PublicInsertsNavAfterMarker(t *testing.T) {
 	if linkIdx < markerIdx {
 		t.Error("nav link should appear after <!-- cais:nav --> marker")
 	}
+	if strings.Contains(body, "use:inertia") || strings.Contains(body, "indigo") {
+		t.Error("public nav must not emit Inertia or indigo leftovers")
+	}
+	if !strings.Contains(body, `data-amarra-drive="true"`) {
+		t.Error("public resource nav link should use Drive")
+	}
 }
 
 func TestScaffoldResource_BlankAppLogoLinksToPublicList(t *testing.T) {

@@ -203,10 +203,13 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 			t.Fatalf("%s: %v", page, err)
 		}
 		text := string(pageBody)
-		for _, needle := range []string{"min-h-screen", "items-center", "justify-center"} {
+		for _, needle := range []string{"items-center", "justify-center", "border-copper"} {
 			if !strings.Contains(text, needle) {
-				t.Errorf("%s missing centering class %q", page, needle)
+				t.Errorf("%s missing %q", page, needle)
 			}
+		}
+		if strings.Contains(text, "indigo") || strings.Contains(text, "font-display") {
+			t.Errorf("%s still has leftover indigo/font-display", page)
 		}
 	}
 }

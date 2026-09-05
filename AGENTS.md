@@ -45,7 +45,6 @@ Imperative. Prefer these when trading off effort.
 | `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks                                |
 | `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further                           |
 | `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates                                  |
-| `internal/cli/tpl_scaffold_inertia.go`        | Leftover Inertia + Svelte blobs — **not** used by `amarra-cais new`; do not grow |
 | `pkg/cais/pwa/assets/cais*.js`                | Leftover HTMX runtime; generated apps ship `amarra.js` only                      |
 
 Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go`), never a mega template dump.
@@ -557,7 +556,6 @@ The `amarra-cais` CLI lives in `internal/cli/`. Scaffold templates are split by 
 | `internal/cli/tpl_scaffold_console.go`                          | `cmd/console/main.go`                                                |
 | `internal/cli/tpl_scaffold_auth.go`                             | Auth Go templates (handler, store, model, migration, tests)          |
 | `internal/cli/tpl_scaffold_auth_pages.go`                       | Auth HTML page templates (`login`, `signup`, reset)                  |
-| `internal/cli/tpl_scaffold_inertia.go`                          | Leftover Vite/Svelte blobs — not written by `new`                    |
 | `internal/cli/tpl_scaffold_handlers_{home,contact,auth,...}.go` | HTML handler scaffolds (one domain per file)                         |
 | `internal/cli/tpl_scaffold_web.go`                              | Amarra layout (`#amarra-main` + `amarra.js`)                         |
 | `internal/cli/tpl_stream_chat.go`                               | `amarra-cais g stream chat` templates and handlers                   |

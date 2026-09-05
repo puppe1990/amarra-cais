@@ -395,12 +395,21 @@ func TestScaffold_InputCSSIncludesHTMXStyles(t *testing.T) {
 	}
 	body := string(css)
 	for _, needle := range []string{
-		".htmx-swapping", ".htmx-settling", ".htmx-indicator", ".no-scrollbar",
+		".no-scrollbar",
 		".cais-toast-enter", ".cais-skeleton",
 		".cais-chat-scroll-down", ".cais-msg-time", ".cais-thinking-dots",
+		".amarra-grain",
 	} {
 		if !strings.Contains(body, needle) {
 			t.Errorf("input.css missing %q", needle)
+		}
+	}
+	for _, leftover := range []string{
+		".htmx-swapping", ".htmx-settling", ".htmx-indicator", ".htmx-request",
+		"from-indigo", "text-indigo", "bg-indigo",
+	} {
+		if strings.Contains(body, leftover) {
+			t.Errorf("input.css still has leftover %q", leftover)
 		}
 	}
 	tailwind, err := os.ReadFile(filepath.Join(appDir, "tailwind.config.js"))

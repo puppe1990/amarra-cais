@@ -95,42 +95,8 @@ const tplInputCSS = `@tailwind base;
     }
   }
 
-  .htmx-swapping {
-    opacity: 0;
-    transition: opacity 150ms ease-out;
-  }
-
-  .htmx-settling {
-    opacity: 1;
-    transition: opacity 150ms ease-in;
-  }
-
-  form.htmx-request button[type="submit"] {
-    @apply opacity-60 pointer-events-none;
-  }
-
-  .htmx-indicator {
-    @apply hidden;
-  }
-
-  .htmx-request .htmx-indicator {
-    @apply inline-block;
-  }
-
-  .htmx-request .htmx-request-hide {
-    @apply hidden;
-  }
-
   form[data-cais-chat-form] button[type="submit"] {
     @apply inline-flex items-center justify-center shrink-0;
-  }
-
-  form[data-cais-chat-form].htmx-request button[type="submit"] .htmx-request-hide {
-    @apply hidden;
-  }
-
-  form[data-cais-chat-form].htmx-request button[type="submit"] .htmx-indicator {
-    @apply inline-flex;
   }
 
   .cais-toast-enter {
@@ -148,12 +114,12 @@ const tplInputCSS = `@tailwind base;
     }
   }
 
-  .htmx-request .cais-skeleton {
-    @apply animate-pulse bg-slate-200 rounded-lg;
+  .cais-skeleton {
+    @apply animate-pulse bg-tide rounded-lg;
   }
 
   .cais-auth-screen {
-    @apply min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-100;
+    @apply min-h-screen bg-ink text-foam;
   }
 
   .cais-password-wrap {
@@ -218,7 +184,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-trigger:focus {
-    box-shadow: 0 0 0 2px rgb(99 102 241);
+    box-shadow: 0 0 0 2px rgb(201 137 58);
   }
 
   .cais-select-search-trigger:disabled {
@@ -267,13 +233,13 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-option:hover {
-    background: rgb(238 242 255);
+    background: rgba(201, 137, 58, 0.12);
   }
 
   .cais-select-search-option.is-selected {
-    background: rgb(238 242 255);
+    background: rgba(201, 137, 58, 0.18);
     font-weight: 500;
-    color: rgb(67 56 202);
+    color: rgb(201 137 58);
   }
 
   .cais-select-search-option.is-highlighted {
@@ -320,7 +286,7 @@ const tplInputCSS = `@tailwind base;
     border-radius: 9999px;
     border: 1px solid rgb(226 232 240);
     background: rgb(255 255 255);
-    color: rgb(79 70 229);
+    color: rgb(201 137 58);
     box-shadow:
       0 10px 15px -3px rgb(0 0 0 / 0.1),
       0 4px 6px -4px rgb(0 0 0 / 0.1);

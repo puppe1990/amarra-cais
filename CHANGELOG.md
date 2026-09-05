@@ -6,6 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.0.3] - 2026-09-05
+
+### Removed
+
+- Generated `input.css` no longer ships dead `.htmx-*` / indigo auth-screen utilities.
+- `/logs` no longer loads `htmx.min.js`; it polls with `fetch("/logs?partial=1")`.
+- Dev banner no longer mentions Vite.
+- `g resource` / `g stream chat` nav links no longer emit `use:inertia` or indigo classes.
+
+### Changed
+
+- Auth, contact, dashboard, kit button/input/pagination, and PWA theme use ink/foam/copper instead of the old indigo cards.
+
 ## [0.0.2] - 2026-09-05
 
 ### Changed

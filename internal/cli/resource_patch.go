@@ -255,14 +255,6 @@ func upgradeResourceRouteHandlers(content string, data scaffoldData) string {
 const layoutNavMarker = "<!-- cais:nav -->"
 
 func layoutNavFile(dir string) (path string, inertia bool) {
-	layout := filepath.Join(dir, "web/src/components/AppLayout.svelte")
-	if _, err := os.Stat(layout); err == nil {
-		return layout, true
-	}
-	home := filepath.Join(dir, "web/src/pages/Home.svelte")
-	if _, err := os.Stat(home); err == nil {
-		return home, true
-	}
 	app := filepath.Join(dir, "web/templates/layouts/app.html")
 	if _, err := os.Stat(app); err == nil {
 		return app, false
@@ -271,11 +263,8 @@ func layoutNavFile(dir string) (path string, inertia bool) {
 }
 
 func publicNavLink(data scaffoldData, inertia bool) string {
-	if inertia {
-		return fmt.Sprintf(`        <a href="/%s" use:inertia class="hover:text-stone-600">%s</a>
-`, data.Plural, toTitle(data.Plural))
-	}
-	return fmt.Sprintf(`          <a href="/%s" class="text-slate-600 hover:text-indigo-600 transition">%s</a>
+	_ = inertia
+	return fmt.Sprintf(`          <a href="/%s" data-amarra-drive="true" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s</a>
 `, data.Plural, toTitle(data.Plural))
 }
 

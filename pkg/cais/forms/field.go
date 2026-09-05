@@ -43,7 +43,7 @@ func FieldInput(f FieldData) template.HTML {
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><textarea class="w-full border border-slate-300 rounded-lg px-3 py-2 min-h-[80px] focus:ring-2 focus:ring-indigo-500 outline-none" id="`)
+		b.WriteString(`</label><textarea class="w-full border border-slate-300 rounded-lg px-3 py-2 min-h-[80px] focus:ring-2 focus:ring-copper outline-none" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
@@ -55,7 +55,7 @@ func FieldInput(f FieldData) template.HTML {
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><input class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" type="number" step="any" id="`)
+		b.WriteString(`</label><input class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-copper outline-none" type="number" step="any" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
@@ -67,9 +67,9 @@ func FieldInput(f FieldData) template.HTML {
 		}
 		b.WriteString(` />`)
 	case "checkbox":
-		b.WriteString(`<label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" name="`)
+		b.WriteString(`<label class="flex items-center gap-2 text-sm text-foam/80"><input type="checkbox" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
-		b.WriteString(`" class="rounded border-slate-300 text-indigo-600"`)
+		b.WriteString(`" class="rounded border-copper/40 bg-ink text-copper"`)
 		if f.Value == "true" || f.Value == "1" || strings.EqualFold(f.Value, "on") {
 			b.WriteString(` checked`)
 		}
@@ -77,11 +77,11 @@ func FieldInput(f FieldData) template.HTML {
 		b.WriteString(template.HTMLEscapeString(f.Label))
 		b.WriteString(`</label>`)
 	default:
-		b.WriteString(`<div><label class="block text-sm font-medium text-slate-700 mb-1" for="`)
+		b.WriteString(`<div><label class="block text-sm font-medium text-foam/70 mb-1" for="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><input class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" type="`)
+		b.WriteString(`</label><input class="w-full border border-copper/40 bg-ink text-foam rounded-none px-3 py-2 focus:ring-2 focus:ring-copper outline-none" type="`)
 		b.WriteString(template.HTMLEscapeString(f.Type))
 		b.WriteString(`" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))

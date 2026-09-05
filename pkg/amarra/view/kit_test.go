@@ -76,7 +76,7 @@ func TestLoad_shippedKitUsedWhenAppOmitsComponent(t *testing.T) {
 	if !strings.Contains(body, `class="app-override"`) {
 		t.Fatalf("app component did not override shipped: %q", body)
 	}
-	if strings.Contains(body, "app-override") && strings.Contains(body, "bg-indigo-600") {
+	if strings.Contains(body, "app-override") && strings.Contains(body, "bg-copper") {
 		t.Fatalf("shipped classes leaked through override: %q", body)
 	}
 }

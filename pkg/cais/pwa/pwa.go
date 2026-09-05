@@ -16,7 +16,7 @@ import (
 //go:embed assets/*
 var assets embed.FS
 
-const ThemeColor = "#4f46e5"
+const ThemeColor = "#c9893a"
 
 type Config struct {
 	Name        string
@@ -46,7 +46,7 @@ func DefaultConfig(name string) Config {
 // HeadHTML returns meta tags and links to include in layout <head>.
 func HeadHTML() string {
 	return `<link rel="manifest" href="/static/manifest.webmanifest" />
-    <meta name="theme-color" content="#4f46e5" />
+    <meta name="theme-color" content="#c9893a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -227,7 +227,7 @@ func writeManifest(path string, cfg Config) error {
   "description": {{printf "%q" .Description}},
   "start_url": {{printf "%q" .StartURL}},
   "display": {{printf "%q" .Display}},
-  "background_color": "#f8fafc",
+  "background_color": "#081014",
   "theme_color": {{printf "%q" .ThemeColor}},
   "orientation": "portrait-primary",
   "icons": [

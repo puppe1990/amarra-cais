@@ -16,6 +16,9 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.ThemeColor != ThemeColor {
 		t.Errorf("ThemeColor = %q", cfg.ThemeColor)
 	}
+	if ThemeColor != "#c9893a" {
+		t.Errorf("ThemeColor constant = %q, want copper #c9893a", ThemeColor)
+	}
 	if cfg.Display != "fullscreen" {
 		t.Errorf("Display = %q, want fullscreen", cfg.Display)
 	}

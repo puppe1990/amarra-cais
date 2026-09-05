@@ -22,7 +22,7 @@ const (
 const MaxMessageChars = 12000
 
 const assistantBubbleClass = "cais-chat-bubble assistant max-w-[85%] rounded-2xl rounded-bl-sm bg-white border border-slate-200 px-4 py-2 text-sm text-slate-800 shadow-xs"
-const userBubbleClass = "cais-chat-bubble user max-w-[85%] rounded-2xl rounded-br-sm bg-indigo-600 px-4 py-2 text-sm text-white shadow-xs"
+const userBubbleClass = "cais-chat-bubble user max-w-[85%] rounded-2xl rounded-br-sm bg-copper px-4 py-2 text-sm text-ink shadow-xs"
 const detailBubbleClass = "cais-chat-bubble detail max-w-[85%] rounded-xl rounded-bl-sm bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-600 shadow-xs self-start"
 
 // DetailBubble renders collapsible tool/log output without polluting assistant bubbles.

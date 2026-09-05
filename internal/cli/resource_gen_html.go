@@ -23,7 +23,7 @@ func buildAdminFormHTML(data scaffoldData) string {
 `, f.Name, f.Pascal, f.Pascal, f.Required)
 		case "checkbox":
 			fmt.Fprintf(&fields, `    <label class="flex items-center gap-2 text-sm text-slate-700">
-      <input type="checkbox" name="%s" class="rounded border-slate-300 text-indigo-600" {{ if .Item.%s }}checked{{ end }} />
+      <input type="checkbox" name="%s" class="rounded border-copper/40 bg-ink text-copper" {{ if .Item.%s }}checked{{ end }} />
       %s
     </label>
 `, f.Name, f.Pascal, f.Pascal)
@@ -192,7 +192,7 @@ func buildPublicListItemHTML(data scaffoldData) string {
 
 	var b strings.Builder
 	if linkField != nil {
-		fmt.Fprintf(&b, `<a href="{{ .%s }}" target="_blank" rel="noopener" class="text-lg font-semibold text-indigo-600 hover:underline">{{ .%s }}</a>`, linkField.Pascal, display.Pascal)
+		fmt.Fprintf(&b, `<a href="{{ .%s }}" target="_blank" rel="noopener" class="text-lg font-semibold text-copper hover:text-foam">{{ .%s }}</a>`, linkField.Pascal, display.Pascal)
 	} else {
 		fmt.Fprintf(&b, `<p class="text-lg font-semibold text-slate-800">{{ .%s }}</p>`, display.Pascal)
 	}
@@ -278,7 +278,7 @@ func buildPublicListHTML(data scaffoldData) string {
 		}
 		totalBlock = fmt.Sprintf(`  <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-6 flex items-center justify-between">
     <span class="text-sm font-medium text-slate-500">Total %s</span>
-    <span class="text-2xl font-bold text-indigo-600">{{ .%s }}</span>
+    <span class="text-2xl font-bold text-copper">{{ .%s }}</span>
   </div>
 `, intField.Pascal, totalVar)
 	}

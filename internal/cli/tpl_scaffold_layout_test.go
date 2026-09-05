@@ -144,6 +144,32 @@ func TestPageHome_greetingHarborLayout(t *testing.T) {
 	}
 }
 
+func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
+	blobs := map[string]string{
+		"login":     tplPageLogin,
+		"signup":    tplPageSignup,
+		"forgot":    tplPageForgotPassword,
+		"reset":     tplPageResetPassword,
+		"contact":   tplPageContact,
+		"dashboard": tplPageDashboard,
+		"home":      tplPageHome,
+		"css":       tplInputCSS,
+		"nav":       tplPartialNavLinks,
+	}
+	for name, blob := range blobs {
+		for _, leftover := range []string{"indigo", "hx-ext", "htmx.min.js", "font-display"} {
+			if strings.Contains(blob, leftover) {
+				t.Errorf("%s still contains leftover %q", name, leftover)
+			}
+		}
+	}
+	for _, blob := range []string{tplPageLogin, tplPageContact, tplPageDashboard} {
+		if !strings.Contains(blob, "border-copper") && !strings.Contains(blob, "text-copper") {
+			t.Error("inner pages should use copper tokens on the harbor shell")
+		}
+	}
+}
+
 func TestLayoutTemplates_shellDesignTokens(t *testing.T) {
 	for name, tpl := range map[string]string{
 		"full":    tplLayout,

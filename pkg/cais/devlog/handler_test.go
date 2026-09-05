@@ -59,15 +59,36 @@ func TestRegister_BlocksNonLocalhost(t *testing.T) {
 	}
 }
 
-func TestRegister_HTMXReturnsPartial(t *testing.T) {
+func TestRegister_PageDoesNotLoadHTMX(t *testing.T) {
+	r := cais.NewRouter()
+	buf := NewBuffer(100)
+	_, _ = buf.Write([]byte("Started GET \"/\" for 127.0.0.1\n"))
+	Register(r, "development", buf)
+
+	req := httptest.NewRequest(http.MethodGet, "/logs", nil)
+	req.RemoteAddr = "127.0.0.1:1234"
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	body := rr.Body.String()
+	for _, leftover := range []string{"htmx.min.js", "hx-get", "hx-trigger", "HX-Request"} {
+		if strings.Contains(body, leftover) {
+			t.Errorf("logs page still references %q", leftover)
+		}
+	}
+	if !strings.Contains(body, "/logs?partial=1") {
+		t.Fatal("logs page should poll /logs?partial=1")
+	}
+}
+
+func TestRegister_PartialQueryReturnsLogBody(t *testing.T) {
 	r := cais.NewRouter()
 	buf := NewBuffer(100)
 	_, _ = buf.Write([]byte("Completed 200 OK\n"))
 	Register(r, "development", buf)
 
-	req := httptest.NewRequest(http.MethodGet, "/logs", nil)
+	req := httptest.NewRequest(http.MethodGet, "/logs?partial=1", nil)
 	req.RemoteAddr = "127.0.0.1:1234"
-	req.Header.Set("HX-Request", "true")
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)
 
@@ -75,7 +96,7 @@ func TestRegister_HTMXReturnsPartial(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rr.Code)
 	}
 	if strings.Contains(rr.Body.String(), "<!DOCTYPE html>") {
-		t.Fatal("htmx response should not include full page")
+		t.Fatal("partial response should not include full page")
 	}
 	if !strings.Contains(rr.Body.String(), "Completed 200 OK") {
 		t.Fatalf("partial missing log: %s", rr.Body.String())
