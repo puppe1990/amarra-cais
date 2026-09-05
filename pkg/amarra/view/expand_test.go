@@ -1,6 +1,8 @@
 package view
 
 import (
+	"bytes"
+	"html/template"
 	"strings"
 	"testing"
 )
@@ -78,5 +80,32 @@ func TestExpandAll_dynamicAttr(t *testing.T) {
 	}
 	if !strings.Contains(got, `{{ $value := .Item.Title }}`) {
 		t.Errorf("got %q", got)
+	}
+}
+
+func TestExpandAll_nestedSameAttrDoesNotLeak(t *testing.T) {
+	components := map[string]string{
+		"card":   `<section>{{ .Inner }}<i>{{ .Title }}</i></section>`,
+		"button": `<button>{{ .Title }}</button>`,
+	}
+	src := `<.card title="outer"><.button title="inner">x</.button></.card>`
+	got, err := ExpandAll(src, components)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl, err := template.New("t").Parse(got)
+	if err != nil {
+		t.Fatalf("parse expanded: %v\n%s", err, got)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, nil); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, `<button>inner</button>`) {
+		t.Errorf("child title missing: %q", out)
+	}
+	if !strings.Contains(out, `<i>outer</i>`) {
+		t.Errorf("parent title leaked/overwritten: %q", out)
 	}
 }

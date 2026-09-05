@@ -39,10 +39,14 @@ func expandCall(call componentCall, components map[string]string) (string, error
 		return "", fmt.Errorf("unknown amarra component %q", call.Name)
 	}
 	var b strings.Builder
+	// html/template $vars live until the enclosing if/with/range/end (or the
+	// whole template). Isolate assigns so nested/sibling attrs cannot leak.
+	b.WriteString("{{ if true }}")
 	for _, attr := range call.Attrs {
 		b.WriteString(attrAssign(attr))
 	}
 	b.WriteString(rewriteComponentBody(body, call.Attrs, call.Inner))
+	b.WriteString("{{ end }}")
 	return b.String(), nil
 }
 
