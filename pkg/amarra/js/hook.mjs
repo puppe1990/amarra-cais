@@ -1,9 +1,13 @@
 import { register, scan, dispatchLivePush, reset } from "./hook_registry.mjs";
 import { clipboard } from "./hook_clipboard.mjs";
+import { password } from "./hook_password.mjs";
+import { theme } from "./hook_theme.mjs";
 
 export { register, scan, dispatchLivePush, reset };
 
 register("clipboard", clipboard);
+register("password", password);
+register("theme", theme);
 
 const ON_CLASSES = ["bg-green-50", "text-green-700"];
 const OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
@@ -109,6 +113,8 @@ export function start(opts = {}) {
   if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
 
   register("clipboard", clipboard);
+  register("password", password);
+  register("theme", theme);
   scan(doc);
 
   let optimistic = null;
