@@ -12,4 +12,7 @@ function isWithinFallbackWindow(ms) {
   if (typeof ms !== "number" || ms <= 0) return false;
   return ms < 3e4;
 }
-export { isWithinFallbackWindow, shouldApplyChatPoll };
+export {
+  isWithinFallbackWindow,
+  shouldApplyChatPoll
+};
