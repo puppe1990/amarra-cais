@@ -1,5 +1,6 @@
-import { csrfTokenFromMeta } from "./hook.mjs";
+import { csrfTokenFromMeta, dispatchLivePush } from "./hook.mjs";
 import { morph } from "./morph.mjs";
+import { applyOp } from "./stream.mjs";
 
 export function wsURL(loc, { view, topic } = {}) {
   if (!loc?.host) return "";
@@ -32,16 +33,39 @@ export function formPayload(form, FormDataCtor = FormData) {
   return data;
 }
 
-export function applyLiveMessage(msg, root, morphFn = morph) {
+export function debounceWait(el) {
+  const n = parseInt(el?.getAttribute?.("amarra-debounce") || "0", 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export function setLoading(el, root, on) {
+  const op = on ? "add" : "remove";
+  el?.classList?.[op]?.("amarra-click-loading");
+  root?.classList?.[op]?.("amarra-loading");
+}
+
+export function applyLiveMessage(msg, root, morphFn = morph, extras = {}) {
   if (!msg || !root) return;
   if (msg.type !== "ok" && msg.type !== "morph") return;
   const html = msg.html ?? "";
-  if (msg.target) {
-    const el = root.querySelector?.(`#${cssEscape(msg.target)}`) || root;
-    morphFn(el, html);
-    return;
+  if (html !== "") {
+    if (msg.target) {
+      const el = root.querySelector?.(`#${cssEscape(msg.target)}`) || root;
+      morphFn(el, html);
+    } else {
+      morphFn(root, html);
+    }
   }
-  morphFn(root, html);
+  const opFn = extras.applyOp ?? applyOp;
+  const doc = extras.document ?? root.ownerDocument;
+  for (const op of msg.ops || []) opFn(op, doc, extras);
+  if (msg.patch) extras.history?.pushState?.({}, "", msg.patch);
+  if (msg.navigate && extras.location) extras.location.href = msg.navigate;
+  const pushFn = extras.dispatchPush ?? dispatchLivePush;
+  for (const p of msg.pushes || []) pushFn(p.event, p.payload);
+  if (doc && typeof doc.dispatchEvent === "function") {
+    doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
+  }
 }
 
 function cssEscape(id) {
@@ -78,7 +102,13 @@ export function start(opts = {}) {
       } catch {
         return;
       }
-      applyLiveMessage(msg, root, opts.morphFn);
+      applyLiveMessage(msg, root, opts.morphFn, {
+        document: doc,
+        history: opts.history ?? (typeof window !== "undefined" ? window.history : null),
+        location,
+      });
+      setLoading(root._amarraPending, root, false);
+      root._amarraPending = null;
     });
     ws.addEventListener("close", () => {
       sockets.delete(root);
@@ -101,7 +131,18 @@ export function start(opts = {}) {
     const ws = sockets.get(root);
     if (!ws || ws.readyState !== 1) return false;
     const payload = extra ?? {};
-    ws.send(JSON.stringify({ type: "event", event: name, payload, ref: String(Date.now()) }));
+    const send = () => {
+      setLoading(el, root, true);
+      root._amarraPending = el;
+      ws.send(JSON.stringify({ type: "event", event: name, payload, ref: String(Date.now()) }));
+    };
+    const wait = debounceWait(el);
+    if (wait) {
+      clearTimeout(el._amarraDebounce);
+      el._amarraDebounce = setTimeout(send, wait);
+      return true;
+    }
+    send();
     return true;
   }
 
