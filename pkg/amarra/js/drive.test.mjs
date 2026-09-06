@@ -130,6 +130,59 @@ test("applyDriveResponse morphs on 200 and pushState", () => {
   assert.deepEqual(pushed, ["http://a/x"]);
 });
 
+test("applyDriveResponse does full visit on layout mismatch", () => {
+  const assigned = [];
+  const main = { tagName: "MAIN", innerHTML: "old" };
+  const result = applyDriveResponse({
+    status: 200,
+    html: `<html data-amarra-layout="app"><body><main id="amarra-main"><p>new</p></main></body></html>`,
+    url: "http://a/dashboard",
+    main,
+    document: { documentElement: { dataset: { amarraLayout: "public" } } },
+    morphFn() {
+      throw new Error("layout mismatch should not morph");
+    },
+    location: {
+      assign(url) {
+        assigned.push(url);
+      },
+    },
+    history: {
+      pushState() {
+        throw new Error("layout mismatch should not push history");
+      },
+    },
+  });
+
+  assert.equal(result.action, "assign");
+  assert.deepEqual(assigned, ["http://a/dashboard"]);
+  assert.equal(main.innerHTML, "old");
+});
+
+test("applyDriveResponse does full visit when #amarra-main tag changes", () => {
+  const assigned = [];
+  const main = { tagName: "MAIN", innerHTML: "old" };
+  const result = applyDriveResponse({
+    status: 200,
+    html: `<html data-amarra-layout="app"><body><div id="amarra-main"><p>new</p></div></body></html>`,
+    url: "http://a/dashboard",
+    main,
+    document: { documentElement: { dataset: { amarraLayout: "app" } } },
+    morphFn() {
+      throw new Error("tag mismatch should not morph");
+    },
+    location: {
+      assign(url) {
+        assigned.push(url);
+      },
+    },
+  });
+
+  assert.equal(result.action, "assign");
+  assert.deepEqual(assigned, ["http://a/dashboard"]);
+  assert.equal(main.innerHTML, "old");
+});
+
 test("applyDriveResponse morphs 422 without pushState", () => {
   const main = { innerHTML: "old" };
   const pushed = [];

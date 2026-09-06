@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { confirmOk, requestMethod, disableSubmit, restoreSubmit } from "./drive_form.mjs";
+import {
+  confirmOk,
+  requestMethod,
+  disableSubmit,
+  restoreSubmit,
+  driveFormBody,
+} from "./drive_form.mjs";
 
 test("confirmOk is true without data-amarra-confirm", () => {
   assert.equal(
@@ -79,4 +85,37 @@ test("disableSubmit swaps label and restoreSubmit reverts", () => {
   restoreSubmit(prev);
   assert.equal(btn.disabled, false);
   assert.equal(btn.textContent, "Save");
+});
+
+class FakeFile {}
+
+function fakeFormData(pairs) {
+  return {
+    *entries() {
+      yield* pairs;
+    },
+  };
+}
+
+test("driveFormBody urlencodes FormData without files", () => {
+  const body = driveFormBody(
+    fakeFormData([
+      ["email", "demo@example.com"],
+      ["password", "secret"],
+    ]),
+    URLSearchParams,
+    FakeFile
+  );
+
+  assert.equal(body instanceof URLSearchParams, true);
+  assert.equal(String(body), "email=demo%40example.com&password=secret");
+});
+
+test("driveFormBody keeps multipart FormData when a file is present", () => {
+  const fd = fakeFormData([
+    ["title", "Report"],
+    ["attachment", new FakeFile()],
+  ]);
+
+  assert.equal(driveFormBody(fd, URLSearchParams, FakeFile), fd);
 });

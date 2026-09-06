@@ -765,6 +765,7 @@
     applyDriveResponse: () => applyDriveResponse,
     driveHeaders: () => driveHeaders,
     extractMainHTML: () => extractMainHTML,
+    extractMainTagName: () => extractMainTagName,
     shouldInterceptClick: () => shouldInterceptClick,
     shouldInterceptSubmit: () => shouldInterceptSubmit,
     start: () => start3,
@@ -1381,10 +1382,18 @@ ${lines.join("\n")}
     const m = String(html ?? "").match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
     return m ? m[1].trim() : null;
   }
+  function extractHTMLAttr(html, name) {
+    const open = String(html ?? "").match(/<html\b[^>]*>/i)?.[0] ?? "";
+    const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = open.match(new RegExp(`\\s${escaped}\\s*=\\s*["']([^"']*)["']`, "i"));
+    return m ? m[1] : null;
+  }
   function applyHead(doc, html) {
     if (!doc) return;
     const title = extractTitle(html);
     if (title != null) doc.title = title;
+    const lang = extractHTMLAttr(html, "lang");
+    if (lang != null && doc.documentElement) doc.documentElement.lang = lang;
     const token = csrfTokenFromMeta(html);
     if (!token) return;
     const meta = doc.querySelector?.('meta[name="csrf-token"]');
@@ -1435,6 +1444,15 @@ ${lines.join("\n")}
     if (!prev?.el) return;
     prev.el.disabled = prev.disabled;
     if (prev.text != null) prev.el.textContent = prev.text;
+  }
+  function driveFormBody(formData, URLSearchParamsCtor = URLSearchParams, FileCtor = typeof File !== "undefined" ? File : null) {
+    if (!formData) return null;
+    for (const [, value] of formData.entries()) {
+      if (FileCtor && value instanceof FileCtor) return formData;
+    }
+    const body = new URLSearchParamsCtor();
+    for (const [key, value] of formData.entries()) body.append(key, value);
+    return body;
   }
 
   // pkg/amarra/js/drive_restore.mjs
@@ -1492,10 +1510,13 @@ ${lines.join("\n")}
   }
   function extractMainHTML(html) {
     const str = String(html ?? "");
-    const open = str.match(/<([a-zA-Z][\w:-]*)(?=[^>]*\sid\s*=\s*["']amarra-main["'])[^>]*>/i);
+    const open = extractMainOpen(str);
     if (!open) return null;
     const start5 = open.index + open[0].length;
     return sliceMatchingClose(str, start5, open[1]);
+  }
+  function extractMainTagName(html) {
+    return extractMainOpen(String(html ?? ""))?.[1]?.toUpperCase() ?? null;
   }
   function applyDriveResponse({
     status,
@@ -1519,7 +1540,12 @@ ${lines.join("\n")}
     }
     const fragment = extractMainHTML(html);
     if (fragment == null) return { action: "ignore" };
+    if (needsFullVisit({ html, main, document: doc })) {
+      assignLocation(location, url);
+      return { action: "assign" };
+    }
     applyHead(doc, html);
+    applyLayoutMarker(doc, html);
     if (main) (morphFn ?? morph)(main, fragment);
     if (status === 200 && push && url && history?.pushState) {
       if (!location?.href || url !== location.href) {
@@ -1533,6 +1559,27 @@ ${lines.join("\n")}
       doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
     }
     return { action: "morph" };
+  }
+  function needsFullVisit({ html, main, document: doc }) {
+    const currentLayout = doc?.documentElement?.dataset?.amarraLayout;
+    const nextLayout = extractHTMLAttr(html, "data-amarra-layout");
+    if (currentLayout && nextLayout && currentLayout !== nextLayout) return true;
+    const currentTag = main?.tagName?.toUpperCase?.();
+    const nextTag = extractMainTagName(html);
+    return !!(currentTag && nextTag && currentTag !== nextTag);
+  }
+  function assignLocation(location, url) {
+    if (url && typeof location?.assign === "function") {
+      location.assign(url);
+      return;
+    }
+    if (url && location) location.href = url;
+  }
+  function applyLayoutMarker(doc, html) {
+    const layout = extractHTMLAttr(html, "data-amarra-layout");
+    if (layout != null && doc?.documentElement?.dataset) {
+      doc.documentElement.dataset.amarraLayout = layout;
+    }
   }
   async function visit(url, opts = {}) {
     const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
@@ -1634,11 +1681,12 @@ ${lines.join("\n")}
       event.preventDefault();
       const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
       const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+      const body = verb === "GET" ? void 0 : driveFormBody(fd);
       const disabled = disableSubmit(submitter);
       void visit(url, {
         ...shared,
         method: verb,
-        body: verb === "GET" ? void 0 : fd
+        body
       }).catch(() => emitDriveError(doc)).finally(() => restoreSubmit(disabled));
     });
     if (typeof window !== "undefined" && opts.popstate !== false) {
@@ -1681,6 +1729,9 @@ ${lines.join("\n")}
       i = nextClose + closeToken.length;
     }
     return null;
+  }
+  function extractMainOpen(str) {
+    return str.match(/<([a-zA-Z][\w:-]*)(?=[^>]*\sid\s*=\s*["']amarra-main["'])[^>]*>/i);
   }
   function findOpenTag(lower, from, name) {
     const token = `<${name}`;

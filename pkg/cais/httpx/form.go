@@ -27,6 +27,9 @@ func ParseFormOrJSON(r *http.Request) error {
 	if mediaType == "application/json" {
 		return parseJSONForm(r)
 	}
+	if mediaType == "multipart/form-data" {
+		return r.ParseMultipartForm(32 << 20)
+	}
 	return r.ParseForm()
 }
 

@@ -322,6 +322,6 @@ test("start includes submitter and formaction in the Drive POST", async () => {
   assert.equal(fetches.length, 1);
   assert.equal(fetches[0].url, "/alt");
   assert.equal(fetches[0].method, "POST");
-  assert.equal(fetches[0].body.submitter, submitter);
+  assert.equal(fetches[0].body instanceof URLSearchParams, true);
   assert.deepEqual([...fetches[0].body.entries()], [["op", "create"]]);
 });
