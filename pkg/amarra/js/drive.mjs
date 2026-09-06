@@ -3,7 +3,13 @@ import { csrfTokenFromMeta } from "./hook.mjs";
 import { visitIntoFrame } from "./frame.mjs";
 import { applyOp, isStreamResponse, parseSSE } from "./stream.mjs";
 import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
-import { confirmOk, disableSubmit, requestMethod, restoreSubmit } from "./drive_form.mjs";
+import {
+  confirmOk,
+  disableSubmit,
+  driveFormBody,
+  requestMethod,
+  restoreSubmit,
+} from "./drive_form.mjs";
 import { captureScroll, focusFirstInvalid, restoreScroll } from "./drive_restore.mjs";
 
 export function shouldInterceptClick({
@@ -210,11 +216,12 @@ export function start(opts = {}) {
     event.preventDefault();
     const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
     const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+    const body = verb === "GET" ? undefined : driveFormBody(fd);
     const disabled = disableSubmit(submitter);
     void visit(url, {
       ...shared,
       method: verb,
-      body: verb === "GET" ? undefined : fd,
+      body,
     })
       .catch(() => emitDriveError(doc))
       .finally(() => restoreSubmit(disabled));

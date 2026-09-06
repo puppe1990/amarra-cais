@@ -29,3 +29,17 @@ export function restoreSubmit(prev) {
   prev.el.disabled = prev.disabled;
   if (prev.text != null) prev.el.textContent = prev.text;
 }
+
+export function driveFormBody(
+  formData,
+  URLSearchParamsCtor = URLSearchParams,
+  FileCtor = typeof File !== "undefined" ? File : null
+) {
+  if (!formData) return null;
+  for (const [, value] of formData.entries()) {
+    if (FileCtor && value instanceof FileCtor) return formData;
+  }
+  const body = new URLSearchParamsCtor();
+  for (const [key, value] of formData.entries()) body.append(key, value);
+  return body;
+}

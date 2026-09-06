@@ -1436,6 +1436,15 @@ ${lines.join("\n")}
     prev.el.disabled = prev.disabled;
     if (prev.text != null) prev.el.textContent = prev.text;
   }
+  function driveFormBody(formData, URLSearchParamsCtor = URLSearchParams, FileCtor = typeof File !== "undefined" ? File : null) {
+    if (!formData) return null;
+    for (const [, value] of formData.entries()) {
+      if (FileCtor && value instanceof FileCtor) return formData;
+    }
+    const body = new URLSearchParamsCtor();
+    for (const [key, value] of formData.entries()) body.append(key, value);
+    return body;
+  }
 
   // pkg/amarra/js/drive_restore.mjs
   function captureScroll(history, y) {
@@ -1634,11 +1643,12 @@ ${lines.join("\n")}
       event.preventDefault();
       const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
       const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+      const body = verb === "GET" ? void 0 : driveFormBody(fd);
       const disabled = disableSubmit(submitter);
       void visit(url, {
         ...shared,
         method: verb,
-        body: verb === "GET" ? void 0 : fd
+        body
       }).catch(() => emitDriveError(doc)).finally(() => restoreSubmit(disabled));
     });
     if (typeof window !== "undefined" && opts.popstate !== false) {

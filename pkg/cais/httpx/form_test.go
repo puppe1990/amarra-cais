@@ -1,6 +1,8 @@
 package httpx
 
 import (
+	"bytes"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -54,6 +56,32 @@ func TestParseFormOrJSON_urlencoded(t *testing.T) {
 	}
 	if got := req.FormValue("password"); got != "x" {
 		t.Errorf("password = %q, want x", got)
+	}
+}
+
+func TestParseFormOrJSON_multipart(t *testing.T) {
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	if err := writer.WriteField("email", "drive@example.com"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteField("password", "secret"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/login", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	if err := ParseFormOrJSON(req); err != nil {
+		t.Fatal(err)
+	}
+	if got := req.FormValue("email"); got != "drive@example.com" {
+		t.Errorf("email = %q, want drive@example.com", got)
+	}
+	if got := req.FormValue("password"); got != "secret" {
+		t.Errorf("password = %q, want secret", got)
 	}
 }
 
