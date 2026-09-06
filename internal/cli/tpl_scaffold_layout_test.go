@@ -66,6 +66,9 @@ func TestLayoutTemplates_hasDriveShell(t *testing.T) {
 		if !strings.Contains(tpl, `id="amarra-main"`) {
 			t.Errorf("%s layout missing amarra-main shell", name)
 		}
+		if !strings.Contains(tpl, `data-amarra-layout="app"`) {
+			t.Errorf("%s layout missing data-amarra-layout marker", name)
+		}
 	}
 }
 

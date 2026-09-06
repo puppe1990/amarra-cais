@@ -5,10 +5,19 @@ export function extractTitle(html) {
   return m ? m[1].trim() : null;
 }
 
+export function extractHTMLAttr(html, name) {
+  const open = String(html ?? "").match(/<html\b[^>]*>/i)?.[0] ?? "";
+  const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = open.match(new RegExp(`\\s${escaped}\\s*=\\s*["']([^"']*)["']`, "i"));
+  return m ? m[1] : null;
+}
+
 export function applyHead(doc, html) {
   if (!doc) return;
   const title = extractTitle(html);
   if (title != null) doc.title = title;
+  const lang = extractHTMLAttr(html, "lang");
+  if (lang != null && doc.documentElement) doc.documentElement.lang = lang;
   const token = csrfTokenFromMeta(html);
   if (!token) return;
   const meta = doc.querySelector?.('meta[name="csrf-token"]');

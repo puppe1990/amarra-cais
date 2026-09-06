@@ -28,6 +28,21 @@ test("applyHead updates title and csrf meta from response HTML", () => {
   assert.equal(meta.content, "tok2");
 });
 
+test("applyHead updates html lang from response HTML", () => {
+  const doc = {
+    documentElement: {
+      lang: "en",
+    },
+    querySelector() {
+      return null;
+    },
+  };
+
+  applyHead(doc, `<html lang="pt-BR"><head><title>Novo</title></head></html>`);
+
+  assert.equal(doc.documentElement.lang, "pt-BR");
+});
+
 test("showProgress creates a bar and hideProgress hides it", () => {
   const created = [];
   const doc = {

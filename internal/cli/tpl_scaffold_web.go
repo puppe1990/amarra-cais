@@ -6,7 +6,7 @@ const tplLayoutTitleDesc = `{{"{{"}} define "title" {{"}}"}}{{.AppName}}{{"{{"}}
 
 const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
 <!doctype html>
-<html lang="{{"{{"}} if .HTMLLang {{"}}"}}{{"{{"}} .HTMLLang {{"}}"}}{{"{{"}} else {{"}}"}}{{"{{"}} htmlLang {{"}}"}}{{"{{"}} end {{"}}"}}">
+<html lang="{{"{{"}} if .HTMLLang {{"}}"}}{{"{{"}} .HTMLLang {{"}}"}}{{"{{"}} else {{"}}"}}{{"{{"}} htmlLang {{"}}"}}{{"{{"}} end {{"}}"}}" data-amarra-layout="app">
   <head>
     <meta charset="UTF-8" />
     <script>

@@ -2,7 +2,7 @@ import { morph } from "./morph.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
 import { visitIntoFrame } from "./frame.mjs";
 import { applyOp, isStreamResponse, parseSSE } from "./stream.mjs";
-import { applyHead, hideProgress, showProgress } from "./drive_head.mjs";
+import { applyHead, extractHTMLAttr, hideProgress, showProgress } from "./drive_head.mjs";
 import {
   confirmOk,
   disableSubmit,
@@ -53,10 +53,14 @@ export function driveHeaders(csrfToken) {
 
 export function extractMainHTML(html) {
   const str = String(html ?? "");
-  const open = str.match(/<([a-zA-Z][\w:-]*)(?=[^>]*\sid\s*=\s*["']amarra-main["'])[^>]*>/i);
+  const open = extractMainOpen(str);
   if (!open) return null;
   const start = open.index + open[0].length;
   return sliceMatchingClose(str, start, open[1]);
+}
+
+export function extractMainTagName(html) {
+  return extractMainOpen(String(html ?? ""))?.[1]?.toUpperCase() ?? null;
 }
 
 export function applyDriveResponse({
@@ -82,7 +86,12 @@ export function applyDriveResponse({
 
   const fragment = extractMainHTML(html);
   if (fragment == null) return { action: "ignore" };
+  if (needsFullVisit({ html, main, document: doc })) {
+    assignLocation(location, url);
+    return { action: "assign" };
+  }
   applyHead(doc, html);
+  applyLayoutMarker(doc, html);
   if (main) (morphFn ?? morph)(main, fragment);
   if (status === 200 && push && url && history?.pushState) {
     if (!location?.href || url !== location.href) {
@@ -96,6 +105,30 @@ export function applyDriveResponse({
     doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
   }
   return { action: "morph" };
+}
+
+function needsFullVisit({ html, main, document: doc }) {
+  const currentLayout = doc?.documentElement?.dataset?.amarraLayout;
+  const nextLayout = extractHTMLAttr(html, "data-amarra-layout");
+  if (currentLayout && nextLayout && currentLayout !== nextLayout) return true;
+  const currentTag = main?.tagName?.toUpperCase?.();
+  const nextTag = extractMainTagName(html);
+  return !!(currentTag && nextTag && currentTag !== nextTag);
+}
+
+function assignLocation(location, url) {
+  if (url && typeof location?.assign === "function") {
+    location.assign(url);
+    return;
+  }
+  if (url && location) location.href = url;
+}
+
+function applyLayoutMarker(doc, html) {
+  const layout = extractHTMLAttr(html, "data-amarra-layout");
+  if (layout != null && doc?.documentElement?.dataset) {
+    doc.documentElement.dataset.amarraLayout = layout;
+  }
 }
 
 export async function visit(url, opts = {}) {
@@ -273,6 +306,10 @@ function sliceMatchingClose(str, start, tag) {
     i = nextClose + closeToken.length;
   }
   return null;
+}
+
+function extractMainOpen(str) {
+  return str.match(/<([a-zA-Z][\w:-]*)(?=[^>]*\sid\s*=\s*["']amarra-main["'])[^>]*>/i);
 }
 
 function findOpenTag(lower, from, name) {
