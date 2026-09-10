@@ -226,7 +226,7 @@ func adminFormRender(data scaffoldData, itemExpr, isNewExpr, errsExpr string) st
 
 func buildResourceAdminHandler(data scaffoldData) string {
 	parse := buildAdminParseForm(data)
-	hasStrconv := true // BulkDelete parses ids; parseForm may too.
+	hasStrconv := needsStrconv(data.Fields) || data.Paginate || hasReferenceFields(data.Fields) || true // BulkDelete parses ids
 	hasRefs := hasReferenceFields(data.Fields)
 	indexMethod := buildAdminIndexMethod(data)
 	showMethod := buildAdminShowMethod(data)
