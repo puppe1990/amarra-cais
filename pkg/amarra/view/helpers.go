@@ -3,6 +3,7 @@ package view
 import (
 	"fmt"
 	"html/template"
+	"net/url"
 	"strings"
 )
 
@@ -66,6 +67,7 @@ func helperFuncs() template.FuncMap {
 		"linkTo":         LinkTo,
 		"dict":           Dict,
 		"paginationHref": PaginationHref,
+		"sortHref":       SortHref,
 	}
 }
 
@@ -92,4 +94,61 @@ func PaginationHref(base any, page any) string {
 		sep = "&"
 	}
 	return b + sep + q
+}
+
+// SortHref builds a sort header URL from Base. It keeps existing query
+// params (q, etc.), sets sort/dir, and drops page so a new sort starts
+// at page 1 (#35).
+func SortHref(base, field, currentSort, currentDir any) string {
+	b := stringifyAttr(base)
+	col := stringifyAttr(field)
+	curSort := stringifyAttr(currentSort)
+	curDir := stringifyAttr(currentDir)
+	nextDir := "asc"
+	if col == curSort && strings.EqualFold(curDir, "asc") {
+		nextDir = "desc"
+	}
+
+	path, vals := splitBaseQuery(b)
+	vals.Del("page")
+	vals.Del("sort")
+	vals.Del("dir")
+
+	var out strings.Builder
+	out.WriteString(path)
+	out.WriteString("?sort=")
+	out.WriteString(url.QueryEscape(col))
+	out.WriteString("&dir=")
+	out.WriteString(url.QueryEscape(nextDir))
+	if enc := vals.Encode(); enc != "" {
+		out.WriteByte('&')
+		out.WriteString(enc)
+	}
+	return out.String()
+}
+
+func stringifyAttr(v any) string {
+	s, ok := v.(string)
+	if !ok || s == "<nil>" {
+		return ""
+	}
+	return s
+}
+
+func splitBaseQuery(base string) (path string, vals url.Values) {
+	vals = url.Values{}
+	if base == "" {
+		return "", vals
+	}
+	u, err := url.Parse(base)
+	if err != nil {
+		return base, vals
+	}
+	if u.RawQuery != "" {
+		vals, _ = url.ParseQuery(u.RawQuery)
+	}
+	if u.Path != "" || strings.HasPrefix(base, "/") {
+		return u.Path, vals
+	}
+	return "", vals
 }

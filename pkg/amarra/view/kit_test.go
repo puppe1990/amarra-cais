@@ -318,7 +318,7 @@ func TestKit_tableSortableHeaders(t *testing.T) {
 	body := rr.Body.String()
 	for _, want := range []string{
 		// Toggle: current sort is name asc, header links to desc.
-		`href="?sort=name&dir=desc"`,
+		`href="?sort=name&amp;dir=desc"`,
 		`aria-sort="ascending"`,
 		"First",
 	} {
@@ -343,7 +343,7 @@ func TestKit_tableTogglesDirOnDesc(t *testing.T) {
 	rr := httptest.NewRecorder()
 	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{"Cols": tableCols()}}, cais.Config{})
 	body := rr.Body.String()
-	for _, want := range []string{`href="?sort=name&dir=asc"`, `aria-sort="descending"`} {
+	for _, want := range []string{`href="?sort=name&amp;dir=asc"`, `aria-sort="descending"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("table missing %q in %s", want, body)
 		}
