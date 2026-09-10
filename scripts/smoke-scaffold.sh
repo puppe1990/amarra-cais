@@ -16,6 +16,11 @@ APP="$TMP/smokeapp"
 cd "$APP"
 go mod tidy
 
+# #34: the empty app compiling is not enough — g resource with a parent FK,
+# --public, and --paginate is what shipped undefined Total and Category.go.
+"$TMP/amarra-cais" g resource category --fields name:string
+"$TMP/amarra-cais" g resource bookmark --fields title:string,url:url,category_id:references,read:bool --public --paginate
+
 go test ./... -count=1
 go build -o "$TMP/server" ./cmd/server
 
