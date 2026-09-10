@@ -31,6 +31,21 @@ func TestDataForResource_PluralPascal(t *testing.T) {
 	}
 }
 
+func TestToSnake_pascalCase(t *testing.T) {
+	tests := map[string]string{
+		"Category":      "category",
+		"BlogPost":      "blog_post",
+		"category":      "category",
+		"blog_post":     "blog_post",
+		"user-settings": "user_settings",
+	}
+	for in, want := range tests {
+		if got := toSnake(in); got != want {
+			t.Errorf("toSnake(%q) = %q, want %q (#39)", in, got, want)
+		}
+	}
+}
+
 func TestNames(t *testing.T) {
 	data := dataForHandler("user_settings")
 	if data.Pascal != "UserSettings" {
