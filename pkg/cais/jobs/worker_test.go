@@ -70,29 +70,25 @@ func TestWorker_writesHeartbeatAndPruneRecurring(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(live) == 1 {
+		tasks, err := store.ListRecurring(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, task := range tasks {
+			if task.Kind == KindPruneFinished {
+				found = true
+			}
+		}
+		if len(live) == 1 && found {
 			break
 		}
 		select {
 		case <-deadline:
-			t.Fatal("worker heartbeat never appeared")
+			t.Fatalf("heartbeat/recurring never appeared live=%d recurring=%+v, want %s", len(live), tasks, KindPruneFinished)
 		default:
 			time.Sleep(20 * time.Millisecond)
 		}
-	}
-
-	tasks, err := store.ListRecurring(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	found := false
-	for _, task := range tasks {
-		if task.Kind == KindPruneFinished {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatalf("recurring = %+v, want %s", tasks, KindPruneFinished)
 	}
 
 	cancel()

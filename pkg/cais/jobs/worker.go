@@ -55,9 +55,6 @@ func NewWorker(cfg WorkerConfig) *Worker {
 func (w *Worker) Run(ctx context.Context) error {
 	w.id = NewWorkerID()
 	pulse := w.pulse()
-	if err := w.cfg.Store.TouchWorker(ctx, pulse); err != nil {
-		w.cfg.Logger.Printf("jobs heartbeat: %v", err)
-	}
 	defer func() { _ = w.cfg.Store.RemoveWorker(context.Background(), w.id) }()
 
 	// Recover jobs whose worker heartbeat is gone (#172) without stealing live work.
@@ -69,6 +66,11 @@ func (w *Worker) Run(ctx context.Context) error {
 
 	if err := w.ensureFinishedPrune(ctx); err != nil {
 		w.cfg.Logger.Printf("jobs prune-finished recurring: %v", err)
+	}
+
+	// Heartbeat last so a live worker implies prune recurring is already registered.
+	if err := w.cfg.Store.TouchWorker(ctx, pulse); err != nil {
+		w.cfg.Logger.Printf("jobs heartbeat: %v", err)
 	}
 
 	errCh := make(chan error, w.cfg.Concurrency+2)
