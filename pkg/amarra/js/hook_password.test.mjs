@@ -72,6 +72,54 @@ test("password hook toggles show/hide icons when present", () => {
   assert.equal(hideIcon.classList.contains("hidden"), true);
 });
 
+test("password hook falls back to the sibling input when no selector is set (#28)", () => {
+  const input = { type: "password" };
+  const hook = makePassword();
+  const el = button("");
+  el.parentElement = {
+    querySelector(sel) {
+      return sel === "input" ? input : null;
+    },
+  };
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(input.type, "text");
+  el.listeners.click[0]();
+  assert.equal(input.type, "password");
+});
+
+test("password hook swaps aria-label from data-amarra-label-show/hide (#28)", () => {
+  // Labels follow the visible affordance (the next action), like the icons:
+  // hidden input shows the "show" label, visible input the "hide" label.
+  const input = { type: "password" };
+  const hook = makePassword((sel) => (sel === "#password" ? input : null));
+  const el = button("#password");
+  el.setAttribute("data-amarra-label-show", "Show password");
+  el.setAttribute("data-amarra-label-hide", "Hide password");
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(el.getAttribute("aria-label"), "Hide password");
+  el.listeners.click[0]();
+  assert.equal(el.getAttribute("aria-label"), "Show password");
+});
+
+test("password hook accepts data-amarra-password-icon aliases (#28)", () => {
+  const input = { type: "password" };
+  const showIcon = { classList: classSet() };
+  const hideIcon = { classList: classSet(["hidden"]) };
+  const hook = makePassword((sel) => (sel === "#password" ? input : null));
+  const el = button("#password");
+  el.querySelector = (sel) => {
+    if (sel === '[data-amarra-password-icon="show"]') return showIcon;
+    if (sel === '[data-amarra-password-icon="hide"]') return hideIcon;
+    return null;
+  };
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(showIcon.classList.contains("hidden"), true);
+  assert.equal(hideIcon.classList.contains("hidden"), false);
+});
+
 function classSet(initial = []) {
   const set = new Set(initial);
   return {
