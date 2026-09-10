@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.2.2] - 2026-09-10
+
+### Fixed
+
+- Worker registers `PruneFinished` recurring before the first heartbeat, so a live worker is not visible while `recurring_tasks` is still empty (Linux CI flake).
+
 ## [0.2.1] - 2026-09-10
 
 ### Fixed

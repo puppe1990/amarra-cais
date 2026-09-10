@@ -26,8 +26,8 @@ Repeating UI is the shipped **kit + hooks**, not Alpine/Stimulus/HTMX: `<.table>
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.2.1   # or: make install-cli from this repo
-amarra-cais version   # expect 0.2.1
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.2.2   # or: make install-cli from this repo
+amarra-cais version   # expect 0.2.2
 amarra-cais new myapp
 cd myapp && amarra-cais install && amarra-cais dev   # http://localhost:8080
 ```
