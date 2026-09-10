@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -70,6 +72,40 @@ func TestCSRF_unsafeMethod_acceptsValidToken(t *testing.T) {
 
 	if !called {
 		t.Fatal("handler not called")
+	}
+	if rr.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200", rr.Code)
+	}
+}
+
+func TestCSRF_unsafeMethod_acceptsValidToken_multipart(t *testing.T) {
+	// Classic HTML form with enctype="multipart/form-data" (e.g. file upload):
+	// no X-CSRF-Token header, only the csrf_token form field (#26). ParseForm
+	// does not read multipart bodies, so the field must come through FormValue.
+	called := false
+	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	if err := writer.WriteField("name", "a"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteField(csrf.FormField, "secret"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/contact", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.AddCookie(&http.Cookie{Name: csrf.CookieName, Value: "secret"})
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if !called {
+		t.Fatalf("handler not called; status = %d", rr.Code)
 	}
 	if rr.Code != http.StatusOK {
 		t.Errorf("status = %d, want 200", rr.Code)

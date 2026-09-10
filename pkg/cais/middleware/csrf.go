@@ -6,6 +6,7 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
+	"github.com/puppe1990/amarra-cais/pkg/cais/httpx"
 )
 
 // CSRF protects state-changing requests with a double-submit cookie token.
@@ -33,7 +34,11 @@ func csrfHandler(cfg cais.Config, next http.Handler) http.Handler {
 			return
 		}
 
-		if err := r.ParseForm(); err != nil {
+		// ParseForm does not read multipart bodies, so the csrf_token form field
+		// of a classic multipart upload would never reach FormValue and every
+		// such request died with 403 (#26). ParseFormOrJSON also covers JSON
+		// posts that carry the token in the body instead of the header.
+		if err := httpx.ParseFormOrJSON(r); err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
