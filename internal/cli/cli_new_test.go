@@ -328,8 +328,11 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	if !strings.Contains(loginBody, `action="/login"`) {
 		t.Error("login.html should post to /login")
 	}
-	if !strings.Contains(loginBody, "csrfField") {
-		t.Error("login.html should include csrfField")
+	if !strings.Contains(loginBody, `<.form`) {
+		t.Error("login.html should use kit <.form")
+	}
+	if strings.Contains(loginBody, "csrfField") {
+		t.Error("login.html must not duplicate csrfField inside <.form> (#37)")
 	}
 	if !strings.Contains(loginBody, `<.password name="password"`) {
 		t.Error("login.html should use the <.password> kit with eye toggle (#29)")
