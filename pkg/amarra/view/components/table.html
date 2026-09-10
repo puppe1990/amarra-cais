@@ -5,7 +5,7 @@
         {{ range .Cols }}{{ $c := . }}
         <th scope="col" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50"{{ if $c.Sortable }} aria-sort="{{ if and (eq $c.Field $sort) (eq $dir "desc") }}descending{{ else if eq $c.Field $sort }}ascending{{ else }}none{{ end }}"{{ end }}>
           {{ if $c.Sortable }}
-          <a class="hover:text-foam" href="?sort={{ $c.Field }}&dir={{ if and (eq $c.Field $sort) (eq $dir "asc") }}desc{{ else }}asc{{ end }}"{{ if $frame }} data-amarra-frame="{{ $frame }}"{{ end }}>{{ $c.Label }}</a>
+          <a class="hover:text-foam" href="{{ sortHref .Base $c.Field $sort $dir }}"{{ if $frame }} data-amarra-frame="{{ $frame }}"{{ end }}>{{ $c.Label }}</a>
           {{ else }}
           {{ $c.Label }}
           {{ end }}
