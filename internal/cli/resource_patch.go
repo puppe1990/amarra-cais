@@ -148,7 +148,7 @@ func buildInsertTestLiteral(fields []FieldDef, dir string) (literal, setup strin
 			continue
 		}
 		varName := strings.ToLower(f.RefPascal) + "ID"
-		setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(dir, f.RefPascal))
+		setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(dir, f))
 		parts = append(parts, f.Pascal+": "+varName)
 	}
 	for _, f := range fields {
@@ -161,7 +161,7 @@ func buildInsertTestLiteral(fields []FieldDef, dir string) (literal, setup strin
 		f := fields[0]
 		if f.RefTable != "" {
 			varName := strings.ToLower(f.RefPascal) + "ID"
-			setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(dir, f.RefPascal))
+			setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(dir, f))
 			parts = append(parts, f.Pascal+": "+varName)
 		} else {
 			parts = append(parts, f.Pascal+": "+seedValueForField(f))

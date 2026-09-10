@@ -8,14 +8,22 @@ import (
 	"strings"
 )
 
+// parentModelFilename is the generated parent model path. RefPascal is
+// "Category"; the file is category.go. toSnake("Category") stays "Category"
+// (splitName does not break PascalCase), which works on macOS and 404s on Linux CI.
+func parentModelFilename(f FieldDef) string {
+	return strings.TrimSuffix(f.Name, "_id") + ".go"
+}
+
 // parentDisplayField is Name or Title on the referenced model. Inspects
 // internal/models so List*Options SQL does not mention a missing column.
-func parentDisplayField(dir, refPascal string) string {
+func parentDisplayField(dir string, f FieldDef) string {
 	if dir != "" {
-		body, err := os.ReadFile(filepath.Join(dir, "internal/models", toSnake(refPascal)+".go"))
+		body, err := os.ReadFile(filepath.Join(dir, "internal/models", parentModelFilename(f)))
 		if err == nil {
-			hasName := strings.Contains(string(body), "\tName ")
-			hasTitle := strings.Contains(string(body), "\tTitle ")
+			src := string(body)
+			hasName := strings.Contains(src, "\tName ") || strings.Contains(src, "\tName\t")
+			hasTitle := strings.Contains(src, "\tTitle ") || strings.Contains(src, "\tTitle\t")
 			if hasTitle && !hasName {
 				return "Title"
 			}
@@ -32,8 +40,8 @@ func parentLabelSelectExpr(field string) string {
 	return fmt.Sprintf("COALESCE(NULLIF(%s, ''), CAST(id AS TEXT))", col)
 }
 
-func parentSampleLiteral(dir, refPascal string) string {
-	return fmt.Sprintf("models.%s{%s: %q}", refPascal, parentDisplayField(dir, refPascal), "Sample")
+func parentSampleLiteral(dir string, f FieldDef) string {
+	return fmt.Sprintf("models.%s{%s: %q}", f.RefPascal, parentDisplayField(dir, f), "Sample")
 }
 
 func buildResourceModel(data scaffoldData) string {
@@ -62,7 +70,7 @@ func buildReferenceStoreMethods(fields []FieldDef, existing, dir string) string 
 		if strings.Contains(existing, "List"+f.RefPascal+"Options()") {
 			continue
 		}
-		labelExpr := parentLabelSelectExpr(parentDisplayField(dir, f.RefPascal))
+		labelExpr := parentLabelSelectExpr(parentDisplayField(dir, f))
 		fmt.Fprintf(&b, `
 func (s *SQLiteStore) List%sOptions() ([]models.SelectOption, error) {
 	rows, err := s.db.Query(
@@ -283,7 +291,7 @@ func buildResourceSeed(data scaffoldData) string {
 	if err != nil {
 		return err
 	}
-`, varName, f.RefPascal, parentSampleLiteral(data.AppDir, f.RefPascal))
+`, varName, f.RefPascal, parentSampleLiteral(data.AppDir, f))
 			inserts = append(inserts, fmt.Sprintf("%s: %s", f.Pascal, varName))
 			continue
 		}

@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.2.1] - 2026-09-10
+
+### Fixed
+
+- Reference parent model lookup uses `category.go`, not `Category.go` — `toSnake("Category")` does not lowercase, so Linux CI 404'd the file and `List*Options` always queried `name`.
+
 ## [0.2.0] - 2026-09-10
 
 ### Added

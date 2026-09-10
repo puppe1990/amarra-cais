@@ -216,7 +216,7 @@ func adminTestRefSetup(data scaffoldData) (setup, literal, vars string) {
 			continue
 		}
 		varName := strings.ToLower(f.RefPascal) + "ID"
-		setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(data.AppDir, f.RefPascal))
+		setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(data.AppDir, f))
 		literal += fmt.Sprintf(", %s: %s", f.Pascal, varName)
 		varNames = append(varNames, varName)
 	}

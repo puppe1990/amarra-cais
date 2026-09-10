@@ -5,7 +5,7 @@
 ## 1. Pin the framework and drop gonertia
 
 ```bash
-go get github.com/puppe1990/amarra-cais@v0.2.0
+go get github.com/puppe1990/amarra-cais@v0.2.1
 ```
 
 Remove `github.com/hotwire-go/gonertia` (or `inertia-go`) from `go.mod`. Delete `vite.config.js`, `svelte.config.js`, `web/src/`, and `web/static/build/`. The CLI binary is `amarra-cais`; it does not overwrite `cais`.
