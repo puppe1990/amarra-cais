@@ -108,3 +108,77 @@ test("theme hook restores html.light from localStorage on connect", () => {
   hook.connect(button());
   assert.equal(html.classList.contains("light"), true);
 });
+
+test("theme hook reads storage key and class from data attributes (#30)", () => {
+  const html = { classList: classList() };
+  const store = new Map();
+  const hook = makeTheme({
+    html: () => html,
+    storage: {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, v),
+    },
+  });
+  const el = button();
+  const origGet = el.getAttribute.bind(el);
+  el.getAttribute = (n) => {
+    if (n === "data-amarra-theme-key") return "app-theme";
+    if (n === "data-amarra-theme-class") return "theme-on";
+    return origGet(n);
+  };
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(html.classList.contains("theme-on"), true);
+  assert.equal(html.classList.contains("light"), false);
+  assert.equal(store.get("app-theme"), "theme-on");
+  assert.equal(store.has("amarra-theme"), false);
+});
+
+test("theme hook restores using the data-attr storage key on connect (#30)", () => {
+  const html = { classList: classList() };
+  const store = new Map([["app-theme", "dark-mode"]]);
+  const hook = makeTheme({
+    html: () => html,
+    storage: {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, v),
+    },
+  });
+  const el = button();
+  const origGet = el.getAttribute.bind(el);
+  el.getAttribute = (n) => {
+    if (n === "data-amarra-theme-key") return "app-theme";
+    if (n === "data-amarra-theme-class") return "dark-mode";
+    return origGet(n);
+  };
+  hook.connect(el);
+  assert.equal(html.classList.contains("dark-mode"), true);
+});
+
+test("theme hook swaps labels and keeps aria-pressed (#30)", () => {
+  const html = { classList: classList() };
+  const hook = makeTheme({ html: () => html, storage: newStorage() });
+  const el = button();
+  const origGet = el.getAttribute.bind(el);
+  el.getAttribute = (n) => {
+    if (n === "data-amarra-theme-on-label") return "Dark mode";
+    if (n === "data-amarra-theme-off-label") return "Light mode";
+    return origGet(n);
+  };
+  el.textContent = "Light mode";
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(el.textContent, "Dark mode");
+  assert.equal(el.getAttribute("aria-pressed"), "true");
+  el.listeners.click[0]();
+  assert.equal(el.textContent, "Light mode");
+  assert.equal(el.getAttribute("aria-pressed"), "false");
+});
+
+function newStorage() {
+  const store = new Map();
+  return {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, v),
+  };
+}

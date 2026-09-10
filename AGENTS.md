@@ -206,11 +206,14 @@ Drive requests still render the layout so JS can morph `#amarra-main`. Frame req
   <option value="access_keys">Access keys</option>
 </select>
 <div id="aws-keys" hidden>…keys…</div>
-<button type="button" amarra-hook="theme" data-amarra-theme-color="#f5f5f4" data-amarra-theme-color-off="#0f172a">Theme</button>
+<button type="button" amarra-hook="theme"
+        data-amarra-theme-key="app-theme"
+        data-amarra-theme-color="#f5f5f4" data-amarra-theme-color-off="#0f172a"
+        data-amarra-theme-on-label="Dark mode" data-amarra-theme-off-label="Light mode">Light mode</button>
 {{ end }}
 ```
 
-Shipped `amarra-hook` builtins: `clipboard`, `password` (toggle `type` + `aria-pressed`), `reveal` (show/hide a target when the control value matches, no Drive round-trip), `theme` (toggle `html.light`, persist `localStorage["amarra-theme"]`, optional `theme-color` meta). Put this FOUC snippet in the layout `<head>` before CSS so a stored light theme does not flash dark:
+Shipped `amarra-hook` builtins: `clipboard`, `password` (toggle `type` + `aria-pressed`), `reveal` (show/hide a target when the control value matches, no Drive round-trip), `theme` (toggle `html.light`, persist `localStorage["amarra-theme"]`, optional `theme-color` meta). The theme hook is configurable per element (#30): `data-amarra-theme-key` (storage key, default `amarra-theme`), `data-amarra-theme-class` (default `light`), `data-amarra-theme-color` / `data-amarra-theme-color-off` (`theme-color` meta hex), `data-amarra-theme-on-label` / `data-amarra-theme-off-label` (swap button text; keeps `aria-pressed`). If you set a custom key, copy it into the FOUC snippet below so restore matches. Put this FOUC snippet in the layout `<head>` before CSS so a stored light theme does not flash dark:
 
 ```html
 <script>
