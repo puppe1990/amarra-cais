@@ -183,9 +183,9 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 		file   string
 		needle string
 	}{
-		{"login.html", "fieldPassword"},
+		{"login.html", `<.password name="password"`},
 		{"signup.html", "password_confirmation"},
-		{"reset_password.html", "fieldPassword"},
+		{"reset_password.html", `<.password name="password"`},
 	} {
 		body, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages", tc.file))
 		if err != nil {

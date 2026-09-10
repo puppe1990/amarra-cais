@@ -331,8 +331,8 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	if !strings.Contains(loginBody, "csrfField") {
 		t.Error("login.html should include csrfField")
 	}
-	if !strings.Contains(loginBody, "fieldPassword") {
-		t.Error("login.html should use fieldPassword with eye toggle")
+	if !strings.Contains(loginBody, `<.password name="password"`) {
+		t.Error("login.html should use the <.password> kit with eye toggle (#29)")
 	}
 
 	auth, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/auth.go"))

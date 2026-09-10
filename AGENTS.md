@@ -225,7 +225,7 @@ Shipped `amarra-hook` builtins: `clipboard`, `nav` (re-sync active link after Dr
 </script>
 ```
 
-Shipped kit (override in `web/templates/components/`): `form`, `input`, `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`, `locale-toggle`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken`.
+Shipped kit (override in `web/templates/components/`): `form`, `input`, `password` (input + eye toggle wired to `amarra-hook="password"`, supports `name`/`label`/`value`/`error`/`autocomplete`/`required`), `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`, `locale-toggle`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken`.
 
 `{{ linkTo "/x" "Label" }}` emits a plain `<a>` — Drive intercepts it by default. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
 

@@ -170,6 +170,36 @@ func TestKit_localeTogglePostsToLocale(t *testing.T) {
 	}
 }
 
+func TestKit_passwordRendersInputAndEyeToggle(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.password name="password" autocomplete="current-password" error="too short" />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{
+		`type="password"`,
+		`name="password"`,
+		`autocomplete="current-password"`,
+		`amarra-hook="password"`,
+		`data-amarra-password-for="#password"`,
+		`data-amarra-password-icon="show"`,
+		`data-amarra-password-icon="hide"`,
+		`aria-pressed="false"`,
+		`aria-label="Show password"`,
+		`too short`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("password kit missing %q in %s", want, body)
+		}
+	}
+}
+
 func TestKit_selectTextareaCheckbox(t *testing.T) {
 	fsys := fstest.MapFS{
 		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
@@ -191,7 +221,7 @@ func TestKit_selectTextareaCheckbox(t *testing.T) {
 
 func TestShippedComponents_includesKitStems(t *testing.T) {
 	got := ShippedComponents()
-	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox"} {
+	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password"} {
 		if _, ok := got[stem]; !ok {
 			t.Errorf("missing shipped component %s", stem)
 		}
