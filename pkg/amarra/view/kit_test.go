@@ -367,9 +367,59 @@ func TestKit_tableFrameTargetsSortLinks(t *testing.T) {
 	}
 }
 
+func TestKit_filtersGetForm(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.filters action="/items" clear="/items"><.input name="q" label="Search" value="{{ .Q }}" /></.filters>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{"Q": "copper"}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{
+		`action="/items"`,
+		`method="get"`,
+		`name="q"`,
+		`value="copper"`,
+		`href="/items"`, // clear link back to the index with no query
+		"Clear",
+		"Filter",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("filters missing %q in %s", want, body)
+		}
+	}
+	// GET forms carry no CSRF field — only state-changing methods validate it.
+	if strings.Contains(body, `name="csrf_token"`) {
+		t.Errorf("filters GET form must not include a csrf_token field: %s", body)
+	}
+}
+
+func TestKit_filtersFrameAndCustomLabel(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.filters action="/items" frame="list" submit="Buscar"></.filters>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{`data-amarra-frame="list"`, "Buscar"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("filters missing %q in %s", want, body)
+		}
+	}
+}
+
 func TestShippedComponents_includesKitStems(t *testing.T) {
 	got := ShippedComponents()
-	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password", "stat", "empty", "table"} {
+	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password", "stat", "empty", "table", "filters"} {
 		if _, ok := got[stem]; !ok {
 			t.Errorf("missing shipped component %s", stem)
 		}
