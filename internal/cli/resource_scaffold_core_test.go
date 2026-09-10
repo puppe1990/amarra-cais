@@ -241,7 +241,7 @@ func TestScaffoldResource_PluralPascal_ListAllMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(admin), "ListAllRecipes()") {
+	if !strings.Contains(string(admin), "ListAllRecipes(q, sort, dir)") {
 		t.Errorf("admin handler wrong ListAll method: %s", admin)
 	}
 
@@ -291,7 +291,7 @@ func TestScaffoldResource_DishPluralization(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(admin), "ListAllDishes()") {
+	if !strings.Contains(string(admin), "ListAllDishes(q, sort, dir)") {
 		t.Error("dish resource should pluralize to dishes, not dishs")
 	}
 }

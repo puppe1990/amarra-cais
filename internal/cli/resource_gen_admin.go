@@ -89,13 +89,6 @@ func buildAdminParseForm(data scaffoldData) string {
 	item := models.%s{%s}%s%s	return item, errs`, data.Pascal, data.Pascal, strings.Join(literal, ", "), validateBlock, afterBlock)
 }
 
-func buildAdminShowDataStruct(data scaffoldData) string {
-	return fmt.Sprintf(`type Admin%sShowData struct {
-	meta.Site
-	Item models.%s
-}`, data.PluralPascal, data.Pascal)
-}
-
 func buildAdminShowMethod(data scaffoldData) string {
 	return fmt.Sprintf(`func (h *Admin%sHandler) Show(w http.ResponseWriter, r *http.Request, id int64) {
 	item, err := h.store.Find%sByID(id)
@@ -106,37 +99,26 @@ func buildAdminShowMethod(data scaffoldData) string {
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "admin_%s_show",
-		Data: Admin%sShowData{
-			Site: meta.ForRequest(h.site, r),
-			Item: item,
-		},
+		Data:   amarraData(r, h.site, map[string]any{"Item": item}),
 	}, h.cfg)
-}`, data.PluralPascal, data.Pascal, data.Snake, data.PluralPascal)
+}`, data.PluralPascal, data.Pascal, data.Snake)
 }
 
-func buildAdminIndexDataStruct(data scaffoldData) string {
-	if data.Paginate {
-		return fmt.Sprintf(`type Admin%sIndexData struct {
-	meta.Site
-	Items    []models.%s
-	Page     int
-	Total    int
-	PerPage  int
-	HasPrev  bool
-	HasNext  bool
-	PrevPage int
-	NextPage int
-}`, data.PluralPascal, data.Pascal)
+func buildAdminIndexColsVar(data scaffoldData) string {
+	var rows []string
+	for _, f := range data.Fields {
+		rows = append(rows, fmt.Sprintf("\t{\"Field\": %q, \"Label\": %q, \"Sortable\": true},", f.Name, f.Pascal))
 	}
-	return fmt.Sprintf(`type Admin%sIndexData struct {
-	meta.Site
-	Items []models.%s
-}`, data.PluralPascal, data.Pascal)
+	rows = append(rows, "\t{\"Field\": \"\", \"Label\": \"Actions\", \"Sortable\": false},")
+	return fmt.Sprintf("var admin%sIndexCols = []map[string]any{\n%s\n}\n", data.PluralPascal, strings.Join(rows, "\n"))
 }
 
 func buildAdminIndexMethod(data scaffoldData) string {
 	if data.Paginate {
 		return fmt.Sprintf(`func (h *Admin%sHandler) Index(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	sort := r.URL.Query().Get("sort")
+	dir := r.URL.Query().Get("dir")
 	page := 1
 	if p := r.URL.Query().Get("page"); p != "" {
 		if n, err := strconv.Atoi(p); err == nil && n > 0 {
@@ -144,32 +126,56 @@ func buildAdminIndexMethod(data scaffoldData) string {
 		}
 	}
 	perPage := 25
-	items, total, err := h.store.List%s(page, perPage)
+	items, total, err := h.store.List%s(q, sort, dir, page, perPage)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	pg := pagination.New(page, perPage, total)
-	data := Admin%sIndexData{
-		Site:     meta.ForRequest(h.site, r),
-		Items:    items,
-		Page:     pg.Page,
-		Total:    pg.Total,
-		PerPage:  pg.PerPage,
-		HasPrev:  pg.HasPrev,
-		HasNext:  pg.HasNext,
-		PrevPage: pg.PrevPage,
-		NextPage: pg.NextPage,
-	}
+	data := amarraData(r, h.site, map[string]any{
+		"Items":    items,
+		"Title":    "Admin — %s",
+		"Q":        q,
+		"Sort":     sort,
+		"Dir":      dir,
+		"Base":     h.indexBase("/admin/%s", q, sort, dir),
+		"Cols":     admin%sIndexCols,
+		"Page":     pg.Page,
+		"Total":    pg.Total,
+		"PerPage":  pg.PerPage,
+		"HasPrev":  pg.HasPrev,
+		"HasNext":  pg.HasNext,
+		"PrevPage": pg.PrevPage,
+		"NextPage": pg.NextPage,
+	})
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "admin_%s",
 		Data:   data,
 	}, h.cfg)
-}`, data.PluralPascal, data.PluralPascal, data.PluralPascal, data.Plural)
+}
+
+// indexBase builds the query string pagination must preserve (filters + sort).
+func (h *Admin%sHandler) indexBase(path, q, sort, dir string) string {
+	params := url.Values{}
+	if q != "" {
+		params.Set("q", q)
+	}
+	if sort != "" {
+		params.Set("sort", sort)
+		params.Set("dir", dir)
+	}
+	if encoded := params.Encode(); encoded != "" {
+		return path + "?" + encoded
+	}
+	return path
+}`, data.PluralPascal, data.PluralPascal, data.Plural, data.Plural, data.PluralPascal, data.Plural, data.PluralPascal)
 	}
 	return fmt.Sprintf(`func (h *Admin%sHandler) Index(w http.ResponseWriter, r *http.Request) {
-	items, err := h.store.ListAll%s()
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	sort := r.URL.Query().Get("sort")
+	dir := r.URL.Query().Get("dir")
+	items, err := h.store.ListAll%s(q, sort, dir)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -177,36 +183,50 @@ func buildAdminIndexMethod(data scaffoldData) string {
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "admin_%s",
-		Data: Admin%sIndexData{
-			Site:  meta.ForRequest(h.site, r),
-			Items: items,
-		},
+		Data: amarraData(r, h.site, map[string]any{
+			"Items": items,
+			"Title": "Admin — %s",
+			"Q":     q,
+			"Sort":  sort,
+			"Dir":   dir,
+			"Base":  h.indexBase("/admin/%s", q, sort, dir),
+			"Cols":  admin%sIndexCols,
+		}),
 	}, h.cfg)
-}`, data.PluralPascal, data.PluralPascal, data.Plural, data.PluralPascal)
+}
+
+// indexBase builds the query string pagination must preserve (filters + sort).
+func (h *Admin%sHandler) indexBase(path, q, sort, dir string) string {
+	params := url.Values{}
+	if q != "" {
+		params.Set("q", q)
+	}
+	if sort != "" {
+		params.Set("sort", sort)
+		params.Set("dir", dir)
+	}
+	if encoded := params.Encode(); encoded != "" {
+		return path + "?" + encoded
+	}
+	return path
+}`, data.PluralPascal, data.PluralPascal, data.Plural, data.Plural, data.Plural, data.PluralPascal, data.PluralPascal)
 }
 
 func adminFormRender(data scaffoldData, itemExpr, isNewExpr, errsExpr string) string {
 	if hasReferenceFields(data.Fields) {
 		return fmt.Sprintf("h.formData(r, %s, %s, %s)", itemExpr, isNewExpr, errsExpr)
 	}
-	if errsExpr == "nil" {
-		return fmt.Sprintf("Admin%sFormData{Site: meta.ForRequest(h.site, r), Item: %s, IsNew: %s}", data.PluralPascal, itemExpr, isNewExpr)
-	}
-	return fmt.Sprintf(`Admin%sFormData{
-			Site:   meta.ForRequest(h.site, r),
-			Item:   %s,
-			IsNew:  %s,
-			Errors: %s,
-		}`, data.PluralPascal, itemExpr, isNewExpr, errsExpr)
+	return fmt.Sprintf(`amarraData(r, h.site, map[string]any{
+			"Item":   %s,
+			"IsNew":  %s,
+			"Errors": %s,
+		})`, itemExpr, isNewExpr, errsExpr)
 }
 
 func buildResourceAdminHandler(data scaffoldData) string {
 	parse := buildAdminParseForm(data)
 	hasStrconv := needsStrconv(data.Fields) || data.Paginate || hasReferenceFields(data.Fields)
 	hasRefs := hasReferenceFields(data.Fields)
-	indexDataStruct := buildAdminIndexDataStruct(data)
-	showDataStruct := buildAdminShowDataStruct(data)
-	formDataStruct := buildAdminFormDataStruct(data)
 	indexMethod := buildAdminIndexMethod(data)
 	showMethod := buildAdminShowMethod(data)
 	formDataMethod := ""
@@ -225,10 +245,12 @@ func buildResourceAdminHandler(data scaffoldData) string {
 	editRender := adminFormRender(data, "item", "false", "nil")
 	createErrRender := adminFormRender(data, "item", "true", "errs")
 	updateErrRender := adminFormRender(data, "item", "false", "errs")
+	colsVar := buildAdminIndexColsVar(data)
 	return fmt.Sprintf(`package handlers
 
 import (
 	"net/http"
+	"net/url"
 %s	"strings"
 
 	"%s/pkg/amarra/view"
@@ -247,12 +269,6 @@ type Admin%sHandler struct {
 	site  meta.Site
 	cfg   cais.Config
 }
-
-%s
-
-%s
-
-%s
 
 func NewAdmin%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.Config) *Admin%sHandler {
 	return &Admin%sHandler{views: views, store: s, site: site, cfg: cfg}
@@ -331,11 +347,8 @@ func (h *Admin%sHandler) parseForm(r *http.Request) (models.%s, validate.FieldEr
 		formsImport,
 		frameworkModule, frameworkModule, frameworkModule, data.ModulePath, data.ModulePath,
 		data.PluralPascal,
-		indexDataStruct,
-		showDataStruct,
-		formDataStruct,
 		data.PluralPascal, data.PluralPascal, data.PluralPascal,
-		indexMethod,
+		colsVar + "\n\n" + indexMethod,
 		showMethod,
 		formDataMethod,
 		data.PluralPascal, data.Snake, newRender,
@@ -349,25 +362,6 @@ func (h *Admin%sHandler) parseForm(r *http.Request) (models.%s, validate.FieldEr
 	)
 }
 
-func buildAdminFormDataStruct(data scaffoldData) string {
-	var extra []string
-	for _, f := range data.Fields {
-		if f.RefTable != "" {
-			extra = append(extra, fmt.Sprintf("\t%sOptions []forms.SelectOption", f.RefPascal))
-		}
-	}
-	extraBlock := ""
-	if len(extra) > 0 {
-		extraBlock = "\n" + strings.Join(extra, "\n")
-	}
-	return fmt.Sprintf(`type Admin%sFormData struct {
-	meta.Site
-	Item   models.%s
-	IsNew  bool
-	Errors validate.FieldErrors%s
-}`, data.PluralPascal, data.Pascal, extraBlock)
-}
-
 func buildAdminFormDataLoader(data scaffoldData) string {
 	var lines []string
 	for _, f := range data.Fields {
@@ -376,13 +370,15 @@ func buildAdminFormDataLoader(data scaffoldData) string {
 		}
 		rawVar := "raw" + f.RefPascal + "Opts"
 		lines = append(lines, fmt.Sprintf(`	if %s, err := h.store.List%sOptions(); err == nil {
+		options := []forms.SelectOption{}
 		for _, opt := range %s {
-			data.%sOptions = append(data.%sOptions, forms.SelectOption{
+			options = append(options, forms.SelectOption{
 				Value: strconv.FormatInt(opt.ID, 10),
 				Label: opt.Label,
 			})
 		}
-	}`, rawVar, f.RefPascal, rawVar, f.RefPascal, f.RefPascal))
+		data["%sOptions"] = options
+	}`, rawVar, f.RefPascal, rawVar, f.RefPascal))
 	}
 	if len(lines) == 0 {
 		return ""
@@ -392,13 +388,12 @@ func buildAdminFormDataLoader(data scaffoldData) string {
 
 func buildAdminFormDataMethod(data scaffoldData) string {
 	loader := buildAdminFormDataLoader(data)
-	return fmt.Sprintf(`func (h *Admin%sHandler) formData(r *http.Request, item models.%s, isNew bool, errs validate.FieldErrors) Admin%sFormData {
-	data := Admin%sFormData{
-		Site:   meta.ForRequest(h.site, r),
-		Item:   item,
-		IsNew:  isNew,
-		Errors: errs,
-	}
+	return fmt.Sprintf(`func (h *Admin%sHandler) formData(r *http.Request, item models.%s, isNew bool, errs validate.FieldErrors) map[string]any {
+	data := amarraData(r, h.site, map[string]any{
+		"Item":   item,
+		"IsNew":  isNew,
+		"Errors": errs,
+	})
 %s	return data
-}`, data.PluralPascal, data.Pascal, data.PluralPascal, data.PluralPascal, loader)
+}`, data.PluralPascal, data.Pascal, loader)
 }

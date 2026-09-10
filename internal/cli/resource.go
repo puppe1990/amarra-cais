@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -123,9 +124,12 @@ func resourceFilesHTML(data scaffoldData, migrationPath string) map[string]strin
 func buildResourceAdminTest(data scaffoldData) string {
 	first := data.Fields[0]
 	formBody := buildAdminTestFormBody(data.Fields)
+	setup, refsLiteral, refVars := adminTestRefSetup(data)
+	readerExpr := "strings.NewReader(fmt.Sprintf(" + strconv.Quote(formBody) + ", " + refVars + "))"
 	return fmt.Sprintf(`package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -138,7 +142,7 @@ import (
 
 func TestAdmin%sHandler_Show(t *testing.T) {
 	s := setupTestStore(t)
-	id, err := s.Insert%s(models.%s{%s: "show-me"%s})
+%s	id, err := s.Insert%s(models.%s{%s: "show-me"%s%s})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,8 +172,8 @@ func TestAdmin%sHandler_Index(t *testing.T) {
 
 func TestAdmin%sHandler_Create(t *testing.T) {
 	s := setupTestStore(t)
-	h := NewAdmin%sHandler(setupTestViews(t), s, testSite(), cais.Config{})
-	req := httptest.NewRequest(http.MethodPost, "/admin/%s", strings.NewReader(%q))
+%s	h := NewAdmin%sHandler(setupTestViews(t), s, testSite(), cais.Config{})
+	req := httptest.NewRequest(http.MethodPost, "/admin/%s", %s)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr := httptest.NewRecorder()
 	h.Create(rr, req)
@@ -180,7 +184,7 @@ func TestAdmin%sHandler_Create(t *testing.T) {
 
 func TestAdmin%sHandler_Delete(t *testing.T) {
 	s := setupTestStore(t)
-	id, err := s.Insert%s(models.%s{%s: "x"%s})
+%s	id, err := s.Insert%s(models.%s{%s: "x"%s%s})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,19 +197,40 @@ func TestAdmin%sHandler_Delete(t *testing.T) {
 }
 `,
 		frameworkModule, frameworkModule, data.ModulePath,
-		data.PluralPascal, data.Pascal, data.Pascal, first.Pascal, urlFieldTestExtra(data),
+		data.PluralPascal, setup, data.Pascal, data.Pascal, first.Pascal, urlFieldTestExtra(data), refsLiteral,
 		data.PluralPascal, data.Plural,
 		data.PluralPascal, data.PluralPascal, data.Plural, data.Plural,
-		data.PluralPascal, data.PluralPascal, data.Plural, formBody,
-		data.PluralPascal, data.Pascal, data.Pascal, first.Pascal, urlFieldTestExtra(data),
+		data.PluralPascal, setup, data.PluralPascal, data.Plural, readerExpr,
+		data.PluralPascal, setup, data.Pascal, data.Pascal, first.Pascal, urlFieldTestExtra(data), refsLiteral,
 		data.PluralPascal, data.Plural,
 	)
+}
+
+// adminTestRefSetup seeds one parent row per required reference field — FK
+// constraints fail when the referenced table is empty.
+func adminTestRefSetup(data scaffoldData) (setup, literal, vars string) {
+	var varNames []string
+	for _, f := range data.Fields {
+		if f.RefTable == "" || !f.Required {
+			continue
+		}
+		varName := strings.ToLower(f.RefPascal) + "ID"
+		setup += fmt.Sprintf("%s, err := s.Insert%s(models.%s{Name: \"Sample\"})\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, f.RefPascal)
+		literal += fmt.Sprintf(", %s: %s", f.Pascal, varName)
+		varNames = append(varNames, varName)
+	}
+	return setup, literal, strings.Join(varNames, ", ")
 }
 
 func buildAdminTestFormBody(fields []FieldDef) string {
 	var parts []string
 	for _, f := range fields {
 		if !f.Required || f.GoType == "bool" {
+			continue
+		}
+		if f.RefTable != "" {
+			// The test seeds the parent and passes its id via Sprintf.
+			parts = append(parts, f.Name+"=%d")
 			continue
 		}
 		val := "Demo"

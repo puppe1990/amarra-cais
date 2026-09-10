@@ -1,11 +1,11 @@
 <div class="flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.22em]" role="group" aria-label="Language">
   <form action="{{ if .Action }}{{ .Action }}{{ else }}/locale{{ end }}" method="post">
-    {{ csrfField .CSRFToken }}
+    {{ csrfField $.CSRFToken }}
     <input type="hidden" name="locale" value="en" />
     <button type="submit" class="px-2 py-1 text-copper hover:text-foam"{{- if eq .Current "en" }} aria-pressed="true"{{ end }}>EN</button>
   </form>
   <form action="{{ if .Action }}{{ .Action }}{{ else }}/locale{{ end }}" method="post">
-    {{ csrfField .CSRFToken }}
+    {{ csrfField $.CSRFToken }}
     <input type="hidden" name="locale" value="pt" />
     <button type="submit" class="px-2 py-1 text-copper hover:text-foam"{{- if eq .Current "pt" }} aria-pressed="true"{{ end }}>PT</button>
   </form>

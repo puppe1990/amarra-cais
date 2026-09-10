@@ -20,7 +20,6 @@ func amarraData(r *http.Request, site meta.Site, extra map[string]any) map[strin
 	}
 	if cat := i18n.CatalogFromRequest(r); cat != nil {
 		data["Locale"] = cat.Locale()
-		data["HTMLLang"] = cat.HTMLLang()
 	}
 	for k, v := range extra {
 		data[k] = v

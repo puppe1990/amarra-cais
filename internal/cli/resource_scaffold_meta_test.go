@@ -31,9 +31,8 @@ func TestScaffoldResource_handlersEmbedMetaSite(t *testing.T) {
 	}
 	pub := string(public)
 	for _, want := range []string{
-		"meta.Site",
-		"meta.ForRequest(h.site, r)",
-		"site",
+		"amarraData(r, h.site",
+		"site meta.Site",
 	} {
 		if !strings.Contains(pub, want) {
 			t.Errorf("public handler missing %q:\n%s", want, pub)
@@ -46,8 +45,8 @@ func TestScaffoldResource_handlersEmbedMetaSite(t *testing.T) {
 	}
 	adm := string(admin)
 	for _, want := range []string{
-		"meta.Site",
-		"meta.ForRequest(h.site, r)",
+		"amarraData(r, h.site",
+		"site meta.Site",
 	} {
 		if !strings.Contains(adm, want) {
 			t.Errorf("admin handler missing %q:\n%s", want, adm)

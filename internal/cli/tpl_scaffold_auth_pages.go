@@ -8,7 +8,7 @@ const tplPageLogin = `{{"{{"}} define "content" {{"}}"}}
   <.form action="/login" method="post">
     {{"{{"}} csrfField .CSRFToken {{"}}"}}
     <.input name="email" type="email" label="Email" value="{{"{{"}} .Email {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
-    <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="current-password" required />
+    <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="current-password" required="required" />
     <.button type="submit">{{"{{"}} t "auth.login_submit" {{"}}"}}</.button>
   </.form>
   <p class="mt-4 text-center text-sm text-foam/60 space-y-1">
@@ -30,8 +30,8 @@ const tplPageSignup = `{{"{{"}} define "content" {{"}}"}}
   <.form action="/signup" method="post">
     {{"{{"}} csrfField .CSRFToken {{"}}"}}
     <.input name="email" type="email" label="{{"{{"}} t "contact.email_label" {{"}}"}}" value="{{"{{"}} .Email {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
-    <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="new-password" required />
-    <.password name="password_confirmation" label="{{"{{"}} t "auth.password_confirmation_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password_confirmation" {{"}}"}}" autocomplete="new-password" required />
+    <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="new-password" required="required" />
+    <.password name="password_confirmation" label="{{"{{"}} t "auth.password_confirmation_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password_confirmation" {{"}}"}}" autocomplete="new-password" required="required" />
     <.button type="submit">{{"{{"}} t "auth.signup_submit" {{"}}"}}</.button>
   </.form>
   <p class="mt-4 text-center text-sm text-foam/60">
@@ -67,8 +67,8 @@ const tplPageResetPassword = `{{"{{"}} define "content" {{"}}"}}
   <.form action="/reset-password" method="post">
     {{"{{"}} csrfField .CSRFToken {{"}}"}}
     <input type="hidden" name="token" value="{{"{{"}} .Token {{"}}"}}" />
-    <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="new-password" required />
-    <.password name="password_confirmation" label="{{"{{"}} t "auth.password_confirmation_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password_confirmation" {{"}}"}}" autocomplete="new-password" required />
+    <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="new-password" required="required" />
+    <.password name="password_confirmation" label="{{"{{"}} t "auth.password_confirmation_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password_confirmation" {{"}}"}}" autocomplete="new-password" required="required" />
     <.button type="submit">{{"{{"}} t "auth.reset_password_submit" {{"}}"}}</.button>
   </.form>
   <p class="mt-4 text-center text-sm text-foam/60">

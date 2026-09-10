@@ -30,10 +30,14 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 	if !strings.Contains(content, ifaceMarker) {
 		return fmt.Errorf("could not patch store interface")
 	}
-	listMethod := fmt.Sprintf("\n\tListAll%s() ([]models.%s, error)", data.PluralPascal, data.Pascal)
+	// The reference-options impl check must run against the pre-patch body:
+	// after the interface insert the method name is already present, which
+	// used to skip generating the SQLiteStore impl and left the app broken.
+	prePatch := content
+	listMethod := fmt.Sprintf("\n\tListAll%s(search, sort, dir string) ([]models.%s, error)", data.PluralPascal, data.Pascal)
 	if data.Paginate {
 		listMethod = fmt.Sprintf(
-			"\n\tList%s(page, perPage int) ([]models.%s, int, error)%s",
+			"\n\tList%s(search, sort, dir string, page, perPage int) ([]models.%s, int, error)%s",
 			data.PluralPascal, data.Pascal, listMethod,
 		)
 	}
@@ -58,7 +62,7 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 
 	implMarker := "\nfunc (s *SQLiteStore) Close()"
 	implInsert := buildResourceStoreMethods(data)
-	implInsert += buildReferenceStoreMethods(data.Fields, content)
+	implInsert += buildReferenceStoreMethods(data.Fields, prePatch)
 	if data.Paginate {
 		implInsert += buildResourcePaginatedStoreMethod(data)
 	}
@@ -102,11 +106,11 @@ func patchStoreTestForResource(dir string, data scaffoldData, dryRun bool) error
 		return nil
 	}
 
-	insertArgs := buildInsertTestLiteral(data.Fields)
+	insertArgs, insertSetup := buildInsertTestLiteral(data.Fields)
 	insert := fmt.Sprintf(`
 func TestStore_Insert%s(t *testing.T) {
 	s := newTestStore(t)
-	id, err := s.Insert%s(models.%s{%s})
+%s	id, err := s.Insert%s(models.%s{%s})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +118,7 @@ func TestStore_Insert%s(t *testing.T) {
 		t.Error("id = 0")
 	}
 }
-`, data.Pascal, data.Pascal, data.Pascal, insertArgs)
+`, data.Pascal, insertSetup, data.Pascal, data.Pascal, insertArgs)
 
 	if !strings.Contains(content, data.ModulePath+"/internal/models") {
 		content = strings.Replace(content,
@@ -134,18 +138,36 @@ func TestStore_Insert%s(t *testing.T) {
 	return os.WriteFile(path, []byte(content), 0o644)
 }
 
-func buildInsertTestLiteral(fields []FieldDef) string {
+// buildInsertTestLiteral returns the Go statements that seed one parent row
+// per required reference field (FK constraints fail otherwise) plus the
+// struct literal for the Insert test.
+func buildInsertTestLiteral(fields []FieldDef) (literal, setup string) {
 	var parts []string
 	for _, f := range fields {
-		if !f.Required {
+		if f.RefTable == "" || !f.Required {
+			continue
+		}
+		varName := strings.ToLower(f.RefPascal) + "ID"
+		setup += fmt.Sprintf("%s, err := s.Insert%s(models.%s{Name: \"Sample\"})\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, f.RefPascal)
+		parts = append(parts, f.Pascal+": "+varName)
+	}
+	for _, f := range fields {
+		if f.RefTable != "" || !f.Required {
 			continue
 		}
 		parts = append(parts, f.Pascal+": "+seedValueForField(f))
 	}
 	if len(parts) == 0 && len(fields) > 0 {
-		return fields[0].Pascal + ": " + seedValueForField(fields[0])
+		f := fields[0]
+		if f.RefTable != "" {
+			varName := strings.ToLower(f.RefPascal) + "ID"
+			setup += fmt.Sprintf("%s, err := s.Insert%s(models.%s{Name: \"Sample\"})\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, f.RefPascal)
+			parts = append(parts, f.Pascal+": "+varName)
+		} else {
+			parts = append(parts, f.Pascal+": "+seedValueForField(f))
+		}
 	}
-	return strings.Join(parts, ", ")
+	return strings.Join(parts, ", "), setup
 }
 
 func patchRoutesForResource(dir string, data scaffoldData, dryRun bool, force bool) error {

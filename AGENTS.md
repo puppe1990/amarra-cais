@@ -139,6 +139,8 @@ Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `Ad
 
 `amarra-cais g resource` defaults to session auth (`--admin-auth session`). Use `--admin-auth bearer` for token-only admin APIs without login pages.
 
+**Resource index uses the kit** (#24): the admin index renders `<.filters>` (q on the display field, sort/dir preserved via hidden inputs) + `<.table>` (sortable headers, `?sort=&dir=`, `aria-sort`) + `<.empty>` + `<.pagination base>`; the public index gets `<.filters>`/`<.empty>`/`<.pagination>` too. Generated store methods take `(search, sort, dir string, ...)` — sort is whitelisted per column, search is a LIKE on the display field. Required reference fields seed their parent row in generated tests and `SeedDemo*` (FK constraints).
+
 ## Session auth
 
 `amarra-cais new` includes login/logout and protects `/dashboard`. Add to existing apps with `amarra-cais g auth`.
@@ -257,7 +259,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 - `middleware.CSRF(cfg)` on the router (validates POST/PUT/DELETE/PATCH)
 - Double-submit cookie (`cais_csrf`) — token in cookie + form field or `X-CSRF-Token` header; no server-side token store
 
-**HTML templates** — pass `meta.ForRequest(site, r)` / `amarraData`; layout renders `<meta name="csrf-token">` + `amarra.js` sends `X-CSRF-Token` on Drive requests. Forms: `{{ csrfField .CSRFToken }}` or hidden `csrf_token` input. Kit `<.form>` still needs the CSRF field in the body.
+**HTML templates** — pass `meta.ForRequest(site, r)` / `amarraData`; layout renders `<meta name="csrf-token">` + `amarra.js` sends `X-CSRF-Token` on Drive requests. Forms: `{{ csrfField .CSRFToken }}` or hidden `csrf_token` input. Kit `<.form>` injects the CSRF field itself from the root data (`$.CSRFToken`) — do not duplicate it inside the slot.
 
 **Integration tests** — GET page first (read `csrf` cookie), then POST with matching `csrf_token` field + cookie.
 

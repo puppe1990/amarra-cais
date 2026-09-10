@@ -1,12 +1,12 @@
 <nav class="flex items-center justify-between">
   {{ if .HasPrev }}
-  <a href="?page={{ .PrevPage }}" class="text-copper hover:text-foam">← Previous</a>
+  <a href="{{ if .Base }}{{ .Base }}&amp;page={{ .PrevPage }}{{ else }}?page={{ .PrevPage }}{{ end }}" class="text-copper hover:text-foam">← Previous</a>
   {{ else }}
   <span></span>
   {{ end }}
   <span class="text-sm text-foam/50">Page {{ .Page }}</span>
   {{ if .HasNext }}
-  <a href="?page={{ .NextPage }}" class="text-copper hover:text-foam">Next →</a>
+  <a href="{{ if .Base }}{{ .Base }}&amp;page={{ .NextPage }}{{ else }}?page={{ .NextPage }}{{ end }}" class="text-copper hover:text-foam">Next →</a>
   {{ else }}
   <span></span>
   {{ end }}

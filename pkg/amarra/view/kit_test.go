@@ -440,6 +440,46 @@ func TestKit_modalRendersNativeDialogTarget(t *testing.T) {
 	}
 }
 
+func TestKit_paginationBasePreservesQuery(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.pagination base="/items?q=copper&sort=name" />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"Page": 2, "HasPrev": true, "PrevPage": 1},
+	}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, `href="/items?q=copper&amp;sort=name&amp;page=1"`) {
+		t.Errorf("pagination base link missing query preservation: %s", body)
+	}
+}
+
+func TestKit_paginationWithoutBaseKeepsRelativeLinks(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.pagination />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"Page": 1, "HasNext": true, "NextPage": 2},
+	}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, `href="?page=2"`) {
+		t.Errorf("pagination without base should keep ?page links: %s", body)
+	}
+}
+
 func TestShippedComponents_includesKitStems(t *testing.T) {
 	got := ShippedComponents()
 	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password", "stat", "empty", "table", "filters"} {

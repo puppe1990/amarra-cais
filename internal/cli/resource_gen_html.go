@@ -22,10 +22,7 @@ func buildAdminFormHTML(data scaffoldData) string {
 			fmt.Fprintf(&fields, `    {{ fieldInput (makeField "%s" "%s" .Item.%s "textarea" %t .Errors) }}
 `, f.Name, f.Pascal, f.Pascal, f.Required)
 		case "checkbox":
-			fmt.Fprintf(&fields, `    <label class="flex items-center gap-2 text-sm text-slate-700">
-      <input type="checkbox" name="%s" class="rounded border-copper/40 bg-ink text-copper" {{ if .Item.%s }}checked{{ end }} />
-      %s
-    </label>
+			fmt.Fprintf(&fields, `    {{ if .Item.%[3]s }}<.checkbox name="%[1]s" label="%[2]s" checked="checked" error="{{ fieldError .Errors "%[1]s" }}" />{{ else }}<.checkbox name="%[1]s" label="%[2]s" error="{{ fieldError .Errors "%[1]s" }}" />{{ end }}
 `, f.Name, f.Pascal, f.Pascal)
 		default:
 			fmt.Fprintf(&fields, `    {{ fieldInput (makeField "%s" "%s" .Item.%s "%s" %t .Errors) }}
@@ -71,45 +68,45 @@ func buildAdminPaginationBlock(data scaffoldData) string {
 	if !data.Paginate {
 		return ""
 	}
-	return fmt.Sprintf(`    <div class="flex items-center justify-between px-6 py-4 border-t bg-slate-50">
-      {{ if .HasPrev }}
-      {{ linkTo (printf "/admin/%s?page=%%d" .PrevPage) "← Previous" }}
-      {{ else }}
-      <span></span>
-      {{ end }}
-      <span class="text-sm text-slate-500">Page {{ .Page }}</span>
-      {{ if .HasNext }}
-      {{ linkTo (printf "/admin/%s?page=%%d" .NextPage) "Next →" }}
-      {{ else }}
-      <span></span>
-      {{ end }}
-    </div>
-`, data.Plural, data.Plural)
+	return `    <.pagination base="{{ .Base }}" />`
+}
+
+func adminIndexRowCell(f FieldDef) string {
+	switch f.GoType {
+	case "bool":
+		return fmt.Sprintf("          <td class=\"px-3 py-2\">{{ if .%s }}Yes{{ else }}No{{ end }}</td>\n", f.Pascal)
+	case "*int64", "*float64":
+		return fmt.Sprintf("          <td class=\"px-3 py-2\">{{ if .%s }}{{ .%s }}{{ end }}</td>\n", f.Pascal, f.Pascal)
+	default:
+		return fmt.Sprintf("          <td class=\"px-3 py-2\">{{ .%s }}</td>\n", f.Pascal)
+	}
 }
 
 func buildAdminIndexPanel(data scaffoldData) string {
-	displayField := adminIndexDisplayField(data.Fields)
-	return fmt.Sprintf(`    <table class="w-full text-left text-sm">
-      <thead class="bg-slate-50 border-b"><tr><th class="px-6 py-3">%s</th><th class="px-6 py-3 text-right">Actions</th></tr></thead>
-      <tbody class="divide-y">
-        {{ range .Items }}
-        <tr class="hover:bg-slate-50">
-          <td class="px-6 py-4 font-medium">{{ .%s }}</td>
-          <td class="px-6 py-4 text-right space-x-3">
-            {{ linkTo (printf "/admin/%s/%%d" .ID) "View" }}
-            {{ linkTo (printf "/admin/%s/%%d/edit" .ID) "Edit" }}
-            <.form action="{{ printf "/admin/%s/%%d/delete" .ID }}" method="post">
-              {{ csrfField $.CSRFToken }}
-              <.button type="submit">Delete</.button>
-            </.form>
-          </td>
-        </tr>
-        {{ else }}
-        <tr><td colspan="2" class="px-6 py-8 text-center text-slate-500">No items yet.</td></tr>
-        {{ end }}
-      </tbody>
-    </table>
-%s`, displayField.Pascal, displayField.Pascal, data.Plural, data.Plural, data.Plural, buildAdminPaginationBlock(data))
+	var rowCells strings.Builder
+	for _, f := range data.Fields {
+		rowCells.WriteString(adminIndexRowCell(f))
+	}
+	return fmt.Sprintf(`    <.filters action="/admin/%[1]s" clear="/admin/%[1]s">
+      {{ if .Sort }}<input type="hidden" name="sort" value="{{ .Sort }}" />{{ end }}
+      {{ if .Dir }}<input type="hidden" name="dir" value="{{ .Dir }}" />{{ end }}
+      <.input name="q" label="Search" value="{{ .Q }}" />
+    </.filters>
+    <.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}" frame="admin-%[1]s">
+      {{ range .Items }}
+      <tr>
+%[2]s        <td class="px-3 py-2 text-right space-x-3">
+          {{ linkTo (printf "/admin/%[1]s/%%d" .ID) "View" }}
+          {{ linkTo (printf "/admin/%[1]s/%%d/edit" .ID) "Edit" }}
+          {{ linkTo (printf "/admin/%[1]s/%%d/delete" .ID) "Delete" (dict "method" "post" "confirm" "Delete this %[3]s?") }}
+        </td>
+      </tr>
+      {{ end }}
+    </.table>
+    {{ if not .Items }}
+    <.empty title="No %[3]s yet" href="/admin/%[1]s/new" action="+ New">Nothing here yet.</.empty>
+    {{ end }}
+%[4]s`, data.Plural, rowCells.String(), data.Title, buildAdminPaginationBlock(data))
 }
 
 func buildAdminIndexPartial(data scaffoldData) string {
@@ -177,7 +174,8 @@ func buildAdminShowHTML(data scaffoldData) string {
 }
 
 func publicToggleForm(data scaffoldData, f FieldDef) string {
-	return fmt.Sprintf(`<.form action="{{ printf "/%s/%%d/toggle" .ID }}" method="post">{{ csrfField $.CSRFToken }}<button type="submit" class="cursor-pointer inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}Pending{{ end }}</button></.form>`, data.Plural, f.Pascal, f.Pascal, f.Pascal)
+	// csrf_token comes from the <.form> kit (root $.CSRFToken) — no duplicate field here.
+	return fmt.Sprintf(`<.form action="{{ printf "/%s/%%d/toggle" .ID }}" method="post"><button type="submit" class="cursor-pointer inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}Pending{{ end }}</button></.form>`, data.Plural, f.Pascal, f.Pascal, f.Pascal)
 }
 
 func buildPublicListItemHTML(data scaffoldData) string {
@@ -229,32 +227,23 @@ func buildPublicPaginationBlock(data scaffoldData) string {
 	if !data.Paginate {
 		return ""
 	}
-	return fmt.Sprintf(`  <div class="flex items-center justify-between mt-6">
-    {{ if .HasPrev }}
-    {{ linkTo (printf "/%s?page=%%d" .PrevPage) "← Previous" }}
-    {{ else }}
-    <span></span>
-    {{ end }}
-    <span class="text-sm text-slate-500">Page {{ .Page }}</span>
-    {{ if .HasNext }}
-    {{ linkTo (printf "/%s?page=%%d" .NextPage) "Next →" }}
-    {{ else }}
-    <span></span>
-    {{ end }}
-  </div>
-`, data.Plural, data.Plural)
+	return `  <.pagination base="{{ .Base }}" />`
 }
 
 func buildPublicListPanel(data scaffoldData) string {
 	itemBlock := buildPublicListItemHTML(data)
-	return fmt.Sprintf(`  <ul id="%s-list" class="space-y-3">
+	return fmt.Sprintf(`  <.filters action="/%[1]s" clear="/%[1]s">
+    <.input name="q" label="Search" value="{{ .Q }}" />
+  </.filters>
+  <ul id="%[1]s-list" class="space-y-3 mt-4">
     {{ range .Items }}
-    <li class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">%s</li>
-    {{ else }}
-    <li class="text-center text-slate-500 py-8">No items yet.</li>
+    <li class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">%[2]s</li>
     {{ end }}
   </ul>
-%s`, data.Plural, itemBlock, buildPublicPaginationBlock(data))
+  {{ if not .Items }}
+  <.empty title="No %[3]s yet">Nothing here yet.</.empty>
+  {{ end }}
+%[4]s`, data.Plural, itemBlock, data.Title, buildPublicPaginationBlock(data))
 }
 
 func buildPublicListPartial(data scaffoldData) string {

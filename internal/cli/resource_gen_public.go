@@ -6,24 +6,9 @@ func buildResourcePublicHandler(data scaffoldData) string {
 	boolField := firstBoolField(data.Fields)
 	intField := firstIntField(data.Fields)
 
-	listDataExtra := ""
-	paginationFields := ""
-	if data.Paginate {
-		paginationFields = `
-	Page     int
-	Total    int
-	PerPage  int
-	HasPrev  bool
-	HasNext  bool
-	PrevPage int
-	NextPage int`
-	}
 	sumField := "Total"
 	if data.Paginate && intField != nil {
 		sumField = "Sum"
-	}
-	if intField != nil {
-		listDataExtra = fmt.Sprintf("\n\t%s int64", sumField)
 	}
 	listSum := ""
 	if intField != nil {
@@ -57,10 +42,10 @@ func (h *%sHandler) Toggle(w http.ResponseWriter, r *http.Request, id int64) {
 `, data.PluralPascal, data.Pascal, boolField.Pascal, boolField.Pascal, data.Pascal, data.Plural)
 	}
 
-	extraStd := ""
+	extraStd := "\t\"net/url\"\n\t\"strings\"\n"
 	paginationImport := ""
 	if data.Paginate {
-		extraStd = "\t\"strconv\"\n"
+		extraStd += "\t\"strconv\"\n"
 		paginationImport = "\t\"" + frameworkModule + "/pkg/cais/pagination\"\n"
 	}
 
@@ -73,7 +58,6 @@ import (
 	"%s/pkg/cais"
 	"%s/pkg/cais/meta"
 
-	"%s/internal/models"
 	"%s/internal/store"
 )
 
@@ -84,11 +68,6 @@ type %sHandler struct {
 	cfg   cais.Config
 }
 
-type %sListData struct {
-	meta.Site
-	Items []models.%s%s%s
-}
-
 func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.Config) *%sHandler {
 	return &%sHandler{views: views, store: s, site: site, cfg: cfg}
 }
@@ -96,9 +75,8 @@ func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.
 %s%s`,
 		extraStd,
 		paginationImport,
-		frameworkModule, frameworkModule, frameworkModule, data.ModulePath, data.ModulePath,
+		frameworkModule, frameworkModule, frameworkModule, data.ModulePath,
 		data.PluralPascal,
-		data.PluralPascal, data.Pascal, listDataExtra, paginationFields,
 		data.PluralPascal, data.PluralPascal, data.PluralPascal,
 		listMethod,
 		toggleMethod,
@@ -106,12 +84,9 @@ func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.
 }
 
 func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
-	sumArg := ""
-	if listSum != "" {
-		sumArg = fmt.Sprintf(", %s: %s", sumField, sumField)
-	}
 	if data.Paginate {
 		return fmt.Sprintf(`func (h *%sHandler) List(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	page := 1
 	if p := r.URL.Query().Get("page"); p != "" {
 		if n, err := strconv.Atoi(p); err == nil && n > 0 {
@@ -119,33 +94,51 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 		}
 	}
 	perPage := 25
-	items, total, err := h.store.List%s(page, perPage)
+	items, total, err := h.store.List%s(q, "", "", page, perPage)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}%s
 	pg := pagination.New(page, perPage, total)
-	listData := %sListData{
-		Site:     meta.ForRequest(h.site, r),
-		Items:    items,
-		Page:     pg.Page,
-		Total:    pg.Total,
-		PerPage:  pg.PerPage,
-		HasPrev:  pg.HasPrev,
-		HasNext:  pg.HasNext,
-		PrevPage: pg.PrevPage,
-		NextPage: pg.NextPage%s,
-	}
+	listData := amarraData(r, h.site, map[string]any{
+		"Items":    items,
+		"Title":    "%s",
+		"Q":        q,
+		"Base":     h.indexBase("/%s", "q", q),
+		"%s":       %s,
+		"Page":     pg.Page,
+		"Total":    pg.Total,
+		"PerPage":  pg.PerPage,
+		"HasPrev":  pg.HasPrev,
+		"HasNext":  pg.HasNext,
+		"PrevPage": pg.PrevPage,
+		"NextPage": pg.NextPage,
+	})
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "%s",
 		Data:   listData,
 	}, h.cfg)
 }
-`, data.PluralPascal, data.PluralPascal, listSum, data.PluralPascal, sumArg, data.Plural)
+
+// indexBase keeps the filters in pagination links.
+func (h *%sHandler) indexBase(path string, params ...string) string {
+	vals := url.Values{}
+	for i := 0; i+1 < len(params); i += 2 {
+		if params[i+1] != "" {
+			vals.Set(params[i], params[i+1])
+		}
+	}
+	if encoded := vals.Encode(); encoded != "" {
+		return path + "?" + encoded
+	}
+	return path
+}
+`, data.PluralPascal, data.PluralPascal, listSum, data.PluralPascal, data.Plural, sumField, sumField, data.Plural, data.PluralPascal)
 	}
 	return fmt.Sprintf(`func (h *%sHandler) List(w http.ResponseWriter, r *http.Request) {
-	items, err := h.store.ListAll%s()
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	items, err := h.store.ListAll%s(q, "", "")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -153,11 +146,27 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "%s",
-		Data: %sListData{
-			Site:  meta.ForRequest(h.site, r),
-			Items: items%s,
-		},
+		Data: amarraData(r, h.site, map[string]any{
+			"Items": items,
+			"Title": "%s",
+			"Q":     q,
+			"Base":  h.indexBase("/%s", "q", q),
+		}),
 	}, h.cfg)
 }
-`, data.PluralPascal, data.PluralPascal, listSum, data.Plural, data.PluralPascal, sumArg)
+
+// indexBase keeps the filters in pagination links.
+func (h *%sHandler) indexBase(path string, params ...string) string {
+	vals := url.Values{}
+	for i := 0; i+1 < len(params); i += 2 {
+		if params[i+1] != "" {
+			vals.Set(params[i], params[i+1])
+		}
+	}
+	if encoded := vals.Encode(); encoded != "" {
+		return path + "?" + encoded
+	}
+	return path
+}
+`, data.PluralPascal, data.PluralPascal, listSum, data.Plural, data.PluralPascal, data.Plural, data.PluralPascal)
 }

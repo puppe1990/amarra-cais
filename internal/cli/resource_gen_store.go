@@ -73,6 +73,7 @@ func buildResourceStoreMethods(data scaffoldData) string {
 	sets := updateSets(data.Fields)
 	updArgs := insertArgs(data.Fields) + ", c.ID"
 	sel := selectColumns(data.Fields)
+	searchCol := adminIndexDisplayField(data.Fields).Name
 
 	return nullableStoreHelpers(data.Fields) + fmt.Sprintf(`
 func (s *SQLiteStore) Insert%s(c models.%s) (int64, error) {
@@ -119,8 +120,18 @@ func (s *SQLiteStore) Find%sByID(id int64) (models.%s, error) {
 	return c, nil
 }
 
-func (s *SQLiteStore) ListAll%s() ([]models.%s, error) {
-	rows, err := s.db.Query("SELECT id, %s, created_at FROM %s ORDER BY id DESC")
+func (s *SQLiteStore) ListAll%s(search, sort, dir string) ([]models.%s, error) {
+	orderCol, orderDir := %sOrderClause(sort, dir)
+	where := ""
+	var args []any
+	if search != "" {
+		where = " WHERE %s LIKE ?"
+		args = append(args, "%%"+search+"%%")
+	}
+	rows, err := s.db.Query(
+		"SELECT id, %s, created_at FROM %s"+where+" ORDER BY "+orderCol+" "+orderDir,
+		args...,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list %s: %%w", err)
 	}
@@ -138,22 +149,53 @@ func (s *SQLiteStore) ListAll%s() ([]models.%s, error) {
 	}
 	return items, rows.Err()
 }
+
+func %sOrderClause(sort, dir string) (string, string) {
+	// Whitelist: sort/dir come from the query string, so only known columns pass.
+	allowed := map[string]bool{"id": true, "created_at": true%s}
+	col := "id"
+	if allowed[sort] {
+		col = sort
+	}
+	orderDir := "DESC"
+	if dir == "asc" {
+		orderDir = "ASC"
+	}
+	return col, orderDir
+}
 `,
 		data.Pascal, data.Pascal, data.Plural, cols, ph, args, data.Snake,
 		data.Pascal, data.Pascal, data.Plural, sets, updArgs, data.Snake,
 		data.Pascal, data.Plural, data.Snake,
 		data.Pascal, data.Pascal, data.Pascal, scanDeclare(data.Fields), sel, data.Plural, scanVars(data.Fields), data.Pascal, data.Snake, scanAssign(data.Fields),
-		data.PluralPascal, data.Pascal, sel, data.Plural, data.Plural,
+		data.PluralPascal, data.Pascal, data.PluralPascal, searchCol, sel, data.Plural, data.Plural,
 		data.Pascal, data.Pascal, scanLoopDeclare(data.Fields), scanVars(data.Fields), data.Snake, scanLoopAssign(data.Fields),
+		data.PluralPascal, sortableCols(data.Fields),
 	)
+}
+
+func sortableCols(fields []FieldDef) string {
+	var out []string
+	for _, f := range fields {
+		out = append(out, fmt.Sprintf(", %q: true", f.Name))
+	}
+	return strings.Join(out, "")
 }
 
 func buildResourcePaginatedStoreMethod(data scaffoldData) string {
 	sel := selectColumns(data.Fields)
+	searchCol := adminIndexDisplayField(data.Fields).Name
 	return fmt.Sprintf(`
-func (s *SQLiteStore) List%s(page, perPage int) ([]models.%s, int, error) {
+func (s *SQLiteStore) List%s(search, sort, dir string, page, perPage int) ([]models.%s, int, error) {
+	orderCol, orderDir := %sOrderClause(sort, dir)
+	where := ""
+	var args []any
+	if search != "" {
+		where = " WHERE %s LIKE ?"
+		args = append(args, "%%"+search+"%%")
+	}
 	var total int
-	err := s.db.QueryRow("SELECT COUNT(*) FROM %s").Scan(&total)
+	err := s.db.QueryRow("SELECT COUNT(*) FROM %s"+where, args...).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("count %s: %%w", err)
 	}
@@ -164,9 +206,10 @@ func (s *SQLiteStore) List%s(page, perPage int) ([]models.%s, int, error) {
 		perPage = 25
 	}
 	offset := pagination.Offset(page, perPage)
+	args = append(args, perPage, offset)
 	rows, err := s.db.Query(
-		"SELECT id, %s, created_at FROM %s ORDER BY id DESC LIMIT ? OFFSET ?",
-		perPage, offset,
+		"SELECT id, %s, created_at FROM %s"+where+" ORDER BY "+orderCol+" "+orderDir+" LIMIT ? OFFSET ?",
+		args...,
 	)
 	if err != nil {
 		return nil, 0, fmt.Errorf("list %s: %%w", err)
@@ -186,7 +229,7 @@ func (s *SQLiteStore) List%s(page, perPage int) ([]models.%s, int, error) {
 	return items, total, rows.Err()
 }
 `,
-		data.PluralPascal, data.Pascal,
+		data.PluralPascal, data.Pascal, data.PluralPascal, searchCol,
 		data.Plural, data.Plural,
 		sel, data.Plural, data.Plural,
 		data.Pascal, data.Pascal,
@@ -198,8 +241,21 @@ func buildResourceSeed(data scaffoldData) string {
 	if !data.Seed {
 		return ""
 	}
+	// Required reference fields need their parent row to exist first, or the
+	// FK constraint fails on a fresh database.
+	var prelude strings.Builder
 	var inserts []string
 	for _, f := range data.Fields {
+		if f.RefTable != "" && f.Required {
+			varName := "parent" + f.RefPascal + "ID"
+			prelude.WriteString(fmt.Sprintf(`	%s, err := s.Insert%s(models.%s{Name: "Sample"})
+	if err != nil {
+		return err
+	}
+`, varName, f.RefPascal, f.RefPascal))
+			inserts = append(inserts, fmt.Sprintf("%s: %s", f.Pascal, varName))
+			continue
+		}
 		inserts = append(inserts, fmt.Sprintf("%s: %s", f.Pascal, seedValueForField(f)))
 	}
 	body := fmt.Sprintf("models.%s{%s}", data.Pascal, strings.Join(inserts, ", "))
@@ -212,7 +268,7 @@ func (s *SQLiteStore) SeedDemo%s() error {
 	if count > 0 {
 		return nil
 	}
-	_, err = s.Insert%s(%s)
+%s	_, err = s.Insert%s(%s)
 	return err
 }
 
@@ -221,5 +277,5 @@ func (s *SQLiteStore) count%s() (int64, error) {
 	err := s.db.QueryRow("SELECT COUNT(*) FROM %s").Scan(&count)
 	return count, err
 }
-`, data.PluralPascal, data.PluralPascal, data.Pascal, body, data.PluralPascal, data.Plural)
+`, data.PluralPascal, data.PluralPascal, prelude.String(), data.Pascal, body, data.PluralPascal, data.Plural)
 }

@@ -28,8 +28,8 @@ func TestScaffoldResource_Paginate(t *testing.T) {
 		t.Fatal(err)
 	}
 	storeBody := string(store)
-	if !strings.Contains(storeBody, "ListArticles(page, perPage int) ([]models.Article, int, error)") {
-		t.Error("store.go missing paginated ListArticles method")
+	if !strings.Contains(storeBody, "ListArticles(search, sort, dir string, page, perPage int) ([]models.Article, int, error)") {
+		t.Error("store.go missing paginated ListArticles method with search/sort")
 	}
 	if !strings.Contains(storeBody, "SELECT COUNT(*) FROM articles") {
 		t.Error("store.go missing count query for pagination")
@@ -37,7 +37,7 @@ func TestScaffoldResource_Paginate(t *testing.T) {
 	if !strings.Contains(storeBody, "LIMIT ? OFFSET ?") {
 		t.Error("store.go missing LIMIT/OFFSET for pagination")
 	}
-	if !strings.Contains(storeBody, "ListAllArticles()") {
+	if !strings.Contains(storeBody, "ListAllArticles(search, sort, dir string)") {
 		t.Error("paginated resource should still include ListAllArticles for public handlers")
 	}
 
@@ -46,11 +46,11 @@ func TestScaffoldResource_Paginate(t *testing.T) {
 		t.Fatal(err)
 	}
 	adminBody := string(admin)
-	if strings.Contains(adminBody, "ListAllArticles()") {
+	if strings.Contains(adminBody, "ListAllArticles(") {
 		t.Error("paginated admin handler should not call ListAllArticles")
 	}
-	if !strings.Contains(adminBody, "ListArticles(page, perPage)") {
-		t.Error("admin handler should call ListArticles with page and perPage")
+	if !strings.Contains(adminBody, "ListArticles(q, sort, dir, page, perPage)") {
+		t.Error("admin handler should call ListArticles with search/sort/page/perPage")
 	}
 	if !strings.Contains(adminBody, `r.URL.Query().Get("page")`) {
 		t.Error("admin handler should read page query param")
@@ -58,7 +58,7 @@ func TestScaffoldResource_Paginate(t *testing.T) {
 	if !strings.Contains(adminBody, "perPage := 25") {
 		t.Error("admin handler should default perPage to 25")
 	}
-	for _, needle := range []string{"Page:", "Total:", "PerPage:", "HasPrev", "HasNext"} {
+	for _, needle := range []string{`"Page":`, `"Total":`, `"PerPage":`, `"HasPrev"`, `"HasNext"`} {
 		if !strings.Contains(adminBody, needle) {
 			t.Errorf("admin index data missing %s", needle)
 		}
@@ -81,9 +81,9 @@ func TestScaffoldResource_Paginate(t *testing.T) {
 		t.Fatal(err)
 	}
 	partialBody := string(partial)
-	for _, needle := range []string{`<table`, `HasPrev`, `NextPage`, `linkTo`} {
+	for _, needle := range []string{`<.table`, `<.filters`, `<.pagination`, `<.empty`} {
 		if !strings.Contains(partialBody, needle) {
-			t.Errorf("admin index partial missing %q", needle)
+			t.Errorf("admin index partial missing kit tag %q (#24)", needle)
 		}
 	}
 	if strings.Contains(partialBody, "hxPaginate") {
@@ -113,10 +113,10 @@ func TestScaffoldResource_PublicPaginate(t *testing.T) {
 		t.Fatal(err)
 	}
 	handlerBody := string(handler)
-	if strings.Contains(handlerBody, "ListAllPosts()") {
+	if strings.Contains(handlerBody, "ListAllPosts(") {
 		t.Error("paginated public handler should not call ListAllPosts")
 	}
-	for _, needle := range []string{"ListPosts(page, perPage)", `view.Write`} {
+	for _, needle := range []string{"ListPosts(q, \"\", \"\", page, perPage)", `view.Write`} {
 		if !strings.Contains(handlerBody, needle) {
 			t.Errorf("public handler missing %q", needle)
 		}
@@ -134,7 +134,7 @@ func TestScaffoldResource_PublicPaginate(t *testing.T) {
 		t.Fatal(err)
 	}
 	partialBody := string(partial)
-	for _, needle := range []string{`range .Items`, `HasPrev`, `NextPage`} {
+	for _, needle := range []string{`range .Items`, `<.pagination`, `<.empty`, `<.filters`} {
 		if !strings.Contains(partialBody, needle) {
 			t.Errorf("public list partial missing %q", needle)
 		}
@@ -162,15 +162,15 @@ func TestScaffoldResource_NoPaginate_UsesListAll(t *testing.T) {
 	if strings.Contains(storeBody, "ListNotes(page, perPage int)") {
 		t.Error("non-paginated store should not have ListNotes(page, perPage)")
 	}
-	if !strings.Contains(storeBody, "ListAllNotes()") {
-		t.Error("non-paginated store should have ListAllNotes")
+	if !strings.Contains(storeBody, "ListAllNotes(search, sort, dir string)") {
+		t.Error("non-paginated store should have ListAllNotes with search/sort")
 	}
 
 	admin, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/admin_notes.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(admin), "ListAllNotes()") {
-		t.Error("non-paginated admin handler should call ListAllNotes")
+	if !strings.Contains(string(admin), "ListAllNotes(q, sort, dir)") {
+		t.Error("non-paginated admin handler should call ListAllNotes with search/sort")
 	}
 }
