@@ -91,6 +91,7 @@ func buildAdminIndexPanel(data scaffoldData) string {
       {{ if .Dir }}<input type="hidden" name="dir" value="{{ .Dir }}" />{{ end }}
       <.input name="q" label="Search" value="{{ .Q }}" />
     </.filters>
+    {{ if .Items }}
     <div amarra-hook="bulk">
       <.form action="/admin/%[1]s/bulk-delete" method="post">
         <div class="flex items-center gap-3 mb-3" data-amarra-bulk-bar hidden>
@@ -127,7 +128,7 @@ func buildAdminIndexPanel(data scaffoldData) string {
         </.table>
       </.form>
     </div>
-    {{ if not .Items }}
+    {{ else }}
     <.empty title="No %[3]s yet" href="/admin/%[1]s/new" action="+ New">Nothing here yet.</.empty>
     {{ end }}
 %[4]s`, data.Plural, rowCells.String(), data.Title, buildAdminPaginationBlock(data))
@@ -258,12 +259,13 @@ func buildPublicListPanel(data scaffoldData) string {
 	return fmt.Sprintf(`  <.filters action="/%[1]s" clear="/%[1]s">
     <.input name="q" label="Search" value="{{ .Q }}" />
   </.filters>
+  {{ if .Items }}
   <ul id="%[1]s-list" class="space-y-3 mt-4">
     {{ range .Items }}
     <li class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">%[2]s</li>
     {{ end }}
   </ul>
-  {{ if not .Items }}
+  {{ else }}
   <.empty title="No %[3]s yet">Nothing here yet.</.empty>
   {{ end }}
 %[4]s`, data.Plural, itemBlock, data.Title, buildPublicPaginationBlock(data))
