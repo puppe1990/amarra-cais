@@ -36,7 +36,6 @@ func buildAdminFormHTML(data scaffoldData) string {
   {{ $action := "/admin/%s" }}{{ if not .IsNew }}{{ $action = printf "/admin/%s/%%d" .Item.ID }}{{ end }}
   <.form action="{{ $action }}" method="post">
     <div id="admin-%s-errors"></div>
-    {{ csrfField .CSRFToken }}
 %s
     <.button type="submit">{{ if .IsNew }}Create{{ else }}Save{{ end }}</.button>
   </.form>
@@ -92,7 +91,7 @@ func buildAdminIndexPanel(data scaffoldData) string {
       {{ if .Dir }}<input type="hidden" name="dir" value="{{ .Dir }}" />{{ end }}
       <.input name="q" label="Search" value="{{ .Q }}" />
     </.filters>
-    <.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}" frame="admin-%[1]s">
+    <.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}">
       {{ range .Items }}
       <tr>
 %[2]s        <td class="px-3 py-2 text-right space-x-3">
@@ -164,7 +163,6 @@ func buildAdminShowHTML(data scaffoldData) string {
   <div class="mt-6 flex gap-3">
     {{ linkTo (printf "/admin/%s/%%d/edit" .Item.ID) "Edit" }}
     <.form action="{{ printf "/admin/%s/%%d/delete" .Item.ID }}" method="post">
-      {{ csrfField .CSRFToken }}
       <.button type="submit">Delete</.button>
     </.form>
   </div>

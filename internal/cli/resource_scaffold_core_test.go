@@ -123,8 +123,8 @@ func TestScaffoldResource_adminHTMLDefaults(t *testing.T) {
 		t.Fatal(err)
 	}
 	formBody := string(formHTML)
-	if !strings.Contains(formBody, `csrfField`) || !strings.Contains(formBody, `.Errors`) {
-		t.Error("admin form should use csrfField and errors")
+	if !strings.Contains(formBody, `<.form`) || !strings.Contains(formBody, `.Errors`) {
+		t.Error("admin form should use <.form (kit CSRF) and errors")
 	}
 
 	adminGo, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/admin_widgets.go"))

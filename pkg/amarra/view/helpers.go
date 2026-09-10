@@ -63,7 +63,33 @@ func Dict(kv ...any) map[string]any {
 
 func helperFuncs() template.FuncMap {
 	return template.FuncMap{
-		"linkTo": LinkTo,
-		"dict":   Dict,
+		"linkTo":         LinkTo,
+		"dict":           Dict,
+		"paginationHref": PaginationHref,
 	}
+}
+
+// PaginationHref joins Base with page. Bare paths use ?page=; paths that
+// already have a query string use &page=. Empty Base stays relative (?page=).
+func PaginationHref(base any, page any) string {
+	b := ""
+	if s, ok := base.(string); ok {
+		b = s
+	}
+	p := 0
+	switch v := page.(type) {
+	case int:
+		p = v
+	case int64:
+		p = int(v)
+	}
+	q := fmt.Sprintf("page=%d", p)
+	if b == "" {
+		return "?" + q
+	}
+	sep := "?"
+	if strings.Contains(b, "?") {
+		sep = "&"
+	}
+	return b + sep + q
 }

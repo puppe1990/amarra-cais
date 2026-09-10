@@ -3,8 +3,38 @@ package cli
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 )
+
+// parentDisplayField is Name or Title on the referenced model. Inspects
+// internal/models so List*Options SQL does not mention a missing column.
+func parentDisplayField(dir, refPascal string) string {
+	if dir != "" {
+		body, err := os.ReadFile(filepath.Join(dir, "internal/models", toSnake(refPascal)+".go"))
+		if err == nil {
+			hasName := strings.Contains(string(body), "\tName ")
+			hasTitle := strings.Contains(string(body), "\tTitle ")
+			if hasTitle && !hasName {
+				return "Title"
+			}
+		}
+	}
+	return "Name"
+}
+
+func parentLabelSelectExpr(field string) string {
+	col := "name"
+	if field == "Title" {
+		col = "title"
+	}
+	return fmt.Sprintf("COALESCE(NULLIF(%s, ''), CAST(id AS TEXT))", col)
+}
+
+func parentSampleLiteral(dir, refPascal string) string {
+	return fmt.Sprintf("models.%s{%s: %q}", refPascal, parentDisplayField(dir, refPascal), "Sample")
+}
 
 func buildResourceModel(data scaffoldData) string {
 	var b strings.Builder
@@ -26,16 +56,17 @@ type SelectOption struct {
 }
 `
 
-func buildReferenceStoreMethods(fields []FieldDef, existing string) string {
+func buildReferenceStoreMethods(fields []FieldDef, existing, dir string) string {
 	var b strings.Builder
 	for _, f := range uniqueReferenceFields(fields) {
 		if strings.Contains(existing, "List"+f.RefPascal+"Options()") {
 			continue
 		}
+		labelExpr := parentLabelSelectExpr(parentDisplayField(dir, f.RefPascal))
 		fmt.Fprintf(&b, `
 func (s *SQLiteStore) List%sOptions() ([]models.SelectOption, error) {
 	rows, err := s.db.Query(
-		"SELECT id, COALESCE(NULLIF(name, ''), NULLIF(title, ''), CAST(id AS TEXT)) FROM %s ORDER BY 2",
+		"SELECT id, %s FROM %s ORDER BY 2",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("list %s options: %%w", err)
@@ -52,7 +83,7 @@ func (s *SQLiteStore) List%sOptions() ([]models.SelectOption, error) {
 	}
 	return items, rows.Err()
 }
-`, f.RefPascal, f.RefTable, f.RefTable, f.RefTable)
+`, f.RefPascal, labelExpr, f.RefTable, f.RefTable, f.RefTable)
 	}
 	return b.String()
 }
@@ -248,11 +279,11 @@ func buildResourceSeed(data scaffoldData) string {
 	for _, f := range data.Fields {
 		if f.RefTable != "" && f.Required {
 			varName := "parent" + f.RefPascal + "ID"
-			fmt.Fprintf(&prelude, `	%s, err := s.Insert%s(models.%s{Name: "Sample"})
+			fmt.Fprintf(&prelude, `	%s, err := s.Insert%s(%s)
 	if err != nil {
 		return err
 	}
-`, varName, f.RefPascal, f.RefPascal)
+`, varName, f.RefPascal, parentSampleLiteral(data.AppDir, f.RefPascal))
 			inserts = append(inserts, fmt.Sprintf("%s: %s", f.Pascal, varName))
 			continue
 		}

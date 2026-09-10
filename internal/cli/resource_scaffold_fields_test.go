@@ -216,6 +216,53 @@ func TestScaffoldResource_ReferencesField(t *testing.T) {
 	if !strings.Contains(string(form), "CategoryOptions") {
 		t.Error("admin HTML form missing category select options")
 	}
+
+	// Parent is usually `g resource category --fields name:string`. Selecting
+	// both name and title in one SQL fails at runtime (no such column: title).
+	if strings.Contains(string(store), "NULLIF(title") {
+		t.Error("ListCategoryOptions must not assume a title column when the parent model is missing or only has name")
+	}
+}
+
+func TestScaffoldResource_ReferencesOptionsSQLUsesParentTitle(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "library")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "library",
+		ModulePath: "github.com/puppe1990/library",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldResource(appDir, "category", resourceOpts{Fields: "title:string"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldResource(appDir, "bookmark", resourceOpts{
+		Fields: "title:string,category_id:references",
+		Seed:   true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	store, err := os.ReadFile(filepath.Join(appDir, "internal/store/store.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(store)
+	if !strings.Contains(body, "NULLIF(title") {
+		t.Error("ListCategoryOptions should label from the parent title column")
+	}
+	if strings.Contains(body, "NULLIF(name") {
+		t.Error("ListCategoryOptions should not query name when the parent model only has Title")
+	}
+	if !strings.Contains(body, `models.Category{Title: "Sample"}`) {
+		t.Error("seed parent insert should use Title when that is the parent display field")
+	}
+	storeTest, err := os.ReadFile(filepath.Join(appDir, "internal/store/store_test.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(storeTest), `models.Category{Title: "Sample"}`) {
+		t.Error("store tests should insert the title-only parent via Title")
+	}
 }
 
 func TestScaffoldResource_BoolFields(t *testing.T) {

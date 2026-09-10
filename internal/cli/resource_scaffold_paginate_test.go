@@ -1,8 +1,11 @@
 package cli
 
 import (
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -172,5 +175,33 @@ func TestScaffoldResource_NoPaginate_UsesListAll(t *testing.T) {
 	}
 	if !strings.Contains(string(admin), "ListAllNotes(q, sort, dir)") {
 		t.Error("non-paginated admin handler should call ListAllNotes with search/sort")
+	}
+}
+
+func TestScaffoldResource_PublicPaginate_HandlerParses(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "pubparse")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "pubparse",
+		ModulePath: "github.com/puppe1990/pubparse",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldResource(appDir, "post", resourceOpts{
+		Fields:   "title:string",
+		Public:   true,
+		Paginate: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	src, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/posts.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := parser.ParseFile(token.NewFileSet(), "posts.go", src, parser.AllErrors); err != nil {
+		t.Fatalf("generated public List must compile: %v\n%s", err, src)
+	}
+	if regexp.MustCompile(`"Total":\s*Total\b`).Match(src) {
+		t.Fatalf("public paginate List emitted undefined Total (no int column):\n%s", src)
 	}
 }

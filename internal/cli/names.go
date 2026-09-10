@@ -25,6 +25,9 @@ type scaffoldData struct {
 	Seed         bool
 	Paginate     bool
 	AdminAuth    string
+	// AppDir is the generated app root. Used to inspect a parent model so
+	// reference SQL and seed literals match name vs title (#24).
+	AppDir string
 }
 
 func dataForHandler(name string) scaffoldData {

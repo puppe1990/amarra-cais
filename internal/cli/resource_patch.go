@@ -62,7 +62,7 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 
 	implMarker := "\nfunc (s *SQLiteStore) Close()"
 	implInsert := buildResourceStoreMethods(data)
-	implInsert += buildReferenceStoreMethods(data.Fields, prePatch)
+	implInsert += buildReferenceStoreMethods(data.Fields, prePatch, dir)
 	if data.Paginate {
 		implInsert += buildResourcePaginatedStoreMethod(data)
 	}
@@ -106,7 +106,7 @@ func patchStoreTestForResource(dir string, data scaffoldData, dryRun bool) error
 		return nil
 	}
 
-	insertArgs, insertSetup := buildInsertTestLiteral(data.Fields)
+	insertArgs, insertSetup := buildInsertTestLiteral(data.Fields, dir)
 	insert := fmt.Sprintf(`
 func TestStore_Insert%s(t *testing.T) {
 	s := newTestStore(t)
@@ -141,14 +141,14 @@ func TestStore_Insert%s(t *testing.T) {
 // buildInsertTestLiteral returns the Go statements that seed one parent row
 // per required reference field (FK constraints fail otherwise) plus the
 // struct literal for the Insert test.
-func buildInsertTestLiteral(fields []FieldDef) (literal, setup string) {
+func buildInsertTestLiteral(fields []FieldDef, dir string) (literal, setup string) {
 	var parts []string
 	for _, f := range fields {
 		if f.RefTable == "" || !f.Required {
 			continue
 		}
 		varName := strings.ToLower(f.RefPascal) + "ID"
-		setup += fmt.Sprintf("%s, err := s.Insert%s(models.%s{Name: \"Sample\"})\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, f.RefPascal)
+		setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(dir, f.RefPascal))
 		parts = append(parts, f.Pascal+": "+varName)
 	}
 	for _, f := range fields {
@@ -161,7 +161,7 @@ func buildInsertTestLiteral(fields []FieldDef) (literal, setup string) {
 		f := fields[0]
 		if f.RefTable != "" {
 			varName := strings.ToLower(f.RefPascal) + "ID"
-			setup += fmt.Sprintf("%s, err := s.Insert%s(models.%s{Name: \"Sample\"})\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, f.RefPascal)
+			setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(dir, f.RefPascal))
 			parts = append(parts, f.Pascal+": "+varName)
 		} else {
 			parts = append(parts, f.Pascal+": "+seedValueForField(f))

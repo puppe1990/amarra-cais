@@ -17,6 +17,7 @@ func scaffoldResource(dir, name string, opts resourceOpts) error {
 
 	data := dataForResource(name)
 	data.ModulePath = readModulePath(dir)
+	data.AppDir = dir
 	data.Fields = fields
 	data.Public = opts.Public
 	data.Seed = opts.Seed
@@ -215,7 +216,7 @@ func adminTestRefSetup(data scaffoldData) (setup, literal, vars string) {
 			continue
 		}
 		varName := strings.ToLower(f.RefPascal) + "ID"
-		setup += fmt.Sprintf("%s, err := s.Insert%s(models.%s{Name: \"Sample\"})\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, f.RefPascal)
+		setup += fmt.Sprintf("%s, err := s.Insert%s(%s)\n\tif err != nil {\n\t\tt.Fatal(err)\n\t}\n\t", varName, f.RefPascal, parentSampleLiteral(data.AppDir, f.RefPascal))
 		literal += fmt.Sprintf(", %s: %s", f.Pascal, varName)
 		varNames = append(varNames, varName)
 	}

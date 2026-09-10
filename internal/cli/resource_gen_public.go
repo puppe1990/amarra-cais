@@ -84,6 +84,10 @@ func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.
 }
 
 func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
+	sumEntry := ""
+	if listSum != "" {
+		sumEntry = fmt.Sprintf("\n\t\t%q: %s,", sumField, sumField)
+	}
 	if data.Paginate {
 		return fmt.Sprintf(`func (h *%sHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -104,8 +108,7 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 		"Items":    items,
 		"Title":    "%s",
 		"Q":        q,
-		"Base":     h.indexBase("/%s", "q", q),
-		"%s":       %s,
+		"Base":     h.indexBase("/%s", "q", q),%s
 		"Page":     pg.Page,
 		"Total":    pg.Total,
 		"PerPage":  pg.PerPage,
@@ -134,7 +137,7 @@ func (h *%sHandler) indexBase(path string, params ...string) string {
 	}
 	return path
 }
-`, data.PluralPascal, data.PluralPascal, listSum, data.PluralPascal, data.Plural, sumField, sumField, data.Plural, data.PluralPascal)
+`, data.PluralPascal, data.PluralPascal, listSum, data.PluralPascal, data.Plural, sumEntry, data.Plural, data.PluralPascal)
 	}
 	return fmt.Sprintf(`func (h *%sHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -150,7 +153,7 @@ func (h *%sHandler) indexBase(path string, params ...string) string {
 			"Items": items,
 			"Title": "%s",
 			"Q":     q,
-			"Base":  h.indexBase("/%s", "q", q),
+			"Base":  h.indexBase("/%s", "q", q),%s
 		}),
 	}, h.cfg)
 }
@@ -168,5 +171,5 @@ func (h *%sHandler) indexBase(path string, params ...string) string {
 	}
 	return path
 }
-`, data.PluralPascal, data.PluralPascal, listSum, data.Plural, data.PluralPascal, data.Plural, data.PluralPascal)
+`, data.PluralPascal, data.PluralPascal, listSum, data.Plural, data.PluralPascal, data.Plural, sumEntry, data.PluralPascal)
 }

@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -41,9 +42,12 @@ func parseJSONForm(r *http.Request) error {
 	if r.Body == nil {
 		return nil
 	}
-	defer func() { _ = r.Body.Close() }()
-
-	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20)) // 1 MiB
+	orig := r.Body
+	body, err := io.ReadAll(io.LimitReader(orig, 1<<20)) // 1 MiB
+	_ = orig.Close()
+	// Rewind so CSRF + the handler can both ParseFormOrJSON (and json.Decoder
+	// still sees the payload). Close on the original body is not reversible.
+	r.Body = io.NopCloser(bytes.NewReader(body))
 	if err != nil {
 		return err
 	}

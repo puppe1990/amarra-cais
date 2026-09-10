@@ -2,6 +2,7 @@ package httpx
 
 import (
 	"bytes"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -103,6 +104,40 @@ func TestParseFormOrJSON_afterMiddlewareParseForm(t *testing.T) {
 	if got := req.FormValue("email"); got != "after@example.com" {
 		t.Errorf("email = %q, want after@example.com", got)
 	}
+}
+
+func TestParseFormOrJSON_jsonTwiceLeavesFormValues(t *testing.T) {
+	raw := []byte(`{"email":"twice@example.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/login", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Body = &closeGuard{Reader: bytes.NewReader(raw)}
+	req.ContentLength = int64(len(raw))
+	if err := ParseFormOrJSON(req); err != nil {
+		t.Fatal(err)
+	}
+	if err := ParseFormOrJSON(req); err != nil {
+		t.Fatalf("second parse after CSRF-style first parse: %v", err)
+	}
+	if got := req.FormValue("email"); got != "twice@example.com" {
+		t.Errorf("email = %q after second parse", got)
+	}
+}
+
+type closeGuard struct {
+	*bytes.Reader
+	closed bool
+}
+
+func (c *closeGuard) Close() error {
+	c.closed = true
+	return nil
+}
+
+func (c *closeGuard) Read(p []byte) (int, error) {
+	if c.closed {
+		return 0, io.ErrClosedPipe
+	}
+	return c.Reader.Read(p)
 }
 
 func TestParseFormOrJSON_invalidJSON(t *testing.T) {

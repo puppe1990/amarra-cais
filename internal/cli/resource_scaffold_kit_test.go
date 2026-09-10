@@ -30,10 +30,13 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := string(partial)
-	for _, tag := range []string{`<.filters`, `<.table`, `<.empty`, `<.pagination`, `frame="admin-bookmarks"`} {
+	for _, tag := range []string{`<.filters`, `<.table`, `<.empty`, `<.pagination`} {
 		if !strings.Contains(body, tag) {
 			t.Errorf("admin index missing %s (#24)", tag)
 		}
+	}
+	if strings.Contains(body, `frame="`) {
+		t.Error("admin table must not set frame= without a {{ define \"frame:<id>\" }} (#18)")
 	}
 	for _, banned := range []string{"bg-slate-50", `<table`} {
 		if strings.Contains(body, banned) {
@@ -56,6 +59,17 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 	}
 	if strings.Contains(string(form), `type="checkbox"`) {
 		t.Error("admin form should not hand-roll checkbox markup")
+	}
+	if strings.Contains(string(form), "csrfField") {
+		t.Error("admin form should not duplicate csrfField inside <.form> (kit injects $.CSRFToken)")
+	}
+
+	show, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_bookmark_show.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(show), "csrfField") {
+		t.Error("admin show delete <.form> should not duplicate csrfField")
 	}
 
 	handler, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/admin_bookmarks.go"))
