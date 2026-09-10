@@ -223,7 +223,7 @@ func patchLayoutNavForStreamChat(dir string, dryRun bool) error {
 		marker = "</nav>"
 	}
 	_ = inertia
-	navLink := `          <a href="/chat" data-amarra-drive="true" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">Chat</a>
+	navLink := `          <a href="/chat" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">Chat</a>
 `
 	content = strings.Replace(content, marker, navLink+marker, 1)
 	rel := strings.TrimPrefix(path, dir+string(os.PathSeparator))

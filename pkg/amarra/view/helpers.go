@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-// LinkTo renders a Drive-enabled anchor. href and label are HTML-escaped.
+// LinkTo renders an anchor for Drive. href and label are HTML-escaped.
+// Drive intercepts same-origin links by default, so no attribute is needed;
+// opt out with data-amarra-skip on the link when a full visit is required.
 // An optional map may set method, confirm, and frame (Turbo-shaped attrs).
 func LinkTo(href, label string, opts ...any) template.HTML {
 	var method, confirm, frame string
@@ -29,7 +31,7 @@ func LinkTo(href, label string, opts ...any) template.HTML {
 	var b strings.Builder
 	b.WriteString(`<a href="`)
 	template.HTMLEscape(&b, []byte(href))
-	b.WriteString(`" data-amarra-drive="true"`)
+	b.WriteString(`"`)
 	writeDataAttr(&b, "data-amarra-method", method)
 	writeDataAttr(&b, "data-amarra-confirm", confirm)
 	writeDataAttr(&b, "data-amarra-frame", frame)

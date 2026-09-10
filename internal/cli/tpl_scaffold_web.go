@@ -39,7 +39,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
     <div>
       <header class="bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-          <a href="/" class="flex items-center gap-3 group" data-amarra-drive="true">
+          <a href="/" class="flex items-center gap-3 group">
             <span class="flex h-9 w-9 items-center justify-center border border-copper/70 text-copper group-hover:bg-copper group-hover:text-ink transition-colors" aria-hidden="true">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 20V8m0 0a3 3 0 116 0v1H5m14 11V9a3 3 0 00-3-3h-3" /></svg>
             </span>
@@ -48,7 +48,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
               <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80">Amarra</span>
             </span>
           </a>
-          <a href="/login" data-amarra-drive="true" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+          <a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
         </div>
       </header>
       <nav id="amarra-nav" class="bg-ink border-b border-foam/10 sticky top-[57px] z-30">
@@ -135,8 +135,8 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
       <h1 class="amarra-rise amarra-rise-delay-1 mt-5 font-serif italic text-[clamp(2.75rem,7vw,6.25rem)] leading-[0.88] text-foam">{{"{{"}} t "home.rails_heading" {{"}}"}}</h1>
       <p data-testid="amarra-ready" class="amarra-rise amarra-rise-delay-2 mt-8 max-w-md text-lg leading-relaxed text-foam/65">{{"{{"}} t "home.rails_subtitle" .Site.AppName {{"}}"}}</p>
       <div class="amarra-rise amarra-rise-delay-3 mt-10 flex flex-wrap items-center gap-6">
-        <a href="/login" data-amarra-drive="true" class="inline-flex items-center gap-2 bg-copper px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-foam transition-colors">{{"{{"}} t "home.cta_board" {{"}}"}}</a>
-        <a href="/contact" data-amarra-drive="true" class="font-mono text-[11px] uppercase tracking-[0.22em] text-foam/55 hover:text-copper transition-colors">{{"{{"}} t "home.contact_link" {{"}}"}}</a>
+        <a href="/login" class="inline-flex items-center gap-2 bg-copper px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-foam transition-colors">{{"{{"}} t "home.cta_board" {{"}}"}}</a>
+        <a href="/contact" class="font-mono text-[11px] uppercase tracking-[0.22em] text-foam/55 hover:text-copper transition-colors">{{"{{"}} t "home.contact_link" {{"}}"}}</a>
       </div>
       <div class="amarra-rise amarra-rise-delay-4 mt-14 flex items-center gap-4 text-copper/50">
         <span class="h-px w-16 bg-copper/60"></span>

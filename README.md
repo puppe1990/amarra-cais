@@ -130,7 +130,7 @@ Pages live in `web/templates/pages/*.html` and define a `content` block. Kit tag
 {{ end }}
 ```
 
-**Drive** — clicks/submits with `data-amarra-drive="true"` (or `{{ linkTo }}` / `<.form>`) become `fetch` with `Amarra-Drive: true` + CSRF, then morph `#amarra-main`. First load, curl, and crawlers get the full layout.
+**Drive** — intercepts all same-origin clicks/submits by default (plain `<a>`, `<form>`, `{{ linkTo }}`, `<.form>`) and turns them into `fetch` with `Amarra-Drive: true` + CSRF, then morphs `#amarra-main`. First load, curl, and crawlers get the full layout. Opt out with `data-amarra-skip`.
 
 **JSON bodies** — if a client posts JSON, handlers should use:
 

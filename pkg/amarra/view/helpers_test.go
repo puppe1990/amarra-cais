@@ -11,12 +11,14 @@ import (
 )
 
 func TestLinkTo_driveAnchor(t *testing.T) {
+	// Drive intercepts every same-origin link by default (#31); data-amarra-drive
+	// is a no-op the runtime never reads. The anchor must stay plain.
 	got := string(LinkTo("/x", "Hi"))
 	if !strings.Contains(got, `href="/x"`) || !strings.Contains(got, "Hi") {
 		t.Fatalf("%q", got)
 	}
-	if !strings.Contains(got, `data-amarra-drive="true"`) {
-		t.Fatalf("missing drive attr: %q", got)
+	if strings.Contains(got, `data-amarra-drive`) {
+		t.Fatalf("no-op drive attr leaked into anchor: %q", got)
 	}
 }
 
@@ -77,7 +79,7 @@ func TestLoad_linkToAvailableInTemplates(t *testing.T) {
 	rr := httptest.NewRecorder()
 	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
 	body := rr.Body.String()
-	if !strings.Contains(body, `href="/x"`) || !strings.Contains(body, "Hi") || !strings.Contains(body, `data-amarra-drive="true"`) {
+	if !strings.Contains(body, `href="/x"`) || !strings.Contains(body, "Hi") || strings.Contains(body, `data-amarra-drive`) {
 		t.Fatalf("%q", body)
 	}
 }

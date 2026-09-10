@@ -23,10 +23,15 @@ func TestLayoutTemplates_fullHasDefaultNavLinks(t *testing.T) {
 	if !strings.Contains(tplLayout, `template "nav_links"`) {
 		t.Error("full layout should render nav_links partial")
 	}
-	for _, link := range []string{`href="/contact"`, `href="/dashboard"`, `data-amarra-drive="true"`} {
+	for _, link := range []string{`href="/contact"`, `href="/dashboard"`} {
 		if !strings.Contains(tplPartialNavLinks, link) {
 			t.Errorf("nav_links partial missing %s", link)
 		}
+	}
+	// Drive intercepts same-origin links by default (#31); the no-op
+	// data-amarra-drive attr must not be generated.
+	if strings.Contains(tplPartialNavLinks, `data-amarra-drive`) {
+		t.Error("nav_links partial should not emit the no-op data-amarra-drive attr")
 	}
 	if !strings.Contains(tplLayout, "amarra-toast-host") {
 		t.Error("full layout missing amarra-toast-host")

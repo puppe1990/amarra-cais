@@ -14,7 +14,7 @@ func TestKit_formIncludesCSRFAndInner(t *testing.T) {
 	fsys := fstest.MapFS{
 		"layouts/app.html":       &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
 		"pages/login.html":       &fstest.MapFile{Data: []byte(`{{ define "content" }}<.form action="/login" method="post">{{ csrfField .CSRFToken }}<.input name="email" label="Email" value="{{ .Email }}" error="{{ fieldError .Errors "email" }}" /><.button type="submit">Go</.button></.form>{{ end }}`)},
-		"components/form.html":   &fstest.MapFile{Data: []byte(`<form action="{{ .Action }}" method="{{ .Method }}" data-amarra-drive="true">{{ .Inner }}</form>`)},
+		"components/form.html":   &fstest.MapFile{Data: []byte(`<form action="{{ .Action }}" method="{{ .Method }}">{{ .Inner }}</form>`)},
 		"components/input.html":  &fstest.MapFile{Data: []byte(`<label for="{{ .Name }}">{{ .Label }}</label><input id="{{ .Name }}" name="{{ .Name }}" value="{{ .Value }}">{{ if .Error }}<p class="err">{{ .Error }}</p>{{ end }}`)},
 		"components/button.html": &fstest.MapFile{Data: []byte(`<button type="{{ .Type }}">{{ .Inner }}</button>`)},
 	}
@@ -38,11 +38,13 @@ func TestKit_formIncludesCSRFAndInner(t *testing.T) {
 		`value="a@b.c"`,
 		`invalid`,
 		`type="submit"`,
-		`data-amarra-drive="true"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("missing %q in %s", want, body)
 		}
+	}
+	if strings.Contains(body, `data-amarra-drive`) {
+		t.Errorf("no-op drive attr leaked into form: %s", body)
 	}
 }
 
@@ -155,7 +157,6 @@ func TestKit_localeTogglePostsToLocale(t *testing.T) {
 	body := rr.Body.String()
 	for _, want := range []string{
 		`action="/locale"`,
-		`data-amarra-drive="true"`,
 		`name="csrf_token"`,
 		`value="tok"`,
 		`name="locale"`,

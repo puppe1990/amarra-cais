@@ -189,7 +189,7 @@ http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 
 Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only.
 
-**Public HTML contract** (`amarra.js`): `data-amarra-drive`, `data-amarra-confirm`, `data-amarra-method`, `data-amarra-disable-with`, `data-amarra-frame`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-debounce` / `amarra-hook` / `amarra-live`, `<amarra-frame loading="lazy">`. HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
+**Public HTML contract** (`amarra.js`): `data-amarra-skip` (opt out of Drive), `data-amarra-confirm`, `data-amarra-method`, `data-amarra-disable-with`, `data-amarra-frame`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-debounce` / `amarra-hook` / `amarra-live`, `<amarra-frame loading="lazy">`. Drive intercepts all same-origin clicks/submits by default — no opt-in attribute exists. HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
 
 ```html
 {{ define "content" }}
@@ -221,9 +221,9 @@ Shipped `amarra-hook` builtins: `clipboard`, `password` (toggle `type` + `aria-p
 </script>
 ```
 
-Shipped kit (override in `web/templates/components/`): `form`, `input`, `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`, `locale-toggle`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken` and `data-amarra-drive="true"`.
+Shipped kit (override in `web/templates/components/`): `form`, `input`, `select`, `textarea`, `checkbox`, `button`, `flash`, `nav`, `pagination`, `modal`, `locale-toggle`. One slot: `.Inner`. Self-closing `<.flash />` is allowed. `<.form>` injects `csrf_token` from `.CSRFToken`.
 
-`{{ linkTo "/x" "Label" }}` emits a Drive-enabled `<a>`. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
+`{{ linkTo "/x" "Label" }}` emits a plain `<a>` — Drive intercepts it by default. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
 
 **Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only. `sock.Patch`, `sock.Stream`, and `sock.Push` ride on the morph message.
 

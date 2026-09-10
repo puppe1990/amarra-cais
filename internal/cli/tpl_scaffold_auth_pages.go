@@ -14,9 +14,9 @@ const tplPageLogin = `{{"{{"}} define "content" {{"}}"}}
   <p class="mt-4 text-center text-sm text-foam/60 space-y-1">
     <span class="block">
       {{"{{"}} t "auth.signup_prompt" {{"}}"}}
-      <a class="text-copper hover:text-foam" href="/signup" data-amarra-drive="true">{{"{{"}} t "auth.signup_title" {{"}}"}}</a>
+      <a class="text-copper hover:text-foam" href="/signup">{{"{{"}} t "auth.signup_title" {{"}}"}}</a>
     </span>
-    <a class="text-copper hover:text-foam" href="/forgot-password" data-amarra-drive="true">{{"{{"}} t "auth.forgot_password" {{"}}"}}</a>
+    <a class="text-copper hover:text-foam" href="/forgot-password">{{"{{"}} t "auth.forgot_password" {{"}}"}}</a>
   </p>
 </div>
 </div>
@@ -36,7 +36,7 @@ const tplPageSignup = `{{"{{"}} define "content" {{"}}"}}
   </.form>
   <p class="mt-4 text-center text-sm text-foam/60">
     {{"{{"}} t "auth.login_prompt" {{"}}"}}
-    <a class="text-copper hover:text-foam" href="/login" data-amarra-drive="true">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+    <a class="text-copper hover:text-foam" href="/login">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
   </p>
 </div>
 </div>
@@ -53,7 +53,7 @@ const tplPageForgotPassword = `{{"{{"}} define "content" {{"}}"}}
     <.button type="submit">{{"{{"}} t "auth.forgot_password_submit" {{"}}"}}</.button>
   </.form>
   <p class="mt-4 text-center text-sm text-foam/60">
-    <a class="text-copper hover:text-foam" href="/login" data-amarra-drive="true">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+    <a class="text-copper hover:text-foam" href="/login">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
   </p>
 </div>
 </div>
@@ -72,7 +72,7 @@ const tplPageResetPassword = `{{"{{"}} define "content" {{"}}"}}
     <.button type="submit">{{"{{"}} t "auth.reset_password_submit" {{"}}"}}</.button>
   </.form>
   <p class="mt-4 text-center text-sm text-foam/60">
-    <a class="text-copper hover:text-foam" href="/login" data-amarra-drive="true">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+    <a class="text-copper hover:text-foam" href="/login">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
   </p>
 </div>
 </div>

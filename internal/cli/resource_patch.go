@@ -264,7 +264,7 @@ func layoutNavFile(dir string) (path string, inertia bool) {
 
 func publicNavLink(data scaffoldData, inertia bool) string {
 	_ = inertia
-	return fmt.Sprintf(`          <a href="/%s" data-amarra-drive="true" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s</a>
+	return fmt.Sprintf(`          <a href="/%s" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s</a>
 `, data.Plural, toTitle(data.Plural))
 }
 
