@@ -219,9 +219,81 @@ func TestKit_selectTextareaCheckbox(t *testing.T) {
 	}
 }
 
+func TestKit_statCard(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.stat label="Spend" value="R$ 12.00" />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, "Spend") || !strings.Contains(body, "R$ 12.00") {
+		t.Errorf("stat missing label/value: %s", body)
+	}
+}
+
+func TestKit_statCardWithHrefAndDelta(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.stat label="Spend" value="R$ 12.00" href="/spend" delta="-8%" hint="vs last month" />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{`href="/spend"`, "-8%", "vs last month"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("stat missing %q in %s", want, body)
+		}
+	}
+}
+
+func TestKit_emptyStateWithButtonSlot(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.empty title="No items"><.button type="button">Create</.button></.empty>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, "No items") || !strings.Contains(body, "Create") {
+		t.Errorf("empty missing title or slot: %s", body)
+	}
+}
+
+func TestKit_emptyStateWithActionLink(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.empty title="No items" href="/items/new" action="New item">Add your first one.</.empty>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{`href="/items/new"`, "New item", "Add your first one."} {
+		if !strings.Contains(body, want) {
+			t.Errorf("empty missing %q in %s", want, body)
+		}
+	}
+}
+
 func TestShippedComponents_includesKitStems(t *testing.T) {
 	got := ShippedComponents()
-	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password"} {
+	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password", "stat", "empty"} {
 		if _, ok := got[stem]; !ok {
 			t.Errorf("missing shipped component %s", stem)
 		}
