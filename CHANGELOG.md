@@ -6,6 +6,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.2.0] - 2026-09-10
+
+### Added
+
+- Kit `<.table>` with server-side sort headers (`?sort=` / `?dir=`, `aria-sort`) (#18).
+- Kit `<.filters>` GET form (search + hidden sort/page) (#19).
+- Kit `<.stat>` KPI card and `<.empty>` empty state (#20).
+- Kit `<.password>` with eye toggle wired to `amarra-hook="password"` (#29).
+- Hooks: `dialog` (native `<dialog>`), `dropdown`, `bulk` (select-all on the current page), `nav` (re-sync active link after Drive morph) (#21, #22, #23, #27).
+- Theme hook: storage key, class, colors, and labels from `data-amarra-theme-*` (#30).
+- Password hook: sibling input fallback, `aria-label` swap, `data-amarra-password-icon` (#28).
+- `amarra-cais g resource` admin/public indexes use the kit (`<.filters>` / `<.table>` / `<.empty>` / `<.pagination>`) with search + sort (#24).
+
+### Fixed
+
+- `Router.Get("/")` is no longer a ServeMux catch-all; root is registered as `/{$}` so `/.env` and unknown paths 404 (#32).
+- CSRF middleware parses multipart bodies via `ParseFormOrJSON` so classic file uploads are not 403 (#26).
+- `ParseFormOrJSON` rewinds JSON bodies so CSRF and the handler can both read the payload.
+- Kit `<.pagination>` joins a bare Base with `?page=` (not `&page=`).
+- Reference `List*Options` SQL and parent seed literals use the parent `name` or `title` column, not both.
+- Generated public `--paginate` List no longer emits an undefined `Total` when there is no int column.
+
+### Changed
+
+- Generators and kit no longer emit the no-op `data-amarra-drive="true"`; Drive is opt-out via `data-amarra-skip` (#31).
+- Kit `<.form>` / locale-toggle read CSRF from the root (`$.CSRFToken`) so nested slots work.
+
 ## [0.1.0] - 2026-09-05
 
 ### Added

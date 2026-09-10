@@ -20,12 +20,14 @@ This repository is the **framework + CLI** only. Generate apps with `amarra-cais
 
 The browser does not mount a SPA. Handlers call `view.Write`. Drive morphs `#amarra-main`. There is no Vite, Svelte, or Inertia in generated apps. Migrating a Cais Inertia app is a UI rewrite — see [docs/migrate-inertia.md](docs/migrate-inertia.md).
 
+Repeating UI is the shipped **kit + hooks**, not Alpine/Stimulus/HTMX: `<.table>`, `<.filters>`, `<.stat>`, `<.empty>`, `<.password>`, plus `amarra-hook` builtins `dialog`, `dropdown`, `bulk`, `nav`, `theme`, `password`. Sort and filter are `GET ?q=&sort=` (server re-render). `amarra-cais g resource` emits the kit.
+
 ## Quick start
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.1.0   # or: make install-cli from this repo
-amarra-cais version   # expect 0.1.0
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.2.0   # or: make install-cli from this repo
+amarra-cais version   # expect 0.2.0
 amarra-cais new myapp
 cd myapp && amarra-cais install && amarra-cais dev   # http://localhost:8080
 ```

@@ -6,3 +6,4 @@ tmp/
 *.db
 .DS_Store
 .worktrees/
+.commandcode/
