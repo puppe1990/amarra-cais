@@ -52,6 +52,12 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 	if !strings.Contains(body, `(dict "method" "post" "confirm"`) {
 		t.Error("admin index delete should be a confirmed Drive link")
 	}
+	if strings.Contains(body, "{{ if not .Items }}") {
+		t.Error("empty state must not sit under the table; use {{ if .Items }} else (#38)")
+	}
+	if !strings.Contains(body, "{{ if .Items }}") {
+		t.Error("admin index must wrap the table in {{ if .Items }} (#38)")
+	}
 	for _, needle := range []string{
 		`amarra-hook="bulk"`,
 		`data-amarra-bulk-all`,
