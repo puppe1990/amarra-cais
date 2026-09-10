@@ -58,11 +58,17 @@ test("bulk hook select-all checks and unchecks every row on the page", () => {
   const { all, rows } = setup();
   all.checked = true;
   all.change();
-  assert.deepEqual(rows.map((r) => r.checked), [true, true]);
+  assert.deepEqual(
+    rows.map((r) => r.checked),
+    [true, true]
+  );
 
   all.checked = false;
   all.change();
-  assert.deepEqual(rows.map((r) => r.checked), [false, false]);
+  assert.deepEqual(
+    rows.map((r) => r.checked),
+    [false, false]
+  );
 });
 
 test("bulk hook marks the header indeterminate when some rows are selected", () => {

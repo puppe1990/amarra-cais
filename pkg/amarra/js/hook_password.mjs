@@ -56,8 +56,12 @@ function swapAriaLabel(el, show) {
 function toggleIcons(el, show) {
   // #28: data-amarra-password-icon is the amarra name; data-cais-password-icon
   // stays as the legacy alias so existing markup keeps working.
-  const showIcon = el.querySelector?.('[data-amarra-password-icon="show"]') ?? el.querySelector?.('[data-cais-password-icon="show"]');
-  const hideIcon = el.querySelector?.('[data-amarra-password-icon="hide"]') ?? el.querySelector?.('[data-cais-password-icon="hide"]');
+  const showIcon =
+    el.querySelector?.('[data-amarra-password-icon="show"]') ??
+    el.querySelector?.('[data-cais-password-icon="show"]');
+  const hideIcon =
+    el.querySelector?.('[data-amarra-password-icon="hide"]') ??
+    el.querySelector?.('[data-cais-password-icon="hide"]');
   showIcon?.classList?.toggle?.("hidden", show);
   hideIcon?.classList?.toggle?.("hidden", !show);
 }

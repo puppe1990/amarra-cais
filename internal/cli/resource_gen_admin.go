@@ -348,7 +348,7 @@ func (h *Admin%sHandler) parseForm(r *http.Request) (models.%s, validate.FieldEr
 		frameworkModule, frameworkModule, frameworkModule, data.ModulePath, data.ModulePath,
 		data.PluralPascal,
 		data.PluralPascal, data.PluralPascal, data.PluralPascal,
-		colsVar + "\n\n" + indexMethod,
+		colsVar+"\n\n"+indexMethod,
 		showMethod,
 		formDataMethod,
 		data.PluralPascal, data.Snake, newRender,

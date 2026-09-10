@@ -248,11 +248,11 @@ func buildResourceSeed(data scaffoldData) string {
 	for _, f := range data.Fields {
 		if f.RefTable != "" && f.Required {
 			varName := "parent" + f.RefPascal + "ID"
-			prelude.WriteString(fmt.Sprintf(`	%s, err := s.Insert%s(models.%s{Name: "Sample"})
+			fmt.Fprintf(&prelude, `	%s, err := s.Insert%s(models.%s{Name: "Sample"})
 	if err != nil {
 		return err
 	}
-`, varName, f.RefPascal, f.RefPascal))
+`, varName, f.RefPascal, f.RefPascal)
 			inserts = append(inserts, fmt.Sprintf("%s: %s", f.Pascal, varName))
 			continue
 		}

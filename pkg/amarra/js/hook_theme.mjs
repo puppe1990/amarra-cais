@@ -11,7 +11,8 @@ export function makeTheme(opts = {}) {
   // (data-amarra-theme-key / data-amarra-theme-class) without re-registering.
   // The FOUC snippet in the layout head must use the same key.
   const keyFor = (el) => el?.getAttribute?.("data-amarra-theme-key") || opts.key || DEFAULT_KEY;
-  const classFor = (el) => el?.getAttribute?.("data-amarra-theme-class") || opts.className || DEFAULT_CLASS;
+  const classFor = (el) =>
+    el?.getAttribute?.("data-amarra-theme-class") || opts.className || DEFAULT_CLASS;
   function apply(on, el) {
     const className = classFor(el);
     const key = keyFor(el);
