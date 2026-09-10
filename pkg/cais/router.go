@@ -3,6 +3,7 @@ package cais
 import (
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type Middleware func(http.Handler) http.Handler
@@ -88,12 +89,28 @@ func (r *Router) register(method, pattern string, handler http.HandlerFunc) {
 
 // handlePattern registers on ServeMux and rewrites conflict panics with a cais-specific hint (#142).
 func (r *Router) handlePattern(pattern string, handler http.Handler) {
+	pattern = exactRoot(pattern)
 	defer func() {
 		if rec := recover(); rec != nil {
 			panic(formatRouteConflict(pattern, rec))
 		}
 	}()
 	r.mux.Handle(pattern, handler)
+}
+
+// exactRoot rewrites root "/" patterns to the end-of-path wildcard "/{$}" (#32).
+// On Go 1.22+ ServeMux a trailing slash is a subtree pattern, so "GET /" matches
+// every unmatched GET path (/.env, /nope → 200 from the home handler). "/{$}"
+// matches only the exact root. Real subtree patterns ("/static/") are kept.
+func exactRoot(pattern string) string {
+	if pattern == "/" {
+		return "/{$}"
+	}
+	method, path, found := strings.Cut(pattern, " ")
+	if found && path == "/" {
+		return method + " /{$}"
+	}
+	return pattern
 }
 
 func (r *Router) wrap(handler http.Handler) http.Handler {

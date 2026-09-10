@@ -38,13 +38,16 @@ func TestRegister_NonConflictingWildcardOK(t *testing.T) {
 	r.Get("/users/me", func(http.ResponseWriter, *http.Request) {})
 }
 
-func TestHandle_allMethodsConflictsWithGetRoot(t *testing.T) {
+func TestHandle_allMethodsConflictsWithMethodWildcard(t *testing.T) {
+	// Since #32, "GET /" matches only the root, so it no longer conflicts with
+	// specific routes. All-methods patterns still panic when they overlap a
+	// method-restricted pattern without either being more specific.
 	r := NewRouter()
-	r.Get("/", func(http.ResponseWriter, *http.Request) {})
+	r.Get("/amarra/{id}", func(http.ResponseWriter, *http.Request) {})
 	defer func() {
 		rec := recover()
 		if rec == nil {
-			t.Fatal("expected panic registering all-method /amarra/live after GET /")
+			t.Fatal("expected panic registering all-methods /amarra/live after GET /amarra/{id}")
 		}
 		if !strings.Contains(fmt.Sprint(rec), "/amarra/live") {
 			t.Errorf("panic should mention /amarra/live, got: %v", rec)

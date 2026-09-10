@@ -170,6 +170,48 @@ func TestRouter_GetRoute(t *testing.T) {
 	}
 }
 
+func TestRouter_GetRoot_IsNotCatchAll(t *testing.T) {
+	r := NewRouter()
+	homeCalled := false
+	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
+		homeCalled = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	for _, path := range []string{"/.env", "/.git/config", "/nope", "/console/"} {
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, path, nil))
+		if rr.Code != http.StatusNotFound {
+			t.Errorf("GET %s status = %d, want 404 (root must not be a catch-all)", path, rr.Code)
+		}
+		if homeCalled {
+			t.Errorf("GET %s reached the home handler", path)
+		}
+	}
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rr.Code != http.StatusOK {
+		t.Errorf("GET / status = %d, want %d", rr.Code, http.StatusOK)
+	}
+	if !homeCalled {
+		t.Error("home handler was not called for GET /")
+	}
+}
+
+func TestRouter_HandleRoot_IsNotCatchAll(t *testing.T) {
+	r := NewRouter()
+	r.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/missing", nil))
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("GET /missing status = %d, want 404", rr.Code)
+	}
+}
+
 func TestRouter_PostRoute(t *testing.T) {
 	r := NewRouter()
 	r.Post("/submit", func(w http.ResponseWriter, req *http.Request) {
