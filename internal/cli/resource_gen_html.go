@@ -91,17 +91,42 @@ func buildAdminIndexPanel(data scaffoldData) string {
       {{ if .Dir }}<input type="hidden" name="dir" value="{{ .Dir }}" />{{ end }}
       <.input name="q" label="Search" value="{{ .Q }}" />
     </.filters>
-    <.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}" base="{{ .Base }}">
-      {{ range .Items }}
-      <tr>
-%[2]s        <td class="px-3 py-2 text-right space-x-3">
-          {{ linkTo (printf "/admin/%[1]s/%%d" .ID) "View" }}
-          {{ linkTo (printf "/admin/%[1]s/%%d/edit" .ID) "Edit" }}
-          {{ linkTo (printf "/admin/%[1]s/%%d/delete" .ID) "Delete" (dict "method" "post" "confirm" "Delete this %[3]s?") }}
-        </td>
-      </tr>
-      {{ end }}
-    </.table>
+    <div amarra-hook="bulk">
+      <.form action="/admin/%[1]s/bulk-delete" method="post">
+        <div class="flex items-center gap-3 mb-3" data-amarra-bulk-bar hidden>
+          <span class="text-sm text-foam/70"><span data-amarra-bulk-count>0</span> selected</span>
+          <div amarra-hook="dialog">
+            <button type="button" data-amarra-dialog-open class="text-sm text-copper">Delete selected</button>
+            <.modal>
+              <p class="mb-4">Delete the selected %[3]s?</p>
+              <.button type="submit">Delete</.button>
+              <button type="button" data-amarra-dialog-close class="ml-3 text-sm text-foam/70">Cancel</button>
+            </.modal>
+          </div>
+        </div>
+        <label class="mb-2 inline-flex items-center gap-2 text-sm text-foam/70">
+          <input type="checkbox" data-amarra-bulk-all />
+          Select page
+        </label>
+        <.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}" base="{{ .Base }}">
+          {{ range .Items }}
+          <tr>
+            <td class="px-3 py-2"><input type="checkbox" name="ids" value="{{ .ID }}" data-amarra-bulk-row /></td>
+%[2]s            <td class="px-3 py-2 text-right">
+              <div amarra-hook="dropdown" class="relative inline-block text-left">
+                <button type="button" data-amarra-dropdown-button aria-expanded="false" class="text-sm text-copper">Actions</button>
+                <div data-amarra-dropdown-menu hidden class="absolute right-0 z-10 mt-1 min-w-[8rem] border border-foam/10 bg-ink p-1 text-left">
+                  {{ linkTo (printf "/admin/%[1]s/%%d" .ID) "View" }}
+                  {{ linkTo (printf "/admin/%[1]s/%%d/edit" .ID) "Edit" }}
+                  {{ linkTo (printf "/admin/%[1]s/%%d/delete" .ID) "Delete" (dict "method" "post" "confirm" "Delete this %[3]s?") }}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {{ end }}
+        </.table>
+      </.form>
+    </div>
     {{ if not .Items }}
     <.empty title="No %[3]s yet" href="/admin/%[1]s/new" action="+ New">Nothing here yet.</.empty>
     {{ end }}

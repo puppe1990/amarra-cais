@@ -161,6 +161,7 @@ func unpatchResourceRoutes(content string, data scaffoldData) (string, error) {
 		"/admin/" + data.Plural + "/new":         true,
 		"/admin/" + data.Plural + "/{id}/edit":   true,
 		"/admin/" + data.Plural + "/{id}/delete": true,
+		"/admin/" + data.Plural + "/bulk-delete": true,
 	}
 	pubPaths := map[string]bool{
 		"/" + data.Plural:                  true,
