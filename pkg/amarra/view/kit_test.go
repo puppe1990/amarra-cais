@@ -291,9 +291,85 @@ func TestKit_emptyStateWithActionLink(t *testing.T) {
 	}
 }
 
+func tableCols() []map[string]any {
+	return []map[string]any{
+		{"Field": "name", "Label": "Name", "Sortable": true},
+		{"Field": "created_at", "Label": "Created", "Sortable": false},
+	}
+}
+
+func TestKit_tableSortableHeaders(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.table cols="{{ .Cols }}" sort="name" dir="asc">{{ range .Items }}<tr><td>{{ .Title }}</td></tr>{{ end }}</.table>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{
+			"Cols":  tableCols(),
+			"Items": []map[string]any{{"Title": "First"}},
+		},
+	}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{
+		// Toggle: current sort is name asc, header links to desc.
+		`href="?sort=name&dir=desc"`,
+		`aria-sort="ascending"`,
+		"First",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("table missing %q in %s", want, body)
+		}
+	}
+	if strings.Contains(body, "?sort=created_at") {
+		t.Errorf("non-sortable column must not emit a sort link: %s", body)
+	}
+}
+
+func TestKit_tableTogglesDirOnDesc(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.table cols="{{ .Cols }}" sort="name" dir="desc"></.table>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{"Cols": tableCols()}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{`href="?sort=name&dir=asc"`, `aria-sort="descending"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("table missing %q in %s", want, body)
+		}
+	}
+}
+
+func TestKit_tableFrameTargetsSortLinks(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.table cols="{{ .Cols }}" sort="name" dir="asc" frame="list"></.table>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{"Cols": tableCols()}}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, `data-amarra-frame="list"`) {
+		t.Errorf("table sort links missing frame target: %s", body)
+	}
+}
+
 func TestShippedComponents_includesKitStems(t *testing.T) {
 	got := ShippedComponents()
-	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password", "stat", "empty"} {
+	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password", "stat", "empty", "table"} {
 		if _, ok := got[stem]; !ok {
 			t.Errorf("missing shipped component %s", stem)
 		}
