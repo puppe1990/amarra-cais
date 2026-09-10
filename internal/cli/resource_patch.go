@@ -220,6 +220,7 @@ func patchRoutesForResource(dir string, data scaffoldData, dryRun bool, force bo
 	fmt.Fprintf(&insert, "\t\tg.Get(\"/admin/%s/{id}/edit\", cais.IntParam(\"id\", %s.Edit))\n", data.Plural, adminVar)
 	fmt.Fprintf(&insert, "\t\tg.Post(\"/admin/%s/{id}\", cais.IntParam(\"id\", %s.Update))\n", data.Plural, adminVar)
 	fmt.Fprintf(&insert, "\t\tg.Post(\"/admin/%s/{id}/delete\", cais.IntParam(\"id\", %s.Delete))\n", data.Plural, adminVar)
+	fmt.Fprintf(&insert, "\t\tg.Post(\"/admin/%s/bulk-delete\", %s.BulkDelete)\n", data.Plural, adminVar)
 	fmt.Fprintf(&insert, "\t})\n")
 
 	var err2 error

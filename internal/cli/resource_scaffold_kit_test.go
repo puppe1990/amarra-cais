@@ -52,6 +52,20 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 	if !strings.Contains(body, `(dict "method" "post" "confirm"`) {
 		t.Error("admin index delete should be a confirmed Drive link")
 	}
+	for _, needle := range []string{
+		`amarra-hook="bulk"`,
+		`data-amarra-bulk-all`,
+		`data-amarra-bulk-row`,
+		`amarra-hook="dropdown"`,
+		`data-amarra-dropdown-button`,
+		`amarra-hook="dialog"`,
+		`data-amarra-dialog-open`,
+		`<.modal`,
+	} {
+		if !strings.Contains(body, needle) {
+			t.Errorf("admin index missing %s (#36)", needle)
+		}
+	}
 
 	form, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/admin_bookmark_form.html"))
 	if err != nil {

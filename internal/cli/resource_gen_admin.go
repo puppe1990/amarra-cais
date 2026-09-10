@@ -106,6 +106,7 @@ func buildAdminShowMethod(data scaffoldData) string {
 
 func buildAdminIndexColsVar(data scaffoldData) string {
 	var rows []string
+	rows = append(rows, "\t{\"Field\": \"\", \"Label\": \"\", \"Sortable\": false},")
 	for _, f := range data.Fields {
 		rows = append(rows, fmt.Sprintf("\t{\"Field\": %q, \"Label\": %q, \"Sortable\": true},", f.Name, f.Pascal))
 	}
@@ -225,7 +226,7 @@ func adminFormRender(data scaffoldData, itemExpr, isNewExpr, errsExpr string) st
 
 func buildResourceAdminHandler(data scaffoldData) string {
 	parse := buildAdminParseForm(data)
-	hasStrconv := needsStrconv(data.Fields) || data.Paginate || hasReferenceFields(data.Fields)
+	hasStrconv := needsStrconv(data.Fields) || data.Paginate || hasReferenceFields(data.Fields) || true // BulkDelete parses ids
 	hasRefs := hasReferenceFields(data.Fields)
 	indexMethod := buildAdminIndexMethod(data)
 	showMethod := buildAdminShowMethod(data)
@@ -336,6 +337,24 @@ func (h *Admin%sHandler) Delete(w http.ResponseWriter, r *http.Request, id int64
 	httpx.SeeOther(w, r, "/admin/%s")
 }
 
+func (h *Admin%sHandler) BulkDelete(w http.ResponseWriter, r *http.Request) {
+	if err := httpx.ParseFormOrJSON(r); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	for _, raw := range r.Form["ids"] {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || id <= 0 {
+			continue
+		}
+		if err := h.store.Delete%s(id); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	httpx.SeeOther(w, r, "/admin/%s")
+}
+
 func (h *Admin%sHandler) parseForm(r *http.Request) (models.%s, validate.FieldErrors) {
 	%s
 }
@@ -357,6 +376,7 @@ func (h *Admin%sHandler) parseForm(r *http.Request) (models.%s, validate.FieldEr
 		data.Pascal, data.Plural,
 		data.PluralPascal, data.Snake, updateErrRender,
 		data.Pascal, data.Plural,
+		data.PluralPascal, data.Pascal, data.Plural,
 		data.PluralPascal, data.Pascal, data.Plural,
 		data.PluralPascal, data.Pascal, parse,
 	)
