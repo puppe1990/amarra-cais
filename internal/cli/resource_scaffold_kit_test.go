@@ -38,6 +38,9 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 	if strings.Contains(body, `frame="`) {
 		t.Error("admin table must not set frame= without a {{ define \"frame:<id>\" }} (#18)")
 	}
+	if !strings.Contains(body, `<.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}" base="{{ .Base }}">`) {
+		t.Error("admin table must pass base so sort keeps q (#35)")
+	}
 	for _, banned := range []string{"bg-slate-50", `<table`} {
 		if strings.Contains(body, banned) {
 			t.Errorf("admin index should not hand-roll %q anymore (#24)", banned)
