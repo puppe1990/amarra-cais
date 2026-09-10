@@ -1,6 +1,7 @@
 import { register, scan, dispatchLivePush, reset } from "./hook_registry.mjs";
 import { clipboard } from "./hook_clipboard.mjs";
 import { dialog } from "./hook_dialog.mjs";
+import { dropdown } from "./hook_dropdown.mjs";
 import { nav } from "./hook_nav.mjs";
 import { password } from "./hook_password.mjs";
 import { reveal } from "./hook_reveal.mjs";
@@ -10,6 +11,7 @@ export { register, scan, dispatchLivePush, reset };
 
 register("clipboard", clipboard);
 register("dialog", dialog);
+register("dropdown", dropdown);
 register("nav", nav);
 register("password", password);
 register("reveal", reveal);
@@ -120,6 +122,7 @@ export function start(opts = {}) {
 
   register("clipboard", clipboard);
   register("dialog", dialog);
+  register("dropdown", dropdown);
   register("nav", nav);
   register("password", password);
   register("reveal", reveal);
