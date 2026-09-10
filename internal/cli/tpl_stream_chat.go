@@ -313,7 +313,6 @@ const tplConversationsPage = `{{"{{"}} define "content" {{"}}"}}
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-slate-900">Conversations</h1>
     <.form action="/chat" method="post">
-      {{"{{"}} csrfField .CSRFToken {{"}}"}}
       <.button type="submit">New chat</.button>
     </.form>
   </div>
@@ -351,7 +350,6 @@ const tplChatPage = `{{"{{"}} define "content" {{"}}"}}
     <div id="chat-live" class="flex flex-col gap-3"></div>
   </div>
   <.form action="{{"{{"}} printf "/chat/%d/messages" .Conversation.ID {{"}}"}}" method="post">
-    {{"{{"}} csrfField .CSRFToken {{"}}"}}
     <textarea name="content" rows="2" class="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Message…" required></textarea>
     <.button type="submit">Send</.button>
   </.form>
