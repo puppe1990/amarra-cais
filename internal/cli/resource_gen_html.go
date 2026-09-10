@@ -91,7 +91,7 @@ func buildAdminIndexPanel(data scaffoldData) string {
       {{ if .Dir }}<input type="hidden" name="dir" value="{{ .Dir }}" />{{ end }}
       <.input name="q" label="Search" value="{{ .Q }}" />
     </.filters>
-    <.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}">
+    <.table cols="{{ .Cols }}" sort="{{ .Sort }}" dir="{{ .Dir }}" base="{{ .Base }}">
       {{ range .Items }}
       <tr>
 %[2]s        <td class="px-3 py-2 text-right space-x-3">
