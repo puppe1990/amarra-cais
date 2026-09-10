@@ -170,7 +170,6 @@ const tplPageContact = `{{"{{"}} define "content" {{"}}"}}
     <p class="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] text-copper">{{"{{"}} t "contact.title" {{"}}"}}</p>
   </div>
   <.form action="/contact" method="post">
-    {{"{{"}} csrfField .CSRFToken {{"}}"}}
     <.input name="name" label="{{"{{"}} t "contact.name_label" {{"}}"}}" value="{{"{{"}} .Name {{"}}"}}" error="{{"{{"}} fieldError .Errors "name" {{"}}"}}" />
     <.input name="email" type="email" label="{{"{{"}} t "contact.email_label" {{"}}"}}" value="{{"{{"}} .Email {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
     <.button type="submit">{{"{{"}} t "contact.submit" {{"}}"}}</.button>
@@ -187,7 +186,6 @@ const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
   <p class="text-foam/80">{{"{{"}} t "dashboard.contacts" {{"}}"}} {{"{{"}} .TotalContacts {{"}}"}}</p>
   <p class="mt-2 text-foam/80">{{"{{"}} t "dashboard.env" {{"}}"}} {{"{{"}} .Env {{"}}"}}</p>
   <.form action="/logout" method="post">
-    {{"{{"}} csrfField .CSRFToken {{"}}"}}
     <.button type="submit">{{"{{"}} t "auth.logout" {{"}}"}}</.button>
   </.form>
 </div>
