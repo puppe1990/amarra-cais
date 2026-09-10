@@ -417,6 +417,29 @@ func TestKit_filtersFrameAndCustomLabel(t *testing.T) {
 	}
 }
 
+func TestKit_modalRendersNativeDialogTarget(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.modal id="confirm">Are you sure?</.modal>{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]any{}}, cais.Config{})
+	body := rr.Body.String()
+	for _, want := range []string{
+		`<dialog data-amarra-dialog-target`,
+		`id="confirm"`,
+		"Are you sure?",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("modal missing %q in %s", want, body)
+		}
+	}
+}
+
 func TestShippedComponents_includesKitStems(t *testing.T) {
 	got := ShippedComponents()
 	for _, stem := range []string{"button", "form", "input", "flash", "nav", "pagination", "modal", "select", "textarea", "checkbox", "password", "stat", "empty", "table", "filters"} {

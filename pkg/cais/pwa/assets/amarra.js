@@ -878,6 +878,65 @@
     if (typeof write === "function") return write.call(globalThis.navigator.clipboard, text);
   });
 
+  // pkg/amarra/js/hook_dialog.mjs
+  var OPEN = "_amarraDialogOpen";
+  var CLOSE = "_amarraDialogClose";
+  var ONCLOSE = "_amarraDialogOnClose";
+  function makeDialog() {
+    return {
+      connect(el) {
+        if (!el?.querySelector) return;
+        const dlg = el.querySelector("[data-amarra-dialog-target]");
+        if (!dlg || typeof dlg.showModal !== "function") return;
+        if (!dlg.getAttribute?.("aria-modal")) dlg.setAttribute?.("aria-modal", "true");
+        let opener = null;
+        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-open]") ?? []) {
+          const fn = (ev) => {
+            ev?.preventDefault?.();
+            opener = btn;
+            dlg.showModal?.();
+          };
+          btn[OPEN] = fn;
+          btn.addEventListener?.("click", fn);
+        }
+        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-close]") ?? []) {
+          const fn = (ev) => {
+            ev?.preventDefault?.();
+            dlg.close?.();
+          };
+          btn[CLOSE] = fn;
+          btn.addEventListener?.("click", fn);
+        }
+        const onClose = () => opener?.focus?.();
+        dlg[ONCLOSE] = onClose;
+        dlg.addEventListener?.("close", onClose);
+      },
+      disconnect(el) {
+        if (!el?.querySelector) return;
+        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-open]") ?? []) {
+          const fn = btn?.[OPEN];
+          if (!fn) continue;
+          btn.removeEventListener?.("click", fn);
+          delete btn[OPEN];
+        }
+        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-close]") ?? []) {
+          const fn = btn?.[CLOSE];
+          if (!fn) continue;
+          btn.removeEventListener?.("click", fn);
+          delete btn[CLOSE];
+        }
+        const dlg = el.querySelector("[data-amarra-dialog-target]");
+        if (!dlg) return;
+        const onClose = dlg?.[ONCLOSE];
+        if (onClose) {
+          dlg.removeEventListener?.("close", onClose);
+          delete dlg[ONCLOSE];
+        }
+      }
+    };
+  }
+  var dialog = makeDialog();
+
   // pkg/amarra/js/hook_nav.mjs
   var POPSTATE = "_amarraNavPopstate";
   function makeNav(opts = {}) {
@@ -1093,6 +1152,7 @@
 
   // pkg/amarra/js/hook.mjs
   register("clipboard", clipboard);
+  register("dialog", dialog);
   register("nav", nav);
   register("password", password);
   register("reveal", reveal);
@@ -1189,6 +1249,7 @@
     if (doc.documentElement?.dataset?.amarraHook === "true") return;
     if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
     register("clipboard", clipboard);
+    register("dialog", dialog);
     register("nav", nav);
     register("password", password);
     register("reveal", reveal);
