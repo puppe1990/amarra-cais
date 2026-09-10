@@ -53,7 +53,8 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
       </header>
       <nav id="amarra-nav" class="bg-ink border-b border-foam/10 sticky top-[57px] z-30">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex gap-1 py-1 overflow-x-auto no-scrollbar">
+          <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
+          <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex gap-1 py-1 overflow-x-auto no-scrollbar">
             `
 
 const tplLayoutNavFull = `<!-- cais:nav -->

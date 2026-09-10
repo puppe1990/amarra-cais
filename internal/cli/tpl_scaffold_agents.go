@@ -56,7 +56,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"Pages define a content block plus kit tags `<.form>` / `<.input>` / `<.button>` / `<.flash />` / `<.locale-toggle />`.\n" +
 	"Drive morphs `#amarra-main` by default — plain links/forms and `linkTo` need no attribute; opt out with `data-amarra-skip` (#31). Do not check `HX-Request`.\n" +
 	"Password fields: `fieldPassword` (eye show/hide via `amarra-hook=\"password\"`).\n" +
-	"Shipped hooks: `clipboard`, `password`, `reveal` (client show/hide, no Drive round-trip), `theme` (`html.light` + `localStorage[\"amarra-theme\"]`, per-element via `data-amarra-theme-key` / `-class` / `-color` / `-on-label` / `-off-label`).\n" +
+	"Shipped hooks: `clipboard`, `nav` (re-sync active link after Drive morph: `amarra-hook=\"nav\"` + `data-amarra-nav-on`/`-off` on the container), `password`, `reveal` (client show/hide, no Drive round-trip), `theme` (`html.light` + `localStorage[\"amarra-theme\"]`, per-element via `data-amarra-theme-key` / `-class` / `-color` / `-on-label` / `-off-label`).\n" +
 	"Theme FOUC snippet belongs in the layout `<head>` before CSS:\n\n" +
 	"```html\n" +
 	"<script>\n" +

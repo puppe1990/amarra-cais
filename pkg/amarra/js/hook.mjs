@@ -1,5 +1,6 @@
 import { register, scan, dispatchLivePush, reset } from "./hook_registry.mjs";
 import { clipboard } from "./hook_clipboard.mjs";
+import { nav } from "./hook_nav.mjs";
 import { password } from "./hook_password.mjs";
 import { reveal } from "./hook_reveal.mjs";
 import { theme } from "./hook_theme.mjs";
@@ -7,6 +8,7 @@ import { theme } from "./hook_theme.mjs";
 export { register, scan, dispatchLivePush, reset };
 
 register("clipboard", clipboard);
+register("nav", nav);
 register("password", password);
 register("reveal", reveal);
 register("theme", theme);
@@ -115,6 +117,7 @@ export function start(opts = {}) {
   if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
 
   register("clipboard", clipboard);
+  register("nav", nav);
   register("password", password);
   register("reveal", reveal);
   register("theme", theme);

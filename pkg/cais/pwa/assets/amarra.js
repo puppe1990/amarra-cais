@@ -878,6 +878,63 @@
     if (typeof write === "function") return write.call(globalThis.navigator.clipboard, text);
   });
 
+  // pkg/amarra/js/hook_nav.mjs
+  var POPSTATE = "_amarraNavPopstate";
+  function makeNav(opts = {}) {
+    const getLocation = opts.location ?? (() => globalThis.location);
+    const getWindow = opts.window ?? globalThis.window;
+    function sync(el) {
+      const loc = getLocation();
+      if (!el || !loc?.pathname) return;
+      const on = classes(el, "data-amarra-nav-on", opts.onClasses);
+      const off = classes(el, "data-amarra-nav-off", opts.offClasses);
+      for (const link of el.querySelectorAll?.("a[href]") ?? []) {
+        if (isActive(link, loc)) {
+          off.forEach((c) => link.classList?.remove(c));
+          on.forEach((c) => link.classList?.add(c));
+          link.setAttribute?.("aria-current", "page");
+        } else {
+          on.forEach((c) => link.classList?.remove(c));
+          if (off.length) off.forEach((c) => link.classList?.add(c));
+          link.removeAttribute?.("aria-current");
+        }
+      }
+    }
+    return {
+      connect(el) {
+        if (!el) return;
+        sync(el);
+        const onPop = () => sync(el);
+        el[POPSTATE] = onPop;
+        getWindow?.addEventListener?.("popstate", onPop);
+      },
+      updated(el) {
+        sync(el);
+      },
+      disconnect(el) {
+        const fn = el?.[POPSTATE];
+        if (!fn) return;
+        getWindow?.removeEventListener?.("popstate", fn);
+        delete el[POPSTATE];
+      }
+    };
+  }
+  function classes(el, attr, fallback) {
+    const raw = el.getAttribute?.(attr) || fallback;
+    if (!raw) return [];
+    return raw.split(/\s+/).filter(Boolean);
+  }
+  function isActive(link, loc) {
+    const href = link.getAttribute?.("href");
+    if (!href) return false;
+    try {
+      return new URL(href, loc.href).pathname === loc.pathname;
+    } catch {
+      return false;
+    }
+  }
+  var nav = makeNav();
+
   // pkg/amarra/js/hook_password.mjs
   var CLICK2 = "_amarraPasswordClick";
   function makePassword(findInput) {
@@ -893,10 +950,8 @@
           const show = input.type === "password";
           input.type = show ? "text" : "password";
           el.setAttribute?.("aria-pressed", show ? "true" : "false");
-          const showIcon = el.querySelector?.('[data-cais-password-icon="show"]');
-          const hideIcon = el.querySelector?.('[data-cais-password-icon="hide"]');
-          showIcon?.classList?.toggle?.("hidden", show);
-          hideIcon?.classList?.toggle?.("hidden", !show);
+          swapAriaLabel(el, show);
+          toggleIcons(el, show);
         };
         el[CLICK2] = fn;
         el.addEventListener("click", fn);
@@ -910,13 +965,28 @@
     };
   }
   function defaultFind(sel, el) {
-    if (!sel) return null;
-    const root = el?.ownerDocument ?? globalThis.document;
-    try {
-      return root?.querySelector?.(sel) ?? null;
-    } catch {
-      return null;
+    if (sel) {
+      const root = el?.ownerDocument ?? globalThis.document;
+      try {
+        const found = root?.querySelector?.(sel);
+        if (found) return found;
+      } catch {
+        return null;
+      }
     }
+    return el?.parentElement?.querySelector?.("input") ?? null;
+  }
+  function swapAriaLabel(el, show) {
+    const showLabel = el.getAttribute?.("data-amarra-label-show");
+    const hideLabel = el.getAttribute?.("data-amarra-label-hide");
+    if (!showLabel && !hideLabel) return;
+    el.setAttribute?.("aria-label", show ? hideLabel || showLabel : showLabel || hideLabel);
+  }
+  function toggleIcons(el, show) {
+    const showIcon = el.querySelector?.('[data-amarra-password-icon="show"]') ?? el.querySelector?.('[data-cais-password-icon="show"]');
+    const hideIcon = el.querySelector?.('[data-amarra-password-icon="hide"]') ?? el.querySelector?.('[data-cais-password-icon="hide"]');
+    showIcon?.classList?.toggle?.("hidden", show);
+    hideIcon?.classList?.toggle?.("hidden", !show);
   }
   var password = makePassword();
 
@@ -964,12 +1034,14 @@
   var DEFAULT_KEY = "amarra-theme";
   var DEFAULT_CLASS = "light";
   function makeTheme(opts = {}) {
-    const className = opts.className ?? DEFAULT_CLASS;
-    const key = opts.key ?? DEFAULT_KEY;
     const getHtml = opts.html ?? (() => globalThis.document?.documentElement);
     const getStorage = () => opts.storage ?? globalThis.localStorage;
     const getMeta = opts.themeColorMeta ?? (() => globalThis.document?.querySelector?.('meta[name="theme-color"]'));
+    const keyFor = (el) => el?.getAttribute?.("data-amarra-theme-key") || opts.key || DEFAULT_KEY;
+    const classFor = (el) => el?.getAttribute?.("data-amarra-theme-class") || opts.className || DEFAULT_CLASS;
     function apply(on, el) {
+      const className = classFor(el);
+      const key = keyFor(el);
       const html = getHtml();
       if (html?.classList) {
         if (on) html.classList.add(className);
@@ -984,21 +1056,26 @@
       const darkColor = el?.getAttribute?.("data-amarra-theme-color-off") || opts.darkColor;
       const color = on ? lightColor : darkColor;
       if (meta && color) meta.setAttribute?.("content", color);
+      const onLabel = el?.getAttribute?.("data-amarra-theme-on-label") || opts.onLabel;
+      const offLabel = el?.getAttribute?.("data-amarra-theme-off-label") || opts.offLabel;
+      const label = on ? onLabel : offLabel;
+      if (label && el) el.textContent = label;
+      el?.setAttribute?.("aria-pressed", on ? "true" : "false");
     }
     return {
       connect(el) {
         if (!el || typeof el.addEventListener !== "function") return;
         let stored = "";
         try {
-          stored = getStorage()?.getItem?.(key) ?? "";
+          stored = getStorage()?.getItem?.(keyFor(el)) ?? "";
         } catch {
           stored = "";
         }
-        if (stored === className) apply(true, el);
+        if (stored === classFor(el)) apply(true, el);
         const fn = (ev) => {
           ev?.preventDefault?.();
           const html = getHtml();
-          const on = !html?.classList?.contains?.(className);
+          const on = !html?.classList?.contains?.(classFor(el));
           apply(on, el);
         };
         el[CLICK3] = fn;
@@ -1016,6 +1093,7 @@
 
   // pkg/amarra/js/hook.mjs
   register("clipboard", clipboard);
+  register("nav", nav);
   register("password", password);
   register("reveal", reveal);
   register("theme", theme);
@@ -1111,6 +1189,7 @@
     if (doc.documentElement?.dataset?.amarraHook === "true") return;
     if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraHook = "true";
     register("clipboard", clipboard);
+    register("nav", nav);
     register("password", password);
     register("reveal", reveal);
     register("theme", theme);
@@ -1139,8 +1218,8 @@
       true
     );
   }
-  function hasClasses(el, classes) {
-    return classes.every((c) => el.classList?.contains(c));
+  function hasClasses(el, classes2) {
+    return classes2.every((c) => el.classList?.contains(c));
   }
   function setClasses(el, add, remove) {
     remove.forEach((c) => el.classList?.remove(c));
