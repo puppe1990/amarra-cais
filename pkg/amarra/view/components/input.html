@@ -5,7 +5,7 @@
     id="{{ .Name }}"
     name="{{ .Name }}"
     type="{{ if .Type }}{{ .Type }}{{ else }}text{{ end }}"
-    {{- if ne .Type "file" }} value="{{ .Value }}"{{ end }}
+    {{- if .Type }}{{ if eq .Type "file" }}{{ else }} value="{{ .Value }}"{{ end }}{{ else }} value="{{ .Value }}"{{ end }}
     {{- if .Accept }} accept="{{ .Accept }}"{{ end }}
     {{- if .Error }} aria-invalid="true"{{ end }}
   >

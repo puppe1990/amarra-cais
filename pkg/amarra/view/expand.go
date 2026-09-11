@@ -38,16 +38,37 @@ func expandCall(call componentCall, components map[string]string) (string, error
 	if !ok {
 		return "", fmt.Errorf("unknown amarra component %q", call.Name)
 	}
+	attrs := defaultComponentAttrs(call.Name, call.Attrs)
 	var b strings.Builder
 	// html/template $vars live until the enclosing if/with/range/end (or the
 	// whole template). Isolate assigns so nested/sibling attrs cannot leak.
 	b.WriteString("{{ if true }}")
-	for _, attr := range call.Attrs {
+	for _, attr := range attrs {
 		b.WriteString(attrAssign(attr))
 	}
-	b.WriteString(rewriteComponentBody(body, call.Attrs, call.Inner))
+	b.WriteString(rewriteComponentBody(body, attrs, call.Inner))
 	b.WriteString("{{ end }}")
 	return b.String(), nil
+}
+
+func defaultComponentAttrs(name string, attrs []componentAttr) []componentAttr {
+	if name != "form" || hasAttrName(attrs, "enctype") {
+		return attrs
+	}
+	// Optional enctype must be a $var. Bare {{ if .Enctype }} inside
+	// {{ range .Items }} looks up Enctype on the row struct and 500s (#43).
+	out := make([]componentAttr, len(attrs), len(attrs)+1)
+	copy(out, attrs)
+	return append(out, componentAttr{Name: "enctype", Value: ""})
+}
+
+func hasAttrName(attrs []componentAttr, name string) bool {
+	for _, a := range attrs {
+		if a.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func attrAssign(attr componentAttr) string {

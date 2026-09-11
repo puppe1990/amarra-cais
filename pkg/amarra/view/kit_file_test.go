@@ -54,3 +54,28 @@ func TestKit_fileInputMultipartForm(t *testing.T) {
 		t.Errorf("file input should omit value=: %s", tag)
 	}
 }
+
+func TestKit_formInsideRangeDoesNotReadEnctypeFromRow(t *testing.T) {
+	type row struct{ ID int64 }
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html": &fstest.MapFile{Data: []byte(
+			`{{ define "content" }}{{ range .Items }}<.form action="/toggle" method="post"><button type="submit">Go</button></.form>{{ end }}{{ end }}`,
+		)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"Items": []row{{ID: 1}}, "CSRFToken": "tok"},
+	}, cais.Config{})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), `action="/toggle"`) {
+		t.Errorf("form missing: %s", rr.Body.String())
+	}
+}
