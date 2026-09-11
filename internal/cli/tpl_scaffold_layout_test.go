@@ -124,6 +124,12 @@ func TestLayoutTemplates_dashboardUsesLogoutForm(t *testing.T) {
 	}
 }
 
+func TestLayoutTemplates_dashboardUsesStat(t *testing.T) {
+	if !strings.Contains(tplPageDashboard, `<.stat`) {
+		t.Error("dashboard should use kit <.stat> for KPIs (#42)")
+	}
+}
+
 func TestPageHome_greetingHarborLayout(t *testing.T) {
 	for _, token := range []string{
 		`data-testid="amarra-ready"`,
