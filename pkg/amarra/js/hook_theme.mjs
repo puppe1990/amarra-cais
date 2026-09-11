@@ -35,7 +35,7 @@ export function makeTheme(opts = {}) {
     const onLabel = el?.getAttribute?.("data-amarra-theme-on-label") || opts.onLabel;
     const offLabel = el?.getAttribute?.("data-amarra-theme-off-label") || opts.offLabel;
     const label = on ? onLabel : offLabel;
-    if (label && el) el.textContent = label;
+    if (label && el) swapThemeLabel(el, label);
     el?.setAttribute?.("aria-pressed", on ? "true" : "false");
   }
 
@@ -68,3 +68,14 @@ export function makeTheme(opts = {}) {
 }
 
 export const theme = makeTheme();
+
+function swapThemeLabel(el, label) {
+  const slot = el.querySelector?.("[data-amarra-theme-label]");
+  if (slot) {
+    slot.textContent = label;
+    return;
+  }
+  // textContent on the button would drop icon spans/SVGs (#41).
+  if (el.children?.length) return;
+  el.textContent = label;
+}
