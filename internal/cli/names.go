@@ -118,7 +118,28 @@ func toTitle(s string) string {
 
 func splitName(s string) []string {
 	s = strings.ReplaceAll(s, "-", "_")
-	return strings.FieldsFunc(s, func(r rune) bool {
+	var parts []string
+	for _, chunk := range strings.FieldsFunc(s, func(r rune) bool {
 		return r == '_' || r == ' '
-	})
+	}) {
+		parts = append(parts, splitPascal(chunk)...)
+	}
+	return parts
+}
+
+func splitPascal(s string) []string {
+	if s == "" {
+		return nil
+	}
+	runes := []rune(s)
+	var parts []string
+	start := 0
+	for i := 1; i < len(runes); i++ {
+		if unicode.IsUpper(runes[i]) && !unicode.IsUpper(runes[i-1]) {
+			parts = append(parts, strings.ToLower(string(runes[start:i])))
+			start = i
+		}
+	}
+	parts = append(parts, strings.ToLower(string(runes[start:])))
+	return parts
 }
