@@ -183,8 +183,10 @@ const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
   <div class="mb-5 pb-4 border-b border-foam/10">
     <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "dashboard.title" {{"}}"}}</h2>
   </div>
-  <p class="text-foam/80">{{"{{"}} t "dashboard.contacts" {{"}}"}} {{"{{"}} .TotalContacts {{"}}"}}</p>
-  <p class="mt-2 text-foam/80">{{"{{"}} t "dashboard.env" {{"}}"}} {{"{{"}} .Env {{"}}"}}</p>
+  <div class="grid gap-4 sm:grid-cols-2 mb-6">
+    <.stat label="{{"{{"}} t "dashboard.contacts" {{"}}"}}" value="{{"{{"}} .TotalContacts {{"}}"}}" />
+    <.stat label="{{"{{"}} t "dashboard.env" {{"}}"}}" value="{{"{{"}} .Env {{"}}"}}" />
+  </div>
   <.form action="/logout" method="post">
     <.button type="submit">{{"{{"}} t "auth.logout" {{"}}"}}</.button>
   </.form>
