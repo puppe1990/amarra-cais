@@ -6,6 +6,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.3.0] - 2026-09-11
+
+### Added
+
+- `amarra-cais g resource` admin index uses bulk select-all, row `dropdown`, and a native `dialog` for bulk delete; `POST /admin/{plural}/bulk-delete` (#36).
+- Kit `<.input type="file">` (`accept`, no `value`) and `<.form enctype="multipart/form-data">` (#43).
+- Scaffold dashboard KPIs use kit `<.stat>` (#42).
+- CI smoke compiles a generated resource with FK + `--public` + `--paginate` (#34).
+- `amarra-cais doctor` FAILs on `hx-*` in templates and `gonertia` in `go.mod` (#40).
+
+### Fixed
+
+- Table sort links keep `q` and drop `page` via `sortHref`; generated admin tables pass `base` (#35).
+- Kit `<.form>` slots no longer duplicate `csrfField` (login, contact, dashboard, stream chat) (#37).
+- Empty resource indexes render `<.empty>` instead of a hollow table plus empty state (#38).
+- `toSnake("Category")` is `category`; `BlogPost` is `blog_post` (#39).
+- Theme hook writes `[data-amarra-theme-label]` and does not wipe SVG children with `textContent` (#41).
+- Optional form `enctype` is bound as `$enctype` so `<.form>` inside `{{ range }}` does not 500 (#43).
+
 ## [0.2.2] - 2026-09-10
 
 ### Fixed
