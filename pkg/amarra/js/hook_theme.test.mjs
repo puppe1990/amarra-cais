@@ -14,8 +14,17 @@ function classList(initial = []) {
 function button() {
   const listeners = {};
   const attrs = {};
-  return {
+  const el = {
     listeners,
+    children: [],
+    _text: undefined,
+    get textContent() {
+      return this._text;
+    },
+    set textContent(v) {
+      this._text = v;
+      this.children = [];
+    },
     getAttribute(n) {
       return Object.hasOwn(attrs, n) ? attrs[n] : null;
     },
@@ -29,6 +38,7 @@ function button() {
       listeners[type] = (listeners[type] || []).filter((f) => f !== fn);
     },
   };
+  return el;
 }
 
 test("theme hook toggles html.light, persists localStorage, updates theme-color, unbinds on disconnect", () => {
@@ -153,6 +163,47 @@ test("theme hook restores using the data-attr storage key on connect (#30)", () 
   };
   hook.connect(el);
   assert.equal(html.classList.contains("dark-mode"), true);
+});
+
+test("theme hook does not wipe svg children when swapping labels (#41)", () => {
+  const html = { classList: classList() };
+  const hook = makeTheme({ html: () => html, storage: newStorage() });
+  const el = button();
+  const svg = { nodeName: "SVG" };
+  el.children = [svg];
+  el.querySelector = () => null;
+  const origGet = el.getAttribute.bind(el);
+  el.getAttribute = (n) => {
+    if (n === "data-amarra-theme-on-label") return "Dark mode";
+    if (n === "data-amarra-theme-off-label") return "Light mode";
+    return origGet(n);
+  };
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(el.children[0], svg);
+  assert.equal(el.textContent, undefined);
+  assert.equal(el.getAttribute("aria-pressed"), "true");
+});
+
+test("theme hook swaps [data-amarra-theme-label] instead of the whole button (#41)", () => {
+  const html = { classList: classList() };
+  const hook = makeTheme({ html: () => html, storage: newStorage() });
+  const el = button();
+  const slot = { textContent: "Light mode" };
+  const svg = { nodeName: "SVG" };
+  el.children = [svg, slot];
+  el.querySelector = (sel) => (sel === "[data-amarra-theme-label]" ? slot : null);
+  const origGet = el.getAttribute.bind(el);
+  el.getAttribute = (n) => {
+    if (n === "data-amarra-theme-on-label") return "Dark mode";
+    if (n === "data-amarra-theme-off-label") return "Light mode";
+    return origGet(n);
+  };
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(slot.textContent, "Dark mode");
+  assert.equal(el.children[0], svg);
+  assert.equal(el.textContent, undefined);
 });
 
 test("theme hook swaps labels and keeps aria-pressed (#30)", () => {
