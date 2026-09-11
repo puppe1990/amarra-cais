@@ -29,6 +29,7 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 		checkCaisDep(dir),
 		checkCLIVersion(dir),
 		checkAmarraFrontend(dir),
+		checkLegacyPublicContract(dir),
 	}
 	if c := checkUnsupportedVite(dir); c != nil {
 		checks = append(checks, *c)
@@ -203,6 +204,41 @@ func checkCLIVersionAt(dir, cliRaw string) doctorCheck {
 
 func formatSemver(s semverCore) string {
 	return fmt.Sprintf("%d.%d.%d", s.Major, s.Minor, s.Patch)
+}
+
+func checkLegacyPublicContract(dir string) doctorCheck {
+	var hits []string
+	if body, err := os.ReadFile(filepath.Join(dir, "go.mod")); err == nil {
+		if strings.Contains(string(body), "gonertia") {
+			hits = append(hits, "go.mod: gonertia")
+		}
+	}
+	root := filepath.Join(dir, "web/templates")
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".html") {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		text := string(data)
+		rel, _ := filepath.Rel(dir, path)
+		for _, needle := range []string{"hx-post", "hx-get", "hx-target", "hx-swap", "hx-ext", "htmx.min.js", "hx-boost"} {
+			if strings.Contains(text, needle) {
+				hits = append(hits, rel+": "+needle)
+			}
+		}
+		return nil
+	})
+	if len(hits) == 0 {
+		return doctorCheck{Name: "HTMX/Inertia leftovers", OK: true, Detail: "no hx-* / gonertia in app templates"}
+	}
+	return doctorCheck{
+		Name:    "HTMX/Inertia leftovers",
+		Detail:  strings.Join(hits, "; "),
+		FixHint: "remove hx-* and gonertia; Drive is the public contract — see docs/migrate-inertia.md",
+	}
 }
 
 func checkUnsupportedVite(dir string) *doctorCheck {
