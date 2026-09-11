@@ -40,10 +40,17 @@ func TestKit_fileInputMultipartForm(t *testing.T) {
 			t.Errorf("file form missing %q in %s", want, body)
 		}
 	}
-	if strings.Contains(body, `value="`) && strings.Contains(body, `type="file"`) {
-		// file inputs must not copy a value attribute (browsers ignore it; it leaks paths)
-		if strings.Contains(body, `type="file"`) && strings.Contains(body, `value="`) {
-			t.Errorf("file input should omit value=: %s", body)
-		}
+	fileAt := strings.Index(body, `type="file"`)
+	if fileAt < 0 {
+		t.Fatal("missing type=file")
+	}
+	start := strings.LastIndex(body[:fileAt], "<input")
+	endRel := strings.Index(body[fileAt:], ">")
+	if start < 0 || endRel < 0 {
+		t.Fatalf("could not isolate file input tag: %s", body)
+	}
+	tag := body[start : fileAt+endRel+1]
+	if strings.Contains(tag, "value=") {
+		t.Errorf("file input should omit value=: %s", tag)
 	}
 }
