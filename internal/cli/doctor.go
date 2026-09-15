@@ -39,6 +39,7 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 		checkJobsUI(dir),
 		checkAir(),
 		checkCSS(dir),
+		checkBrandAssets(dir),
 		checkDeployLayout(dir),
 		checkQualityTooling(dir),
 	)
