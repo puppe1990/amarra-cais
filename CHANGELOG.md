@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.5.1] - 2026-09-15
+
+### Fixed
+
+- Kit attributes interpolate template actions and mixed text: `<.stat value="{{ .Power }} kWp" />` renders `5 kWp` instead of printing `{{ .Power }} kWp` to the user; a control action (`{{ if }}`) in an attribute value fails at boot naming the component and attribute (#72).
+
 ## [0.5.0] - 2026-09-15
 
 ### Added
