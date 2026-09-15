@@ -285,6 +285,16 @@ func applyMigrations(db *sql.DB) error {
 }
 `
 
+// tplMigrationInit is the first migration of minimal/blank scaffolds. The
+// directory needs at least one .sql file for //go:embed migrations/*.sql to
+// match, and it is where the app adds its first table (#74).
+const tplMigrationInit = `-- 001_init.sql — first migration. Add the app tables here (or delete this file).
+-- up
+
+-- down
+-- Nothing to undo yet.
+`
+
 const tplMigration001 = `CREATE TABLE IF NOT EXISTS contacts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
