@@ -177,7 +177,8 @@ view.Write(w, r, h.views, view.Page{
 }, h.cfg)
 
 // Validation — same page, status 422, `.Errors` on inputs
-writeView(w, r, h.views, h.cfg, "contact", amarraData(r, h.site, map[string]any{
+// writeView names the layout: an app with a second layout passes "landing" here (#66).
+writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
   "Title":  h.catalog.T("contact.title"),
   "Errors": errs,
   "Name":   name,

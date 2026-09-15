@@ -31,7 +31,7 @@ func NewContactHandler(views *view.Renderer, s store.Store, site meta.Site, cata
 }
 
 func (h *ContactHandler) Get(w http.ResponseWriter, r *http.Request) {
-	writeView(w, r, h.views, h.cfg, "contact", amarraData(r, h.site, map[string]any{
+	writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
 		"Title":     h.catalog.T("contact.title"),
 		"ActiveNav": "contact",
 	}), 0)
@@ -58,7 +58,7 @@ func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {
 		errs.Add("email", msg)
 	}
 	if errs.Any() {
-		writeView(w, r, h.views, h.cfg, "contact", amarraData(r, h.site, map[string]any{
+		writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
 			"Title":     h.catalog.T("contact.title"),
 			"ActiveNav": "contact",
 			"Errors":    errs,
