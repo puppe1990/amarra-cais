@@ -42,7 +42,8 @@ func (c *CLI) cmdInstall() error {
 
 	if _, err := os.Stat(filepath.Join(dir, "package.json")); err == nil {
 		_, _ = fmt.Fprintln(c.Out, "→ npm install")
-		if err := runCmd(dir, "npm", "install"); err != nil {
+		// --include=dev: NODE_ENV=production would skip tailwindcss/prettier (#54).
+		if err := runCmd(dir, "npm", "install", "--include=dev"); err != nil {
 			return fmt.Errorf("npm install: %w", err)
 		}
 	}
@@ -56,7 +57,8 @@ func (c *CLI) cmdInstall() error {
 	if _, err := os.Stat(filepath.Join(dir, cssInput)); err == nil {
 		_, _ = fmt.Fprintln(c.Out, "→ tailwind build (styles.css)")
 		if err := runTailwindBuild(dir, false); err != nil {
-			_, _ = fmt.Fprintf(c.Out, "⚠ css build failed: %v (run: amarra-cais css)\n", err)
+			// Fail loudly: exiting 0 here left users on an unstyled app (#54).
+			return fmt.Errorf("css build failed: %w — retry: amarra-cais css (NODE_ENV=production skips npm devDependencies)", err)
 		}
 	}
 

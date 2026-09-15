@@ -111,3 +111,84 @@ func TestEnsureStylesCSS_errorsWithoutInput(t *testing.T) {
 		t.Errorf("error = %v", err)
 	}
 }
+
+// fakeToolchain puts stub npm/npx/go first on PATH and returns the call log.
+// The npm stub encodes the real contract (#54): npm skips devDependencies when
+// NODE_ENV=production unless --include=dev is passed.
+func fakeToolchain(t *testing.T) string {
+	t.Helper()
+	binDir := t.TempDir()
+	logPath := filepath.Join(binDir, "calls.log")
+	scripts := map[string]string{
+		"npm": "#!/bin/sh\n" +
+			"echo \"npm $*\" >> \"$FAKE_CALLS\"\n" +
+			"if [ \"$NODE_ENV\" = \"production\" ]; then\n" +
+			"  case \" $* \" in *\" --include=dev \"*) ;; *) echo \"npm error could not determine executable to run\" >&2; exit 1 ;; esac\n" +
+			"fi\n" +
+			"exit 0\n",
+		"npx": "#!/bin/sh\necho \"npx $*\" >> \"$FAKE_CALLS\"\nexit ${FAKE_NPX_EXIT:-0}\n",
+		"go":  "#!/bin/sh\necho \"go $*\" >> \"$FAKE_CALLS\"\nexit 0\n",
+	}
+	for name, body := range scripts {
+		if err := os.WriteFile(filepath.Join(binDir, name), []byte(body), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("FAKE_CALLS", logPath)
+	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	return logPath
+}
+
+func installFixture(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	files := map[string]string{
+		"go.mod":       "module github.com/example/probe\n\ngo 1.26\n\nrequire github.com/puppe1990/amarra-cais v0.3.0\n",
+		"package.json": `{"devDependencies":{"tailwindcss":"^4.0.0","prettier":"^3.5.3"}}`,
+		"input.css":    "@import \"tailwindcss\";\n",
+	}
+	for rel, body := range files {
+		if err := os.WriteFile(filepath.Join(dir, rel), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return dir
+}
+
+func TestCLI_Install_npmIncludesDevDependencies(t *testing.T) {
+	dir := installFixture(t)
+	logPath := fakeToolchain(t)
+	t.Setenv("NODE_ENV", "production")
+	t.Chdir(dir)
+
+	var buf bytes.Buffer
+	if err := (&CLI{Out: &buf}).Run([]string{"install"}); err != nil {
+		t.Fatalf("install must install the build toolchain with NODE_ENV=production: %v\n%s", err, buf.String())
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("no tool calls recorded: %v", err)
+	}
+	if !strings.Contains(string(calls), "--include=dev") {
+		t.Errorf("npm install must pass --include=dev, calls:\n%s", calls)
+	}
+}
+
+func TestCLI_Install_failsWhenStylesheetCannotBeBuilt(t *testing.T) {
+	dir := installFixture(t)
+	fakeToolchain(t)
+	t.Setenv("FAKE_NPX_EXIT", "1")
+	t.Chdir(dir)
+
+	var buf bytes.Buffer
+	err := (&CLI{Out: &buf}).Run([]string{"install"})
+	if err == nil {
+		t.Fatalf("install must not exit 0 leaving an unbuilt stylesheet\n%s", buf.String())
+	}
+	if !strings.Contains(err.Error(), "amarra-cais css") {
+		t.Errorf("error should point at amarra-cais css, got: %v", err)
+	}
+	if strings.Contains(buf.String(), "Done. Run: amarra-cais dev") {
+		t.Errorf("install must not report success after a failed css build:\n%s", buf.String())
+	}
+}
