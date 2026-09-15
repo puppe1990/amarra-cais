@@ -299,6 +299,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 - `amarra-cais dev` auto-bumps `CACHE_VERSION` when `sw.js` exists (fresh assets on phone without a manual bump)
 - `amarra-cais doctor --mobile` checks flash markup, Google Fonts CSP, `amarra.js`, SW cache (network-first `/static/js/amarra.js`), chat form CSS, `#chat-messages` scroll container, and health `lan_urls`
 - Scaffold `input.css` uses system fonts (no `fonts.googleapis.com` — blocked by default CSP)
+- Brand assets: scaffolds ship a **neutral placeholder** tile (`pkg/cais/pwa/assets/icon.png`, 512×512) plus a generated `icons/icon-512-maskable.png`; the manifest splits `any` (192 + 512) from `maskable`. `amarra-cais doctor` warns while `web/static/icons/*` and `og.png` are still the placeholders (#64).
 
 **Mobile checklist:** `amarra-cais doctor --mobile` → `amarra-cais pwa --bump` → open boot **LAN** URL on phone → stay on the page while SSE streams (Drive morphs `#amarra-main`; a full navigation drops the EventSource)
 
