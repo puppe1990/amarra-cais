@@ -80,7 +80,8 @@ Usage:
   amarra-cais new <app> [dir] --blank     Empty app (no starter content)
   amarra-cais new <app> [dir] --module <path>   Override go module path
   amarra-cais g [--dry-run] handler <name>      Generate handler + test + HTML page
-  amarra-cais g [--dry-run] component <name>    Generate HTML component with {{ .Inner }} slot
+  amarra-cais g [--dry-run] component <name>    Kit name seeds the shipped markup; other names get a slot
+  amarra-cais g component --list                List the shipped kit components an app can override
   amarra-cais g [--dry-run] resource <name> [--fields title:string,url:url] [--public] [--paginate] [--no-seed] [--force] [--admin-auth session|bearer]
   amarra-cais g [--dry-run] model <name> [--fields title:string,url:url]
   amarra-cais g [--dry-run] page <name>         Generate page template only
@@ -250,6 +251,11 @@ func (c *CLI) cmdGenerate(args []string) error {
 	}
 
 	kind := args[0]
+	// --list is discovery and needs no app: the shipped kit is framework-side (#63).
+	if kind == "component" && len(args) >= 2 && args[1] == "--list" {
+		printShippedComponents(c.Out)
+		return nil
+	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -298,7 +304,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 		genErr = scaffoldStreamChat(cwd, opts)
 	case "component":
 		if len(args) < 2 {
-			return fmt.Errorf("usage: amarra-cais g component <name>")
+			return fmt.Errorf("usage: amarra-cais g component <name>|--list")
 		}
 		genErr = scaffoldComponent(cwd, args[1], dryRun)
 	case "handler", "page", "migration", "resource", "model":
