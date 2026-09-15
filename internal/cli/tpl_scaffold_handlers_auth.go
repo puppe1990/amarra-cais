@@ -41,7 +41,7 @@ func (h *AuthHandler) renderAuth(w http.ResponseWriter, r *http.Request, name st
 	if _, ok := extra["Title"]; !ok {
 		extra["Title"] = h.catalog.T("auth.login_title")
 	}
-	writeView(w, r, h.views, h.cfg, name, amarraData(r, h.site, extra), status)
+	writeView(w, r, h.views, h.cfg, "app", name, amarraData(r, h.site, extra), status)
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {

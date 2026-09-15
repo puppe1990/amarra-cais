@@ -27,8 +27,10 @@ func amarraData(r *http.Request, site meta.Site, extra map[string]any) map[strin
 	return data
 }
 
-func writeView(w http.ResponseWriter, r *http.Request, views *view.Renderer, cfg cais.Config, name string, data any, status int) {
-	view.Write(w, r, views, view.Page{Layout: "app", Name: name, Data: data, Status: status}, cfg)
+// writeView names the layout at the call site: an app with a second layout (a
+// marketing "landing") must not render public pages inside the app chrome (#66).
+func writeView(w http.ResponseWriter, r *http.Request, views *view.Renderer, cfg cais.Config, layout, name string, data any, status int) {
+	view.Write(w, r, views, view.Page{Layout: layout, Name: name, Data: data, Status: status}, cfg)
 }
 `
 

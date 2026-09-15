@@ -32,7 +32,7 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeView(w, r, h.views, h.cfg, "dashboard", amarraData(r, h.site, map[string]any{
+	writeView(w, r, h.views, h.cfg, "app", "dashboard", amarraData(r, h.site, map[string]any{
 		"Title":         h.catalog.T("dashboard.title"),
 		"ActiveNav":     "dashboard",
 		"TotalContacts": count,
