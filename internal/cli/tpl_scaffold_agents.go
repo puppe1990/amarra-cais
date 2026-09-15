@@ -54,6 +54,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"http.Redirect(w, r, \"/dashboard\", http.StatusSeeOther)\n" +
 	"```\n\n" +
 	"Pages define a content block plus kit tags `<.form>` / `<.input>` / `<.button>` / `<.flash />` / `<.locale-toggle />`.\n" +
+	"Templates load once at boot (`view.Load`): `layouts/*.html`; `pages/*.html` plus `pages/*/*.html` — `pages/blog/post.html` is `view.Page{Name: \"blog/post\"}`; `partials/*.html` and `components/*.html` are **flat only** (a nested partial never loads), and an unknown `<.x>` fails at boot.\n" +
 	"Drive morphs `#amarra-main` by default — plain links/forms and `linkTo` need no attribute; opt out with `data-amarra-skip` (#31). Do not check `HX-Request`.\n" +
 	"Password fields: `<.password name=\"password\" />` kit (input + eye toggle wired to `amarra-hook=\"password\"`; `fieldPassword` stays as the Go form-builder path).\n" +
 	"Shipped hooks: `bulk` (select-all: `amarra-hook=\"bulk\"` + `data-amarra-bulk-all`/`-row`/`-bar`), `clipboard`, `dialog` (native `<dialog>` via `amarra-hook=\"dialog\"` + `data-amarra-dialog-open`/`-target`/`-close`; `<.modal>` renders the target), `dropdown` (row actions: `amarra-hook=\"dropdown\"` + `data-amarra-dropdown-button`/`-menu`), `nav` (re-sync active link after Drive morph: `amarra-hook=\"nav\"` + `data-amarra-nav-on`/`-off` on the container), `password`, `reveal` (client show/hide, no Drive round-trip), `theme` (`html.light` + `localStorage[\"amarra-theme\"]`, per-element via `data-amarra-theme-key` / `-class` / `-color` / `-on-label` / `-off-label`).\n" +
