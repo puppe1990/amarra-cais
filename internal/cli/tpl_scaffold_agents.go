@@ -78,6 +78,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"```bash\n" +
 	"amarra-cais g handler settings     # handler + test + web/templates/pages/settings.html + route\n" +
 	"amarra-cais g page about           # HTML page only\n" +
+	"amarra-cais g component input      # override a kit component with its shipped markup (--list shows them)\n" +
 	"amarra-cais g resource bookmark --fields title:string,url:url,notes:text?\n" +
 	"amarra-cais g model tag --fields name:string\n" +
 	"amarra-cais g migration add_notes\n" +

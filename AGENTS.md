@@ -99,7 +99,7 @@ Layout: `web/templates/layouts/app.html` (`#amarra-main`) + `web/templates/pages
 
 `amarra-cais g handler` / `amarra-cais g page` generate **HTML** pages in `web/templates/pages/`.
 
-`amarra-cais g resource` generates HTML admin CRUD (`view.Write` + kit `<.form>`). `amarra-cais g stream chat` uses Amarra Stream SSE (`data-amarra-stream`). `amarra-cais g component` writes `web/templates/components/<name>.html`.
+`amarra-cais g resource` generates HTML admin CRUD (`view.Write` + kit `<.form>`). `amarra-cais g stream chat` uses Amarra Stream SSE (`data-amarra-stream`). `amarra-cais g component <kit-name>` seeds the shipped markup of that kit component (so an app restyles the real contract instead of recreating it) and falls back to a generic `{{ .Inner }}` slot for other names; the override file keeps the kit stem (`locale-toggle.html`). `amarra-cais g component --list` prints the overridable components (#63).
 
 Handlers do **not** check `HX-Request`. They call `view.Write`.
 
@@ -481,6 +481,7 @@ amarra-cais g [--dry-run] model bookmark --fields title:string,url:url
 amarra-cais g [--dry-run] handler settings
 amarra-cais g [--dry-run] page about
 amarra-cais g [--dry-run] component card
+amarra-cais g component --list       # kit components an app can override
 amarra-cais g [--dry-run] migration add_tags
 amarra-cais g [--dry-run] auth       # login/logout + protected dashboard
 amarra-cais g [--dry-run] console    # scaffold cmd/console/main.go
