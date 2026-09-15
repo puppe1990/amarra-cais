@@ -99,38 +99,38 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 
 	if blank {
 		files = map[string]string{
-			"go.mod":                             tplGoMod,
-			"cmd/server/main.go":                 tplMainBlank,
-			"cmd/console/main.go":                tplConsole,
-			"internal/app/app.go":                tplAppBlank,
-			"internal/app/routes.go":             tplRoutesBlank,
-			"internal/handlers/helpers_test.go":  tplHelpersTest,
-			"internal/handlers/viewdata.go":      tplViewData,
-			"internal/store/store.go":            tplStoreMinimal,
-			"internal/store/store_test.go":       tplStoreTestMinimal,
-			"internal/store/migrations.go":       tplMigrations,
-			"internal/store/migrations/.gitkeep": "",
-			"web/embed.go":                       tplWebEmbed,
-			"internal/handlers/home.go":          tplHomeHandler,
-			"internal/handlers/home_test.go":     tplHomeTest,
-			"web/templates/layouts/app.html":     tplLayoutBlank,
-			"web/templates/pages/home.html":      tplPageHome,
-			"web/templates/components/.gitkeep":  "",
-			"web/static/css/styles.css":          tplEmptyCSS,
-			"input.css":                          tplInputCSS,
-			"tailwind.config.js":                 tplTailwind,
-			"package.json":                       tplPackageJSON,
-			"Makefile":                           tplMakefile,
-			".gitignore":                         tplGitignore,
-			".air.toml":                          tplAir,
-			".env.example":                       tplEnvExample,
-			"README.md":                          tplREADMEBlank,
-			"AGENTS.md":                          tplAgentsMD,
-			"internal/i18n/i18n.go":              tplI18nCatalog,
-			"internal/i18n/en.go":                tplI18nEn,
-			"internal/i18n/pt.go":                tplI18nPt,
-			"internal/i18n/i18n_test.go":         tplI18nTest,
-			"internal/db/seeds.go":               tplSeedsMinimal,
+			"go.mod":                                 tplGoMod,
+			"cmd/server/main.go":                     tplMainBlank,
+			"cmd/console/main.go":                    tplConsole,
+			"internal/app/app.go":                    tplAppBlank,
+			"internal/app/routes.go":                 tplRoutesBlank,
+			"internal/handlers/helpers_test.go":      tplHelpersTest,
+			"internal/handlers/viewdata.go":          tplViewData,
+			"internal/store/store.go":                tplStoreMinimal,
+			"internal/store/store_test.go":           tplStoreTestMinimal,
+			"internal/store/migrations.go":           tplMigrations,
+			"internal/store/migrations/001_init.sql": tplMigrationInit,
+			"web/embed.go":                           tplWebEmbed,
+			"internal/handlers/home.go":              tplHomeHandler,
+			"internal/handlers/home_test.go":         tplHomeTest,
+			"web/templates/layouts/app.html":         tplLayoutBlank,
+			"web/templates/pages/home.html":          tplPageHome,
+			"web/templates/components/.gitkeep":      "",
+			"web/static/css/styles.css":              tplEmptyCSS,
+			"input.css":                              tplInputCSS,
+			"tailwind.config.js":                     tplTailwind,
+			"package.json":                           tplPackageJSON,
+			"Makefile":                               tplMakefile,
+			".gitignore":                             tplGitignore,
+			".air.toml":                              tplAir,
+			".env.example":                           tplEnvExample,
+			"README.md":                              tplREADMEBlank,
+			"AGENTS.md":                              tplAgentsMD,
+			"internal/i18n/i18n.go":                  tplI18nCatalog,
+			"internal/i18n/en.go":                    tplI18nEn,
+			"internal/i18n/pt.go":                    tplI18nPt,
+			"internal/i18n/i18n_test.go":             tplI18nTest,
+			"internal/db/seeds.go":                   tplSeedsMinimal,
 		}
 		for path, content := range qualityToolingFiles() {
 			files[path] = content
@@ -161,7 +161,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		files["internal/store/store.go"] = tplStoreMinimal
 		files["internal/store/store_test.go"] = tplStoreTestMinimal
 		files["internal/handlers/home_test.go"] = tplHomeTest
-		files["internal/store/migrations/.gitkeep"] = ""
+		files["internal/store/migrations/001_init.sql"] = tplMigrationInit
 		files["internal/db/seeds.go"] = tplSeedsMinimal
 	}
 

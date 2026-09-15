@@ -296,16 +296,24 @@ func TestScaffoldAuth_migrationIncludesExpiresAt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	migration, err := os.ReadFile(filepath.Join(appDir, "internal/store/migrations/001_auth.sql"))
+	// The blank scaffold already ships 001_init.sql, so auth takes the next number.
+	matches, err := filepath.Glob(filepath.Join(appDir, "internal/store/migrations/*_auth.sql"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 {
+		t.Fatalf("expected one *_auth.sql migration, got %v", matches)
+	}
+	migration, err := os.ReadFile(matches[0])
 	if err != nil {
 		t.Fatal(err)
 	}
 	body := string(migration)
 	if !strings.Contains(body, "expires_at") {
-		t.Errorf("001_auth.sql missing expires_at:\n%s", body)
+		t.Errorf("%s missing expires_at:\n%s", filepath.Base(matches[0]), body)
 	}
 	if !strings.Contains(body, `expires_at DATETIME NOT NULL DEFAULT (datetime('now', '+7 days'))`) {
-		t.Errorf("001_auth.sql missing expires_at default:\n%s", body)
+		t.Errorf("%s missing expires_at default:\n%s", filepath.Base(matches[0]), body)
 	}
 }
 
