@@ -50,6 +50,12 @@ const tplREADME = "# {{.AppName}}\n\n" +
 	"cmd/server/        → entry point\n" +
 	"```\n\n" +
 	"See [AGENTS.md](AGENTS.md) for TDD, Amarra views, flash/CSRF, and generator conventions.\n\n" +
+	"## Templates\n\n" +
+	"`view.Load` parses `web/templates/` once at boot:\n\n" +
+	"- `layouts/*.html` — one layout per file; `view.Page{Layout: \"app\"}` selects it\n" +
+	"- `pages/*.html` and `pages/*/*.html` — the name is the path under `pages/` without `.html`, so `pages/blog/post.html` renders as `view.Page{Name: \"blog/post\"}`\n" +
+	"- `partials/*.html` — flat only; a nested partial never loads. A partial declares a named template that pages invoke\n" +
+	"- `components/*.html` — flat only; overrides the shipped kit component with the same file name; an unknown `<.x>` tag fails at boot\n\n" +
 	"## Environment variables\n\n" +
 	"| Variable | Default       | Description      |\n" +
 	"| -------- | ------------- | ---------------- |\n" +
