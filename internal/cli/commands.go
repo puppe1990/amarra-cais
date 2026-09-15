@@ -42,7 +42,8 @@ func (c *CLI) cmdInstall() error {
 
 	if _, err := os.Stat(filepath.Join(dir, "package.json")); err == nil {
 		_, _ = fmt.Fprintln(c.Out, "→ npm install")
-		if err := runCmd(dir, "npm", "install"); err != nil {
+		// --include=dev: NODE_ENV=production would skip tailwindcss/prettier (#54).
+		if err := runCmd(dir, "npm", "install", "--include=dev"); err != nil {
 			return fmt.Errorf("npm install: %w", err)
 		}
 	}
