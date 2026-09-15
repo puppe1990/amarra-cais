@@ -173,3 +173,22 @@ func TestCLI_Install_npmIncludesDevDependencies(t *testing.T) {
 		t.Errorf("npm install must pass --include=dev, calls:\n%s", calls)
 	}
 }
+
+func TestCLI_Install_failsWhenStylesheetCannotBeBuilt(t *testing.T) {
+	dir := installFixture(t)
+	fakeToolchain(t)
+	t.Setenv("FAKE_NPX_EXIT", "1")
+	t.Chdir(dir)
+
+	var buf bytes.Buffer
+	err := (&CLI{Out: &buf}).Run([]string{"install"})
+	if err == nil {
+		t.Fatalf("install must not exit 0 leaving an unbuilt stylesheet\n%s", buf.String())
+	}
+	if !strings.Contains(err.Error(), "amarra-cais css") {
+		t.Errorf("error should point at amarra-cais css, got: %v", err)
+	}
+	if strings.Contains(buf.String(), "Done. Run: amarra-cais dev") {
+		t.Errorf("install must not report success after a failed css build:\n%s", buf.String())
+	}
+}
