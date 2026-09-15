@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.5.2] - 2026-09-15
+
+### Fixed
+
+- `amarra-cais new app --minimal` (and `--blank`) produced an app that did not compile: `//go:embed migrations/*.sql` matched no file because the scaffold shipped only `.gitkeep`. Both scaffolds now ship `001_init.sql` with the `-- up` / `-- down` markers, and a compile smoke covers both variants (#74).
+
 ## [0.5.1] - 2026-09-15
 
 ### Fixed
