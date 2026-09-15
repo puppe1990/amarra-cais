@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/pwa"
@@ -33,21 +34,86 @@ func checkFlashTemplate(dir string) doctorCheck {
 	return doctorCheck{Name: "flash template", OK: true, Detail: "no flash markup detected"}
 }
 
-func checkGoogleFonts(dir string) doctorCheck {
-	path := filepath.Join(dir, "input.css")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return doctorCheck{Name: "CSP fonts", OK: true, Detail: "skipped (no input.css)"}
-	}
-	if strings.Contains(string(data), "fonts.googleapis.com") {
-		return doctorCheck{
-			Name:     "CSP fonts",
-			Optional: true,
-			Detail:   "Google Fonts @import blocked by default CSP (style-src 'self')",
-			FixHint:  "remove fonts.googleapis.com from input.css; use system font stack in tailwind.config.js",
+// googleFontHosts maps each Google Fonts host to the CSP directive that must
+// allow it: the stylesheet needs style-src, the woff2 files need font-src.
+var googleFontHosts = []struct{ host, directive string }{
+	{"fonts.googleapis.com", "CSP_STYLE_SRC"},
+	{"fonts.gstatic.com", "CSP_FONT_SRC"},
+}
+
+// googleFontRefs maps each referenced Google Fonts host to the app files that
+// reference it. Templates matter as much as input.css: porting a design into a
+// scaffolded app links the fonts from the layout (#57).
+func googleFontRefs(dir string) map[string][]string {
+	refs := map[string][]string{}
+	scan := func(rel string, body []byte) {
+		text := string(body)
+		for _, h := range googleFontHosts {
+			if strings.Contains(text, h.host) {
+				refs[h.host] = append(refs[h.host], rel)
+			}
 		}
 	}
-	return doctorCheck{Name: "CSP fonts", OK: true, Detail: "no external font imports"}
+	if body, err := os.ReadFile(filepath.Join(dir, cssInput)); err == nil {
+		scan(cssInput, body)
+	}
+	root := filepath.Join(dir, "web", "templates")
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".html") {
+			return err
+		}
+		body, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		if rel, relErr := filepath.Rel(dir, path); relErr == nil {
+			scan(rel, body)
+		}
+		return nil
+	})
+	return refs
+}
+
+func fontRefFiles(refs map[string][]string) string {
+	seen := map[string]bool{}
+	var files []string
+	for _, list := range refs {
+		for _, f := range list {
+			if !seen[f] {
+				seen[f] = true
+				files = append(files, f)
+			}
+		}
+	}
+	sort.Strings(files)
+	return strings.Join(files, ", ")
+}
+
+func checkGoogleFonts(dir string) doctorCheck {
+	refs := googleFontRefs(dir)
+	if len(refs) == 0 {
+		return doctorCheck{Name: "CSP fonts", OK: true, Detail: "no external font imports"}
+	}
+	files := fontRefFiles(refs)
+	var missing []string
+	for _, h := range googleFontHosts {
+		if len(refs[h.host]) == 0 {
+			continue
+		}
+		if strings.Contains(resolveEnvVar(dir, h.directive), h.host) {
+			continue
+		}
+		missing = append(missing, h.directive+"="+h.host)
+	}
+	if len(missing) == 0 {
+		return doctorCheck{Name: "CSP fonts", OK: true, Detail: files + " allowed by CSP"}
+	}
+	return doctorCheck{
+		Name:     "CSP fonts",
+		Optional: true,
+		Detail:   "external fonts in " + files + " blocked by default CSP (style-src 'self')",
+		FixHint:  "allow with " + strings.Join(missing, " ") + " in .env, or use the system font stack in tailwind.config.js",
+	}
 }
 
 func checkPWACacheVersion(dir string) doctorCheck {
