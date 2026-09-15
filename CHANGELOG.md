@@ -6,6 +6,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.4.0] - 2026-09-15
+
+### Added
+
+- `amarra-cais doctor --mobile` reads Google Fonts from `web/templates/**` as well as `input.css`, and passes when `CSP_STYLE_SRC` / `CSP_FONT_SRC` cover the referenced hosts (#57).
+
+### Fixed
+
+- `amarra-cais install` runs `npm install --include=dev`, so `NODE_ENV=production` no longer skips `tailwindcss`/`prettier`; a failed Tailwind build fails the command instead of exiting 0 on an unstyled app (#54).
+- A fresh scaffold passes the Prettier job shipped in its own CI: `.prettierignore` skips `web/static/` (built CSS + vendored PWA assets) and the `AGENTS.md` / `README.md` templates are formatted (#55).
+- `amarra-cais new` no longer writes a machine-local `replace` into `go.mod` when it finds a sibling Cais checkout (#56).
+
+### Changed
+
+- `amarra-cais new` links the local framework only through `CAIS_REPLACE`, and prints the "do not commit this replace" notice when it does; `amarra-cais link` still discovers a sibling checkout on purpose (#56).
+
 ## [0.3.0] - 2026-09-11
 
 ### Added
