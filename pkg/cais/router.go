@@ -16,11 +16,15 @@ type IntStringParamsHandler func(http.ResponseWriter, *http.Request, int64, stri
 type Router struct {
 	mux         *http.ServeMux
 	middlewares []Middleware
+	// notFound is shared with groups: the parent registration applies to routes
+	// declared on child routers (#62).
+	notFound *notFoundSlot
 }
 
 func NewRouter() *Router {
 	return &Router{
-		mux: http.NewServeMux(),
+		mux:      http.NewServeMux(),
+		notFound: &notFoundSlot{},
 	}
 }
 
@@ -34,6 +38,7 @@ func (r *Router) Group(mw Middleware, fn func(*Router)) {
 	child := &Router{
 		mux:         r.mux,
 		middlewares: append(append([]Middleware{}, r.middlewares...), mw),
+		notFound:    r.notFound,
 	}
 	fn(child)
 }
@@ -90,6 +95,7 @@ func (r *Router) register(method, pattern string, handler http.HandlerFunc) {
 // handlePattern registers on ServeMux and rewrites conflict panics with a cais-specific hint (#142).
 func (r *Router) handlePattern(pattern string, handler http.Handler) {
 	pattern = exactRoot(pattern)
+	handler = r.withNotFoundSlot(handler)
 	defer func() {
 		if rec := recover(); rec != nil {
 			panic(formatRouteConflict(pattern, rec))
@@ -122,6 +128,10 @@ func (r *Router) wrap(handler http.Handler) http.Handler {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if _, pattern := r.mux.Handler(req); pattern == "" {
+		r.serveNoPattern(w, req)
+		return
+	}
 	r.mux.ServeHTTP(w, req)
 }
 
@@ -130,7 +140,7 @@ func IntParam(name string, fn IntHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.ParseInt(r.PathValue(name), 10, 64)
 		if err != nil || id <= 0 {
-			http.NotFound(w, r)
+			serveNotFound(w, r)
 			return
 		}
 		fn(w, r, id)
@@ -142,12 +152,12 @@ func IntStringParams(intName, stringName string, fn IntStringParamsHandler) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.ParseInt(r.PathValue(intName), 10, 64)
 		if err != nil || id <= 0 {
-			http.NotFound(w, r)
+			serveNotFound(w, r)
 			return
 		}
 		s := r.PathValue(stringName)
 		if s == "" {
-			http.NotFound(w, r)
+			serveNotFound(w, r)
 			return
 		}
 		fn(w, r, id, s)
@@ -160,7 +170,7 @@ func StringParams(nameA, nameB string, fn StringParamsHandler) http.HandlerFunc 
 		a := r.PathValue(nameA)
 		b := r.PathValue(nameB)
 		if a == "" || b == "" {
-			http.NotFound(w, r)
+			serveNotFound(w, r)
 			return
 		}
 		fn(w, r, a, b)
@@ -172,7 +182,7 @@ func StringParam(name string, fn StringHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		v := r.PathValue(name)
 		if v == "" {
-			http.NotFound(w, r)
+			serveNotFound(w, r)
 			return
 		}
 		fn(w, r, v)

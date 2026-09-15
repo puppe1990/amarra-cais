@@ -114,6 +114,14 @@ r.Group(middleware.Protect, func(g *cais.Router) {
 })
 ```
 
+**Designed 404** — `r.NotFound(handler)` serves unmatched routes _and_ the param helpers' parse failures (`IntParam`, `StringParam`, `StringParams`). The handler owns the status and runs with the router middlewares (session/flash/CSRF), so it can render a normal page:
+
+```go
+r.NotFound(notFound.ServeHTTP)   // notFound calls view.Write(..., Status: http.StatusNotFound)
+```
+
+Without it, both paths fall back to `http.NotFound` (text/plain).
+
 **ServeMux conflicts (Go 1.22+)** — registration panics when two patterns under the same method can match the same path and neither is more specific:
 
 ```go
