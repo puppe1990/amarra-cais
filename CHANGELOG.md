@@ -6,6 +6,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.5.0] - 2026-09-15
+
+### Added
+
+- `r.NotFound(handler)` serves unmatched routes and the path-param parse failures (`IntParam`, `StringParam`, …) with the app's own page; the handler runs with the router middlewares and owns the status (#62).
+- `amarra-cais g component <kit-name>` seeds the shipped kit markup, so an app restyles the real contract (attributes, error slot, hooks) and keeps the kit stem (`locale-toggle.html`); `amarra-cais g component --list` prints the 16 overridable components (#63).
+- `amarra-cais doctor` warns while `web/static/icons/*` and `og.png` are still the scaffold placeholders (#64).
+- The template loader contract is documented in `AGENTS.md` and in the scaffold README: nested pages are addressable as `blog/post`, partials and components are flat, and an unknown `<.x>` fails at boot (#65).
+
+### Changed
+
+- `writeView` takes the layout before the name — `writeView(w, r, views, cfg, layout, name, data, status)` — so an app with a second layout renders through the shared helper instead of bypassing it (#66).
+- Scaffolds ship neutral placeholder brand assets instead of the framework marks, and the manifest splits `any` (192 + 512) from a dedicated padded `maskable` entry (#64).
+
 ## [0.4.0] - 2026-09-15
 
 ### Added
