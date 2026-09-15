@@ -12,28 +12,28 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"4. Write the **minimal** code to pass\n" +
 	"5. Run `amarra-cais test`\n\n" +
 	"## Clean code for agents\n\n" +
-	"| Priority | Rule |\n" +
-	"| -------- | ---- |\n" +
-	"| 1 | **Small units** — functions ~4–20 lines; files target 200–300 lines, hard cap ~500 |\n" +
-	"| 2 | **SRP** — one reason to change per file/package |\n" +
-	"| 3 | **Greppable names** — unique domain nouns; avoid `data`, `handler`, `Manager`, `util` as primary names |\n" +
-	"| 4 | **Comments = WHY** — security, SQLite, CSRF/cookie, Drive vs full HTML. No narrating WHAT |\n" +
-	"| 5 | **Inject deps** — handlers take `Store`, `*view.Renderer`, `cais.Config` via constructor |\n" +
-	"| 6 | **Early returns** — max ~2 nesting levels |\n" +
-	"| 7 | **Errors with values** — `fmt.Errorf(\"...: %w\", err)` |\n" +
-	"| 8 | **Headless tests** — SQLite `:memory:`; no manual seed for unit tests |\n\n" +
+	"| Priority | Rule                                                                                                   |\n" +
+	"| -------- | ------------------------------------------------------------------------------------------------------ |\n" +
+	"| 1        | **Small units** — functions ~4–20 lines; files target 200–300 lines, hard cap ~500                     |\n" +
+	"| 2        | **SRP** — one reason to change per file/package                                                        |\n" +
+	"| 3        | **Greppable names** — unique domain nouns; avoid `data`, `handler`, `Manager`, `util` as primary names |\n" +
+	"| 4        | **Comments = WHY** — security, SQLite, CSRF/cookie, Drive vs full HTML. No narrating WHAT              |\n" +
+	"| 5        | **Inject deps** — handlers take `Store`, `*view.Renderer`, `cais.Config` via constructor               |\n" +
+	"| 6        | **Early returns** — max ~2 nesting levels                                                              |\n" +
+	"| 7        | **Errors with values** — `fmt.Errorf(\"...: %w\", err)`                                                  |\n" +
+	"| 8        | **Headless tests** — SQLite `:memory:`; no manual seed for unit tests                                  |\n\n" +
 	"## Layout\n\n" +
-	"| Path | Responsibility |\n" +
-	"| ---- | -------------- |\n" +
-	"| `cmd/server/` | Entry point |\n" +
-	"| `internal/app/` | Bootstrap, `registerRoutes` |\n" +
-	"| `internal/handlers/` | HTTP handlers (`view.Write`) |\n" +
-	"| `internal/store/` | SQLite + migrations |\n" +
-	"| `internal/models/` | Domain structs |\n" +
-	"| `web/templates/layouts/` | Amarra layout (`#amarra-main`) |\n" +
-	"| `web/templates/pages/` | HTML pages |\n" +
-	"| `web/templates/components/` | App component overrides |\n" +
-	"| `web/static/` | CSS, `amarra.js`, PWA |\n\n" +
+	"| Path                        | Responsibility                 |\n" +
+	"| --------------------------- | ------------------------------ |\n" +
+	"| `cmd/server/`               | Entry point                    |\n" +
+	"| `internal/app/`             | Bootstrap, `registerRoutes`    |\n" +
+	"| `internal/handlers/`        | HTTP handlers (`view.Write`)   |\n" +
+	"| `internal/store/`           | SQLite + migrations            |\n" +
+	"| `internal/models/`          | Domain structs                 |\n" +
+	"| `web/templates/layouts/`    | Amarra layout (`#amarra-main`) |\n" +
+	"| `web/templates/pages/`      | HTML pages                     |\n" +
+	"| `web/templates/components/` | App component overrides        |\n" +
+	"| `web/static/`               | CSS, `amarra.js`, PWA          |\n\n" +
 	"Patch markers (do not remove): `registerRoutes`, `Close() error`, `<!-- cais:nav -->`, `// cais:live-views`.\n\n" +
 	"## Amarra HTML\n\n" +
 	"Handlers render HTML via `view.Write`:\n\n" +
@@ -61,10 +61,11 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"```html\n" +
 	"<script>\n" +
 	"  try {\n" +
-	"    if (localStorage.getItem(\"amarra-theme\") === \"light\") document.documentElement.classList.add(\"light\");\n" +
+	"    if (localStorage.getItem(\"amarra-theme\") === \"light\")\n" +
+	"      document.documentElement.classList.add(\"light\");\n" +
 	"  } catch (e) {}\n" +
 	"</script>\n" +
-	"```\n" +
+	"```\n\n" +
 	"Parse bodies with `httpx.ParseFormOrJSON`.\n\n" +
 	"## Auth, CSRF, flash\n\n" +
 	"- Session middleware: `LoadSession` + `Flash` + `CSRF(cfg)`\n" +

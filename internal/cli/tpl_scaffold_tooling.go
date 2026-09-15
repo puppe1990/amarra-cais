@@ -636,8 +636,10 @@ const tplPrettierignore = `node_modules/
 bin/
 tmp/
 data/
+# web/templates is Go html/template; web/static is built CSS + vendored PWA assets
+# (amarra-cais pwa rewrites web/static/js) — same exclusion as the pre-commit hook (#55).
 web/templates/
-web/static/css/styles.css
+web/static/
 package-lock.json
 go.sum
 `
