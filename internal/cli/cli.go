@@ -173,6 +173,10 @@ func (c *CLI) cmdNew(args []string) error {
 		return err
 	}
 
+	if replace := os.Getenv("CAIS_REPLACE"); replace != "" {
+		printLinkMessage(c.Out, replace)
+	}
+
 	_, _ = fmt.Fprintf(c.Out, "Created app %q at %s\n\nNext steps:\n  cd %s\n  amarra-cais install\n  amarra-cais dev\n", opts.name, abs, abs)
 	return nil
 }

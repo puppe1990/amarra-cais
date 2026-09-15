@@ -140,3 +140,21 @@ func TestCLI_Link_discoversSiblingCais(t *testing.T) {
 		t.Errorf("link must write the sibling replace:\n%s", got)
 	}
 }
+
+func TestCLI_New_warnsWhenCAISReplaceIsSet(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	t.Setenv("CAIS_REPLACE", "../Cais")
+	appDir := filepath.Join(t.TempDir(), "demo")
+
+	var buf bytes.Buffer
+	if err := (&CLI{Out: &buf}).Run([]string{"new", "demo", appDir}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "do not commit this replace") {
+		t.Errorf("new must warn that the replace is machine-local:\n%s", out)
+	}
+	if !strings.Contains(out, "amarra-cais link --unlink") {
+		t.Errorf("new must show the unlink hint:\n%s", out)
+	}
+}
