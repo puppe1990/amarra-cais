@@ -51,11 +51,11 @@ const tplREADME = "# {{.AppName}}\n\n" +
 	"```\n\n" +
 	"See [AGENTS.md](AGENTS.md) for TDD, Amarra views, flash/CSRF, and generator conventions.\n\n" +
 	"## Environment variables\n\n" +
-	"| Variable  | Default         | Description      |\n" +
-	"| --------- | --------------- | ---------------- |\n" +
-	"| PORT      | :8080           | Server port      |\n" +
-	"| DB_PATH   | ./data/app.db   | SQLite file path |\n" +
-	"| ENV       | development     | Environment      |\n\n" +
+	"| Variable | Default       | Description      |\n" +
+	"| -------- | ------------- | ---------------- |\n" +
+	"| PORT     | :8080         | Server port      |\n" +
+	"| DB_PATH  | ./data/app.db | SQLite file path |\n" +
+	"| ENV      | development   | Environment      |\n\n" +
 	"Health check: GET /health → {\"status\":\"ok\"}\n\n" +
 	"Jobs dashboard: GET /jobs (localhost only) — queue counts, failed retry/discard.\n\n" +
 	"## Testing on phone (LAN)\n\n" +
@@ -82,7 +82,7 @@ const tplREADMEBlank = "# {{.AppName}}\n\n" +
 	"```bash\n" +
 	"amarra-cais g resource bookmark --fields title:string,url:url,notes:text?\n" +
 	"```\n\n" +
-	"This generates:\n" +
+	"This generates:\n\n" +
 	"- Model, migration, admin CRUD, and public list page\n" +
 	"- Tests for handlers and store\n" +
 	"- Routes with admin protection\n"
