@@ -69,8 +69,12 @@ func findLocalCaisReplace(appDir string) string {
 	return ""
 }
 
+// patchGoModReplace links the framework only when explicitly requested via
+// CAIS_REPLACE. Auto-detecting a sibling checkout wrote a machine-local path
+// into a fresh go.mod, so the app stopped building anywhere else — including
+// its own CI (#56). `amarra-cais link` stays the explicit path for that.
 func patchGoModReplace(appDir string) error {
-	replace := findLocalCaisReplace(appDir)
+	replace := os.Getenv("CAIS_REPLACE")
 	if replace == "" {
 		return nil
 	}
