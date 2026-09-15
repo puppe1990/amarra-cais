@@ -94,11 +94,25 @@ func checkGoogleFonts(dir string) doctorCheck {
 	if len(refs) == 0 {
 		return doctorCheck{Name: "CSP fonts", OK: true, Detail: "no external font imports"}
 	}
+	files := fontRefFiles(refs)
+	var missing []string
+	for _, h := range googleFontHosts {
+		if len(refs[h.host]) == 0 {
+			continue
+		}
+		if strings.Contains(resolveEnvVar(dir, h.directive), h.host) {
+			continue
+		}
+		missing = append(missing, h.directive+"="+h.host)
+	}
+	if len(missing) == 0 {
+		return doctorCheck{Name: "CSP fonts", OK: true, Detail: files + " allowed by CSP"}
+	}
 	return doctorCheck{
 		Name:     "CSP fonts",
 		Optional: true,
-		Detail:   "external fonts in " + fontRefFiles(refs) + " blocked by default CSP (style-src 'self')",
-		FixHint:  "remove the Google Fonts import, or allow it via CSP_STYLE_SRC / CSP_FONT_SRC in .env; the system font stack in tailwind.config.js needs neither",
+		Detail:   "external fonts in " + files + " blocked by default CSP (style-src 'self')",
+		FixHint:  "allow with " + strings.Join(missing, " ") + " in .env, or use the system font stack in tailwind.config.js",
 	}
 }
 
