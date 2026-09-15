@@ -118,7 +118,6 @@ func WriteStatic(appDir string, cfg Config) error {
 		{"assets/cais-chat.js", "js/cais-chat.js"},
 		{"assets/cais-chat-logic.mjs", "js/cais-chat-logic.mjs"},
 		{"assets/offline.html", "offline.html"},
-		{"assets/icon.png", "icons/icon.png"},
 		{"assets/go-on-cais.jpg", "img/go-on-cais.jpg"},
 	} {
 		if err := copyAsset(pair.src, filepath.Join(staticDir, pair.dst)); err != nil {
@@ -172,7 +171,6 @@ func WriteStaticInertia(appDir string, cfg Config) error {
 	for _, pair := range []struct{ src, dst string }{
 		{"assets/amarra.js", "js/amarra.js"},
 		{"assets/offline.html", "offline.html"},
-		{"assets/icon.png", "icons/icon.png"},
 		{"assets/go-on-cais.jpg", "img/go-on-cais.jpg"},
 	} {
 		if err := copyAsset(pair.src, filepath.Join(staticDir, pair.dst)); err != nil {
@@ -241,7 +239,13 @@ func writeManifest(path string, cfg Config) error {
       "src": "/static/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
@@ -265,18 +269,10 @@ func copyAsset(src, dst string) error {
 	return os.WriteFile(dst, data, 0o644)
 }
 
+// writeOGImage copies the neutral 1200x630 preview shipped with the framework.
+// Apps replace web/static/og.png with their own art (#64).
 func writeOGImage(path string) error {
-	const width, height = 1200, 630
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	fill(img, color.RGBA{R: 15, G: 23, B: 42, A: 255})
-	accent := color.RGBA{R: 79, G: 70, B: 229, A: 255}
-	barHeight := height / 5
-	for y := 0; y < barHeight; y++ {
-		for x := 0; x < width; x++ {
-			img.Set(x, y, accent)
-		}
-	}
-	return encodePNG(path, img)
+	return copyAsset("assets/og.png", path)
 }
 
 func fill(img *image.RGBA, c color.RGBA) {
@@ -289,22 +285,32 @@ func fill(img *image.RGBA, c color.RGBA) {
 }
 
 func encodePNG(path string, img image.Image) error {
-	f, err := os.Create(path)
+	body, err := encodePNGBytes(img)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = f.Close() }()
-	return png.Encode(f, img)
+	return os.WriteFile(path, body, 0o644)
+}
+
+func encodePNGBytes(img image.Image) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// iconSource returns the icon an app scaffolds with: the caller's brand file
+// when configured, otherwise the framework's neutral placeholder tile.
+func iconSource(iconPath string) ([]byte, error) {
+	if iconPath != "" {
+		return os.ReadFile(iconPath)
+	}
+	return assets.ReadFile("assets/icon.png")
 }
 
 func writeAppIcons(dir string, iconPath string) error {
-	var data []byte
-	var err error
-	if iconPath != "" {
-		data, err = os.ReadFile(iconPath)
-	} else {
-		data, err = assets.ReadFile("assets/icon.png")
-	}
+	data, err := iconSource(iconPath)
 	if err != nil {
 		return err
 	}
@@ -321,7 +327,61 @@ func writeAppIcons(dir string, iconPath string) error {
 			return err
 		}
 	}
+	// Separate maskable file: platforms crop `any` icons, so keep a version whose
+	// content sits inside the safe zone (#64).
+	if err := encodePNG(filepath.Join(dir, "icon-512-maskable.png"), maskableIcon(src, 512)); err != nil {
+		return err
+	}
 	return nil
+}
+
+// maskableIcon insets src to 80% of the canvas over its own corner color, the
+// Android safe zone for maskable icons.
+func maskableIcon(src image.Image, size int) *image.RGBA {
+	inner := resizeNearest(src, size*4/5, size*4/5)
+	bounds := src.Bounds()
+	bg := color.RGBAModel.Convert(src.At(bounds.Min.X, bounds.Min.Y)).(color.RGBA)
+	dst := image.NewRGBA(image.Rect(0, 0, size, size))
+	fill(dst, bg)
+	offset := (size - inner.Bounds().Dx()) / 2
+	for y := 0; y < inner.Bounds().Dy(); y++ {
+		for x := 0; x < inner.Bounds().Dx(); x++ {
+			dst.Set(offset+x, offset+y, inner.At(x, y))
+		}
+	}
+	return dst
+}
+
+// DefaultBrandAssets returns the brand files a scaffold writes, keyed by their
+// path under web/static. doctor compares app files against them to warn while
+// the app still ships the placeholder (#64).
+func DefaultBrandAssets() map[string][]byte {
+	out := map[string][]byte{}
+	data, err := assets.ReadFile("assets/icon.png")
+	if err != nil {
+		return out
+	}
+	src, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		return out
+	}
+	out["icons/icon.png"] = data
+	encoded := map[string]image.Image{
+		"icons/icon-192.png":          resizeNearest(src, 192, 192),
+		"icons/icon-512.png":          resizeNearest(src, 512, 512),
+		"icons/icon-512-maskable.png": maskableIcon(src, 512),
+	}
+	for rel, img := range encoded {
+		body, err := encodePNGBytes(img)
+		if err != nil {
+			return map[string][]byte{}
+		}
+		out[rel] = body
+	}
+	if og, err := assets.ReadFile("assets/og.png"); err == nil {
+		out["og.png"] = og
+	}
+	return out
 }
 
 func resizeNearest(src image.Image, w, h int) *image.RGBA {

@@ -68,7 +68,9 @@ const tplREADME = "# {{.AppName}}\n\n" +
 	"1. Run `amarra-cais dev` and note the **LAN** URL printed at boot (e.g. `http://192.168.1.10:8080`).\n" +
 	"2. Open that URL in mobile Safari/Chrome on the same Wi‑Fi.\n" +
 	"3. After template or SSE changes, run `amarra-cais pwa --bump` and reinstall the PWA (or clear site data) so the service worker cache refreshes.\n" +
-	"4. Run `amarra-cais doctor --mobile` to catch flash markup, font CSP, and SW cache issues.\n"
+	"4. Run `amarra-cais doctor --mobile` to catch flash markup, font CSP, and SW cache issues.\n\n" +
+	"## Brand assets\n\n" +
+	"Replace the scaffold placeholders before sharing the site: `web/static/icons/icon.png`, `icon-192.png`, `icon-512.png`, the padded `icon-512-maskable.png`, and the 1200x630 `web/static/og.png`. `amarra-cais doctor` warns while they are still the defaults.\n"
 
 const tplREADMEBlank = "# {{.AppName}}\n\n" +
 	"Full-stack Go app built with [Amarra](https://github.com/puppe1990/amarra-cais): HTML templates, Tailwind, and SQLite.\n\n" +
