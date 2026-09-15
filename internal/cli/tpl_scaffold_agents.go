@@ -54,6 +54,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"http.Redirect(w, r, \"/dashboard\", http.StatusSeeOther)\n" +
 	"```\n\n" +
 	"Pages define a content block plus kit tags `<.form>` / `<.input>` / `<.button>` / `<.flash />` / `<.locale-toggle />`.\n" +
+	"Kit attributes interpolate: `<.stat label=\"Potência\" value=\"{{\"{{\"}} .Power {{\"}}\"}} kWp\" />` renders `5 kWp`; a control action in an attribute value fails at boot.\n" +
 	"Templates load once at boot (`view.Load`): `layouts/*.html`; `pages/*.html` plus `pages/*/*.html` — `pages/blog/post.html` is `view.Page{Name: \"blog/post\"}`; `partials/*.html` and `components/*.html` are **flat only** (a nested partial never loads), and an unknown `<.x>` fails at boot.\n" +
 	"Designed 404: register `r.NotFound(handler)` in `internal/app/routes.go` — it also serves path params that fail to parse (`IntParam`, `StringParam`); render with `writeView(..., http.StatusNotFound)`.\n" +
 	"Drive morphs `#amarra-main` by default — plain links/forms and `linkTo` need no attribute; opt out with `data-amarra-skip` (#31). Do not check `HX-Request`.\n" +
