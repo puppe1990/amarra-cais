@@ -793,12 +793,24 @@ func TestCLI_NewMainUsesTemplateHotReload(t *testing.T) {
 	if !strings.Contains(body, "view.Load") {
 		t.Error("main.go should use view.Load for Amarra templates")
 	}
+	if !strings.Contains(body, "signal.NotifyContext") {
+		t.Error("main.go should wire signal.NotifyContext so air's restart signal shuts down gracefully (#77)")
+	}
+	if !strings.Contains(body, "RunContext") {
+		t.Error("main.go should run the app with RunContext so SIGINT/SIGTERM releases the port and sqlite (#77)")
+	}
 	air, err := os.ReadFile(filepath.Join(appDir, ".air.toml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(string(air), `"html"`) {
 		t.Error(".air.toml include_ext must include html so air rebuilds (and re-embeds) templates")
+	}
+	if !strings.Contains(string(air), "send_interrupt") {
+		t.Error(".air.toml must set send_interrupt so air SIGINTs tmp/main before killing it (#77)")
+	}
+	if !strings.Contains(string(air), "kill_delay") {
+		t.Error(".air.toml must set kill_delay so tmp/main can exit before SIGKILL (#77)")
 	}
 }
 
