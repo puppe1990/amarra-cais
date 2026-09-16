@@ -240,8 +240,27 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 				t.Errorf("%s layout should not contain %q", name, gone)
 			}
 		}
+		if strings.Contains(tpl, ">Home<") {
+			t.Errorf("%s layout sidebar should not contain a Home item", name)
+		}
+		if !strings.Contains(tpl, `id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60"`) {
+			t.Errorf("%s layout should tie lg:ml-60 to #amarra-main", name)
+		}
 		if strings.Index(tpl, "<aside") > strings.Index(tpl, "<!-- cais:nav -->") {
 			t.Errorf("%s layout should render <!-- cais:nav --> inside the sidebar", name)
+		}
+		if !(strings.Index(tpl, "<!-- cais:nav -->") < strings.Index(tpl, "</aside>")) {
+			t.Errorf("%s layout should render <!-- cais:nav --> before </aside>", name)
+		}
+		side := tpl[strings.Index(tpl, "<aside"):strings.Index(tpl, "</aside>")]
+		for _, token := range []string{
+			`amarra-hook="nav"`,
+			`data-amarra-nav-on`,
+			`data-amarra-nav-off`,
+		} {
+			if !strings.Contains(side, token) {
+				t.Errorf("%s layout sidebar should contain %q", name, token)
+			}
 		}
 	}
 }
