@@ -203,3 +203,38 @@ func TestLayoutTemplates_shellDesignTokens(t *testing.T) {
 		}
 	}
 }
+
+func TestLayoutTemplates_sidebarShell(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		for _, token := range []string{
+			`<aside id="amarra-nav"`,
+			`fixed left-0 top-[57px] bottom-0`,
+			`w-60`,
+			`lg:ml-60`,
+			`amarra-sidebar-toggle`,
+			`peer-checked:translate-x-0`,
+			`amarra-hook="nav"`,
+			`href="/dashboard"`,
+			`action="/logout"`,
+			`amarra-toast-host`,
+			`template "icon_chart_nav"`,
+			`<!-- cais:nav -->`,
+		} {
+			if !strings.Contains(tpl, token) {
+				t.Errorf("%s layout missing sidebar token %q", name, token)
+			}
+		}
+		for _, gone := range []string{
+			`<nav id="amarra-nav"`,
+			`template "nav_links"`,
+		} {
+			if strings.Contains(tpl, gone) {
+				t.Errorf("%s layout should not contain %q", name, gone)
+			}
+		}
+	}
+}
