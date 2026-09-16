@@ -49,8 +49,25 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 	if !strings.Contains(body, `name="q"`) {
 		t.Error("admin index filters should search q")
 	}
-	if !strings.Contains(body, `(dict "method" "post" "confirm"`) {
-		t.Error("admin index delete should be a confirmed Drive link")
+	if strings.Contains(body, `(dict "method" "post" "confirm"`) {
+		t.Error("admin index delete should use a modal, not a confirmed Drive link")
+	}
+	if strings.Contains(body, `amarra-hook="dropdown"`) {
+		t.Error("admin index rows should use Edit + trash buttons, not an Actions dropdown")
+	}
+	for _, needle := range []string{
+		`/edit"`,
+		`aria-label="Delete`,
+		`Delete this`,
+		`<.modal`,
+	} {
+		if !strings.Contains(body, needle) {
+			t.Errorf("admin index row missing %s (Edit + trash with modal)", needle)
+		}
+	}
+	// Rows sit inside the bulk-delete form — a second form would nest and break the parser.
+	if n := strings.Count(body, "<.form"); n != 1 {
+		t.Errorf("admin index should have exactly the bulk <.form>, got %d (nested forms are invalid HTML)", n)
 	}
 	if strings.Contains(body, "{{ if not .Items }}") {
 		t.Error("empty state must not sit under the table; use {{ if .Items }} else (#38)")
@@ -62,10 +79,9 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 		`amarra-hook="bulk"`,
 		`data-amarra-bulk-all`,
 		`data-amarra-bulk-row`,
-		`amarra-hook="dropdown"`,
-		`data-amarra-dropdown-button`,
 		`amarra-hook="dialog"`,
 		`data-amarra-dialog-open`,
+		`data-amarra-dialog-close`,
 		`<.modal`,
 	} {
 		if !strings.Contains(body, needle) {
@@ -93,6 +109,17 @@ func TestScaffoldResource_AdminIndexUsesKit(t *testing.T) {
 	}
 	if strings.Contains(string(show), "csrfField") {
 		t.Error("admin show delete <.form> should not duplicate csrfField")
+	}
+	for _, needle := range []string{
+		`/edit"`,
+		`aria-label="Delete`,
+		`amarra-hook="dialog"`,
+		`<.modal`,
+		`Delete this`,
+	} {
+		if !strings.Contains(string(show), needle) {
+			t.Errorf("admin show missing %s (Edit + trash with modal)", needle)
+		}
 	}
 
 	handler, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/admin_bookmarks.go"))
