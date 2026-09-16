@@ -19,25 +19,6 @@ func TestLayoutTemplates_containNavMarker(t *testing.T) {
 	}
 }
 
-func TestLayoutTemplates_fullHasDefaultNavLinks(t *testing.T) {
-	if !strings.Contains(tplLayout, `template "nav_links"`) {
-		t.Error("full layout should render nav_links partial")
-	}
-	for _, link := range []string{`href="/contact"`, `href="/dashboard"`} {
-		if !strings.Contains(tplPartialNavLinks, link) {
-			t.Errorf("nav_links partial missing %s", link)
-		}
-	}
-	// Drive intercepts same-origin links by default (#31); the no-op
-	// data-amarra-drive attr must not be generated.
-	if strings.Contains(tplPartialNavLinks, `data-amarra-drive`) {
-		t.Error("nav_links partial should not emit the no-op data-amarra-drive attr")
-	}
-	if !strings.Contains(tplLayout, "amarra-toast-host") {
-		t.Error("full layout missing amarra-toast-host")
-	}
-}
-
 func TestLayoutTemplates_minimalAndBlankMatch(t *testing.T) {
 	if tplLayoutMinimal != tplLayoutBlank {
 		t.Error("minimal and blank base layouts should be identical")
@@ -77,20 +58,11 @@ func TestLayoutTemplates_hasDriveShell(t *testing.T) {
 	}
 }
 
-func TestLayoutTemplates_navTabsHaveIcons(t *testing.T) {
-	for _, icon := range []string{`icon_home_nav`, `icon_message_nav`, `icon_chart_nav`} {
-		if !strings.Contains(tplPartialNavLinks, icon) {
-			t.Errorf("nav partial should include %s", icon)
-		}
-	}
-}
-
 func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 	dir := t.TempDir()
 	data := scaffoldData{AppName: "demo", ModulePath: "github.com/acme/demo"}
 	for path, tpl := range map[string]string{
-		"web/templates/partials/icons.html":     tplPartialIcons,
-		"web/templates/partials/nav_links.html": tplPartialNavLinks,
+		"web/templates/partials/icons.html": tplPartialIcons,
 	} {
 		if err := writeTemplate(filepath.Join(dir, path), tpl, data); err != nil {
 			t.Fatalf("%s: %v", path, err)
@@ -103,9 +75,6 @@ func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 			t.Fatalf("%s rendered empty", path)
 		}
 		want := `define "icon_sparkles_md"`
-		if path == "web/templates/partials/nav_links.html" {
-			want = `define "nav_links"`
-		}
 		if !strings.Contains(string(body), want) {
 			t.Fatalf("%s missing %s", path, want)
 		}
@@ -168,7 +137,6 @@ func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 		"dashboard": tplPageDashboard,
 		"home":      tplPageHome,
 		"css":       tplInputCSS,
-		"nav":       tplPartialNavLinks,
 	}
 	for name, blob := range blobs {
 		for _, leftover := range []string{"indigo", "hx-ext", "htmx.min.js", "font-display"} {
@@ -199,6 +167,71 @@ func TestLayoutTemplates_shellDesignTokens(t *testing.T) {
 		} {
 			if !strings.Contains(tpl, token) {
 				t.Errorf("%s layout missing design token %q", name, token)
+			}
+		}
+	}
+}
+
+func TestLayoutTemplates_sidebarShell(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		for _, token := range []string{
+			`<aside id="amarra-nav"`,
+			`fixed left-0 top-[57px] bottom-0`,
+			`w-60`,
+			`lg:ml-60`,
+			`amarra-sidebar-toggle`,
+			`peer-checked:translate-x-0`,
+			`amarra-hook="nav"`,
+			`data-amarra-nav-on`,
+			`data-amarra-nav-off`,
+			`href="/dashboard"`,
+			`<.form action="/logout"`,
+			`<.flash />`,
+			`amarra-toast-host`,
+			`template "icon_chart_nav"`,
+			`<!-- cais:nav -->`,
+		} {
+			if !strings.Contains(tpl, token) {
+				t.Errorf("%s layout missing sidebar token %q", name, token)
+			}
+		}
+		for _, gone := range []string{
+			`<nav id="amarra-nav"`,
+			`template "nav_links"`,
+			`href="/contact"`,
+		} {
+			if strings.Contains(tpl, gone) {
+				t.Errorf("%s layout should not contain %q", name, gone)
+			}
+		}
+		if strings.Contains(tpl, ">Home<") {
+			t.Errorf("%s layout sidebar should not contain a Home item", name)
+		}
+		if !strings.Contains(tpl, `id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60"`) {
+			t.Errorf("%s layout should tie lg:ml-60 to #amarra-main", name)
+		}
+		if !strings.Contains(tpl, "<aside") {
+			t.Errorf("%s layout missing <aside sidebar", name)
+			continue
+		}
+		if strings.Index(tpl, "<aside") > strings.Index(tpl, "<!-- cais:nav -->") {
+			t.Errorf("%s layout should render <!-- cais:nav --> inside the sidebar", name)
+		}
+		if strings.Index(tpl, "<!-- cais:nav -->") >= strings.Index(tpl, "</aside>") {
+			t.Errorf("%s layout should render <!-- cais:nav --> before </aside>", name)
+		}
+		side := tpl[strings.Index(tpl, "<aside"):strings.Index(tpl, "</aside>")]
+		for _, token := range []string{
+			`amarra-hook="nav"`,
+			`data-amarra-nav-on`,
+			`data-amarra-nav-off`,
+		} {
+			if !strings.Contains(side, token) {
+				t.Errorf("%s layout sidebar should contain %q", name, token)
 			}
 		}
 	}

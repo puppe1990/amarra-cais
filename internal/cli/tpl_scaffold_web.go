@@ -37,8 +37,10 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
   </head>
   <body class="min-h-screen bg-ink font-sans antialiased text-foam flex flex-col justify-between">
     <div>
+      <input id="amarra-sidebar-toggle" type="checkbox" class="peer sr-only" aria-label="Menu" />
       <header class="bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+          <label for="amarra-sidebar-toggle" class="lg:hidden font-mono text-[10px] uppercase tracking-[0.22em] text-copper cursor-pointer">Menu</label>
           <a href="/" class="flex items-center gap-3 group">
             <span class="flex h-9 w-9 items-center justify-center border border-copper/70 text-copper group-hover:bg-copper group-hover:text-ink transition-colors" aria-hidden="true">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 20V8m0 0a3 3 0 116 0v1H5m14 11V9a3 3 0 00-3-3h-3" /></svg>
@@ -51,24 +53,27 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
           <a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
         </div>
       </header>
-      <nav id="amarra-nav" class="bg-ink border-b border-foam/10 sticky top-[57px] z-30">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full transition-transform peer-checked:translate-x-0 lg:translate-x-0">
+        <div class="h-full flex flex-col gap-1 p-3 overflow-y-auto no-scrollbar">
           <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
-          <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex gap-1 py-1 overflow-x-auto no-scrollbar">
+          <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
             `
 
-const tplLayoutNavFull = `<!-- cais:nav -->
-            {{"{{"}} template "nav_links" . {{"}}"}}
+const tplLayoutNavFull = `<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+            <!-- cais:nav -->
+            <.form action="/logout" method="post">
+              <.button type="submit">Sair</.button>
+            </.form>
             <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />`
 
-const tplLayoutNavEmpty = `<!-- cais:nav -->`
+const tplLayoutNavEmpty = tplLayoutNavFull
 
 const tplLayoutBaseClose = `
           </div>
         </div>
-      </nav>
+      </aside>
       <div id="amarra-toast-host" aria-live="polite"></div>
-      <main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5">
+      <main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60">
         <.flash />
         {{"{{"}} template "content" . {{"}}"}}
       </main>
@@ -100,9 +105,9 @@ const tplLayoutBaseClose = `
 </html>
 {{"{{"}} end {{"}}"}}`
 
-const tplLayout = tplLayoutTitleDesc + tplPartialIcons + tplPartialNavLinks + tplLayoutBaseOpen + tplLayoutNavFull + tplLayoutBaseClose
+const tplLayout = tplLayoutTitleDesc + tplPartialIcons + tplLayoutBaseOpen + tplLayoutNavFull + tplLayoutBaseClose
 
-const tplLayoutMinimal = tplLayoutTitleDesc + tplPartialIcons + tplPartialNavLinks + tplLayoutBaseOpen + tplLayoutNavEmpty + tplLayoutBaseClose
+const tplLayoutMinimal = tplLayoutTitleDesc + tplPartialIcons + tplLayoutBaseOpen + tplLayoutNavEmpty + tplLayoutBaseClose
 
 const tplLayoutBlank = tplLayoutMinimal
 
