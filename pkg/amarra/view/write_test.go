@@ -178,6 +178,56 @@ func TestLoad_nestedPageName(t *testing.T) {
 	}
 }
 
+func TestWrite_setsNoStoreByDefault(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]string{"Title": "Hi"}}, cais.Config{})
+	if cc := rr.Header().Get("Cache-Control"); cc != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", cc)
+	}
+}
+
+func TestWrite_respectsPresetCacheControl(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	rr.Header().Set("Cache-Control", "public, max-age=60")
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]string{"Title": "Hi"}}, cais.Config{})
+	if cc := rr.Header().Get("Cache-Control"); cc != "public, max-age=60" {
+		t.Fatalf("Cache-Control = %q, want preset kept", cc)
+	}
+}
+
+func TestWrite_pageCacheControlOverride(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]string{"Title": "Hi"}, CacheControl: "no-cache"}, cais.Config{})
+	if cc := rr.Header().Get("Cache-Control"); cc != "no-cache" {
+		t.Fatalf("Cache-Control = %q, want no-cache", cc)
+	}
+}
+
+func TestWrite_presetETagSkipsNoStoreDefault(t *testing.T) {
+	rec, err := Load(testFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	rr.Header().Set("ETag", `"v1"`)
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{Layout: "app", Name: "home", Data: map[string]string{"Title": "Hi"}}, cais.Config{})
+	if cc := rr.Header().Get("Cache-Control"); cc != "" {
+		t.Fatalf("Cache-Control = %q, want empty when ETag preset", cc)
+	}
+}
+
 func TestLoad_unknownComponentFailsBoot(t *testing.T) {
 	fsys := fstest.MapFS{
 		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
