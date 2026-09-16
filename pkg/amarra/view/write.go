@@ -17,6 +17,9 @@ type Page struct {
 	Frame  string // frame id (e.g. "cart"); fragment only when Amarra-Frame is set
 	Data   any
 	Status int
+	// CacheControl overrides the default "no-store" (#80). Empty means
+	// default; a handler can also preset the header (e.g. ETag list pages).
+	CacheControl string
 }
 
 // Write renders a full layout+page, a Drive document (layout kept so JS can
@@ -36,6 +39,15 @@ func Write(w http.ResponseWriter, r *http.Request, rec *Renderer, p Page, cfg ca
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// Dynamic pages default to no-store so browsers never heuristically
+	// cache HTML + inline scripts (#80). Handlers opt into caching via
+	// Page.CacheControl, a preset Cache-Control, or a preset ETag
+	// (httpx.SetETag list flow keeps its 304 behavior).
+	if p.CacheControl != "" {
+		w.Header().Set("Cache-Control", p.CacheControl)
+	} else if w.Header().Get("Cache-Control") == "" && w.Header().Get("ETag") == "" {
+		w.Header().Set("Cache-Control", "no-store")
+	}
 	if p.Status != 0 {
 		w.WriteHeader(p.Status)
 	}
