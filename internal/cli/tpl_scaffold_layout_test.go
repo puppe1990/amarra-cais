@@ -246,6 +246,10 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 		if !strings.Contains(tpl, `id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60"`) {
 			t.Errorf("%s layout should tie lg:ml-60 to #amarra-main", name)
 		}
+		if !strings.Contains(tpl, "<aside") {
+			t.Errorf("%s layout missing <aside sidebar", name)
+			continue
+		}
 		if strings.Index(tpl, "<aside") > strings.Index(tpl, "<!-- cais:nav -->") {
 			t.Errorf("%s layout should render <!-- cais:nav --> inside the sidebar", name)
 		}
