@@ -88,6 +88,7 @@ Usage:
   amarra-cais g [--dry-run] migration <name>    Generate SQL migration file
   amarra-cais g [--dry-run] live <name>         Generate Live view + page (WebSocket)
   amarra-cais g [--dry-run] stream chat [--live]
+  amarra-cais g [--dry-run] sitemap              Blog posts + dynamic /sitemap.xml
                              Generate SSE chat (optional Live WebSocket)
   amarra-cais g [--dry-run] job <name> [--cron "0 3 * * *"]
                              Generate job handler + cmd/worker + registry
@@ -247,7 +248,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
-		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|component|migration|resource|model|stream|live|job|console|auth|ci> [name]")
+		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|component|migration|resource|model|stream|live|job|console|auth|ci|sitemap> [name]")
 	}
 
 	kind := args[0]
@@ -307,6 +308,8 @@ func (c *CLI) cmdGenerate(args []string) error {
 			return fmt.Errorf("usage: amarra-cais g component <name>|--list")
 		}
 		genErr = scaffoldComponent(cwd, args[1], dryRun)
+	case "sitemap":
+		genErr = scaffoldSitemap(cwd, dryRun)
 	case "handler", "page", "migration", "resource", "model":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais g %s <name>", kind)
@@ -335,7 +338,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 			genErr = scaffoldModel(cwd, name, opts)
 		}
 	default:
-		return fmt.Errorf("unknown generator %q (use handler, page, component, migration, resource, model, stream, auth, ci, app, or console)", kind)
+		return fmt.Errorf("unknown generator %q (use handler, page, component, migration, resource, model, stream, auth, ci, app, sitemap, or console)", kind)
 	}
 	if genErr != nil {
 		return genErr
@@ -349,7 +352,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 func printGenerateNextSteps(w io.Writer, kind string) {
 	_, _ = fmt.Fprintln(w)
 	switch kind {
-	case "resource", "model", "migration", "auth", "stream":
+	case "resource", "model", "migration", "auth", "stream", "sitemap":
 		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais db migrate && amarra-cais test")
 	case "app":
 		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais install && amarra-cais dev")
