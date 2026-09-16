@@ -63,6 +63,14 @@ export function extractMainTagName(html) {
   return extractMainOpen(String(html ?? ""))?.[1]?.toUpperCase() ?? null;
 }
 
+function defaultDriveWarn(msg) {
+  try {
+    globalThis.console?.warn?.(msg);
+  } catch {
+    /* noop: console unavailable */
+  }
+}
+
 export function applyDriveResponse({
   status,
   html,
@@ -74,6 +82,7 @@ export function applyDriveResponse({
   document: doc,
   push = true,
   window: win,
+  warn = defaultDriveWarn,
 } = {}) {
   if (status === 401 || status === 403) {
     location?.reload?.();
@@ -85,7 +94,14 @@ export function applyDriveResponse({
   }
 
   const fragment = extractMainHTML(html);
-  if (fragment == null) return { action: "ignore" };
+  if (fragment == null) {
+    // Silent ignores cost hours of debugging (#83): the target HTML has no
+    // (or unbalanced) #amarra-main, so there is nothing to morph.
+    warn(
+      `amarra drive: ignored ${status} response for ${url ?? "(unknown url)"} — #amarra-main missing or unbalanced HTML`
+    );
+    return { action: "ignore" };
+  }
   if (needsFullVisit({ html, main, document: doc })) {
     assignLocation(location, url);
     return { action: "assign" };
