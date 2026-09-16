@@ -74,6 +74,8 @@ func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
 				`localStorage.getItem("amarra-theme")`,
 				"Fullbleed",
 				"page-owned chrome",
+				"IIFE",
+				"event delegation",
 				tc.name, // AppName rendered into title
 			} {
 				if !strings.Contains(text, needle) {
