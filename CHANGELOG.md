@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.6.1] - 2026-09-16
+
+### Fixed
+
+- `view.Write` defaults dynamic pages to `Cache-Control: no-store` so browsers never heuristically cache HTML + inline scripts (stale clicks after deploy). Opt out via `Page.CacheControl`, a preset `Cache-Control`, or a preset `ETag` (httpx 304 list flow keeps working) (#80).
+
 ## [0.6.0] - 2026-09-16
 
 ### Added
