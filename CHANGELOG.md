@@ -6,6 +6,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.7.0] - 2026-09-16
+
+### Added
+
+- Scaffold shell troca a nav horizontal por sidebar fixa à esquerda (`fixed w-60`, drawer no mobile via checkbox + `peer-checked`): nasce com Dashboard + logout + locale-toggle, `<!-- cais:nav -->` dentro para `g resource --public`; full, minimal e blank idênticos (a faixa vazia do `--minimal` deixa de existir).
+- `amarra.js` avisa no console quando uma resposta Drive 200/422 não tem `#amarra-main` extraível (HTML desbalanceado), com status + URL (#83).
+
+### Fixed
+
+- `amarra-cais new` gera `package.json` com script `build` (Tailwind `input.css` → `web/static/css/styles.css --minify`) para o CSS chegar ao deploy (#82).
+
+### Documentation
+
+- `AGENTS.md` do scaffold: scripts inline re-executam a cada morph — usar IIFE (sem `let`/`const` global) e event delegation no `document` com flag `window` (#84).
+
 ## [0.6.1] - 2026-09-16
 
 ### Fixed
