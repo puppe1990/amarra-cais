@@ -6,6 +6,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.6.0] - 2026-09-16
+
+### Added
+
+- Scaffold `AGENTS.md` documents the fullbleed page pattern: Drive only swaps `#amarra-main`, so page-owned chrome (landing header/footer, dashboard sidebar) must live inside it — next to the nav hook (#27), skip opt-out (#31), and second layout (#66) references (#76).
+
+### Fixed
+
+- `amarra-cais dev` restarts no longer leave `tmp/main` zombies holding `:8080` and `data/app.db`: the generated `.air.toml` sets `send_interrupt` + `kill_delay`, and the generated `cmd/server/main.go` shuts down gracefully via `signal.NotifyContext` + `RunContext` (#77).
+
 ## [0.5.2] - 2026-09-15
 
 ### Fixed
