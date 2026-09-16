@@ -218,8 +218,11 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 			`amarra-sidebar-toggle`,
 			`peer-checked:translate-x-0`,
 			`amarra-hook="nav"`,
+			`data-amarra-nav-on`,
+			`data-amarra-nav-off`,
 			`href="/dashboard"`,
-			`action="/logout"`,
+			`<.form action="/logout"`,
+			`<.flash />`,
 			`amarra-toast-host`,
 			`template "icon_chart_nav"`,
 			`<!-- cais:nav -->`,
@@ -231,10 +234,14 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 		for _, gone := range []string{
 			`<nav id="amarra-nav"`,
 			`template "nav_links"`,
+			`href="/contact"`,
 		} {
 			if strings.Contains(tpl, gone) {
 				t.Errorf("%s layout should not contain %q", name, gone)
 			}
+		}
+		if strings.Index(tpl, "<aside") > strings.Index(tpl, "<!-- cais:nav -->") {
+			t.Errorf("%s layout should render <!-- cais:nav --> inside the sidebar", name)
 		}
 	}
 }
