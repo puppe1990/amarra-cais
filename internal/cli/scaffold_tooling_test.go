@@ -7,6 +7,16 @@ import (
 	"testing"
 )
 
+func TestTplPackageJSON_hasBuildScript(t *testing.T) {
+	// #82 — deploy Go só compila o CSS via `npm run build`; sem ele o styles.css (gitignored) nunca chega ao servidor.
+	if !strings.Contains(tplPackageJSON, `"build"`) {
+		t.Error("package.json should define a build script for deploys")
+	}
+	if !strings.Contains(tplPackageJSON, "tailwindcss -i input.css -o web/static/css/styles.css --minify") {
+		t.Error("build script should compile tailwind input.css into web/static/css/styles.css")
+	}
+}
+
 func TestScaffoldTooling_CITriggersMain(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "ciapp")

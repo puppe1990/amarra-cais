@@ -418,6 +418,7 @@ const tplPackageJSON = `{
     "tailwindcss": "^3.4.17"
   },
   "scripts": {
+    "build": "tailwindcss -i input.css -o web/static/css/styles.css --minify",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run format:check"
