@@ -19,25 +19,6 @@ func TestLayoutTemplates_containNavMarker(t *testing.T) {
 	}
 }
 
-func TestLayoutTemplates_fullHasDefaultNavLinks(t *testing.T) {
-	if !strings.Contains(tplLayout, `template "nav_links"`) {
-		t.Error("full layout should render nav_links partial")
-	}
-	for _, link := range []string{`href="/contact"`, `href="/dashboard"`} {
-		if !strings.Contains(tplPartialNavLinks, link) {
-			t.Errorf("nav_links partial missing %s", link)
-		}
-	}
-	// Drive intercepts same-origin links by default (#31); the no-op
-	// data-amarra-drive attr must not be generated.
-	if strings.Contains(tplPartialNavLinks, `data-amarra-drive`) {
-		t.Error("nav_links partial should not emit the no-op data-amarra-drive attr")
-	}
-	if !strings.Contains(tplLayout, "amarra-toast-host") {
-		t.Error("full layout missing amarra-toast-host")
-	}
-}
-
 func TestLayoutTemplates_minimalAndBlankMatch(t *testing.T) {
 	if tplLayoutMinimal != tplLayoutBlank {
 		t.Error("minimal and blank base layouts should be identical")
@@ -77,20 +58,11 @@ func TestLayoutTemplates_hasDriveShell(t *testing.T) {
 	}
 }
 
-func TestLayoutTemplates_navTabsHaveIcons(t *testing.T) {
-	for _, icon := range []string{`icon_home_nav`, `icon_message_nav`, `icon_chart_nav`} {
-		if !strings.Contains(tplPartialNavLinks, icon) {
-			t.Errorf("nav partial should include %s", icon)
-		}
-	}
-}
-
 func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 	dir := t.TempDir()
 	data := scaffoldData{AppName: "demo", ModulePath: "github.com/acme/demo"}
 	for path, tpl := range map[string]string{
-		"web/templates/partials/icons.html":     tplPartialIcons,
-		"web/templates/partials/nav_links.html": tplPartialNavLinks,
+		"web/templates/partials/icons.html": tplPartialIcons,
 	} {
 		if err := writeTemplate(filepath.Join(dir, path), tpl, data); err != nil {
 			t.Fatalf("%s: %v", path, err)
@@ -103,9 +75,6 @@ func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 			t.Fatalf("%s rendered empty", path)
 		}
 		want := `define "icon_sparkles_md"`
-		if path == "web/templates/partials/nav_links.html" {
-			want = `define "nav_links"`
-		}
 		if !strings.Contains(string(body), want) {
 			t.Fatalf("%s missing %s", path, want)
 		}
@@ -168,7 +137,6 @@ func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 		"dashboard": tplPageDashboard,
 		"home":      tplPageHome,
 		"css":       tplInputCSS,
-		"nav":       tplPartialNavLinks,
 	}
 	for name, blob := range blobs {
 		for _, leftover := range []string{"indigo", "hx-ext", "htmx.min.js", "font-display"} {

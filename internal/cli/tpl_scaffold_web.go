@@ -59,11 +59,14 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
           <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
             `
 
-const tplLayoutNavFull = `<!-- cais:nav -->
-            {{"{{"}} template "nav_links" . {{"}}"}}
+const tplLayoutNavFull = `<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+            <!-- cais:nav -->
+            <.form action="/logout" method="post">
+              <.button type="submit">Sair</.button>
+            </.form>
             <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />`
 
-const tplLayoutNavEmpty = `<!-- cais:nav -->`
+const tplLayoutNavEmpty = tplLayoutNavFull
 
 const tplLayoutBaseClose = `
           </div>
@@ -102,9 +105,9 @@ const tplLayoutBaseClose = `
 </html>
 {{"{{"}} end {{"}}"}}`
 
-const tplLayout = tplLayoutTitleDesc + tplPartialIcons + tplPartialNavLinks + tplLayoutBaseOpen + tplLayoutNavFull + tplLayoutBaseClose
+const tplLayout = tplLayoutTitleDesc + tplPartialIcons + tplLayoutBaseOpen + tplLayoutNavFull + tplLayoutBaseClose
 
-const tplLayoutMinimal = tplLayoutTitleDesc + tplPartialIcons + tplPartialNavLinks + tplLayoutBaseOpen + tplLayoutNavEmpty + tplLayoutBaseClose
+const tplLayoutMinimal = tplLayoutTitleDesc + tplPartialIcons + tplLayoutBaseOpen + tplLayoutNavEmpty + tplLayoutBaseClose
 
 const tplLayoutBlank = tplLayoutMinimal
 
