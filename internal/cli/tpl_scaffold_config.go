@@ -22,6 +22,10 @@ tmp_dir = "tmp"
   exclude_dir = ["tmp", "data", "bin", "node_modules"]
   include_ext = ["go", "html", "css"]
   stop_on_error = true
+  # SIGINT the old tmp/main and wait before SIGKILL, or the zombie keeps
+  # :8080 and the sqlite WAL and the next boot shifts ports / locks (#77).
+  send_interrupt = true
+  kill_delay = 1000
 
 [log]
   time = false
