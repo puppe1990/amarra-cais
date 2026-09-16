@@ -63,6 +63,23 @@ func adminIndexDisplayField(fields []FieldDef) FieldDef {
 	return displayField
 }
 
+// Row trash icon (heroicons trash outline) shared by index rows and show page.
+const adminTrashSVG = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`
+
+// adminDeleteModal renders a trash button opening a "tem certeza?" modal.
+// Confirm posts via a Drive link (CSRF rides the X-CSRF-Token header), not a
+// form: rows live inside the bulk-delete form and nested forms are invalid
+// HTML. deleteLink is the full {{ linkTo ... }} delete expression.
+func adminDeleteModal(plural, title, deleteLink string) string {
+	return fmt.Sprintf(`<div amarra-hook="dialog" class="relative inline-block">
+              <button type="button" data-amarra-dialog-open aria-label="Delete %[2]s" class="inline-flex items-center justify-center w-8 h-8 border border-foam/10 text-foam/50 hover:text-copper hover:border-copper/50 transition-colors">%[3]s</button>
+              <.modal>
+                <p class="mb-4">Delete this %[2]s?</p>
+                <div class="flex items-center gap-3">%[4]s<button type="button" data-amarra-dialog-close class="text-sm text-foam/70">Cancel</button></div>
+              </.modal>
+            </div>`, plural, title, adminTrashSVG, deleteLink)
+}
+
 func buildAdminPaginationBlock(data scaffoldData) string {
 	if !data.Paginate {
 		return ""
@@ -113,25 +130,20 @@ func buildAdminIndexPanel(data scaffoldData) string {
           {{ range .Items }}
           <tr>
             <td class="px-3 py-2"><input type="checkbox" name="ids" value="{{ .ID }}" data-amarra-bulk-row /></td>
-%[2]s            <td class="px-3 py-2 text-right">
-              <div amarra-hook="dropdown" class="relative inline-block text-left">
-                <button type="button" data-amarra-dropdown-button aria-expanded="false" class="text-sm text-copper">Actions</button>
-                <div data-amarra-dropdown-menu hidden class="absolute right-0 z-10 mt-1 min-w-[8rem] border border-foam/10 bg-ink p-1 text-left">
-                  {{ linkTo (printf "/admin/%[1]s/%%d" .ID) "View" }}
-                  {{ linkTo (printf "/admin/%[1]s/%%d/edit" .ID) "Edit" }}
-                  {{ linkTo (printf "/admin/%[1]s/%%d/delete" .ID) "Delete" (dict "method" "post" "confirm" "Delete this %[3]s?") }}
-                </div>
-              </div>
+%[2]s            <td class="px-3 py-2 text-right whitespace-nowrap">
+              <a href="/admin/%[1]s/{{ .ID }}/edit" class="inline-flex items-center px-3 py-1.5 mr-2 font-mono text-[11px] uppercase tracking-[0.18em] border border-copper/50 text-copper hover:bg-copper hover:text-ink transition-colors">Edit</a>
+              %[5]s
             </td>
           </tr>
           {{ end }}
         </.table>
       </.form>
     </div>
-    {{ else }}
+     {{ else }}
     <.empty title="No %[3]s yet" href="/admin/%[1]s/new" action="+ New">Nothing here yet.</.empty>
     {{ end }}
-%[4]s`, data.Plural, rowCells.String(), data.Title, buildAdminPaginationBlock(data))
+%[4]s`, data.Plural, rowCells.String(), data.Title, buildAdminPaginationBlock(data),
+		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d/delete" .ID) "Delete" (dict "method" "post") }}`, data.Plural)))
 }
 
 func buildAdminIndexPartial(data scaffoldData) string {
@@ -186,15 +198,14 @@ func buildAdminShowHTML(data scaffoldData) string {
   <h1 class="text-3xl font-bold text-slate-900 mb-6">%s</h1>
   <dl class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
 %s  </dl>
-  <div class="mt-6 flex gap-3">
-    {{ linkTo (printf "/admin/%s/%%d/edit" .Item.ID) "Edit" }}
-    <.form action="{{ printf "/admin/%s/%%d/delete" .Item.ID }}" method="post">
-      <.button type="submit">Delete</.button>
-    </.form>
+  <div class="mt-6 flex items-center gap-3">
+    <a href="/admin/%s/{{ .Item.ID }}/edit" class="inline-flex items-center px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] border border-copper/50 text-copper hover:bg-copper hover:text-ink transition-colors">Edit</a>
+    %s
   </div>
 </div>
 {{ end }}
-`, data.Title, data.Plural, data.Title, fields.String(), data.Plural, data.Plural)
+`, data.Title, data.Plural, data.Title, fields.String(), data.Plural,
+		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d/delete" .Item.ID) "Delete" (dict "method" "post") }}`, data.Plural)))
 }
 
 func publicToggleForm(data scaffoldData, f FieldDef) string {
