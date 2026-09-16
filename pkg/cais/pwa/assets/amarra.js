@@ -1785,6 +1785,12 @@ ${lines.join("\n")}
   function extractMainTagName(html) {
     return extractMainOpen(String(html ?? ""))?.[1]?.toUpperCase() ?? null;
   }
+  function defaultDriveWarn(msg) {
+    try {
+      globalThis.console?.warn?.(msg);
+    } catch {
+    }
+  }
   function applyDriveResponse({
     status,
     html,
@@ -1795,7 +1801,8 @@ ${lines.join("\n")}
     history,
     document: doc,
     push = true,
-    window: win
+    window: win,
+    warn = defaultDriveWarn
   } = {}) {
     if (status === 401 || status === 403) {
       location?.reload?.();
@@ -1806,7 +1813,12 @@ ${lines.join("\n")}
       return { action: "ignore" };
     }
     const fragment = extractMainHTML(html);
-    if (fragment == null) return { action: "ignore" };
+    if (fragment == null) {
+      warn(
+        `amarra drive: ignored ${status} response for ${url ?? "(unknown url)"} \u2014 #amarra-main missing or unbalanced HTML`
+      );
+      return { action: "ignore" };
+    }
     if (needsFullVisit({ html, main, document: doc })) {
       assignLocation(location, url);
       return { action: "assign" };

@@ -283,6 +283,25 @@ test("applyDriveResponse does not morph when #amarra-main is missing", () => {
   assert.equal(pushed, false);
 });
 
+test("applyDriveResponse warns when #amarra-main is unbalanced", () => {
+  const main = { innerHTML: "old" };
+  const warnings = [];
+  const result = applyDriveResponse({
+    status: 200,
+    html: `<div id="amarra-main"><div><p>unbalanced</p></div>`,
+    url: "http://a/dashboard",
+    main,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    warn: (msg) => warnings.push(msg),
+  });
+  assert.equal(result.action, "ignore");
+  assert.equal(main.innerHTML, "old");
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /dashboard/);
+});
+
 test("visit applies amarra-stream HTTP bodies instead of morphing main", async () => {
   const list = {
     innerHTML: "<li>a</li>",
