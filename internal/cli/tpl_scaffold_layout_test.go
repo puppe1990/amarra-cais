@@ -221,7 +221,7 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 		if strings.Index(tpl, "<aside") > strings.Index(tpl, "<!-- cais:nav -->") {
 			t.Errorf("%s layout should render <!-- cais:nav --> inside the sidebar", name)
 		}
-		if !(strings.Index(tpl, "<!-- cais:nav -->") < strings.Index(tpl, "</aside>")) {
+		if strings.Index(tpl, "<!-- cais:nav -->") >= strings.Index(tpl, "</aside>") {
 			t.Errorf("%s layout should render <!-- cais:nav --> before </aside>", name)
 		}
 		side := tpl[strings.Index(tpl, "<aside"):strings.Index(tpl, "</aside>")]
