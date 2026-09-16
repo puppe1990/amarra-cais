@@ -13,6 +13,7 @@
 ### Task 1: Teste failing do shell sidebar
 
 **Files:**
+
 - Modify: `internal/cli/tpl_scaffold_layout_test.go`
 
 - [ ] **Step 1: Adicionar o teste**
@@ -71,6 +72,7 @@ git commit -m "test(cli): sidebar shell tokens for scaffold layouts"
 ### Task 2: Shell sidebar no template
 
 **Files:**
+
 - Modify: `internal/cli/tpl_scaffold_web.go:38-72`
 
 - [ ] **Step 1: Trocar header/nav por sidebar**
@@ -84,7 +86,11 @@ Em `tplLayoutBaseOpen`, logo após `<div>` (linha 39), insira o checkbox do draw
 Na linha do header (dentro do `div.max-w-6xl...`, antes do logo), insira o hamburger visível só no mobile:
 
 ```html
-<label for="amarra-sidebar-toggle" class="lg:hidden font-mono text-[10px] uppercase tracking-[0.22em] text-copper cursor-pointer">Menu</label>
+<label
+  for="amarra-sidebar-toggle"
+  class="lg:hidden font-mono text-[10px] uppercase tracking-[0.22em] text-copper cursor-pointer"
+  >Menu</label
+>
 ```
 
 Substitua o bloco (linhas 54-58):
@@ -93,22 +99,39 @@ Substitua o bloco (linhas 54-58):
 <nav id="amarra-nav" class="bg-ink border-b border-foam/10 sticky top-[57px] z-30">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
-    <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex gap-1 py-1 overflow-x-auto no-scrollbar">
+    <div
+      amarra-hook="nav"
+      data-amarra-nav-on="text-copper"
+      data-amarra-nav-off="text-foam/50 hover:text-foam"
+      class="flex gap-1 py-1 overflow-x-auto no-scrollbar"
+    ></div>
+  </div>
+</nav>
 ```
 
 por:
 
 ```html
-<aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full transition-transform peer-checked:translate-x-0 lg:translate-x-0">
+<aside
+  id="amarra-nav"
+  class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full transition-transform peer-checked:translate-x-0 lg:translate-x-0"
+>
   <div class="h-full flex flex-col gap-1 p-3 overflow-y-auto no-scrollbar">
     <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
-    <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
+    <div
+      amarra-hook="nav"
+      data-amarra-nav-on="text-copper"
+      data-amarra-nav-off="text-foam/50 hover:text-foam"
+      class="flex flex-col gap-1"
+    ></div>
+  </div>
+</aside>
 ```
 
 Em `tplLayoutBaseClose`, o fechamento antigo de 3 níveis (`</div>` do hook + `</div>` do max-w-6xl + `</nav>`) vira 3 níveis novos (`</div>` do hook + `</div>` do h-full + `</aside>`). E adicione `lg:ml-60` ao `<main id="amarra-main">`:
 
 ```html
-<main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60">
+<main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60"></main>
 ```
 
 Atenção: o checkbox `peer` precisa ser irmão anterior do `aside` (mesmo pai). O `<div>` da linha 39 é pai de header, aside e main — ok.
@@ -130,6 +153,7 @@ git commit -m "feat(cli): scaffold shell with fixed sidebar instead of top nav"
 ### Task 3: Itens default + remover nav_links
 
 **Files:**
+
 - Modify: `internal/cli/tpl_scaffold_web.go:60-64,103-105`
 - Modify: `internal/cli/tpl_scaffold_partials.go:33-37` (deletar `tplPartialNavLinks`)
 - Modify: `internal/cli/tpl_scaffold_layout_test.go` (atualizar testes afetados)
@@ -163,6 +187,7 @@ Remova `tplPartialNavLinks` de `tpl_scaffold_partials.go` e das concatenações 
 - [ ] **Step 2: Atualizar testes que citavam nav_links**
 
 Em `internal/cli/tpl_scaffold_layout_test.go`:
+
 - Deletar `TestLayoutTemplates_fullHasDefaultNavLinks` (trocado pelo sidebarShell da Task 1; toast-host segue coberto? mover a asserção `amarra-toast-host` para o sidebarShell não — ela já existe só nesse teste; adicione `amarra-toast-host` à lista de tokens do `TestLayoutTemplates_sidebarShell`).
 - Deletar `TestLayoutTemplates_navTabsHaveIcons` (parcial removida). O ícone `icon_chart_nav` segue coberto por `TestScaffoldPartials_iconsRenderNonEmpty`? Não — ele testa só icons.html. Adicione asserção em sidebarShell: token `template "icon_chart_nav"`.
 - Em `TestScaffoldPartials_iconsRenderNonEmpty`: remover a entrada `nav_links.html` do map e o branch `want` correspondente.
