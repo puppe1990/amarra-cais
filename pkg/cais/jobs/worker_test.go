@@ -1,7 +1,10 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
+	"log"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -128,5 +131,63 @@ func TestPruneSessionsHandler(t *testing.T) {
 	h := PruneSessionsHandler(db)
 	if err := h(ctx, nil); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// #109: a handler panic used to escape the worker goroutine and kill the whole
+// process, taking every queue down. It must fail the job (panic in last_error,
+// stack in the log) and leave the worker running.
+func TestWorker_panicInHandlerMarksJobFailed(t *testing.T) {
+	db := testDB(t)
+	store := NewStore(db)
+	ctx := context.Background()
+
+	reg := NewRegistry()
+	reg.Register("Boom", func(ctx context.Context, payload []byte) error {
+		panic("handler exploded")
+	})
+
+	id, err := Enqueue(ctx, store, Options{Kind: "Boom", MaxAttempts: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var logBuf bytes.Buffer
+	w := NewWorker(WorkerConfig{
+		Store:            store,
+		Registry:         reg,
+		Concurrency:      1,
+		PollInterval:     time.Millisecond,
+		DispatchInterval: time.Hour,
+		Logger:           log.New(&logBuf, "", 0),
+	})
+	w.pollOnce(ctx)
+
+	rec, err := store.Get(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Status != StatusFailed {
+		t.Fatalf("status = %q, want failed", rec.Status)
+	}
+	if !strings.Contains(rec.LastError, "panic") {
+		t.Fatalf("last_error = %q, want panic details", rec.LastError)
+	}
+	if !strings.Contains(logBuf.String(), "handler exploded") {
+		t.Errorf("log should carry the panic, got: %s", logBuf.String())
+	}
+
+	// The worker must keep processing jobs after the panic.
+	var ran atomic.Bool
+	reg.Register("Ping", func(ctx context.Context, payload []byte) error {
+		ran.Store(true)
+		return nil
+	})
+	if _, err := Enqueue(ctx, store, Options{Kind: "Ping"}); err != nil {
+		t.Fatal(err)
+	}
+	w.pollOnce(ctx)
+	if !ran.Load() {
+		t.Fatal("worker stopped processing jobs after a handler panic")
 	}
 }
