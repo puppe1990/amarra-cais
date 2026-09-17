@@ -9,6 +9,7 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/migrate"
 	"github.com/puppe1990/amarra-cais/pkg/cais/session"
+	caissqlite "github.com/puppe1990/amarra-cais/pkg/cais/sqlite"
 
 	_ "modernc.org/sqlite"
 )
@@ -204,7 +205,7 @@ func openAppDB(appDir string) (*sql.DB, string, func(), error) {
 		}
 	}
 
-	db, err := sql.Open("sqlite", cfg.DBPath)
+	db, err := sql.Open("sqlite", caissqlite.DSN(cfg.DBPath))
 	if err != nil {
 		return nil, "", nil, fmt.Errorf("open db: %w", err)
 	}

@@ -113,3 +113,13 @@ func TestScaffoldNewApp_gitignoreSkipsEnvSecrets(t *testing.T) {
 		t.Errorf(".env.example should still be scaffolded: %v", err)
 	}
 }
+
+// #122: the scaffolded store must put the SQLite pragmas in the DSN, so every
+// driver connection inherits foreign_keys/busy_timeout after a reconnect.
+func TestScaffoldStore_opensWithDSNPragmas(t *testing.T) {
+	for name, tpl := range map[string]string{"full": tplStore, "minimal": tplStoreMinimal} {
+		if !strings.Contains(tpl, `sql.Open("sqlite", caissqlite.DSN(dsn))`) {
+			t.Errorf("%s store template should build the DSN with caissqlite.DSN: %s", name, tpl[:min(len(tpl), 200)])
+		}
+	}
+}
