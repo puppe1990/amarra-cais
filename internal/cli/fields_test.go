@@ -171,3 +171,42 @@ func TestParseFields_DateType(t *testing.T) {
 		t.Errorf("date SQLType = %q", fields[1].SQLType)
 	}
 }
+
+// #128: field names were never validated: `id` collided with the primary key,
+// `order` broke the DDL, duplicates produced dead structs, and `name;DROP`
+// aborted late after mutating store.go.
+func TestParseFields_rejectsInvalidNames(t *testing.T) {
+	cases := map[string]string{
+		"id:string":                "reserved",
+		"created_at:string":        "reserved",
+		"order:int":                "reserved",
+		"group:string":             "reserved",
+		"key:string":               "reserved",
+		"select:string":            "reserved",
+		"name:string,name:string":  "duplicate",
+		"name;DROP TABLE x:string": "invalid field name",
+		"foo$$:string":             "invalid field name",
+		"2fast:string":             "invalid field name",
+		"category_id:references,CategoryId:string": "duplicate",
+	}
+	for spec, want := range cases {
+		_, err := parseFields(spec)
+		if err == nil {
+			t.Errorf("parseFields(%q) accepted an invalid spec", spec)
+			continue
+		}
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("parseFields(%q) error = %q, want %q", spec, err, want)
+		}
+	}
+}
+
+func TestParseFields_keepsValidNames(t *testing.T) {
+	fields, err := parseFields("title:string,url:url,category_id:references,published:bool")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(fields) != 4 {
+		t.Fatalf("fields = %d, want 4", len(fields))
+	}
+}
