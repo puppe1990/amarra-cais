@@ -195,3 +195,81 @@ func TestWorker_panicInHandlerMarksJobFailed(t *testing.T) {
 		t.Fatal("worker stopped processing jobs after a handler panic")
 	}
 }
+
+// #110: Run returned as soon as ctx was done and removed the heartbeat while
+// handlers were still running. RequeueOrphaned then re-enqueued the live job —
+// duplicate execution of non-idempotent work (mail, billing) on every deploy.
+func TestWorker_shutdownDrainsInFlightJob(t *testing.T) {
+	db := testDB(t)
+	store := NewStore(db)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	started := make(chan struct{})
+	release := make(chan struct{})
+	reg := NewRegistry()
+	reg.Register("Slow", func(ctx context.Context, payload []byte) error {
+		close(started)
+		<-release
+		return nil
+	})
+	id, err := Enqueue(ctx, store, Options{Kind: "Slow"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := NewWorker(WorkerConfig{
+		Store:             store,
+		Registry:          reg,
+		Concurrency:       1,
+		PollInterval:      10 * time.Millisecond,
+		DispatchInterval:  time.Hour,
+		SchedulerInterval: time.Hour,
+		DrainTimeout:      2 * time.Second,
+	})
+	done := make(chan error, 1)
+	go func() { done <- w.Run(ctx) }()
+
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("job never started")
+	}
+
+	cancel()
+
+	select {
+	case err := <-done:
+		t.Fatalf("Run returned before draining the in-flight job (err=%v)", err)
+	case <-time.After(150 * time.Millisecond):
+	}
+
+	close(release)
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("Run did not return after the handler finished")
+	}
+
+	rec, err := store.Get(context.Background(), id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Status != StatusFinished {
+		t.Fatalf("status = %q, want finished (final mark must survive cancel)", rec.Status)
+	}
+	live, err := store.ListLiveWorkers(context.Background(), time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(live) != 0 {
+		t.Fatalf("heartbeat should be removed after drain: %+v", live)
+	}
+	n, err := store.RequeueOrphaned(context.Background(), time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 0 {
+		t.Fatalf("RequeueOrphaned requeued %d job(s) after a clean shutdown", n)
+	}
+}
