@@ -16,6 +16,9 @@ import (
 func removeGeneratedFiles(dir string, rels []string, dryRun, force bool) error {
 	var removed []string
 	for _, rel := range rels {
+		if err := ensureRelPath(rel); err != nil {
+			return err
+		}
 		full := filepath.Join(dir, rel)
 		if _, err := os.Stat(full); err != nil {
 			continue
@@ -386,6 +389,9 @@ func (c *CLI) cmdDestroy(args []string) error {
 			return fmt.Errorf("usage: amarra-cais destroy [--dry-run] %s <name>", kind)
 		}
 		name := args[1]
+		if err := validateGeneratedName(kind, name); err != nil {
+			return err
+		}
 		switch kind {
 		case "resource":
 			genErr = destroyResource(cwd, name, dryRun, force)

@@ -20,6 +20,9 @@ func printfScaffold(action, rel string) {
 }
 
 func writeScaffoldFile(fullPath string, content []byte, perm os.FileMode, rel string, dryRun bool) error {
+	if err := ensureRelPath(rel); err != nil {
+		return err
+	}
 	if dryRun {
 		printfScaffold("create", rel)
 		return nil
@@ -31,6 +34,9 @@ func writeScaffoldFile(fullPath string, content []byte, perm os.FileMode, rel st
 }
 
 func writeScaffoldTemplate(fullPath, tpl string, data scaffoldData, rel string, dryRun bool) error {
+	if err := ensureRelPath(rel); err != nil {
+		return err
+	}
 	if dryRun {
 		printfScaffold("create", rel)
 		return nil
@@ -39,6 +45,9 @@ func writeScaffoldTemplate(fullPath, tpl string, data scaffoldData, rel string, 
 }
 
 func updateScaffoldFile(fullPath string, content []byte, rel string, dryRun bool) error {
+	if err := ensureRelPath(rel); err != nil {
+		return err
+	}
 	if dryRun {
 		printfScaffold("update", rel)
 		return nil

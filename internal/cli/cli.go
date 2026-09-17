@@ -281,6 +281,9 @@ func (c *CLI) cmdGenerate(args []string) error {
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais g job <name> [--cron \"0 3 * * *\"]")
 		}
+		if err := validateGeneratedName(kind, args[1]); err != nil {
+			return err
+		}
 		opts, parseErr := parseJobOpts(args[2:])
 		if parseErr != nil {
 			return parseErr
@@ -290,6 +293,9 @@ func (c *CLI) cmdGenerate(args []string) error {
 	case "live":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais g live <name>")
+		}
+		if err := validateGeneratedName(kind, args[1]); err != nil {
+			return err
 		}
 		genErr = scaffoldLive(cwd, args[1], dryRun)
 	case "stream":
@@ -307,6 +313,9 @@ func (c *CLI) cmdGenerate(args []string) error {
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais g component <name>|--list")
 		}
+		if err := validateGeneratedName(kind, args[1]); err != nil {
+			return err
+		}
 		genErr = scaffoldComponent(cwd, args[1], dryRun)
 	case "sitemap":
 		genErr = scaffoldSitemap(cwd, dryRun)
@@ -315,6 +324,9 @@ func (c *CLI) cmdGenerate(args []string) error {
 			return fmt.Errorf("usage: amarra-cais g %s <name>", kind)
 		}
 		name := args[1]
+		if err := validateGeneratedName(kind, name); err != nil {
+			return err
+		}
 		switch kind {
 		case "handler":
 			genErr = scaffoldHandler(cwd, name, dryRun)
