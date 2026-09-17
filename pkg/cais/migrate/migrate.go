@@ -2,12 +2,14 @@ package migrate
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"sort"
 	"strings"
+	"time"
 )
 
 // schema_migrations records applied migration filenames — ApplyDir is safe to call on every boot.
@@ -45,8 +47,8 @@ func RollbackLastDir(db *sql.DB, dir string) (RollbackResult, error) {
 
 // Apply runs pending SQL migrations from dir inside migrations in sorted order.
 func Apply(db *sql.DB, migrations fs.FS, dir string) error {
-	if _, err := db.Exec(schemaTable); err != nil {
-		return fmt.Errorf("ensure schema_migrations: %w", err)
+	if err := ensureSchemaTable(db); err != nil {
+		return err
 	}
 
 	files, err := listSQL(migrations, dir)
@@ -71,6 +73,9 @@ func Apply(db *sql.DB, migrations fs.FS, dir string) error {
 		}
 		upSQL, _ := parseMigrationSQL(string(sqlBytes))
 		if err := applyMigration(db, version, upSQL); err != nil {
+			if errors.Is(err, errMigrationClaimed) {
+				continue
+			}
 			return err
 		}
 	}
@@ -78,10 +83,45 @@ func Apply(db *sql.DB, migrations fs.FS, dir string) error {
 	return nil
 }
 
+// errMigrationClaimed means another process applied the migration first (#123).
+var errMigrationClaimed = errors.New("migration already applied")
+
+// ensureSchemaTable creates schema_migrations, retrying SQLITE_BUSY: several
+// processes booting together on a fresh file fight over the WAL switch and the
+// first DDL, and the loser used to fail before any migration ran (#123).
+func ensureSchemaTable(db *sql.DB) error {
+	var err error
+	for attempt := 0; attempt < schemaTableRetries; attempt++ {
+		if _, err = db.Exec(schemaTable); err == nil {
+			return nil
+		}
+		if !isSQLiteBusy(err) {
+			break
+		}
+		time.Sleep(schemaTableRetryDelay)
+	}
+	return fmt.Errorf("ensure schema_migrations: %w", err)
+}
+
+const (
+	schemaTableRetries    = 50
+	schemaTableRetryDelay = 100 * time.Millisecond
+)
+
+// isSQLiteBusy matches the driver's lock errors. modernc exposes no typed code
+// through database/sql, and retrying a busy lock is the only recovery.
+func isSQLiteBusy(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "SQLITE_BUSY") || strings.Contains(msg, "database is locked")
+}
+
 // Status returns migration files in order with applied state.
 func Status(db *sql.DB, migrations fs.FS, dir string) ([]Entry, error) {
-	if _, err := db.Exec(schemaTable); err != nil {
-		return nil, fmt.Errorf("ensure schema_migrations: %w", err)
+	if err := ensureSchemaTable(db); err != nil {
+		return nil, err
 	}
 
 	files, err := listSQL(migrations, dir)
@@ -229,13 +269,27 @@ func applyMigration(db *sql.DB, version, sql string) error {
 		return fmt.Errorf("begin migration %s: %w", version, err)
 	}
 
+	// Claim the version first: the INSERT takes the write lock, so a second
+	// process waits (busy_timeout) and then sees 0 rows instead of running the
+	// DDL twice (#123). A failure before COMMIT rolls the claim back.
+	res, err := tx.Exec("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)", version)
+	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("claim migration %s: %w", version, err)
+	}
+	claimed, err := res.RowsAffected()
+	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("claim migration %s: %w", version, err)
+	}
+	if claimed == 0 {
+		_ = tx.Rollback()
+		return errMigrationClaimed
+	}
+
 	if _, err := tx.Exec(sql); err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("apply migration %s: %w", version, err)
-	}
-	if _, err := tx.Exec("INSERT INTO schema_migrations (version) VALUES (?)", version); err != nil {
-		_ = tx.Rollback()
-		return fmt.Errorf("record migration %s: %w", version, err)
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit migration %s: %w", version, err)
