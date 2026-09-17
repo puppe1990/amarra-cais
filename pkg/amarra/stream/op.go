@@ -29,7 +29,20 @@ func WriteHTTP(w http.ResponseWriter, ops ...Op) error {
 	return nil
 }
 
+// opKinds mirrors STREAM_KINDS in pkg/amarra/js/stream.mjs. WriteOp rejects
+// anything else so Op.Kind cannot inject arbitrary SSE event names (#103).
+var opKinds = map[string]bool{
+	"append": true, "prepend": true, "replace": true, "morph": true,
+	"remove": true, "toast": true, "before": true, "after": true,
+}
+
 func WriteOp(w http.ResponseWriter, op Op) error {
+	if !opKinds[op.Kind] {
+		return fmt.Errorf(
+			"stream: unknown op kind %q (use append, prepend, replace, morph, remove, toast, before, after)",
+			op.Kind,
+		)
+	}
 	if id := sseFieldID(op.Target); id != "" {
 		if _, err := fmt.Fprintf(w, "id: %s\n", id); err != nil {
 			return err

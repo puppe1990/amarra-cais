@@ -13,7 +13,7 @@ const STREAM_KINDS = [
 
 export function parseSSE(chunk) {
   const events = [];
-  const text = String(chunk ?? "").replace(/\r\n/g, "\n");
+  const text = String(chunk ?? "").replace(/\r\n?/g, "\n");
   for (const block of text.split("\n\n")) {
     if (!block.trim()) continue;
     let kind = "message";
