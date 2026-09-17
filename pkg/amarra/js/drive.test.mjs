@@ -369,3 +369,61 @@ test("visit emits amarra:drive-error on 404 and 500", async () => {
     ["amarra:drive-error", "amarra:drive-error"]
   );
 });
+
+// #125: two fast clicks left two fetches in flight; the older response could
+// arrive last and morph #amarra-main + pushState its own URL (content A under
+// URL B). Responses that are no longer the newest visit are dropped.
+test("visit drops a superseded response", async () => {
+  const pushed = [];
+  const morphed = [];
+  const main = { innerHTML: "old" };
+  const doc = {
+    querySelector: () => main,
+    getElementById: () => null,
+    createElement: () => ({ style: {}, setAttribute() {} }),
+    body: { appendChild() {} },
+    documentElement: { dataset: {} },
+    dispatchEvent() {},
+    title: "",
+  };
+  let resolveA;
+  let resolveB;
+  const fetchFn = (url) =>
+    new Promise((resolve) => {
+      const make = (html) => ({
+        status: 200,
+        url,
+        headers: { get: () => null },
+        text: async () => html,
+      });
+      if (url === "/a") {
+        resolveA = () => resolve(make(`<main id="amarra-main"><p>A</p></main>`));
+      } else {
+        resolveB = () => resolve(make(`<main id="amarra-main"><p>B</p></main>`));
+      }
+    });
+  const opts = {
+    fetchFn,
+    document: doc,
+    morphFn: (_el, html) => morphed.push(html),
+    history: {
+      pushState(_s, _t, url) {
+        pushed.push(url);
+      },
+      replaceState() {},
+    },
+    location: { href: "http://a/" },
+  };
+
+  const first = visit("/a", opts);
+  const second = visit("/b", opts);
+  resolveB();
+  await second;
+  resolveA();
+  const result = await first;
+
+  assert.equal(result.action, "superseded");
+  assert.deepEqual(pushed, ["/b"]);
+  assert.equal(morphed.length, 1);
+  assert.match(morphed[0], /<p>B<\/p>/);
+});
