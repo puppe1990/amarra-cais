@@ -308,6 +308,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 
 - `middleware.SecurityHeaders(cfg)` on the router (after `Recover`)
 - Sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`
+- CSP keeps `script-src 'self' 'unsafe-inline'` for the FOUC theme snippet / Drive inline init (escaping is the primary defense); roadmap: per-request nonce or SRI hashes (#97)
 - Adds `Strict-Transport-Security` in production (`ENV=production`)
 - CSRF and flash cookies use `Secure` when `cfg.CookieSecure()` is true
 - Session rotates on login (invalidates previous token)
