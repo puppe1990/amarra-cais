@@ -436,3 +436,27 @@ func TestLive_handleErrorShownInDevelopment(t *testing.T) {
 		t.Fatalf("development should keep the detail, got %q", errMsg.Message)
 	}
 }
+
+// #96: push() dropped events with select/default and no counter or log — a
+// slow client lost morphs silently. The hub now counts drops and logs them
+// (first drop, then every 100).
+func TestHub_countsDroppedEvents(t *testing.T) {
+	h := NewHub(Config{OriginPatterns: []string{"*"}})
+	c := &conn{hub: h, topic: "counter", inbox: make(chan Event, 1)}
+
+	c.push(Event{Name: "kept"})
+	c.push(Event{Name: "dropped-1"})
+	c.push(Event{Name: "dropped-2"})
+
+	if got := h.Dropped(); got != 2 {
+		t.Fatalf("Dropped() = %d, want 2", got)
+	}
+	select {
+	case ev := <-c.inbox:
+		if ev.Name != "kept" {
+			t.Fatalf("inbox head = %q, want the oldest event", ev.Name)
+		}
+	default:
+		t.Fatal("inbox should still hold the first event")
+	}
+}
