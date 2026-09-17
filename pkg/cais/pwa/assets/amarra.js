@@ -1126,7 +1126,7 @@
   }
   function isActive(link, loc) {
     const href = link.getAttribute?.("href");
-    if (!href) return false;
+    if (!href || href.startsWith("#")) return false;
     try {
       return new URL(href, loc.href).pathname === loc.pathname;
     } catch {
