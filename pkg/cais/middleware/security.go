@@ -42,6 +42,12 @@ func SecurityHeaders(cfg cais.Config) func(http.Handler) http.Handler {
 			if cfg.CSPFontSrc != "" {
 				fontSrc += " " + cfg.CSPFontSrc
 			}
+			// script-src keeps 'unsafe-inline' on purpose: the layout ships a
+			// tiny inline theme-restore snippet before CSS (FOUC) and Drive
+			// pages may carry inline init code. Escaping is the primary
+			// defense today; roadmap (#97): a per-request nonce injected by
+			// view.Write or SRI hashes for amarra.js plus a hash-allowed
+			// snippet, so an injection cannot execute even if escaping fails.
 			w.Header().Set("Content-Security-Policy", fmt.Sprintf(
 				"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src %s; img-src %s; font-src %s; connect-src %s; media-src %s; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 				styleSrc, imgSrc, fontSrc, connectSrc, mediaSrc,
