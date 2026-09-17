@@ -112,3 +112,45 @@ test("bulk hook works without a bar and unbinds on disconnect", () => {
   // header no longer reacts after disconnect
   assert.equal(all.checked, true);
 });
+
+// #126: Idiomorph keeps the container and swaps children, so the hook kept
+// references to the old checkboxes — new rows were unbindable and the header
+// count went stale.
+test("bulk hook updated rebinds the checkboxes replaced by a morph", () => {
+  const el = {
+    all: checkbox(),
+    rows: [checkbox(), checkbox()],
+    barEl: bar(),
+    querySelector(sel) {
+      if (sel === "[data-amarra-bulk-all]") return this.all;
+      if (sel === "[data-amarra-bulk-bar]") return this.barEl;
+      return null;
+    },
+    querySelectorAll(sel) {
+      return sel === "[data-amarra-bulk-row]" ? [...this.rows] : [];
+    },
+  };
+  const hook = makeBulk();
+  hook.connect(el);
+
+  const staleAll = el.all;
+  el.all = checkbox();
+  el.rows = [checkbox(), checkbox()];
+  hook.updated(el);
+
+  el.all.checked = true;
+  el.all.change();
+  assert.deepEqual(
+    el.rows.map((r) => r.checked),
+    [true, true]
+  );
+  assert.equal(el.barEl.count.textContent, "2");
+
+  staleAll.checked = false;
+  staleAll.change();
+  assert.deepEqual(
+    el.rows.map((r) => r.checked),
+    [true, true],
+    "stale header must be unbound after a morph"
+  );
+});

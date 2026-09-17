@@ -112,3 +112,33 @@ test("dialog hook keeps an existing aria-modal value", () => {
   makeDialog().connect(container([], [dlg]));
   assert.equal(dlg.attrs["aria-modal"], "true");
 });
+
+// #126: after a partial morph the old buttons stayed bound and the new ones
+// never opened the dialog.
+test("dialog hook updated rebinds buttons replaced by a morph", () => {
+  const hook = makeDialog();
+  const staleOpen = openerButton("stale");
+  const staleDlg = dialogEl();
+  const el = {
+    openers: [staleOpen],
+    dialogs: [staleDlg],
+    querySelector(sel) {
+      return sel === "[data-amarra-dialog-target]" ? (this.dialogs[0] ?? null) : null;
+    },
+    querySelectorAll(sel) {
+      return sel === "[data-amarra-dialog-open]" ? [...this.openers] : [];
+    },
+  };
+  hook.connect(el);
+
+  const freshOpen = openerButton("fresh");
+  const freshDlg = dialogEl();
+  el.openers = [freshOpen];
+  el.dialogs = [freshDlg];
+  hook.updated(el);
+
+  freshOpen.click();
+  assert.equal(freshDlg.open, true, "fresh opener must open the fresh dialog");
+  assert.equal(staleDlg.open, false, "stale dialog must stay closed");
+  assert.equal((staleDlg.listeners.close || []).length, 0, "stale close listener removed");
+});

@@ -37,6 +37,12 @@ export function makeBulk() {
       }
       el[STATE] = { all, onAll, rowUnbinds };
     },
+    // #126: Idiomorph keeps the container and swaps children; rebind so the
+    // hook tracks the new nodes instead of stale references.
+    updated(el) {
+      bulk.disconnect(el);
+      bulk.connect(el);
+    },
     disconnect(el) {
       const st = el?.[STATE];
       if (!st) return;
