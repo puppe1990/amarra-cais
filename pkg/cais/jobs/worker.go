@@ -2,8 +2,10 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -163,7 +165,7 @@ func (w *Worker) pollOnce(ctx context.Context) error {
 }
 
 func (w *Worker) runJob(ctx context.Context, job *Job) {
-	err := w.cfg.Registry.Perform(ctx, job.Kind, job.Payload)
+	err := w.perform(ctx, job)
 	if err == nil {
 		if markErr := w.cfg.Store.MarkFinished(ctx, job.ID); markErr != nil {
 			w.cfg.Logger.Printf("jobs finish id=%d: %v", job.ID, markErr)
@@ -176,6 +178,19 @@ func (w *Worker) runJob(ctx context.Context, job *Job) {
 		return
 	}
 	w.cfg.Logger.Printf("jobs failed id=%d kind=%s: %v", job.ID, job.Kind, err)
+}
+
+// perform isolates handler panics (#109): a buggy handler must fail its own
+// job, not kill every queue in the worker process. The stack goes to the log;
+// last_error carries a short panic message.
+func (w *Worker) perform(ctx context.Context, job *Job) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			w.cfg.Logger.Printf("jobs panic id=%d kind=%s: %v\n%s", job.ID, job.Kind, r, debug.Stack())
+			err = fmt.Errorf("panic: %v", r)
+		}
+	}()
+	return w.cfg.Registry.Perform(ctx, job.Kind, job.Payload)
 }
 
 func (w *Worker) pulse() WorkerPulse {
