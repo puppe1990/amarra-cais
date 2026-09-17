@@ -3,6 +3,7 @@ package stream
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -15,6 +16,10 @@ func Flush(w http.ResponseWriter) error {
 }
 
 // RelaySSE sets standard SSE headers and disables the write deadline for long-lived streams.
+// A wrapper that does not implement Unwrap makes the deadline clear fail
+// (ErrNotSupported); the failure is logged because the server's WriteTimeout
+// would otherwise cut the stream with no diagnostic (#137). Keep
+// WriteTimeout: 0 on SSE routes as the primary mechanism.
 func RelaySSE(w http.ResponseWriter) *http.ResponseController {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -22,7 +27,9 @@ func RelaySSE(w http.ResponseWriter) *http.ResponseController {
 	w.WriteHeader(http.StatusOK)
 
 	rc := http.NewResponseController(w)
-	_ = rc.SetWriteDeadline(time.Time{}) // zero time clears deadline
+	if err := rc.SetWriteDeadline(time.Time{}); err != nil { // zero time clears deadline
+		log.Printf("amarra stream: SetWriteDeadline unsupported (middleware wrapper without Unwrap?): %v — set WriteTimeout: 0 on the SSE server/route", err)
+	}
 	return rc
 }
 
