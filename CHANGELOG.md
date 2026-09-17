@@ -6,6 +6,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.8.0] - 2026-09-16
+
+### Added
+
+- `amarra-cais g sitemap`: scaffolds blog posts (title/slug/body/published, public + paginate + seed) plus a dynamic `/sitemap.xml` (static `/` + `/posts` plus published posts with lastmod, XML-escaped, 1h cache). Reruns reuse; friendly error when posts lacks slug/published.
+- Drive default transition: soft dark veil + the current favicon (`link[rel=icon]`, fallback `/static/icons/icon.png`) pulsing center-screen beside the progress bar. No layout change; honors `prefers-reduced-motion`.
+
+### Changed
+
+- `g resource` rows use an Edit button plus a trash icon opening a native "Delete this …?" modal (index and show). The Actions dropdown, confirm-via-link, and the show's unconfirmed Delete are gone; row confirms post via Drive link (no nested forms inside bulk-delete).
+- Auth pages (login, signup, forgot, reset) center on screen (`min-h-[calc(100vh-12rem)]`, same as home).
+
 ## [0.7.0] - 2026-09-16
 
 ### Added
