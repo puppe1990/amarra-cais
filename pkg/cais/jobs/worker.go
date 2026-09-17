@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -19,13 +20,17 @@ type WorkerConfig struct {
 	PollInterval      time.Duration
 	DispatchInterval  time.Duration
 	SchedulerInterval time.Duration
-	Logger            *log.Logger
+	// DrainTimeout bounds how long Run waits for in-flight handlers before
+	// removing the heartbeat on shutdown (#110). Defaults to 30s.
+	DrainTimeout time.Duration
+	Logger       *log.Logger
 }
 
 // Worker processes jobs from SQLite.
 type Worker struct {
 	cfg WorkerConfig
 	id  string
+	wg  sync.WaitGroup
 }
 
 func NewWorker(cfg WorkerConfig) *Worker {
@@ -37,6 +42,9 @@ func NewWorker(cfg WorkerConfig) *Worker {
 	}
 	if cfg.SchedulerInterval <= 0 {
 		cfg.SchedulerInterval = time.Minute
+	}
+	if cfg.DrainTimeout <= 0 {
+		cfg.DrainTimeout = 30 * time.Second
 	}
 	if len(cfg.Queues) == 0 {
 		cfg.Queues = []string{DefaultQueue}
@@ -57,7 +65,12 @@ func NewWorker(cfg WorkerConfig) *Worker {
 func (w *Worker) Run(ctx context.Context) error {
 	w.id = NewWorkerID()
 	pulse := w.pulse()
-	defer func() { _ = w.cfg.Store.RemoveWorker(context.Background(), w.id) }()
+	// Drain before RemoveWorker: dropping the heartbeat while a handler is
+	// still running lets RequeueOrphaned duplicate the job (#110).
+	defer func() {
+		w.drain()
+		_ = w.cfg.Store.RemoveWorker(context.Background(), w.id)
+	}()
 
 	// Recover jobs whose worker heartbeat is gone (#172) without stealing live work.
 	if n, err := w.cfg.Store.RequeueOrphaned(ctx, DefaultWorkerStale); err != nil {
@@ -125,7 +138,9 @@ func (w *Worker) Run(ctx context.Context) error {
 	}()
 
 	for i := 0; i < w.cfg.Concurrency; i++ {
+		w.wg.Add(1)
 		go func() {
+			defer w.wg.Done()
 			ticker := time.NewTicker(w.cfg.PollInterval)
 			defer ticker.Stop()
 			for {
@@ -167,17 +182,43 @@ func (w *Worker) pollOnce(ctx context.Context) error {
 func (w *Worker) runJob(ctx context.Context, job *Job) {
 	err := w.perform(ctx, job)
 	if err == nil {
-		if markErr := w.cfg.Store.MarkFinished(ctx, job.ID); markErr != nil {
+		markCtx, cancel := finalizeContext(ctx)
+		defer cancel()
+		if markErr := w.cfg.Store.MarkFinished(markCtx, job.ID); markErr != nil {
 			w.cfg.Logger.Printf("jobs finish id=%d: %v", job.ID, markErr)
 		}
 		w.cfg.Logger.Printf("jobs finished id=%d kind=%s", job.ID, job.Kind)
 		return
 	}
-	if markErr := w.cfg.Store.MarkFailed(ctx, job.ID, err, job.Attempts, job.MaxAttempts); markErr != nil {
+	markCtx, cancel := finalizeContext(ctx)
+	defer cancel()
+	if markErr := w.cfg.Store.MarkFailed(markCtx, job.ID, err, job.Attempts, job.MaxAttempts); markErr != nil {
 		w.cfg.Logger.Printf("jobs fail id=%d: %v (mark: %v)", job.ID, err, markErr)
 		return
 	}
 	w.cfg.Logger.Printf("jobs failed id=%d kind=%s: %v", job.ID, job.Kind, err)
+}
+
+// drain waits for in-flight handlers before the heartbeat is removed (#110),
+// bounded by DrainTimeout so a stuck handler cannot block shutdown forever.
+func (w *Worker) drain() {
+	done := make(chan struct{})
+	go func() {
+		w.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(w.cfg.DrainTimeout):
+		w.cfg.Logger.Printf("jobs drain: timeout after %s; in-flight jobs may be requeued", w.cfg.DrainTimeout)
+	}
+}
+
+// finalizeContext detaches from cancellation so recording a finished/failed
+// job survives shutdown (#110). Without this, MarkFinished(ctx) fails on a
+// cancelled context and the drained job stayed "running".
+func finalizeContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 }
 
 // perform isolates handler panics (#109): a buggy handler must fail its own
