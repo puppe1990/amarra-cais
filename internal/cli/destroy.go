@@ -23,9 +23,16 @@ func removeGeneratedFiles(dir string, rels []string, dryRun, force bool) error {
 		if _, err := os.Stat(full); err != nil {
 			continue
 		}
-		if !force && fileDiffersFromManifest(dir, filepath.ToSlash(rel)) {
-			printfScaffold("skip", rel+" (modified since generation; use --force to remove)")
-			continue
+		relSlash := filepath.ToSlash(rel)
+		if !force {
+			if !manifestHas(dir, relSlash) {
+				printfScaffold("skip", rel+" (not recorded as generated; use --force to remove)")
+				continue
+			}
+			if fileDiffersFromManifest(dir, relSlash) {
+				printfScaffold("skip", rel+" (modified since generation; use --force to remove)")
+				continue
+			}
 		}
 		if dryRun {
 			printfScaffold("remove", rel)

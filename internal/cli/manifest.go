@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -66,18 +67,65 @@ func dropManifestEntries(dir string, rels []string) error {
 	return writeGeneratedManifest(dir, entries)
 }
 
-// fileDiffersFromManifest reports whether rel exists, is tracked, and its
-// content no longer matches the recorded hash.
+// manifestHas reports whether rel was recorded as generated.
+func manifestHas(dir, rel string) bool {
+	_, ok := readGeneratedManifest(dir)[rel]
+	return ok
+}
+
+// fileDiffersFromManifest reports whether rel is not tracked or no longer
+// matches the recorded hash. Untracked (and unreadable) files count as
+// differing so destroy fails closed (#102).
 func fileDiffersFromManifest(dir, rel string) bool {
 	want, ok := readGeneratedManifest(dir)[rel]
 	if !ok || want == "" {
-		return false
+		return true
 	}
 	got, err := hashFile(filepath.Join(dir, rel))
 	if err != nil {
-		return false
+		return true
 	}
 	return got != want
+}
+
+// fileRels lists the rel paths of a generator's file map.
+func fileRels(files map[string]string) []string {
+	rels := make([]string, 0, len(files))
+	for rel := range files {
+		rels = append(rels, rel)
+	}
+	return rels
+}
+
+// recordScaffoldTree hashes every file written by `amarra-cais new` (#102).
+// Generated apps start fully tracked, so destroy can tell scaffold files from
+// hand-written ones without requiring --force.
+func recordScaffoldTree(dir string) error {
+	var rels []string
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() {
+			if d.Name() == ".git" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if d.Name() == generatedManifestRel {
+			return nil
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		rels = append(rels, filepath.ToSlash(rel))
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return recordGeneratedFiles(dir, rels)
 }
 
 func hashFile(path string) (string, error) {

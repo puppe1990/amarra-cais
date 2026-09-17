@@ -48,6 +48,12 @@ func scaffoldAuth(dir string, data scaffoldData, dryRun bool) error {
 		}
 	}
 
+	if !dryRun {
+		if err := recordGeneratedFiles(dir, fileRels(files)); err != nil {
+			return err
+		}
+	}
+
 	if err := patchStoreForAuth(dir, dryRun); err != nil {
 		return err
 	}
