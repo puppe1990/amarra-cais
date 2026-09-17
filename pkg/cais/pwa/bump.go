@@ -27,7 +27,7 @@ func BumpCacheVersion(appDir string) (int, error) {
 	}
 	next := cur + 1
 	updated := cacheVersionRe.ReplaceAllString(string(data), fmt.Sprintf("const CACHE_VERSION = %d;", next))
-	if err := os.WriteFile(path, []byte(updated), 0o644); err != nil {
+	if err := writeFileSafe(path, []byte(updated)); err != nil {
 		return 0, err
 	}
 	return next, nil

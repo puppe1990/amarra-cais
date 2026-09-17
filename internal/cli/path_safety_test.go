@@ -123,3 +123,28 @@ func TestRemoveGeneratedFiles_rejectsEscapingRel(t *testing.T) {
 		t.Error("removeGeneratedFiles deleted outside the app dir")
 	}
 }
+
+// #134: a symlinked destination must be refused instead of overwritten.
+func TestWriteScaffoldFile_refusesSymlinkTarget(t *testing.T) {
+	dir := t.TempDir()
+	outside := filepath.Join(t.TempDir(), "victim.go")
+	if err := os.WriteFile(outside, []byte("package victim\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "store.go")
+	if err := os.Symlink(outside, link); err != nil {
+		t.Fatal(err)
+	}
+
+	err := writeScaffoldFile(link, []byte("package overwritten\n"), 0o644, "store.go", false)
+	if err == nil {
+		t.Fatal("writeScaffoldFile followed a symlink")
+	}
+	body, readErr := os.ReadFile(outside)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if string(body) != "package victim\n" {
+		t.Errorf("outside file was overwritten: %q", body)
+	}
+}

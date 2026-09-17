@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/puppe1990/amarra-cais/pkg/cais/fsutil"
 )
 
 //go:embed assets/*
@@ -258,7 +260,7 @@ func writeManifest(path string, cfg Config) error {
 	if err := t.Execute(&buf, manifestData{Config: cfg, Display: display}); err != nil {
 		return err
 	}
-	return os.WriteFile(path, buf.Bytes(), 0o644)
+	return writeFileSafe(path, buf.Bytes())
 }
 
 func copyAsset(src, dst string) error {
@@ -266,7 +268,15 @@ func copyAsset(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dst, data, 0o644)
+	return writeFileSafe(dst, data)
+}
+
+// writeFileSafe refuses to follow a planted symlink at the destination (#134).
+func writeFileSafe(path string, data []byte) error {
+	if err := fsutil.RefuseSymlinkWrite(path); err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0o644)
 }
 
 // writeOGImage copies the neutral 1200x630 preview shipped with the framework.
@@ -289,7 +299,7 @@ func encodePNG(path string, img image.Image) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, body, 0o644)
+	return writeFileSafe(path, body)
 }
 
 func encodePNGBytes(img image.Image) ([]byte, error) {
@@ -314,7 +324,7 @@ func writeAppIcons(dir string, iconPath string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, "icon.png"), data, 0o644); err != nil {
+	if err := writeFileSafe(filepath.Join(dir, "icon.png"), data); err != nil {
 		return err
 	}
 	src, err := png.Decode(bytes.NewReader(data))
