@@ -132,7 +132,7 @@ func buildAdminIndexMethod(data scaffoldData) string {
 	perPage := 25
 	items, total, err := h.store.List%s(q, sort, dir, page, perPage)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	pg := pagination.New(page, perPage, total)
@@ -181,7 +181,7 @@ func (h *Admin%sHandler) indexBase(path, q, sort, dir string) string {
 	dir := r.URL.Query().Get("dir")
 	items, err := h.store.ListAll%s(q, sort, dir)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	view.Write(w, r, h.views, view.Page{
@@ -307,7 +307,7 @@ func (h *Admin%sHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := h.store.Insert%s(item); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	httpx.SeeOther(w, r, "/admin/%s")
@@ -326,7 +326,7 @@ func (h *Admin%sHandler) Update(w http.ResponseWriter, r *http.Request, id int64
 		return
 	}
 	if err := h.store.Update%s(item); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	httpx.SeeOther(w, r, "/admin/%s")
@@ -334,7 +334,7 @@ func (h *Admin%sHandler) Update(w http.ResponseWriter, r *http.Request, id int64
 
 func (h *Admin%sHandler) Delete(w http.ResponseWriter, r *http.Request, id int64) {
 	if err := h.store.Delete%s(id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	httpx.SeeOther(w, r, "/admin/%s")
@@ -351,7 +351,7 @@ func (h *Admin%sHandler) BulkDelete(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if err := h.store.Delete%s(id); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			httpx.ServerError(w, err, h.cfg)
 			return
 		}
 	}

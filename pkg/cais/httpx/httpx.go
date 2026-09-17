@@ -34,6 +34,13 @@ func writeRenderError(w http.ResponseWriter, err error, cfg cais.Config) {
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 
+// ServerError writes a 500 without leaking internals: the detail goes to the
+// log in production (cfg.SanitizeErrors()) and to the client in development.
+// Generated handlers use this instead of writing err.Error() (#127).
+func ServerError(w http.ResponseWriter, err error, cfg cais.Config) {
+	writeRenderError(w, err, cfg)
+}
+
 // RenderOrError writes a page or returns 500 on render error.
 func RenderOrError(w http.ResponseWriter, renderer *cais.Renderer, layout, page string, data any, cfg cais.Config) {
 	if err := RenderPage(w, renderer, layout, page, data); err != nil {
