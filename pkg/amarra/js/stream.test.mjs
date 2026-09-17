@@ -18,6 +18,14 @@ test("parseSSE joins multiline data", () => {
   assert.deepEqual(multi, [{ kind: "morph", html: "<div>\nx</div>" }]);
 });
 
+// #103: SSE treats a lone CR as a line terminator too, so the client parser
+// must fold CR/CRLF before splitting or a raw CR in the payload becomes a
+// boundary (event:/id:/data: injection).
+test("parseSSE folds lone carriage returns like SSE parsers do", () => {
+  const ops = parseSSE("event: append\rdata: <p>a</p>\rdata: <p>b</p>\r\r");
+  assert.deepEqual(ops, [{ kind: "append", html: "<p>a</p>\n<p>b</p>" }]);
+});
+
 test("parseSSE does not JSON-sniff HTML payloads", () => {
   const raw = `{"kind":"remove","target":"amarra-main"}`;
   const ops = parseSSE(`event: append\ndata: ${raw}\n\n`);

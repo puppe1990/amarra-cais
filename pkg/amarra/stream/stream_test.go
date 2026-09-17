@@ -146,6 +146,40 @@ func TestWriteEvent_splitsMultiLinePayloadIntoDataLines(t *testing.T) {
 	}
 }
 
+// #103: SSE parsers treat a lone \r as a line terminator too. A raw \r (or
+// \r\r) in the payload turned into field boundaries and let a user inject
+// event:/id:/retry: into the stream.
+func TestWriteEvent_carriageReturnsCannotInjectFields(t *testing.T) {
+	rr := httptest.NewRecorder()
+	payload := "<p>ok</p>\r\nevent: replace\rretry: 0\rdata: <script>x</script>"
+	if err := WriteEvent(rr, "message", payload); err != nil {
+		t.Fatalf("WriteEvent error: %v", err)
+	}
+	body := rr.Body.String()
+	if strings.ContainsRune(body, '\r') {
+		t.Fatalf("body still has a bare CR: %q", body)
+	}
+	for _, line := range strings.Split(body, "\n") {
+		if line == "" || strings.HasPrefix(line, "data: ") || line == "event: message" {
+			continue
+		}
+		t.Errorf("unexpected SSE line %q (field injection)", line)
+	}
+	if !strings.Contains(body, "data: event: replace") {
+		t.Errorf("payload fields should stay inside data lines, got %q", body)
+	}
+}
+
+func TestWriteEvent_rejectsEventNameWithNewlines(t *testing.T) {
+	rr := httptest.NewRecorder()
+	if err := WriteEvent(rr, "message\rretry: 0", "<p>x</p>"); err == nil {
+		t.Fatal("expected error for an event name containing CR")
+	}
+	if rr.Body.Len() != 0 {
+		t.Fatalf("nothing should be written on invalid event name, got %q", rr.Body.String())
+	}
+}
+
 func TestWriteEvent_emitsMessageAndThinking(t *testing.T) {
 	for _, tc := range []struct {
 		event string

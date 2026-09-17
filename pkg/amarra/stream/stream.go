@@ -58,10 +58,13 @@ func RelayAndCopy(w http.ResponseWriter, src io.Reader) (int64, error) {
 // only data:-prefixed lines, so a raw newline in chat HTML would truncate the
 // event and \n\n would dispatch attacker-chosen bogus events.
 func WriteEvent(w http.ResponseWriter, event, html string) error {
+	if event == "" || strings.ContainsAny(event, "\r\n") {
+		return fmt.Errorf("stream: invalid event name %q", event)
+	}
 	if _, err := fmt.Fprintf(w, "event: %s\n", event); err != nil {
 		return err
 	}
-	for _, line := range strings.Split(html, "\n") {
+	for _, line := range strings.Split(normalizeNewlines(html), "\n") {
 		if _, err := fmt.Fprintf(w, "data: %s\n", line); err != nil {
 			return err
 		}
@@ -70,4 +73,12 @@ func WriteEvent(w http.ResponseWriter, event, html string) error {
 		return err
 	}
 	return Flush(w)
+}
+
+// normalizeNewlines folds CRLF and lone CR into \n. SSE parsers treat \r as a
+// line terminator too, so a raw CR in the payload would start attacker-chosen
+// event:/id:/retry: fields (#103).
+func normalizeNewlines(s string) string {
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	return strings.ReplaceAll(s, "\r", "\n")
 }
