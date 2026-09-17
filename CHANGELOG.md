@@ -6,6 +6,34 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.10.0] - 2026-09-17
+
+### Added
+
+- `cache.SetMaxEntries(n)` (default 4096) and `RateLimiter.SetMaxBuckets(n)`: high-cardinality keys evict in batches instead of growing the heap.
+- `fsutil.RefuseSymlinkWrite`: CLI and PWA writes refuse symlinked targets or ancestors (`internal/`, `store.go`, `amarra.js`).
+- `sqlite.DSN(path)`: pragmas ride the DSN, so driver reconnects keep `foreign_keys` and `busy_timeout`.
+- `jobs.WorkerConfig.HeartbeatStore` plus a dedicated liveness pool in the scaffolded worker.
+- `live.Hub.Dropped()` counts slow-client drops (logged on the first and every 100th).
+- `httpx.ServerError(w, err, cfg)`: sanitized 500s for generated handlers.
+- `make js-bundle-check` and a CI step that rebuilds and diffs the committed bundles.
+
+### Changed
+
+- `jobs`: the worker retries transient store errors with exponential backoff, drains handlers before dropping the heartbeat, and `DispatchDue` runs `BEGIN IMMEDIATE`; the recurring scheduler claims each tick with compare-and-set.
+- `migrate`: each version is claimed with `INSERT OR IGNORE` and schema setup retries `SQLITE_BUSY`, so concurrent boots (server + worker) stop failing with `UNIQUE constraint`.
+- Drive/Frame drop superseded responses (monotonic sequence per document/element); `bulk`, `dialog` and `dropdown` hooks rebind on `amarra:morphed`.
+- `netutil.HealthPayload(status, port, env)` omits `lan_urls` in production; `RequireAuth` always redirects 303 for Drive.
+- `pagination` clamps `page` to the last page and saturates offsets; generated SQL quotes identifiers and field names are validated (reserved words, `id`/`created_at`, duplicates rejected).
+- Generated handlers use `httpx.ServerError`; `UnsafeMessageHTML` maps roles through an allowlist; `linkTo` unchanged.
+- `live` hides handler error detail outside development.
+- HTMX legacy packages and assets are marked deprecated with removal at v1.0; generators are guarded against emitting `hx-*`.
+
+### Fixed
+
+- Generator patches validate markers before writing and roll back on failure (no more half-patched apps); `MarkFailed` clears `worker_id`/`started_at`; `RelaySSE` logs unsupported `SetWriteDeadline`; the nav hook ignores `#`/fragment links; the password toggle only flips `type=password` fields.
+- Files over 500 lines split by domain, with a test enforcing the cap.
+
 ## [0.9.0] - 2026-09-16
 
 ### Added
