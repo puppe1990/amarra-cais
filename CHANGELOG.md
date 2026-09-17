@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.8.1] - 2026-09-16
+
+### Changed
+
+- Drive veil transition swaps the favicon for a system-color spinner (copper `#c9893a`, same as the progress bar): no icon lookup, no image request.
+
 ## [0.8.0] - 2026-09-16
 
 ### Added
