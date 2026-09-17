@@ -136,3 +136,35 @@ func TestScaffoldResource_PublicListRichFields(t *testing.T) {
 		t.Error("public list should render title field")
 	}
 }
+
+// #127: generated handlers must not write store errors to the client.
+func TestScaffoldResource_handlersUseSanitizedServerError(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "sanitizeapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "sanitizeapp",
+		ModulePath: "github.com/puppe1990/sanitizeapp",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldResource(appDir, "bookmark", resourceOpts{
+		Fields: "title:string,published:bool",
+		Public: true,
+		Seed:   false,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, rel := range []string{
+		"internal/handlers/admin_bookmarks.go",
+		"internal/handlers/bookmarks.go",
+	} {
+		body := mustReadFile(t, filepath.Join(appDir, rel))
+		if strings.Contains(body, "http.Error(w, err.Error()") {
+			t.Errorf("%s still writes the raw error to the client", rel)
+		}
+		if !strings.Contains(body, "httpx.ServerError(w, err, h.cfg)") {
+			t.Errorf("%s should route store errors through httpx.ServerError", rel)
+		}
+	}
+}

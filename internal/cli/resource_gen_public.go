@@ -34,7 +34,7 @@ func (h *%sHandler) Toggle(w http.ResponseWriter, r *http.Request, id int64) {
 	}
 	item.%s = !item.%s
 	if err := h.store.Update%s(item); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	http.Redirect(w, r, "/%s", http.StatusSeeOther)
@@ -56,6 +56,7 @@ import (
 %s
 %s	"%s/pkg/amarra/view"
 	"%s/pkg/cais"
+	"%s/pkg/cais/httpx"
 	"%s/pkg/cais/meta"
 
 	"%s/internal/store"
@@ -75,7 +76,7 @@ func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.
 %s%s`,
 		extraStd,
 		paginationImport,
-		frameworkModule, frameworkModule, frameworkModule, data.ModulePath,
+		frameworkModule, frameworkModule, frameworkModule, frameworkModule, data.ModulePath,
 		data.PluralPascal,
 		data.PluralPascal, data.PluralPascal, data.PluralPascal,
 		listMethod,
@@ -100,7 +101,7 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 	perPage := 25
 	items, total, err := h.store.List%s(q, "", "", page, perPage)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}%s
 	pg := pagination.New(page, perPage, total)
@@ -143,7 +144,7 @@ func (h *%sHandler) indexBase(path string, params ...string) string {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	items, err := h.store.ListAll%s(q, "", "")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}%s
 	view.Write(w, r, h.views, view.Page{

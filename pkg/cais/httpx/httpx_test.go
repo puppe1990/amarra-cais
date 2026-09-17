@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -170,5 +171,27 @@ func TestSetETag(t *testing.T) {
 	SetETag(rr, "xyz")
 	if et := rr.Header().Get("ETag"); et != `"xyz"` {
 		t.Errorf("ETag = %q", et)
+	}
+}
+
+// #127: generated handlers wrote err.Error() to the client; anonymous visitors
+// could read SQLite/schema details. ServerError logs the detail and only shows
+// it when cfg.SanitizeErrors() is false (development).
+func TestServerError_sanitizesInProduction(t *testing.T) {
+	rr := httptest.NewRecorder()
+	ServerError(rr, errors.New("no such table: secret_widgets"), cais.Config{Env: "production"})
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500", rr.Code)
+	}
+	if strings.Contains(rr.Body.String(), "secret_widgets") {
+		t.Fatalf("internal detail leaked: %q", rr.Body.String())
+	}
+}
+
+func TestServerError_showsDetailInDevelopment(t *testing.T) {
+	rr := httptest.NewRecorder()
+	ServerError(rr, errors.New("no such table: secret_widgets"), cais.Config{Env: "development"})
+	if !strings.Contains(rr.Body.String(), "secret_widgets") {
+		t.Fatalf("development should keep the detail, got %q", rr.Body.String())
 	}
 }
