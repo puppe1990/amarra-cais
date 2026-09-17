@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/puppe1990/amarra-cais/pkg/cais/fsutil"
 	"github.com/puppe1990/amarra-cais/pkg/cais/pwa"
 )
 
@@ -281,6 +282,9 @@ func patchRoutes(dir string, data scaffoldData, dryRun bool) error {
 }
 
 func writeTemplate(path, tpl string, data scaffoldData) error {
+	if err := fsutil.RefuseSymlinkWrite(path); err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}

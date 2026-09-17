@@ -50,7 +50,7 @@ func SyncServiceWorker(appDir string) (updated bool, version int, err error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return false, 0, err
 	}
-	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+	if err := writeFileSafe(path, []byte(body)); err != nil {
 		return false, 0, err
 	}
 
