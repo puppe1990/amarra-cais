@@ -190,8 +190,21 @@ func UnsafeMessageHTML(role Role, htmlContent string, at time.Time) string {
 	}
 	return fmt.Sprintf(
 		`<div class="cais-msg cais-msg-%s max-w-[85%%] %s"><time datetime="%s" class="cais-msg-time"></time><div class="%s">%s</div></div>`,
-		role, align, dt, cls, htmlContent,
+		safeRoleClass(role), align, dt, cls, htmlContent,
 	)
+}
+
+// safeRoleClass maps known roles to their CSS class suffix; anything else
+// (e.g. a caller-supplied string) falls back to assistant (#136).
+func safeRoleClass(role Role) string {
+	switch role {
+	case RoleUser:
+		return string(RoleUser)
+	case RoleDetail:
+		return string(RoleDetail)
+	default:
+		return string(RoleAssistant)
+	}
 }
 
 // MessageBubble is a persisted row with a UTC datetime for client-side local formatting.
