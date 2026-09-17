@@ -132,3 +132,55 @@ test("isStreamResponse detects vnd.amarra-stream", () => {
 test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });
+
+// #113: Drive intercepts navigation and morphs #amarra-main, so a chat page
+// reached via a link had no EventSource at all — stream.start only scanned at
+// boot. Nodes added by a morph must connect; stale nodes must disconnect.
+test("stream start connects nodes added by a Drive morph", () => {
+  const instances = [];
+  class FakeEventSource {
+    constructor(url) {
+      this.url = url;
+      this.closed = false;
+      instances.push(this);
+    }
+    addEventListener() {}
+    close() {
+      this.closed = true;
+    }
+  }
+  const listeners = {};
+  const nodes = [];
+  const doc = {
+    documentElement: { dataset: {} },
+    querySelectorAll: () => nodes,
+    addEventListener: (type, fn) => {
+      (listeners[type] ||= []).push(fn);
+    },
+  };
+  const node = (url) => ({
+    isConnected: true,
+    getAttribute: (name) => (name === "data-amarra-stream" ? url : ""),
+  });
+
+  const first = node("/stream/a");
+  nodes.push(first);
+  start({ document: doc, EventSource: FakeEventSource });
+  assert.equal(instances.length, 1);
+  assert.equal(instances[0].url, "/stream/a");
+
+  // Drive morph: old node replaced by a new one.
+  first.isConnected = false;
+  const fresh = node("/stream/b");
+  nodes.length = 0;
+  nodes.push(fresh);
+  for (const fn of listeners["amarra:morphed"] || []) fn();
+
+  assert.equal(instances.length, 2, "morphed-in node should open a stream");
+  assert.equal(instances[1].url, "/stream/b");
+  assert.equal(instances[0].closed, true, "stale node stream should close");
+
+  // Idempotent: another morph with the same nodes must not duplicate.
+  for (const fn of listeners["amarra:morphed"] || []) fn();
+  assert.equal(instances.length, 2);
+});
