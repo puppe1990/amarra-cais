@@ -6,6 +6,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.9.0] - 2026-09-16
+
+### Added
+
+- `amarra-cais new` records every generated file in `.cais-generated.json`; `destroy` skips untracked or modified files unless `--force` (missing manifest fails closed).
+- `destroy` refuses parents still referenced by other resources and drops orphan `List<Ref>Options`; generators record their own files after gofmt.
+
+### Changed
+
+- Drive morphs remount `data-amarra-stream` and `amarra-live` nodes (rescan on `amarra:morphed`, replaced nodes disconnect) — chat/live reached through a link now connects.
+- Service worker skips `no-store`/`private` responses, never falls back to cached pages for navigations or Drive fragments, and clears the cache on `POST /logout`.
+- `jobs` worker drains in-flight handlers (bounded by `DrainTimeout`, default 30s) before removing its heartbeat and records the final status with a detached context.
+- `linkTo` allowlists `http`, `https`, `mailto`, `tel` and relative hrefs; unsafe schemes (e.g. `javascript:`) render `href="#"`.
+
+### Fixed
+
+- Kit tags accept hyphenated attributes (`data-*`, `aria-*`): expansion maps them to `attr_*` variables instead of failing the template parse at boot.
+- `g resource`: prefix collisions no longer skip store patches (`post_comment` → `post`); bool-only fields compile; `references` without the generated parent fails early pointing at the parent command.
+- `destroy`: removing `boolInt` no longer corrupts `store.go`.
+- `jobs`: handler panics fail the job instead of killing the worker; orphaned jobs at `max_attempts` become `failed` instead of looping forever.
+- `Live`: events broadcast before the join handshake are dropped and `Mount` is serialized before `Handle`.
+- SSE: lone `\r` in payloads is folded into `data:` lines; `WriteOp` rejects unknown op kinds.
+
+### Security
+
+- `g`/`destroy` reject names that resolve outside the app dir (path traversal); write/remove helpers refuse escaping rel paths.
+- `/jobs` rejects requests carrying forwarding headers, so a same-host reverse proxy cannot expose the dashboard.
+- Scaffold `.gitignore` ignores `.env`/`.env.*` while keeping `.env.example`.
+- `linkTo` neutralizes `javascript:`/`vbscript:`/`data:` hrefs.
+- SSE CR field injection and service-worker caching of authenticated HTML (`no-store`) closed.
+
 ## [0.8.1] - 2026-09-16
 
 ### Changed
