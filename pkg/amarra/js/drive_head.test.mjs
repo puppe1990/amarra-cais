@@ -43,6 +43,98 @@ test("applyHead updates html lang from response HTML", () => {
   assert.equal(doc.documentElement.lang, "pt-BR");
 });
 
+function veilDoc(iconHref = "/static/icons/app.png") {
+  const created = [];
+  const img = {
+    tagName: "img",
+    setAttribute(name, value) {
+      this[name] = value;
+    },
+    style: {},
+  };
+  const veil = {
+    tagName: "div",
+    id: "",
+    hidden: false,
+    style: {},
+    setAttribute(name, value) {
+      this[name] = value;
+    },
+    appendChild(el) {
+      created.push(el);
+    },
+    querySelector(sel) {
+      return sel === "img" ? img : null;
+    },
+  };
+  const byId = {};
+  const doc = {
+    getElementById(id) {
+      return byId[id] || null;
+    },
+    querySelector(sel) {
+      if (sel === 'link[rel="icon"]') {
+        return { getAttribute: () => iconHref };
+      }
+      return null;
+    },
+    createElement(tag) {
+      const el = {
+        tagName: tag,
+        id: "",
+        hidden: false,
+        style: {},
+        textContent: "",
+        setAttribute(name, value) {
+          this[name] = value;
+        },
+        appendChild(child) {
+          created.push(child);
+        },
+        querySelector(s) {
+          return s === "img" ? img : null;
+        },
+      };
+      return el;
+    },
+    head: {
+      appendChild(el) {
+        created.push(el);
+      },
+    },
+    body: {
+      appendChild(el) {
+        created.push(el);
+        if (el.id) byId[el.id] = el;
+      },
+    },
+    _created: created,
+    _veil: veil,
+  };
+  return doc;
+}
+
+test("showProgress shows a veil with the current favicon", () => {
+  const doc = veilDoc("/static/icons/app.png");
+  showProgress(doc);
+  const veil = doc.getElementById("amarra-veil");
+  assert.ok(veil, "veil created");
+  assert.equal(veil.hidden, false);
+  const img = veil.querySelector("img");
+  assert.equal(img.src, "/static/icons/app.png");
+  hideProgress(doc);
+  assert.equal(veil.hidden, true);
+});
+
+test("showProgress falls back to the default icon without link[rel=icon]", () => {
+  const doc = veilDoc(null);
+  doc.querySelector = () => null;
+  showProgress(doc);
+  const veil = doc.getElementById("amarra-veil");
+  const img = veil.querySelector("img");
+  assert.equal(img.src, "/static/icons/icon.png");
+});
+
 test("showProgress creates a bar and hideProgress hides it", () => {
   const created = [];
   const doc = {
@@ -65,9 +157,9 @@ test("showProgress creates a bar and hideProgress hides it", () => {
     },
   };
   showProgress(doc);
-  assert.equal(created.length, 1);
-  assert.equal(created[0].id, "amarra-progress");
-  assert.equal(created[0].hidden, false);
+  const bar = created.find((el) => el.id === "amarra-progress");
+  assert.ok(bar, "progress bar created");
+  assert.equal(bar.hidden, false);
   hideProgress(doc);
-  assert.equal(created[0].hidden, true);
+  assert.equal(bar.hidden, true);
 });
