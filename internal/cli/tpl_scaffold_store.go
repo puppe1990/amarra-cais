@@ -60,7 +60,7 @@ func NewSQLiteStore(dsn string, env string) (*SQLiteStore, error) {
 		}
 	}
 
-	db, err := sql.Open("sqlite", dsn)
+	db, err := sql.Open("sqlite", caissqlite.DSN(dsn))
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
@@ -313,6 +313,7 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/devlog"
 	"github.com/puppe1990/amarra-cais/pkg/cais/session"
+	caissqlite "github.com/puppe1990/amarra-cais/pkg/cais/sqlite"
 	"github.com/puppe1990/amarra-cais/pkg/cais/sqllog"
 	_ "modernc.org/sqlite"
 )
@@ -336,7 +337,7 @@ func NewSQLiteStore(dsn string, env string) (*SQLiteStore, error) {
 		}
 	}
 
-	db, err := sql.Open("sqlite", dsn)
+	db, err := sql.Open("sqlite", caissqlite.DSN(dsn))
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
