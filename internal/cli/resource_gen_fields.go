@@ -120,8 +120,19 @@ func seedStringValue(f FieldDef, name string) string {
 	return `"Sample"`
 }
 
+// sqlIdent quotes a column identifier for SQLite. Brackets are used instead of
+// double quotes because the generated SQL lives inside Go string literals.
+// Field names are validated anyway (^[a-z][a-z0-9_]*$, no reserved words), so
+// this is defense in depth (#128).
+func sqlIdent(name string) string {
+	return "[" + name + "]"
+}
+
 func insertColumns(fields []FieldDef) (cols, placeholders string) {
 	names := fieldNames(fields)
+	for i, n := range names {
+		names[i] = sqlIdent(n)
+	}
 	ph := make([]string, len(names))
 	for i := range names {
 		ph[i] = "?"
@@ -144,13 +155,17 @@ func insertArgs(fields []FieldDef) string {
 func updateSets(fields []FieldDef) string {
 	var sets []string
 	for _, f := range fields {
-		sets = append(sets, f.Name+" = ?")
+		sets = append(sets, sqlIdent(f.Name)+" = ?")
 	}
 	return strings.Join(sets, ", ")
 }
 
 func selectColumns(fields []FieldDef) string {
-	return strings.Join(fieldNames(fields), ", ")
+	names := fieldNames(fields)
+	for i, n := range names {
+		names[i] = sqlIdent(n)
+	}
+	return strings.Join(names, ", ")
 }
 
 func fieldNames(fields []FieldDef) []string {
