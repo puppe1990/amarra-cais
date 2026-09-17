@@ -50,9 +50,16 @@ func scaffoldComponent(dir, name string, dryRun bool) error {
 		// Seed the shipped markup so the app restyles the real contract
 		// (attributes, error slot, hooks) instead of recreating it (#63).
 		// Written verbatim: it is a Go template for the app, not scaffold data.
-		return writeScaffoldFile(path, []byte(view.ShippedComponents()[stem]), 0o644, rel, dryRun)
+		if err := writeScaffoldFile(path, []byte(view.ShippedComponents()[stem]), 0o644, rel, dryRun); err != nil {
+			return err
+		}
+	} else if err := writeScaffoldTemplate(path, tplComponent, dataForHandler(name), rel, dryRun); err != nil {
+		return err
 	}
-	return writeScaffoldTemplate(path, tplComponent, dataForHandler(name), rel, dryRun)
+	if !dryRun {
+		return recordGeneratedFiles(dir, []string{rel})
+	}
+	return nil
 }
 
 // printShippedComponents lists what `g component <name>` can seed (#63).

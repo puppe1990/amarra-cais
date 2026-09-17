@@ -183,15 +183,17 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		return err
 	}
 
-	if os.Getenv("CAIS_SKIP_TIDY") == "1" {
-		return nil
+	if os.Getenv("CAIS_SKIP_TIDY") != "1" {
+		cmd := exec.Command("go", "mod", "tidy")
+		cmd.Dir = dir
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return err
+		}
 	}
 
-	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return recordScaffoldTree(dir)
 }
 
 func scaffoldHandler(dir, name string, dryRun bool) error {
@@ -212,6 +214,11 @@ func scaffoldHandler(dir, name string, dryRun bool) error {
 			return err
 		}
 	}
+	if !dryRun {
+		if err := recordGeneratedFiles(dir, fileRels(files)); err != nil {
+			return err
+		}
+	}
 
 	return patchRoutes(dir, data, dryRun)
 }
@@ -223,7 +230,13 @@ func scaffoldPage(dir, name string, dryRun bool) error {
 	if _, err := os.Stat(path); err == nil {
 		return fmt.Errorf("web/templates/pages/%s.html already exists", data.Snake)
 	}
-	return writeScaffoldTemplate(path, tplGenericPage, data, rel, dryRun)
+	if err := writeScaffoldTemplate(path, tplGenericPage, data, rel, dryRun); err != nil {
+		return err
+	}
+	if !dryRun {
+		return recordGeneratedFiles(dir, []string{rel})
+	}
+	return nil
 }
 
 func scaffoldMigration(dir, name string, dryRun bool) error {
@@ -234,7 +247,13 @@ func scaffoldMigration(dir, name string, dryRun bool) error {
 	}
 	path := filepath.Join(dir, rel)
 	content := fmt.Sprintf("-- migration: %s\n-- up\n\n-- down\n\n", data.Snake)
-	return writeScaffoldFile(path, []byte(content), 0o644, rel, dryRun)
+	if err := writeScaffoldFile(path, []byte(content), 0o644, rel, dryRun); err != nil {
+		return err
+	}
+	if !dryRun {
+		return recordGeneratedFiles(dir, []string{rel})
+	}
+	return nil
 }
 
 func patchRoutes(dir string, data scaffoldData, dryRun bool) error {

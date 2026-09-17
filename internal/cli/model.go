@@ -60,11 +60,14 @@ func scaffoldModel(dir, name string, opts modelOpts) error {
 		}
 	}
 
-	if err := patchStoreForResource(dir, data, opts.dryRun, false); err != nil {
-		return err
+	if !opts.dryRun {
+		if err := patchStoreForResource(dir, data, false, false); err != nil {
+			return err
+		}
+		if err := gofmtGoFiles(dir); err != nil {
+			return err
+		}
+		return recordGeneratedFiles(dir, fileRels(files))
 	}
-	if opts.dryRun {
-		return nil
-	}
-	return gofmtGoFiles(dir)
+	return patchStoreForResource(dir, data, true, false)
 }

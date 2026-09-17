@@ -75,7 +75,10 @@ func scaffoldJob(dir, name string, opts jobOpts) error {
 	if opts.dryRun {
 		return nil
 	}
-	return gofmtGoFiles(dir)
+	if err := gofmtGoFiles(dir); err != nil {
+		return err
+	}
+	return recordGeneratedFiles(dir, fileRels(files))
 }
 
 func buildJobHandler(data scaffoldData) string {

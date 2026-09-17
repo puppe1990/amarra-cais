@@ -26,6 +26,11 @@ func scaffoldLive(dir, name string, dryRun bool) error {
 			return err
 		}
 	}
+	if !dryRun {
+		if err := recordGeneratedFiles(dir, fileRels(files)); err != nil {
+			return err
+		}
+	}
 	if err := patchRoutesForLive(dir, data, dryRun); err != nil {
 		return err
 	}
