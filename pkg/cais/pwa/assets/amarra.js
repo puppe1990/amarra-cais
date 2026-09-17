@@ -1174,7 +1174,15 @@
         return null;
       }
     }
-    return el?.parentElement?.querySelector?.("input") ?? null;
+    const scope = el?.closest?.("form") ?? el?.parentElement ?? null;
+    const inputs = scope?.querySelectorAll?.('input[type="password"]') ?? [];
+    if (inputs.length === 0) return null;
+    if (inputs.length === 1) return inputs[0];
+    let best = inputs[0];
+    for (const input of inputs) {
+      if (el?.compareDocumentPosition?.(input) & 2) best = input;
+    }
+    return best;
   }
   function swapAriaLabel(el, show) {
     const showLabel = el.getAttribute?.("data-amarra-label-show");

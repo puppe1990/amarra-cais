@@ -38,10 +38,21 @@ function defaultFind(sel, el) {
       return null;
     }
   }
-  // #28: auth pages usually wrap <input> + toggle button in one relative
-  // div — fall back to the nearest input sibling when the selector misses
-  // or is absent, so apps do not re-register the hook for the auth path.
-  return el?.parentElement?.querySelector?.("input") ?? null;
+  // #28/#132: auth pages wrap <input> + toggle in one relative element. The
+  // old fallback took the first input of the parent — with several fields it
+  // toggled the wrong one (e.g. the email field). Prefer a password field in
+  // the same form (or wrapper) and never guess a non-password input.
+  const scope = el?.closest?.("form") ?? el?.parentElement ?? null;
+  const inputs = scope?.querySelectorAll?.('input[type="password"]') ?? [];
+  if (inputs.length === 0) return null;
+  if (inputs.length === 1) return inputs[0];
+  // Several password fields (password + confirmation): pick the closest one
+  // preceding the toggle when the DOM API is available.
+  let best = inputs[0];
+  for (const input of inputs) {
+    if (el?.compareDocumentPosition?.(input) & 2) best = input;
+  }
+  return best;
 }
 
 // #28: aria-label follows the visible affordance (the next action), like the

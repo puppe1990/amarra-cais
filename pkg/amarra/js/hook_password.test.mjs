@@ -72,20 +72,64 @@ test("password hook toggles show/hide icons when present", () => {
   assert.equal(hideIcon.classList.contains("hidden"), true);
 });
 
-test("password hook falls back to the sibling input when no selector is set (#28)", () => {
-  const input = { type: "password" };
+// #132: the fallback used parentElement.querySelector("input") — the first
+// input of the wrapper, which may be the email field. Prefer the password
+// field in the same form/wrapper.
+test("password hook fallback picks the password input, not the first input", () => {
+  const email = { type: "email" };
+  const passwordInput = { type: "password" };
   const hook = makePassword();
   const el = button("");
   el.parentElement = {
-    querySelector(sel) {
-      return sel === "input" ? input : null;
+    querySelectorAll(sel) {
+      return sel === 'input[type="password"]' ? [passwordInput] : [];
+    },
+    querySelector() {
+      return email; // what the old fallback would have toggled
     },
   };
   hook.connect(el);
   el.listeners.click[0]();
-  assert.equal(input.type, "text");
+  assert.equal(passwordInput.type, "text");
+  assert.equal(email.type, "email", "email field must not be toggled");
   el.listeners.click[0]();
-  assert.equal(input.type, "password");
+  assert.equal(passwordInput.type, "password");
+});
+
+test("password hook fallback never toggles a form without password fields", () => {
+  const email = { type: "email" };
+  const hook = makePassword();
+  const el = button("");
+  el.parentElement = {
+    querySelectorAll() {
+      return [];
+    },
+    querySelector() {
+      return email;
+    },
+  };
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(email.type, "email");
+  assert.equal(el.getAttribute("aria-pressed"), "false");
+});
+
+test("password hook picks the closest preceding password field in a form", () => {
+  const pw = { type: "password" };
+  const confirm = { type: "password" };
+  const hook = makePassword();
+  const el = button("");
+  el.closest = (sel) => (sel === "form" ? form : null);
+  const form = {
+    querySelectorAll() {
+      return [pw, confirm];
+    },
+  };
+  el.compareDocumentPosition = (node) => (node === pw ? 2 : 4); // pw precedes, confirm follows
+  hook.connect(el);
+  el.listeners.click[0]();
+  assert.equal(pw.type, "text");
+  assert.equal(confirm.type, "password");
 });
 
 test("password hook swaps aria-label from data-amarra-label-show/hide (#28)", () => {
