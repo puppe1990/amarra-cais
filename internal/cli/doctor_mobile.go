@@ -272,7 +272,7 @@ func checkHealthLANURLs(dir string) doctorCheck {
 			Name:     "health lan_urls",
 			Optional: true,
 			Detail:   "malformed double http:// in health handler",
-			FixHint:  "use netutil.HealthPayload(status, cfg.Port) — never concatenate APP_URL + port manually",
+			FixHint:  "use netutil.HealthPayload(status, cfg.Port, cfg.Env) — never concatenate APP_URL + port manually",
 		}
 	}
 	if strings.Contains(content, "netutil.HealthPayload") {
