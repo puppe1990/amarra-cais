@@ -98,24 +98,44 @@ func (s *Store) RemoveWorker(ctx context.Context, id string) error {
 	return nil
 }
 
+// orphanCondition matches running jobs whose worker heartbeat is missing or
+// stale. It expects the stale modifier as its only parameter.
+const orphanCondition = `worker_id IS NULL OR worker_id = ''
+    OR worker_id NOT IN (
+      SELECT id FROM job_workers WHERE heartbeat_at >= datetime('now', ?)
+    )`
+
 // RequeueOrphaned returns running jobs whose worker is missing or stale.
 // Live workers keep their in-flight jobs — unlike RequeueStuck, this is safe
 // to call while a worker is running (dashboard button, overlapping processes).
+// Orphans at max_attempts become failed instead of ready (#111): the cap only
+// ran in MarkFailed, which never executes when the handler kills the process,
+// so the job was claimed again forever.
 func (s *Store) RequeueOrphaned(ctx context.Context, stale time.Duration) (int64, error) {
 	if stale <= 0 {
 		stale = DefaultWorkerStale
 	}
 	mod := fmt.Sprintf("-%d seconds", int(stale.Seconds()))
+	exhausted, err := s.db.ExecContext(ctx, `
+UPDATE jobs
+SET status = ?, worker_id = NULL, started_at = NULL, finished_at = datetime('now'), last_error = ?
+WHERE status = ?
+  AND attempts >= max_attempts
+  AND (`+orphanCondition+`)`, StatusFailed, "orphaned after reaching max attempts", StatusRunning, mod)
+	if err != nil {
+		return 0, fmt.Errorf("fail orphaned: %w", err)
+	}
+	failed, err := exhausted.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("fail orphaned: %w", err)
+	}
+
 	res, err := s.db.ExecContext(ctx, `
 UPDATE jobs
 SET status = ?, worker_id = NULL, started_at = NULL
 WHERE status = ?
-  AND (
-    worker_id IS NULL OR worker_id = ''
-    OR worker_id NOT IN (
-      SELECT id FROM job_workers WHERE heartbeat_at >= datetime('now', ?)
-    )
-  )`, StatusReady, StatusRunning, mod)
+  AND attempts < max_attempts
+  AND (`+orphanCondition+`)`, StatusReady, StatusRunning, mod)
 	if err != nil {
 		return 0, fmt.Errorf("requeue orphaned: %w", err)
 	}
@@ -123,7 +143,7 @@ WHERE status = ?
 	if err != nil {
 		return 0, fmt.Errorf("requeue orphaned: %w", err)
 	}
-	return n, nil
+	return failed + n, nil
 }
 
 // ClaimFor is Claim tagged with the worker id so RequeueOrphaned can skip live work.
@@ -137,6 +157,7 @@ SET status = ?, attempts = attempts + 1, last_error = NULL,
 WHERE id = (
   SELECT id FROM jobs
   WHERE queue = ? AND status = ? AND run_at <= datetime('now')
+    AND attempts < max_attempts
   ORDER BY priority ASC, id ASC
   LIMIT 1
 )
