@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -320,4 +321,72 @@ func readJSON(t *testing.T, c *websocket.Conn) outMsg {
 		t.Fatalf("json %s: %v", data, err)
 	}
 	return msg
+}
+
+type mountOrderView struct {
+	mu      sync.Mutex
+	mounts  int
+	handles int
+}
+
+func (v *mountOrderView) Mount(context.Context, Socket) error {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.mounts++
+	return nil
+}
+
+func (v *mountOrderView) Handle(context.Context, Event) error {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.handles++
+	return nil
+}
+
+func (v *mountOrderView) Render() Rendered {
+	return Rendered{Target: "order", HTML: "<span>0</span>"}
+}
+
+func (v *mountOrderView) counts() (mounts, handles int) {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	return v.mounts, v.handles
+}
+
+// #112: Broadcast can deliver an event before the join/Mount handshake
+// completes. Handle must not run with zero state (e.g. inserting into
+// conversation 0 in the chat scaffold).
+func TestLive_ignoresEventsBeforeJoin(t *testing.T) {
+	h := NewHub(Config{OriginPatterns: []string{"*"}})
+	view := &mountOrderView{}
+	h.Register("order", func() View { return view })
+	s := httptest.NewServer(h.Handler())
+	t.Cleanup(s.Close)
+
+	c := dialLive(t, s, "order", "tok")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
+
+	h.Broadcast("order", Event{Name: "inc"})
+	time.Sleep(50 * time.Millisecond)
+
+	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "tok"})
+	ok := readJSON(t, c)
+	if ok.Type != typeOK {
+		t.Fatalf("join = %+v", ok)
+	}
+	mounts, handles := view.counts()
+	if mounts != 1 {
+		t.Fatalf("mounts = %d, want 1", mounts)
+	}
+	if handles != 0 {
+		t.Fatalf("handled %d event(s) before join", handles)
+	}
+
+	// After the join, events flow normally.
+	writeJSON(t, c, inMsg{Type: typeEvent, Event: "inc", Ref: "1"})
+	_ = readJSON(t, c)
+	_, handles = view.counts()
+	if handles != 1 {
+		t.Fatalf("handles after join = %d, want 1", handles)
+	}
 }
