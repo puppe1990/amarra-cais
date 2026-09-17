@@ -81,12 +81,15 @@ func buildAdminParseForm(data scaffoldData) string {
 	if len(after) > 0 {
 		afterBlock = "\n\t" + strings.Join(after, "\n\t") + "\n"
 	}
-	return fmt.Sprintf(`var errs validate.FieldErrors
+	body := fmt.Sprintf(`var errs validate.FieldErrors
 	if err := httpx.ParseFormOrJSON(r); err != nil {
 		errs.Add("_form", err.Error())
 		return models.%s{}, errs
 	}
-	item := models.%s{%s}%s%s	return item, errs`, data.Pascal, data.Pascal, strings.Join(literal, ", "), validateBlock, afterBlock)
+	item := models.%s{%s}%s%s`, data.Pascal, data.Pascal, strings.Join(literal, ", "), validateBlock, afterBlock)
+	// Always start the return on its own line: bool-only resources have empty
+	// literal/validation/after blocks (#106).
+	return strings.TrimRight(body, "\n") + "\n\treturn item, errs"
 }
 
 func buildAdminShowMethod(data scaffoldData) string {
