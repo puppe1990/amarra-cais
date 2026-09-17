@@ -77,3 +77,17 @@ func TestWriteOp_remove(t *testing.T) {
 		t.Fatalf("%q", body)
 	}
 }
+
+// #103: Op.Kind is the SSE event name; an unknown kind (or user data in the
+// kind) must be rejected instead of becoming an arbitrary "event:" field.
+func TestWriteOp_rejectsUnknownKind(t *testing.T) {
+	for _, kind := range []string{"bogus", "message\nevent: replace", ""} {
+		rr := httptest.NewRecorder()
+		if err := WriteOp(rr, Op{Kind: kind, Target: "chat", HTML: "<p>x</p>"}); err == nil {
+			t.Errorf("WriteOp(%-q) accepted an unknown kind", kind)
+		}
+		if rr.Body.Len() != 0 {
+			t.Errorf("WriteOp(%-q) wrote %q before rejecting", kind, rr.Body.String())
+		}
+	}
+}
