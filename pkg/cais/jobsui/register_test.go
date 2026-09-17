@@ -83,6 +83,35 @@ func TestRegister_BlocksNonLocalhost(t *testing.T) {
 	}
 }
 
+// #100: the documented deploy runs Caddy on the same host
+// (reverse_proxy 127.0.0.1:4006), so every internet request reaches the app
+// with RemoteAddr 127.0.0.1. Forwarding headers prove the request came through
+// a proxy; only a direct loopback connection (SSH tunnel / curl on the box)
+// may read or mutate the queue.
+func TestRegister_BlocksSameHostProxyRequests(t *testing.T) {
+	cases := map[string]map[string]string{
+		"x-forwarded-for":   {"X-Forwarded-For": "203.0.113.1"},
+		"x-forwarded-proto": {"X-Forwarded-Proto": "https"},
+		"x-real-ip":         {"X-Real-IP": "203.0.113.1"},
+		"forwarded":         {"Forwarded": "for=203.0.113.1;proto=https"},
+	}
+	for name, headers := range cases {
+		t.Run(name, func(t *testing.T) {
+			r := newJobsRouter(t, testDB(t))
+			req := httptest.NewRequest(http.MethodGet, "/jobs", nil)
+			req.RemoteAddr = "127.0.0.1:1234"
+			for k, v := range headers {
+				req.Header.Set(k, v)
+			}
+			rr := httptest.NewRecorder()
+			r.ServeHTTP(rr, req)
+			if rr.Code != http.StatusForbidden {
+				t.Fatalf("status = %d, want 403 for proxied loopback request", rr.Code)
+			}
+		})
+	}
+}
+
 func TestRegister_RetryFailedPost(t *testing.T) {
 	db := testDB(t)
 	store := jobs.NewStore(db)
