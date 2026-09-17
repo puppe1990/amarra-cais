@@ -1,6 +1,7 @@
 package view
 
 import (
+	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -46,6 +47,50 @@ func TestLinkTo_methodConfirmFrame(t *testing.T) {
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in %s", want, got)
+		}
+	}
+}
+
+// #116: LinkTo bypasses html/template's URL filter, so `{{ linkTo .UserURL }}`
+// with javascript: emitted an executable href (Drive does not intercept it).
+func TestLinkTo_neutralizesUnsafeSchemes(t *testing.T) {
+	for _, href := range []string{
+		"javascript:alert(1)",
+		"JaVaScRiPt:alert(1)",
+		" javascript:alert(1)",
+		"java\tscript:alert(1)",
+		"vbscript:msgbox(1)",
+		"data:text/html,<script>alert(1)</script>",
+	} {
+		got := string(LinkTo(href, "click"))
+		if strings.Contains(strings.ToLower(got), "javascript:") ||
+			strings.Contains(strings.ToLower(got), "vbscript:") ||
+			strings.Contains(strings.ToLower(got), "data:text/html") {
+			t.Errorf("unsafe href survived (%q): %q", href, got)
+		}
+		if !strings.Contains(got, `href="#"`) {
+			t.Errorf("unsafe href %q should become #, got %q", href, got)
+		}
+		if !strings.Contains(got, "click") {
+			t.Errorf("label dropped for %q: %q", href, got)
+		}
+	}
+}
+
+func TestLinkTo_keepsAllowedSchemesAndRelativePaths(t *testing.T) {
+	for _, href := range []string{
+		"/items/1",
+		"items/1",
+		"#anchor",
+		"?page=2",
+		"https://example.com/x",
+		"http://example.com",
+		"mailto:hi@example.com",
+		"tel:+5511999999999",
+	} {
+		got := string(LinkTo(href, "x"))
+		if !strings.Contains(got, `href="`+template.HTMLEscapeString(href)+`"`) {
+			t.Errorf("safe href %q was rewritten: %q", href, got)
 		}
 	}
 }

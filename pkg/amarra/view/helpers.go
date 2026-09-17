@@ -31,7 +31,7 @@ func LinkTo(href, label string, opts ...any) template.HTML {
 	}
 	var b strings.Builder
 	b.WriteString(`<a href="`)
-	template.HTMLEscape(&b, []byte(href))
+	template.HTMLEscape(&b, []byte(safeHref(href)))
 	b.WriteString(`"`)
 	writeDataAttr(&b, "data-amarra-method", method)
 	writeDataAttr(&b, "data-amarra-confirm", confirm)
@@ -40,6 +40,32 @@ func LinkTo(href, label string, opts ...any) template.HTML {
 	template.HTMLEscape(&b, []byte(label))
 	b.WriteString(`</a>`)
 	return template.HTML(b.String())
+}
+
+// safeHref returns href when it is a relative reference or an allowed scheme,
+// and "#" otherwise. LinkTo emits raw template.HTML, bypassing html/template's
+// URL filtering, so javascript:/data:/vbscript: must be neutralized here (#116).
+// Control characters are stripped for the probe because browsers ignore them
+// inside schemes ("java\tscript:").
+func safeHref(href string) string {
+	probe := strings.Map(func(r rune) rune {
+		if r <= ' ' {
+			return -1
+		}
+		return r
+	}, href)
+	if probe == "" {
+		return href
+	}
+	u, err := url.Parse(probe)
+	if err != nil {
+		return "#"
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "", "http", "https", "mailto", "tel":
+		return href
+	}
+	return "#"
 }
 
 func writeDataAttr(b *strings.Builder, name, value string) {
