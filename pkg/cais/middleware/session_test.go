@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/puppe1990/amarra-cais/pkg/amarra"
 	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 )
 
@@ -83,7 +84,30 @@ func TestRequireAuth_AllowsAuthenticatedUser(t *testing.T) {
 	}
 }
 
-func TestRequireAuth_HTMX_SetsRedirectHeader(t *testing.T) {
+// #94: the generated contract is Drive, not HTMX. Drive follows redirects and
+// morphs the login page, so a plain 303 is the one redirect behavior.
+func TestRequireAuth_DriveHeaderGets303(t *testing.T) {
+	h := RequireAuth("/login")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("handler should not run")
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	req.Header.Set(amarra.HeaderDrive, "true")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want 303", rr.Code)
+	}
+	if got := rr.Header().Get("Location"); got != "/login" {
+		t.Errorf("Location = %q, want /login", got)
+	}
+	if rr.Header().Get("HX-Redirect") != "" {
+		t.Error("HTMX redirect header must not be emitted")
+	}
+}
+
+func TestRequireAuth_HTMXHeaderStillGets303(t *testing.T) {
 	h := RequireAuth("/login")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("handler should not run")
 	}))
@@ -93,10 +117,7 @@ func TestRequireAuth_HTMX_SetsRedirectHeader(t *testing.T) {
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusUnauthorized {
-		t.Errorf("status = %d, want 401", rr.Code)
-	}
-	if got := rr.Header().Get("HX-Redirect"); got != "/login" {
-		t.Errorf("HX-Redirect = %q, want /login", got)
+	if rr.Code != http.StatusSeeOther || rr.Header().Get("HX-Redirect") != "" {
+		t.Fatalf("status = %d, HX-Redirect = %q; want 303 without HTMX header", rr.Code, rr.Header().Get("HX-Redirect"))
 	}
 }
