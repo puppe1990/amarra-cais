@@ -3,6 +3,7 @@ package live
 import (
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -36,13 +37,22 @@ func (c Config) withDefaults() Config {
 	return c
 }
 
-// Hub holds Live views and in-process topic membership.
+// Hub holds Live views and in-process topic membership. Broadcast is
+// in-process only: Live is opt-in and single-replica — two app replicas do not
+// share sockets, so cross-replica fan-out needs an external bus.
 type Hub struct {
-	cfg    Config
-	mu     sync.Mutex
-	views  map[string]func() View
-	conns  map[*conn]struct{}
-	topics map[string]map[*conn]struct{}
+	cfg     Config
+	mu      sync.Mutex
+	views   map[string]func() View
+	conns   map[*conn]struct{}
+	topics  map[string]map[*conn]struct{}
+	dropped atomic.Int64
+}
+
+// Dropped reports events discarded because a connection inbox was full — a
+// slow client cannot block Broadcast, but the loss is now visible (#96).
+func (h *Hub) Dropped() int64 {
+	return h.dropped.Load()
 }
 
 // NewHub returns an empty hub. Register views before serving.

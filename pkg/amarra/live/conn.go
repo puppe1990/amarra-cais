@@ -38,6 +38,12 @@ func (c *conn) push(ev Event) {
 	select {
 	case c.inbox <- ev:
 	default:
+		// Slow client: drop the newest event instead of blocking the hub, but
+		// make the loss observable (#96). Log the first drop and every 100th.
+		n := c.hub.dropped.Add(1)
+		if n == 1 || n%100 == 0 {
+			log.Printf("amarra live: dropped event %q (topic %s, inbox full, total dropped %d)", ev.Name, c.topic, n)
+		}
 	}
 }
 
