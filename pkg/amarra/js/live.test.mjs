@@ -8,6 +8,7 @@ import {
   applyLiveMessage,
   debounceWait,
   setLoading,
+  start,
 } from "./live.mjs";
 
 test("wsURL uses ws and query", () => {
@@ -149,4 +150,59 @@ test("applyLiveMessage morphs target id", () => {
     calls.push([el, html]);
   });
   assert.deepEqual(calls, [[target, "<b>1</b>"]]);
+});
+
+// #113: a live page reached through Drive navigation never joined — start only
+// scanned [amarra-live] at boot. A morph must connect new roots and drop the
+// sockets of replaced ones.
+test("live start joins roots added by a Drive morph", () => {
+  const sockets = [];
+  class FakeWebSocket {
+    constructor(url) {
+      this.url = url;
+      this.closed = false;
+      this.readyState = 0;
+      sockets.push(this);
+    }
+    addEventListener() {}
+    close() {
+      this.closed = true;
+    }
+  }
+  const listeners = {};
+  const roots = [];
+  const doc = {
+    documentElement: { dataset: {} },
+    querySelectorAll: () => roots,
+    addEventListener: (type, fn) => {
+      (listeners[type] ||= []).push(fn);
+    },
+  };
+  const root = (view) => ({
+    isConnected: true,
+    getAttribute: (name) => (name === "amarra-live" ? view : ""),
+  });
+
+  const first = root("chat");
+  roots.push(first);
+  start({
+    document: doc,
+    WebSocket: FakeWebSocket,
+    location: { protocol: "http:", host: "localhost:8080" },
+  });
+  assert.equal(sockets.length, 1);
+  assert.equal(sockets[0].url, "ws://localhost:8080/amarra/live?view=chat&topic=chat");
+
+  first.isConnected = false;
+  const fresh = root("counter");
+  roots.length = 0;
+  roots.push(fresh);
+  for (const fn of listeners["amarra:morphed"] || []) fn();
+
+  assert.equal(sockets.length, 2, "morphed-in root should open a socket");
+  assert.equal(sockets[1].url, "ws://localhost:8080/amarra/live?view=counter&topic=counter");
+  assert.equal(sockets[0].closed, true, "replaced root socket should close");
+
+  for (const fn of listeners["amarra:morphed"] || []) fn();
+  assert.equal(sockets.length, 2, "sync must be idempotent");
 });

@@ -98,18 +98,39 @@ export function connect(url, opts = {}) {
 
 export function start(opts = {}) {
   const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
-  if (!doc) return;
-  const nodes =
-    typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("[data-amarra-stream]") : [];
-  for (const el of nodes) {
-    const url = el.getAttribute?.("data-amarra-stream");
-    if (!url) continue;
-    connect(url, {
-      ...opts,
-      document: doc,
-      defaultTarget: el.getAttribute?.("data-amarra-target") || opts.defaultTarget,
-    });
-  }
+  if (!doc || typeof doc.addEventListener !== "function") return;
+  if (doc.documentElement?.dataset?.amarraStream === "true") return;
+  if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraStream = "true";
+
+  // #113: Drive morphs #amarra-main on navigation, so the boot scan is not
+  // enough. sync() is idempotent per element and closes sources whose node
+  // was replaced by the morph.
+  const sources = new Map();
+  const sync = () => {
+    for (const [el, src] of sources) {
+      if (el.isConnected === false) {
+        src?.close?.();
+        sources.delete(el);
+      }
+    }
+    const nodes =
+      typeof doc.querySelectorAll === "function"
+        ? doc.querySelectorAll("[data-amarra-stream]")
+        : [];
+    for (const el of nodes) {
+      if (sources.has(el)) continue;
+      const url = el.getAttribute?.("data-amarra-stream");
+      if (!url) continue;
+      const src = connect(url, {
+        ...opts,
+        document: doc,
+        defaultTarget: el.getAttribute?.("data-amarra-target") || opts.defaultTarget,
+      });
+      if (src) sources.set(el, src);
+    }
+  };
+  sync();
+  doc.addEventListener("amarra:morphed", sync);
 }
 
 function sseEnvelope(kind, data) {

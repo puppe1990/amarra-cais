@@ -1529,7 +1529,7 @@
   ];
   function parseSSE(chunk) {
     const events = [];
-    const text = String(chunk ?? "").replace(/\r\n/g, "\n");
+    const text = String(chunk ?? "").replace(/\r\n?/g, "\n");
     for (const block of text.split("\n\n")) {
       if (!block.trim()) continue;
       let kind = "message";
@@ -1611,17 +1611,32 @@
   }
   function start2(opts = {}) {
     const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
-    if (!doc) return;
-    const nodes = typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("[data-amarra-stream]") : [];
-    for (const el of nodes) {
-      const url = el.getAttribute?.("data-amarra-stream");
-      if (!url) continue;
-      connect(url, {
-        ...opts,
-        document: doc,
-        defaultTarget: el.getAttribute?.("data-amarra-target") || opts.defaultTarget
-      });
-    }
+    if (!doc || typeof doc.addEventListener !== "function") return;
+    if (doc.documentElement?.dataset?.amarraStream === "true") return;
+    if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraStream = "true";
+    const sources = /* @__PURE__ */ new Map();
+    const sync = () => {
+      for (const [el, src] of sources) {
+        if (el.isConnected === false) {
+          src?.close?.();
+          sources.delete(el);
+        }
+      }
+      const nodes = typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("[data-amarra-stream]") : [];
+      for (const el of nodes) {
+        if (sources.has(el)) continue;
+        const url = el.getAttribute?.("data-amarra-stream");
+        if (!url) continue;
+        const src = connect(url, {
+          ...opts,
+          document: doc,
+          defaultTarget: el.getAttribute?.("data-amarra-target") || opts.defaultTarget
+        });
+        if (src) sources.set(el, src);
+      }
+    };
+    sync();
+    doc.addEventListener("amarra:morphed", sync);
   }
   function sseEnvelope(kind, data) {
     const lines = String(data ?? "").split("\n").map((line) => `data: ${line}`);
@@ -2230,7 +2245,19 @@ ${lines.join("\n")}
         }, wait);
       });
     }
-    doc.querySelectorAll?.("[amarra-live]").forEach((el) => connect2(el));
+    function sync() {
+      for (const [root, ws] of sockets) {
+        if (root.isConnected === false) {
+          ws?.close?.();
+          sockets.delete(root);
+        }
+      }
+      doc.querySelectorAll?.("[amarra-live]").forEach((el) => {
+        if (!sockets.has(el)) connect2(el);
+      });
+    }
+    sync();
+    if (typeof doc.addEventListener === "function") doc.addEventListener("amarra:morphed", sync);
     function sendFrom(el, kind, extra) {
       const root = liveRoot(el);
       if (!root) return false;
