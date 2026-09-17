@@ -112,10 +112,10 @@ func TestScaffoldResource_FloatFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	mig := string(migration)
-	if !strings.Contains(mig, "lat REAL NOT NULL") {
+	if !strings.Contains(mig, "[lat] REAL NOT NULL") {
 		t.Errorf("migration missing lat REAL: %s", mig)
 	}
-	if !strings.Contains(mig, "lng REAL") || strings.Contains(mig, "lng REAL NOT NULL") {
+	if !strings.Contains(mig, "[lng] REAL") || strings.Contains(mig, "[lng] REAL NOT NULL") {
 		t.Errorf("migration lng should be nullable REAL: %s", mig)
 	}
 
@@ -300,5 +300,30 @@ func TestScaffoldResource_BoolFields(t *testing.T) {
 	}
 	if strings.Contains(body, "published") {
 		t.Error("should not hardcode published variable name for non-published bool fields")
+	}
+}
+
+// #128: the generator used to abort late (after patching store.go) for invalid
+// field names, leaving a half-written app.
+func TestScaffoldResource_invalidFieldFailsBeforeWriting(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "invalidfield")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "invalidfield",
+		ModulePath: "github.com/puppe1990/invalidfield",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	storeBefore := mustReadFile(t, filepath.Join(appDir, "internal/store/store.go"))
+
+	err := scaffoldResource(appDir, "widget", resourceOpts{Fields: "order:int", Seed: false})
+	if err == nil {
+		t.Fatal("scaffoldResource accepted a reserved field name")
+	}
+	if got := mustReadFile(t, filepath.Join(appDir, "internal/store/store.go")); got != storeBefore {
+		t.Error("store.go was mutated before field validation")
+	}
+	if _, statErr := os.Stat(filepath.Join(appDir, "internal/models/widget.go")); !os.IsNotExist(statErr) {
+		t.Error("model file written before field validation")
 	}
 }

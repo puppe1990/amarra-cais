@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -23,6 +24,7 @@ func parseFields(spec string) ([]FieldDef, error) {
 	}
 
 	var fields []FieldDef
+	seen := make(map[string]bool)
 	for _, part := range strings.Split(spec, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
@@ -37,12 +39,71 @@ func parseFields(spec string) ([]FieldDef, error) {
 		if err != nil {
 			return nil, err
 		}
+		if err := validateFieldName(f.Name); err != nil {
+			return nil, err
+		}
+		if seen[f.Name] {
+			return nil, fmt.Errorf("duplicate field %q: each field may appear once", f.Name)
+		}
+		seen[f.Name] = true
 		fields = append(fields, f)
 	}
 	if len(fields) == 0 {
 		return defaultFields()
 	}
 	return fields, nil
+}
+
+var fieldNamePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
+
+// reservedFieldNames are the columns the migration already creates plus the
+// SQLite keywords that break unquoted DDL/DML; a field named "order" used to
+// generate a syntax error after store.go was already patched (#128).
+var reservedFieldNames = map[string]bool{
+	"id": true, "created_at": true, "updated_at": true,
+	"abort": true, "action": true, "add": true, "after": true, "all": true,
+	"alter": true, "always": true, "analyze": true, "and": true, "as": true,
+	"asc": true, "attach": true, "autoincrement": true, "before": true,
+	"begin": true, "between": true, "by": true, "cascade": true, "case": true,
+	"cast": true, "check": true, "collate": true, "column": true, "commit": true,
+	"conflict": true, "constraint": true, "create": true, "cross": true,
+	"current": true, "database": true, "default": true, "deferrable": true,
+	"deferred": true, "delete": true, "desc": true, "detach": true,
+	"distinct": true, "do": true, "drop": true, "each": true, "else": true,
+	"end": true, "escape": true, "except": true, "exclusive": true,
+	"exists": true, "explain": true, "fail": true, "filter": true,
+	"first": true, "following": true, "for": true, "foreign": true,
+	"from": true, "full": true, "generated": true, "glob": true, "group": true,
+	"groups": true, "having": true, "if": true, "ignore": true,
+	"immediate": true, "in": true, "index": true, "indexed": true,
+	"initially": true, "inner": true, "insert": true, "instead": true,
+	"intersect": true, "into": true, "is": true, "isnull": true, "join": true,
+	"key": true, "last": true, "left": true, "like": true, "limit": true,
+	"match": true, "materialized": true, "natural": true, "no": true,
+	"not": true, "nothing": true, "notnull": true, "null": true, "nulls": true,
+	"of": true, "offset": true, "on": true, "or": true, "order": true,
+	"others": true, "outer": true, "over": true, "partition": true,
+	"plan": true, "pragma": true, "preceding": true, "primary": true,
+	"query": true, "raise": true, "range": true, "recursive": true,
+	"references": true, "regexp": true, "reindex": true, "release": true,
+	"rename": true, "replace": true, "restrict": true, "returning": true,
+	"right": true, "rollback": true, "row": true, "rows": true,
+	"savepoint": true, "select": true, "set": true, "table": true,
+	"temp": true, "temporary": true, "then": true, "ties": true, "to": true,
+	"transaction": true, "trigger": true, "unbounded": true, "union": true,
+	"unique": true, "update": true, "using": true, "vacuum": true,
+	"values": true, "view": true, "virtual": true, "when": true,
+	"where": true, "window": true, "with": true, "without": true,
+}
+
+func validateFieldName(name string) error {
+	if !fieldNamePattern.MatchString(name) {
+		return fmt.Errorf("invalid field name %q: use lowercase letters, digits and underscores, starting with a letter", name)
+	}
+	if reservedFieldNames[name] {
+		return fmt.Errorf("field name %q is reserved (SQLite keyword or generated column) — pick another name", name)
+	}
+	return nil
 }
 
 func parseFieldPart(part string) (name, typ string, required bool, err error) {
