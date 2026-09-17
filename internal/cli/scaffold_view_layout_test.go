@@ -63,3 +63,11 @@ func TestScaffoldHandlers_passLayoutExplicitly(t *testing.T) {
 		}
 	}
 }
+
+// #131: /health is public; the scaffold must let netutil omit lan_urls in
+// production instead of always shipping the host's RFC1918 addresses.
+func TestScaffoldApp_healthPassesEnv(t *testing.T) {
+	if !strings.Contains(tplApp, "netutil.HealthPayload(status, cfg.Port, cfg.Env)") {
+		t.Error("app.go healthHandler must pass cfg.Env to netutil.HealthPayload")
+	}
+}

@@ -6,7 +6,7 @@ import (
 )
 
 func TestHealthPayload_includesStatusAndLANURLs(t *testing.T) {
-	payload := HealthPayload("ok", ":8080")
+	payload := HealthPayload("ok", ":8080", "development")
 	if payload["status"] != "ok" {
 		t.Errorf("status = %v", payload["status"])
 	}
@@ -21,5 +21,17 @@ func TestHealthPayload_includesStatusAndLANURLs(t *testing.T) {
 		if strings.Contains(u, "http://http://") {
 			t.Errorf("malformed double scheme in %q", u)
 		}
+	}
+}
+
+// #131: /health is public; lan_urls expose the host's RFC1918 topology and
+// must not ship in production.
+func TestHealthPayload_omitsLANURLsInProduction(t *testing.T) {
+	payload := HealthPayload("ok", ":8080", "production")
+	if _, ok := payload["lan_urls"]; ok {
+		t.Fatalf("production payload leaked lan_urls: %v", payload["lan_urls"])
+	}
+	if payload["status"] != "ok" {
+		t.Fatalf("status = %v", payload["status"])
 	}
 }
