@@ -2,7 +2,9 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -23,6 +25,10 @@ func scaffoldResource(dir, name string, opts resourceOpts) error {
 	data.Seed = opts.Seed
 	data.Paginate = opts.Paginate
 	data.AdminAuth = opts.AdminAuth
+
+	if err := validateReferenceParents(dir, data.Fields); err != nil {
+		return err
+	}
 
 	migrationPath, migrationNum, err := nextMigrationFile(dir, data.Plural, opts.dryRun)
 	if err != nil {
@@ -89,6 +95,31 @@ func scaffoldResource(dir, name string, opts resourceOpts) error {
 	}
 	if err := recordGeneratedFiles(dir, rels); err != nil {
 		return fmt.Errorf("record generated manifest: %w", err)
+	}
+	return nil
+}
+
+// validateReferenceParents fails before any file is written when a references
+// field points at a parent resource that was never generated: seeds and tests
+// would call Insert<Parent> and reference a table that does not exist (#107).
+func validateReferenceParents(dir string, fields []FieldDef) error {
+	for _, f := range fields {
+		if f.RefTable == "" {
+			continue
+		}
+		parent := toSnake(f.RefPascal)
+		modelPath := filepath.Join(dir, "internal/models", parent+".go")
+		switch _, err := os.Stat(modelPath); {
+		case err == nil:
+			continue
+		case errors.Is(err, fs.ErrNotExist):
+			return fmt.Errorf(
+				"field %q references table %q: internal/models/%s.go not found — run `amarra-cais g resource %s` first",
+				f.Name, f.RefTable, parent, parent,
+			)
+		default:
+			return fmt.Errorf("stat parent model %s: %w", modelPath, err)
+		}
 	}
 	return nil
 }
