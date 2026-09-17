@@ -183,3 +183,41 @@ func TestRequeueOrphaned_requeuesJobWithRemainingAttempts(t *testing.T) {
 		t.Fatalf("job with attempts left should be claimable again: %v %v", again, err)
 	}
 }
+
+// #138: the retry UPDATE left worker_id/started_at set, so the dashboard showed
+// a ready job as if it belonged to a worker.
+func TestMarkFailed_retryClearsWorkerBinding(t *testing.T) {
+	store := NewStore(testDB(t))
+	ctx := context.Background()
+	if _, err := Enqueue(ctx, store, Options{Kind: "Flaky", MaxAttempts: 3}); err != nil {
+		t.Fatal(err)
+	}
+	job, err := store.ClaimFor(ctx, DefaultQueue, "worker-1")
+	if err != nil || job == nil {
+		t.Fatal(err)
+	}
+	bound, err := store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bound.WorkerID != "worker-1" || bound.StartedAt == "" {
+		t.Fatalf("claim should bind the worker: %+v", bound)
+	}
+
+	if err := store.MarkFailed(ctx, job.ID, errTestFail, job.Attempts, job.MaxAttempts); err != nil {
+		t.Fatal(err)
+	}
+	rec, err := store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Status != StatusReady {
+		t.Fatalf("status = %q, want ready", rec.Status)
+	}
+	if rec.WorkerID != "" {
+		t.Errorf("worker_id = %q, want cleared on retry", rec.WorkerID)
+	}
+	if rec.StartedAt != "" {
+		t.Errorf("started_at = %q, want cleared on retry", rec.StartedAt)
+	}
+}

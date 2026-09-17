@@ -156,8 +156,10 @@ func (s *Store) MarkFailed(ctx context.Context, id int64, jobErr error, attempts
 	}
 	if attempts < maxAttempts {
 		backoff := retryDelay(attempts)
+		// Clear the worker binding: the job is ready again, not owned by the
+		// worker that failed it (#138).
 		_, err := s.db.ExecContext(ctx, `
-UPDATE jobs SET status = ?, last_error = ?, run_at = datetime('now', ?) WHERE id = ?`,
+UPDATE jobs SET status = ?, last_error = ?, run_at = datetime('now', ?), worker_id = NULL, started_at = NULL WHERE id = ?`,
 			StatusReady, msg, fmt.Sprintf("+%d seconds", int(backoff.Seconds())), id,
 		)
 		return err
