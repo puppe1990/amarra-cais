@@ -1668,6 +1668,22 @@ ${lines.join("\n")}
     if (typeof meta.setAttribute === "function") meta.setAttribute("content", token);
     else meta.content = token;
   }
+  function progressIconSrc(doc) {
+    try {
+      const link = doc?.querySelector?.('link[rel="icon"]');
+      const href = link?.getAttribute?.("href") ?? link?.href;
+      if (href) return href;
+    } catch {
+    }
+    return "/static/icons/icon.png";
+  }
+  function ensureVeilKeyframes(doc) {
+    if (!doc?.createElement || doc.getElementById?.("amarra-veil-style")) return;
+    const style = doc.createElement("style");
+    style.id = "amarra-veil-style";
+    style.textContent = "@keyframes amarra-icon-pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.12);opacity:1}}@media (prefers-reduced-motion:reduce){#amarra-veil img{animation:none!important}}";
+    (doc.head ?? doc.body)?.appendChild?.(style);
+  }
   function showProgress(doc) {
     if (!doc?.createElement || !doc.body) return;
     let bar = doc.getElementById?.("amarra-progress");
@@ -1679,10 +1695,32 @@ ${lines.join("\n")}
       doc.body.appendChild(bar);
     }
     bar.hidden = false;
+    let veil = doc.getElementById?.("amarra-veil");
+    if (!veil) {
+      veil = doc.createElement("div");
+      veil.id = "amarra-veil";
+      veil.setAttribute("role", "status");
+      veil.setAttribute("aria-label", "Loading");
+      veil.style.cssText = "position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(10,10,12,.45);backdrop-filter:blur(2px);opacity:0;transition:opacity .18s ease;pointer-events:none";
+      const img = doc.createElement("img");
+      img.setAttribute("alt", "");
+      img.style.cssText = "width:56px;height:56px;border-radius:14px;animation:amarra-icon-pulse 1.1s ease-in-out infinite";
+      veil.appendChild?.(img);
+      ensureVeilKeyframes(doc);
+      doc.body.appendChild(veil);
+    }
+    veil.querySelector?.("img")?.setAttribute?.("src", progressIconSrc(doc));
+    veil.hidden = false;
+    if (veil.style) veil.style.opacity = "1";
   }
   function hideProgress(doc) {
     const bar = doc?.getElementById?.("amarra-progress");
     if (bar) bar.hidden = true;
+    const veil = doc?.getElementById?.("amarra-veil");
+    if (veil) {
+      if (veil.style) veil.style.opacity = "0";
+      veil.hidden = true;
+    }
   }
 
   // pkg/amarra/js/drive_form.mjs
