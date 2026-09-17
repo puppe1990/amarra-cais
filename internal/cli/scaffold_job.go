@@ -262,11 +262,20 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Dedicated SQLite pool for liveness: a long handler holds the job pool's
+	// single connection and would otherwise starve the heartbeat (#121).
+	heartbeat, err := store.NewSQLiteStore(cfg.DBPath, cfg.Env)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = heartbeat.Close() }()
+
 	worker := caisjobs.NewWorker(caisjobs.WorkerConfig{
-		Store:       caisjobs.NewStore(s.DB()),
-		Registry:    reg,
-		Queues:      splitQueues(*queues),
-		Concurrency: *concurrency,
+		Store:          caisjobs.NewStore(s.DB()),
+		HeartbeatStore: caisjobs.NewStore(heartbeat.DB()),
+		Registry:       reg,
+		Queues:         splitQueues(*queues),
+		Concurrency:    *concurrency,
 	})
 	log.Printf("=> Worker started (queues=%s, concurrency=%d)", *queues, *concurrency)
 	if err := worker.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {

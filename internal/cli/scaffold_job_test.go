@@ -104,3 +104,25 @@ func TestScaffoldJob_workerTreatsCanceledAsCleanShutdown(t *testing.T) {
 		t.Error("worker template should import errors")
 	}
 }
+
+// #121: the generated worker opens a second SQLite pool for heartbeats so a
+// long handler cannot starve liveness writes on the single job connection.
+func TestScaffoldJob_workerHeartbeatUsesDedicatedPool(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "jobhb")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName: "jobhb", ModulePath: "github.com/puppe1990/jobhb",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldJob(appDir, "send_welcome", jobOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	body := mustReadFile(t, filepath.Join(appDir, "cmd/worker/main.go"))
+	if !strings.Contains(body, "HeartbeatStore:") {
+		t.Error("worker should configure a dedicated HeartbeatStore")
+	}
+	if strings.Count(body, "store.NewSQLiteStore(cfg.DBPath") < 2 {
+		t.Error("worker should open a second SQLite pool for heartbeats")
+	}
+}

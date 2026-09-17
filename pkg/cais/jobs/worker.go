@@ -23,7 +23,12 @@ type WorkerConfig struct {
 	// DrainTimeout bounds how long Run waits for in-flight handlers before
 	// removing the heartbeat on shutdown (#110). Defaults to 30s.
 	DrainTimeout time.Duration
-	Logger       *log.Logger
+	// HeartbeatStore is an optional dedicated pool for liveness writes. The
+	// job pool may be pinned to one connection (sqlite.Configure), so a long
+	// handler starves the heartbeat and live jobs get requeued as orphans
+	// (#121). Defaults to Store.
+	HeartbeatStore *Store
+	Logger         *log.Logger
 }
 
 // Worker processes jobs from SQLite.
@@ -69,7 +74,7 @@ func (w *Worker) Run(ctx context.Context) error {
 	// still running lets RequeueOrphaned duplicate the job (#110).
 	defer func() {
 		w.drain()
-		_ = w.cfg.Store.RemoveWorker(context.Background(), w.id)
+		_ = w.heartbeatStore().RemoveWorker(context.Background(), w.id)
 	}()
 
 	// Recover jobs whose worker heartbeat is gone (#172) without stealing live work.
@@ -84,7 +89,7 @@ func (w *Worker) Run(ctx context.Context) error {
 	}
 
 	// Heartbeat last so a live worker implies prune recurring is already registered.
-	if err := w.cfg.Store.TouchWorker(ctx, pulse); err != nil {
+	if err := w.heartbeatStore().TouchWorker(ctx, pulse); err != nil {
 		w.cfg.Logger.Printf("jobs heartbeat: %v", err)
 	}
 
@@ -96,7 +101,7 @@ func (w *Worker) Run(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				if err := w.cfg.Store.TouchWorker(ctx, pulse); err != nil {
+				if err := w.heartbeatStore().TouchWorker(ctx, pulse); err != nil {
 					w.cfg.Logger.Printf("jobs heartbeat: %v", err)
 				}
 			}
@@ -266,6 +271,14 @@ func (w *Worker) perform(ctx context.Context, job *Job) (err error) {
 		}
 	}()
 	return w.cfg.Registry.Perform(ctx, job.Kind, job.Payload)
+}
+
+// heartbeatStore is the pool used for liveness writes (#121).
+func (w *Worker) heartbeatStore() *Store {
+	if w.cfg.HeartbeatStore != nil {
+		return w.cfg.HeartbeatStore
+	}
+	return w.cfg.Store
 }
 
 func (w *Worker) pulse() WorkerPulse {
