@@ -53,14 +53,28 @@ VALUES (?, ?, ?, ?, ?, ?)`,
 }
 
 // DispatchDue moves scheduled jobs whose run_at has passed into the ready queue.
+// The transaction starts with BEGIN IMMEDIATE: a deferred transaction that
+// reads first and then writes must upgrade its snapshot lock, which fails with
+// SQLITE_BUSY under a concurrent writer even with busy_timeout set — the
+// upgrade cannot wait (#120).
 func (s *Store) DispatchDue(ctx context.Context, now time.Time) (int, error) {
-	tx, err := s.db.BeginTx(ctx, nil)
+	conn, err := s.db.Conn(ctx)
 	if err != nil {
 		return 0, err
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer func() { _ = conn.Close() }()
 
-	rows, err := tx.QueryContext(ctx, `
+	if _, err := conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
+		return 0, fmt.Errorf("dispatch begin: %w", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_, _ = conn.ExecContext(context.Background(), "ROLLBACK")
+		}
+	}()
+
+	rows, err := conn.QueryContext(ctx, `
 SELECT queue, kind, payload, priority, max_attempts, run_at
 FROM scheduled_jobs
 WHERE run_at <= ?
@@ -68,7 +82,6 @@ ORDER BY run_at ASC, id ASC`, formatTime(now))
 	if err != nil {
 		return 0, fmt.Errorf("select scheduled: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
 	type row struct {
 		queue, kind, payload string
@@ -79,16 +92,22 @@ ORDER BY run_at ASC, id ASC`, formatTime(now))
 	for rows.Next() {
 		var r row
 		if err := rows.Scan(&r.queue, &r.kind, &r.payload, &r.priority, &r.max, &r.runAt); err != nil {
+			_ = rows.Close()
 			return 0, err
 		}
 		pending = append(pending, r)
 	}
 	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return 0, err
+	}
+	// Close before writing: the INSERTs run on the same single connection.
+	if err := rows.Close(); err != nil {
 		return 0, err
 	}
 
 	for _, r := range pending {
-		if _, err := tx.ExecContext(ctx, `
+		if _, err := conn.ExecContext(ctx, `
 INSERT INTO jobs (queue, kind, payload, priority, max_attempts, run_at, status)
 VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
 			r.queue, r.kind, r.payload, r.priority, r.max, StatusReady,
@@ -97,14 +116,15 @@ VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
 		}
 	}
 
-	res, err := tx.ExecContext(ctx, `DELETE FROM scheduled_jobs WHERE run_at <= ?`, formatTime(now))
+	res, err := conn.ExecContext(ctx, `DELETE FROM scheduled_jobs WHERE run_at <= ?`, formatTime(now))
 	if err != nil {
 		return 0, fmt.Errorf("delete scheduled: %w", err)
 	}
 	n, _ := res.RowsAffected()
-	if err := tx.Commit(); err != nil {
+	if _, err := conn.ExecContext(ctx, "COMMIT"); err != nil {
 		return 0, err
 	}
+	committed = true
 	return int(n), nil
 }
 
