@@ -2,6 +2,7 @@ package stream
 
 import (
 	"bytes"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -196,5 +197,25 @@ func TestWriteEvent_emitsMessageAndThinking(t *testing.T) {
 		if !strings.Contains(body, "event: "+tc.event+"\n") {
 			t.Errorf("event %s: missing event line, got %q", tc.event, body)
 		}
+	}
+}
+
+// #137: RelaySSE discarded the SetWriteDeadline error. With the scaffold's
+// WriteTimeout: 30s, a middleware wrapper without Unwrap made the clear fail
+// and the stream died at 30s with no diagnostic.
+func TestRelaySSE_logsUnsupportedWriteDeadline(t *testing.T) {
+	var buf bytes.Buffer
+	old := log.Writer()
+	log.SetOutput(&buf)
+	t.Cleanup(func() { log.SetOutput(old) })
+
+	rr := httptest.NewRecorder()
+	RelaySSE(rr)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rr.Code)
+	}
+	if !strings.Contains(buf.String(), "SetWriteDeadline") {
+		t.Errorf("expected a diagnostic log mentioning SetWriteDeadline, got %q", buf.String())
 	}
 }
