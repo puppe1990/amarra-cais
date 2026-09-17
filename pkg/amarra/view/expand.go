@@ -81,16 +81,26 @@ func hasAttrName(attrs []componentAttr, name string) bool {
 // text with actions becomes one printf, so it interpolates like plain markup (#72).
 func attrAssign(siblings []componentAttr, attr componentAttr) (string, error) {
 	if expr, ok := dynamicAttrExpr(attr.Value); ok {
-		return fmt.Sprintf("{{ $%s := %s }}", attr.Name, expr), nil
+		return fmt.Sprintf("{{ $%s := %s }}", attrVar(attr.Name), expr), nil
 	}
 	if strings.Contains(attr.Value, "{{") {
 		expr, err := interpolatedAttrExpr(siblings, attr)
 		if err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("{{ $%s := %s }}", attr.Name, expr), nil
+		return fmt.Sprintf("{{ $%s := %s }}", attrVar(attr.Name), expr), nil
 	}
-	return fmt.Sprintf("{{ $%s := %q }}", attr.Name, attr.Value), nil
+	return fmt.Sprintf("{{ $%s := %q }}", attrVar(attr.Name), attr.Value), nil
+}
+
+// attrVar returns the Go template variable name for an attribute. Hyphenated
+// names (data-*, aria-*) are valid markup but not Go identifiers, so they
+// become attr_*; every reference to the variable must go through this (#115).
+func attrVar(name string) string {
+	if !strings.Contains(name, "-") {
+		return name
+	}
+	return "attr_" + strings.ReplaceAll(name, "-", "_")
 }
 
 // interpolatedAttrExpr builds `printf "%v%s…" …` for a value that mixes literal

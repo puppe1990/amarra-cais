@@ -73,7 +73,7 @@ func matchAttrIdent(action string, identStart int, attrs []componentAttr) (strin
 		if identContinueAt(action, after) {
 			continue
 		}
-		bestDollar = attr.Name
+		bestDollar = attrVar(attr.Name)
 		bestLen = len(pascal)
 	}
 	if bestLen == 0 {
