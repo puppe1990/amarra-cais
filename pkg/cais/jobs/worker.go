@@ -88,8 +88,6 @@ func (w *Worker) Run(ctx context.Context) error {
 		w.cfg.Logger.Printf("jobs heartbeat: %v", err)
 	}
 
-	errCh := make(chan error, w.cfg.Concurrency+2)
-
 	go func() {
 		ticker := time.NewTicker(w.cfg.PollInterval)
 		defer ticker.Stop()
@@ -143,13 +141,25 @@ func (w *Worker) Run(ctx context.Context) error {
 			defer w.wg.Done()
 			ticker := time.NewTicker(w.cfg.PollInterval)
 			defer ticker.Stop()
+			backoff := time.Duration(0)
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					if err := w.pollOnce(ctx); err != nil {
-						errCh <- err
+					err := w.pollOnce(ctx)
+					if err == nil {
+						backoff = 0
+						continue
+					}
+					if ctx.Err() != nil {
+						return
+					}
+					// Transient store errors (SQLITE_BUSY under contention)
+					// must not kill job processing (#118).
+					backoff = nextPollBackoff(backoff)
+					w.cfg.Logger.Printf("jobs poll: %v (retrying in %s)", err, backoff)
+					if !sleepContext(ctx, backoff) {
 						return
 					}
 				}
@@ -157,11 +167,35 @@ func (w *Worker) Run(ctx context.Context) error {
 		}()
 	}
 
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+const (
+	pollBackoffMin = time.Second
+	pollBackoffMax = 30 * time.Second
+)
+
+// nextPollBackoff doubles the retry delay up to pollBackoffMax (#118).
+func nextPollBackoff(current time.Duration) time.Duration {
+	if current <= 0 {
+		return pollBackoffMin
+	}
+	if next := current * 2; next <= pollBackoffMax {
+		return next
+	}
+	return pollBackoffMax
+}
+
+// sleepContext waits for d or ctx cancellation; false means cancelled.
+func sleepContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-errCh:
-		return err
+		return false
+	case <-timer.C:
+		return true
 	}
 }
 

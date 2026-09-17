@@ -3,8 +3,10 @@ package jobs
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -272,4 +274,68 @@ func TestWorker_shutdownDrainsInFlightJob(t *testing.T) {
 	if n != 0 {
 		t.Fatalf("RequeueOrphaned requeued %d job(s) after a clean shutdown", n)
 	}
+}
+
+// #118: any pollOnce error (e.g. SQLITE_BUSY under lock contention) was pushed
+// to errCh and killed Run — the generated cmd/worker then log.Fatal'd, taking
+// job processing down until a manual restart.
+func TestWorker_pollErrorDoesNotKillWorker(t *testing.T) {
+	db := testDB(t)
+	store := NewStore(db)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logBuf := &syncBuffer{}
+	w := NewWorker(WorkerConfig{
+		Store:             store,
+		Registry:          NewRegistry(),
+		Concurrency:       1,
+		PollInterval:      5 * time.Millisecond,
+		DispatchInterval:  time.Hour,
+		SchedulerInterval: time.Hour,
+		Logger:            log.New(logBuf, "", 0),
+	})
+	done := make(chan error, 1)
+	go func() { done <- w.Run(ctx) }()
+
+	select {
+	case err := <-done:
+		t.Fatalf("Run returned on a transient store error (err=%v)", err)
+	case <-time.After(150 * time.Millisecond):
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("Run returned %v, want context.Canceled", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("Run did not stop after cancel")
+	}
+	if !strings.Contains(logBuf.String(), "jobs poll") {
+		t.Errorf("poll errors should be logged, got: %s", logBuf.String())
+	}
+}
+
+// syncBuffer is a race-safe log sink: worker goroutines keep logging after
+// Run returns.
+type syncBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
 }

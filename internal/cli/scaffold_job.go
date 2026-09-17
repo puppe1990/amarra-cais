@@ -225,6 +225,7 @@ const tplWorker = `package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"os"
@@ -268,7 +269,7 @@ func main() {
 		Concurrency: *concurrency,
 	})
 	log.Printf("=> Worker started (queues=%s, concurrency=%d)", *queues, *concurrency)
-	if err := worker.Run(ctx); err != nil && err != context.Canceled {
+	if err := worker.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		log.Fatal(err)
 	}
 }
