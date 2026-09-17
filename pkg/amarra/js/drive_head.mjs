@@ -26,24 +26,13 @@ export function applyHead(doc, html) {
   else meta.content = token;
 }
 
-export function progressIconSrc(doc) {
-  try {
-    const link = doc?.querySelector?.('link[rel="icon"]');
-    const href = link?.getAttribute?.("href") ?? link?.href;
-    if (href) return href;
-  } catch {
-    /* noop: fall through to default */
-  }
-  return "/static/icons/icon.png";
-}
-
 function ensureVeilKeyframes(doc) {
   if (!doc?.createElement || doc.getElementById?.("amarra-veil-style")) return;
   const style = doc.createElement("style");
   style.id = "amarra-veil-style";
   style.textContent =
-    "@keyframes amarra-icon-pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.12);opacity:1}}" +
-    "@media (prefers-reduced-motion:reduce){#amarra-veil img{animation:none!important}}";
+    "@keyframes amarra-spin{to{transform:rotate(360deg)}}" +
+    "@media (prefers-reduced-motion:reduce){#amarra-veil div{animation:none!important}}";
   (doc.head ?? doc.body)?.appendChild?.(style);
 }
 
@@ -68,15 +57,15 @@ export function showProgress(doc) {
     veil.style.cssText =
       "position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;" +
       "background:rgba(10,10,12,.45);backdrop-filter:blur(2px);opacity:0;transition:opacity .18s ease;pointer-events:none";
-    const img = doc.createElement("img");
-    img.setAttribute("alt", "");
-    img.style.cssText =
-      "width:56px;height:56px;border-radius:14px;animation:amarra-icon-pulse 1.1s ease-in-out infinite";
-    veil.appendChild?.(img);
+    const spinner = doc.createElement("div");
+    spinner.setAttribute("role", "presentation");
+    spinner.style.cssText =
+      "width:52px;height:52px;border-radius:50%;border:4px solid rgba(201,137,58,.25);" +
+      "border-top-color:#c9893a;animation:amarra-spin .9s linear infinite";
+    veil.appendChild?.(spinner);
     ensureVeilKeyframes(doc);
     doc.body.appendChild(veil);
   }
-  veil.querySelector?.("img")?.setAttribute?.("src", progressIconSrc(doc));
   veil.hidden = false;
   if (veil.style) veil.style.opacity = "1";
 }

@@ -43,39 +43,14 @@ test("applyHead updates html lang from response HTML", () => {
   assert.equal(doc.documentElement.lang, "pt-BR");
 });
 
-function veilDoc(iconHref = "/static/icons/app.png") {
+function veilDoc() {
   const created = [];
-  const img = {
-    tagName: "img",
-    setAttribute(name, value) {
-      this[name] = value;
-    },
-    style: {},
-  };
-  const veil = {
-    tagName: "div",
-    id: "",
-    hidden: false,
-    style: {},
-    setAttribute(name, value) {
-      this[name] = value;
-    },
-    appendChild(el) {
-      created.push(el);
-    },
-    querySelector(sel) {
-      return sel === "img" ? img : null;
-    },
-  };
   const byId = {};
   const doc = {
     getElementById(id) {
       return byId[id] || null;
     },
-    querySelector(sel) {
-      if (sel === 'link[rel="icon"]') {
-        return { getAttribute: () => iconHref };
-      }
+    querySelector() {
       return null;
     },
     createElement(tag) {
@@ -91,8 +66,8 @@ function veilDoc(iconHref = "/static/icons/app.png") {
         appendChild(child) {
           created.push(child);
         },
-        querySelector(s) {
-          return s === "img" ? img : null;
+        querySelector() {
+          return null;
         },
       };
       return el;
@@ -109,30 +84,24 @@ function veilDoc(iconHref = "/static/icons/app.png") {
       },
     },
     _created: created,
-    _veil: veil,
   };
   return doc;
 }
 
-test("showProgress shows a veil with the current favicon", () => {
-  const doc = veilDoc("/static/icons/app.png");
+test("showProgress shows a veil with a system-color spinner", () => {
+  const doc = veilDoc();
   showProgress(doc);
   const veil = doc.getElementById("amarra-veil");
   assert.ok(veil, "veil created");
   assert.equal(veil.hidden, false);
-  const img = veil.querySelector("img");
-  assert.equal(img.src, "/static/icons/app.png");
+  assert.equal(veil.querySelector("img"), null, "veil should not use the favicon");
+  const spinner = doc._created.find(
+    (el) => el.style?.cssText && el.style.cssText.includes("amarra-spin")
+  );
+  assert.ok(spinner, "spinner created");
+  assert.match(spinner.style.cssText, /#c9893a/);
   hideProgress(doc);
   assert.equal(veil.hidden, true);
-});
-
-test("showProgress falls back to the default icon without link[rel=icon]", () => {
-  const doc = veilDoc(null);
-  doc.querySelector = () => null;
-  showProgress(doc);
-  const veil = doc.getElementById("amarra-veil");
-  const img = veil.querySelector("img");
-  assert.equal(img.src, "/static/icons/icon.png");
 });
 
 test("showProgress creates a bar and hideProgress hides it", () => {
