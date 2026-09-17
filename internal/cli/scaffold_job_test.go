@@ -79,3 +79,28 @@ func TestScaffoldJob_withCronPatchesSeeds(t *testing.T) {
 		t.Fatalf("seeds missing recurring job:\n%s", body)
 	}
 }
+
+// #118: the generated worker must treat context.Canceled as a clean shutdown
+// (errors.Is), not log.Fatal on the wrapped error.
+func TestScaffoldJob_workerTreatsCanceledAsCleanShutdown(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "jobcancel")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName: "jobcancel", ModulePath: "github.com/puppe1990/jobcancel",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldJob(appDir, "send_welcome", jobOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	body := string(mustReadFile(t, filepath.Join(appDir, "cmd/worker/main.go")))
+	if strings.Contains(body, "err != context.Canceled") {
+		t.Error("worker should not compare errors directly; use errors.Is")
+	}
+	if !strings.Contains(body, "errors.Is(err, context.Canceled)") {
+		t.Error("worker should check errors.Is(err, context.Canceled)")
+	}
+	if !strings.Contains(body, `"errors"`) {
+		t.Error("worker template should import errors")
+	}
+}
