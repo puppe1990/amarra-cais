@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"sync"
@@ -24,7 +25,14 @@ type conn struct {
 	writeM sync.Mutex
 	mu     sync.Mutex
 	active time.Time
+	// stateM serializes Mount/Render/Handle and guards joined (#112): a
+	// Broadcast can deliver an event before the join handshake, and Handle must
+	// never run with zero state.
+	stateM sync.Mutex
+	joined bool
 }
+
+var errNotJoined = errors.New("live: event before join")
 
 func (c *conn) push(ev Event) {
 	select {
@@ -130,13 +138,14 @@ func (c *conn) readLoop(ctx context.Context, r *http.Request, cancel context.Can
 				_ = c.ws.Close(websocket.StatusPolicyViolation, "csrf")
 				return
 			}
-			if err := c.view.Mount(ctx, c.sock); err != nil {
-				c.write(ctx, outMsg{Type: typeError, Message: err.Error()})
+			rendered, mountErr := c.join(ctx)
+			if mountErr != nil {
+				c.write(ctx, outMsg{Type: typeError, Message: mountErr.Error()})
 				_ = c.ws.Close(websocket.StatusInternalError, "mount")
 				return
 			}
 			joined = true
-			c.writeRendered(ctx, typeOK, c.view.Render(), "")
+			c.writeRendered(ctx, typeOK, rendered, "")
 		case typeEvent:
 			if !joined {
 				c.write(ctx, outMsg{Type: typeError, Message: "join first"})
@@ -182,14 +191,44 @@ func (c *conn) dispatch(ctx context.Context, ev Event) {
 			_ = c.ws.Close(websocket.StatusInternalError, "panic")
 		}
 	}()
-	if err := c.view.Handle(ctx, ev); err != nil {
+	rendered, err := c.handleEvent(ctx, ev)
+	if errors.Is(err, errNotJoined) {
+		return
+	}
+	if err != nil {
 		c.write(ctx, outMsg{Type: typeError, Message: err.Error(), Ref: ev.Ref})
 		return
 	}
-	c.writeRendered(ctx, typeMorph, c.view.Render(), ev.Ref)
+	c.writeRendered(ctx, typeMorph, rendered, ev.Ref)
 	if ev.Ref != "" {
 		c.write(ctx, outMsg{Type: typeAck, Ref: ev.Ref})
 	}
+}
+
+// join runs Mount once and flips joined under stateM, so concurrently queued
+// events cannot reach Handle first (#112).
+func (c *conn) join(ctx context.Context) (Rendered, error) {
+	c.stateM.Lock()
+	defer c.stateM.Unlock()
+	if err := c.view.Mount(ctx, c.sock); err != nil {
+		return Rendered{}, err
+	}
+	c.joined = true
+	return c.view.Render(), nil
+}
+
+// handleEvent serializes Handle/Render with join. Panics from Handle unwind
+// through the deferred unlock, so the recover in dispatch keeps the lock free.
+func (c *conn) handleEvent(ctx context.Context, ev Event) (Rendered, error) {
+	c.stateM.Lock()
+	defer c.stateM.Unlock()
+	if !c.joined {
+		return Rendered{}, errNotJoined
+	}
+	if err := c.view.Handle(ctx, ev); err != nil {
+		return Rendered{}, err
+	}
+	return c.view.Render(), nil
 }
 
 func (c *conn) writeRendered(ctx context.Context, kind string, out Rendered, ref string) {
