@@ -140,7 +140,7 @@ func (c *conn) readLoop(ctx context.Context, r *http.Request, cancel context.Can
 			}
 			rendered, mountErr := c.join(ctx)
 			if mountErr != nil {
-				c.write(ctx, outMsg{Type: typeError, Message: mountErr.Error()})
+				c.write(ctx, outMsg{Type: typeError, Message: c.clientMessage(mountErr)})
 				_ = c.ws.Close(websocket.StatusInternalError, "mount")
 				return
 			}
@@ -196,7 +196,7 @@ func (c *conn) dispatch(ctx context.Context, ev Event) {
 		return
 	}
 	if err != nil {
-		c.write(ctx, outMsg{Type: typeError, Message: err.Error(), Ref: ev.Ref})
+		c.write(ctx, outMsg{Type: typeError, Message: c.clientMessage(err), Ref: ev.Ref})
 		return
 	}
 	c.writeRendered(ctx, typeMorph, rendered, ev.Ref)
@@ -215,6 +215,16 @@ func (c *conn) join(ctx context.Context) (Rendered, error) {
 	}
 	c.joined = true
 	return c.view.Render(), nil
+}
+
+// clientMessage hides internal error detail outside development (#98); the
+// full error always goes to the server log.
+func (c *conn) clientMessage(err error) string {
+	if c.hub.cfg.Env == "development" {
+		return err.Error()
+	}
+	log.Printf("amarra live: %v", err)
+	return "internal error"
 }
 
 // handleEvent serializes Handle/Render with join. Panics from Handle unwind

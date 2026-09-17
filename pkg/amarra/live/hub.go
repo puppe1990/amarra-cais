@@ -18,6 +18,9 @@ type Config struct {
 	Idle           time.Duration
 	PingInterval   time.Duration
 	OriginPatterns []string
+	// Env gates error sanitization: only "development" sends view errors
+	// verbatim to the socket (#98).
+	Env string
 }
 
 func (c Config) withDefaults() Config {

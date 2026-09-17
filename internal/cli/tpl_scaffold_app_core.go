@@ -75,7 +75,7 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 	r.StaticForEnv("/static", deps.StaticDir, cfg)
 
 	registerRoutes(r, deps, cfg)
-	hub := live.NewHub(live.Config{})
+	hub := live.NewHub(live.Config{Env: cfg.Env})
 	registerLiveViews(hub, deps)
 	r.Handle("GET /amarra/live", hub.Handler())
 	devlog.Register(r, cfg.Env, buf)
