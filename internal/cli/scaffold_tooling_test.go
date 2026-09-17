@@ -83,3 +83,33 @@ func TestScaffoldTooling_PreCommitUsesGoimportsNotOnlyGofmt(t *testing.T) {
 		t.Error("pre-commit must run goimports to match CI golangci formatters")
 	}
 }
+
+// #117: the scaffold tells users to put ADMIN_TOKEN/SMTP_PASSWORD in .env,
+// but the generated .gitignore did not ignore it — the first `git add .`
+// committed production secrets.
+func TestScaffoldNewApp_gitignoreSkipsEnvSecrets(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "envapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "envapp",
+		ModulePath: "github.com/puppe1990/envapp",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(appDir, ".gitignore"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := map[string]bool{}
+	for _, line := range strings.Split(string(body), "\n") {
+		lines[strings.TrimSpace(line)] = true
+	}
+	for _, want := range []string{".env", ".env.*", "!.env.example"} {
+		if !lines[want] {
+			t.Errorf(".gitignore missing %q:\n%s", want, body)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(appDir, ".env.example")); err != nil {
+		t.Errorf(".env.example should still be scaffolded: %v", err)
+	}
+}

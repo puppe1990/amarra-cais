@@ -652,5 +652,8 @@ node_modules/
 tmp/
 .air/
 *.db
+.env
+.env.*
+!.env.example
 .DS_Store
 `
