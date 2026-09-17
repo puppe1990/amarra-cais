@@ -150,3 +150,19 @@ func TestSet_sweepsExpiredEntriesUnderPressure(t *testing.T) {
 		}
 	}
 }
+
+// #124: the sweep only removed expired entries; long TTLs plus high-cardinality
+// keys (query strings via cache.Key) grew the heap without bound.
+func TestSet_capsTotalEntries(t *testing.T) {
+	c := New[int](time.Hour)
+	c.SetMaxEntries(256)
+	for i := 0; i < 2000; i++ {
+		c.Set("k"+strconv.Itoa(i), i)
+	}
+	if got := c.Len(); got > 256 {
+		t.Fatalf("Len = %d, want <= 256 (cache must cap entries)", got)
+	}
+	if _, ok := c.Get("k1999"); !ok {
+		t.Error("most recent key should survive eviction")
+	}
+}
