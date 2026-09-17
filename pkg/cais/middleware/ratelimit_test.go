@@ -76,3 +76,17 @@ func TestRateLimiter_retainsActiveBucketsDuringCleanup(t *testing.T) {
 		t.Errorf("buckets = %d, want 1002 (active buckets retained + new key)", len(lim.buckets))
 	}
 }
+
+// #124: keys are IP+path; a flood with varied IPs created unbounded buckets.
+func TestRateLimiter_capsTotalBuckets(t *testing.T) {
+	lim := NewRateLimiter(10, cais.Config{})
+	lim.SetMaxBuckets(64)
+	for i := 0; i < 500; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/login", nil)
+		req.RemoteAddr = fmt.Sprintf("198.51.%d.%d:1234", i/250, i%250)
+		lim.allow(ClientIP(req, lim.cfg) + ":" + req.URL.Path)
+	}
+	if got := len(lim.buckets); got > 64 {
+		t.Fatalf("buckets = %d, want <= 64 (limiter must cap buckets)", got)
+	}
+}

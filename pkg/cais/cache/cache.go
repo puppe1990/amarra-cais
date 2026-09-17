@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -17,16 +18,34 @@ type entry[V any] struct {
 
 // Cache is a thread-safe in-memory key-value store with per-entry TTL.
 type Cache[V any] struct {
-	mu   sync.RWMutex
-	ttl  time.Duration
-	data map[string]entry[V]
+	mu         sync.RWMutex
+	ttl        time.Duration
+	data       map[string]entry[V]
+	maxEntries int
 }
 
 // New returns a cache where each Set expires after ttl.
 func New[V any](ttl time.Duration) *Cache[V] {
 	return &Cache[V]{
-		ttl:  ttl,
-		data: make(map[string]entry[V]),
+		ttl:        ttl,
+		data:       make(map[string]entry[V]),
+		maxEntries: defaultMaxEntries,
+	}
+}
+
+// SetMaxEntries caps the number of live entries (<= 0 restores the default).
+// When the cap is hit, expired entries are swept first and then the entries
+// closest to expiry are evicted in one batch (#124), so a high-cardinality
+// route (query strings via Key) cannot grow the heap without bound.
+func (c *Cache[V]) SetMaxEntries(n int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if n <= 0 {
+		n = defaultMaxEntries
+	}
+	c.maxEntries = n
+	if len(c.data) > c.maxEntries {
+		c.evictLocked(time.Now())
 	}
 }
 
@@ -47,8 +66,12 @@ func (c *Cache[V]) Get(key string) (V, bool) {
 // overwrite, so high-cardinality keys would otherwise leak forever (#174).
 const sweepThreshold = 1024
 
+// defaultMaxEntries is the hard cap on live entries (see SetMaxEntries).
+const defaultMaxEntries = 4096
+
 // Set stores val under key; it expires after the cache TTL.
-// When the map grows past sweepThreshold, expired entries are swept inline.
+// When the map grows past sweepThreshold, expired entries are swept inline;
+// past maxEntries, the oldest entries are evicted in one batch (#124).
 func (c *Cache[V]) Set(key string, val V) {
 	c.mu.Lock()
 	c.data[key] = entry[V]{
@@ -56,14 +79,40 @@ func (c *Cache[V]) Set(key string, val V) {
 		expiresAt: time.Now().Add(c.ttl),
 	}
 	if len(c.data) > sweepThreshold {
-		now := time.Now()
-		for k, e := range c.data {
-			if now.After(e.expiresAt) {
-				delete(c.data, k)
-			}
-		}
+		c.sweepExpiredLocked(time.Now())
+	}
+	if len(c.data) > c.maxEntries {
+		c.evictLocked(time.Now())
 	}
 	c.mu.Unlock()
+}
+
+func (c *Cache[V]) sweepExpiredLocked(now time.Time) {
+	for k, e := range c.data {
+		if now.After(e.expiresAt) {
+			delete(c.data, k)
+		}
+	}
+}
+
+// evictLocked drops the entries closest to expiry down to 3/4 of the cap in a
+// single pass, amortizing the O(n log n) sort over many Sets (#124).
+func (c *Cache[V]) evictLocked(now time.Time) {
+	c.sweepExpiredLocked(now)
+	if len(c.data) <= c.maxEntries {
+		return
+	}
+	target := c.maxEntries * 3 / 4
+	keys := make([]string, 0, len(c.data))
+	for k := range c.data {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return c.data[keys[i]].expiresAt.Before(c.data[keys[j]].expiresAt)
+	})
+	for i := 0; i < len(keys) && len(c.data) > target; i++ {
+		delete(c.data, keys[i])
+	}
 }
 
 // Len reports the number of entries currently stored (including not-yet-expired).
