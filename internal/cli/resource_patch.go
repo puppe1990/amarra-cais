@@ -15,7 +15,7 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 		return err
 	}
 	content := string(body)
-	if strings.Contains(content, "Insert"+data.Pascal) {
+	if hasFuncDecl(content, "Insert"+data.Pascal) {
 		if !force {
 			return nil
 		}
@@ -102,7 +102,7 @@ func patchStoreTestForResource(dir string, data scaffoldData, dryRun bool) error
 		return err
 	}
 	content := string(body)
-	if strings.Contains(content, "TestStore_Insert"+data.Pascal) {
+	if hasFuncDecl(content, "TestStore_Insert"+data.Pascal) {
 		return nil
 	}
 
@@ -177,7 +177,7 @@ func patchRoutesForResource(dir string, data scaffoldData, dryRun bool, force bo
 		return err
 	}
 	content := string(body)
-	if strings.Contains(content, "/admin/"+data.Plural) {
+	if strings.Contains(content, `"/admin/`+data.Plural+`"`) || strings.Contains(content, "`/admin/"+data.Plural+"`") {
 		if !force {
 			return nil
 		}
@@ -349,7 +349,7 @@ func patchSeedsForResource(dir string, data scaffoldData, dryRun bool) error {
 		return err
 	}
 	content := string(body)
-	if strings.Contains(content, "SeedDemo"+data.PluralPascal) {
+	if strings.Contains(content, "s.SeedDemo"+data.PluralPascal+"()") {
 		return nil
 	}
 	marker := "\t// cais:seeds\n"
@@ -371,7 +371,7 @@ func patchMainForSeed(dir string, data scaffoldData, dryRun bool) error {
 		return err
 	}
 	content := string(body)
-	if strings.Contains(content, "SeedDemo"+data.PluralPascal) {
+	if strings.Contains(content, "s.SeedDemo"+data.PluralPascal+"()") {
 		return patchLayoutNav(dir, data, dryRun)
 	}
 	marker := "\n\tstaticDir, err := cais.ResolveWebDir(\"static\", cfg.StaticDir)"

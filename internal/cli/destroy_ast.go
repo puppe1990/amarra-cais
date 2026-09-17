@@ -93,6 +93,22 @@ func removeDeclsByName(src string, names map[string]bool) (string, error) {
 	return cutSpans(src, spans), nil
 }
 
+// hasFuncDecl reports whether src declares a top-level function named exactly
+// name (methods included). Substring guards like "InsertPost" also match
+// "InsertPostComment" and skip the patch entirely (#104).
+func hasFuncDecl(src, name string) bool {
+	_, file, err := parseGo(src, "store.go")
+	if err != nil {
+		return false
+	}
+	for _, decl := range file.Decls {
+		if fd, ok := decl.(*ast.FuncDecl); ok && fd.Name.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 // removeInterfaceMethods cuts fields with exactly matching names from the named
 // interface; other interfaces sharing method names are untouched.
 func removeInterfaceMethods(src, ifaceName string, names map[string]bool) (string, error) {
