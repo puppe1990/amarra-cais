@@ -253,7 +253,7 @@ Shipped kit (override in `web/templates/components/`): `form`, `input`, `passwor
 
 **Kit attributes interpolate** like plain markup: `<.stat label="Potência" value="{{ .Power }} kWp" />` renders `5 kWp`, and a value may mix text with several actions (a bare `{{ .X }}` keeps the raw expression, so non-string data still works in the component's `if`/`range`). A control action (`{{ if }}`/`{{ range }}`) in an attribute value fails at boot instead of printing `{{ … }}` to the user (#72).
 
-**Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only. `sock.Patch`, `sock.Stream`, and `sock.Push` ride on the morph message.
+**Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only, so Live is **single-replica**: two app replicas do not share sockets (cross-replica fan-out needs an external bus). Slow-client drops are counted by `hub.Dropped()` and logged (first drop, then every 100). `sock.Patch`, `sock.Stream`, and `sock.Push` ride on the morph message.
 
 **Stream HTTP:** `stream.WriteHTTP(w, stream.Op{Kind: "append", Target: "list", HTML: row})` with `Content-Type: text/vnd.amarra-stream` applies ops instead of morphing `#amarra-main`.
 
