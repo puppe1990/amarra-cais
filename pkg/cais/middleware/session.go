@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 )
 
@@ -29,16 +28,13 @@ func RequireAuthFunc(loginURL string, h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// RequireAuth blocks unauthenticated requests. HTMX requests get HX-Redirect; others get 303 to loginURL.
+// RequireAuth blocks unauthenticated requests with a 303 to loginURL. Drive
+// follows redirects and morphs the login page, so 303 is the single redirect
+// behavior — the old HX-Redirect branch was dead contract (#94).
 func RequireAuth(loginURL string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if _, ok := session.UserID(r); !ok {
-				if cais.IsHTMX(r) {
-					w.Header().Set("HX-Redirect", loginURL)
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				}
 				http.Redirect(w, r, loginURL, http.StatusSeeOther)
 				return
 			}
