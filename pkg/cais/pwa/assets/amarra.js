@@ -901,6 +901,12 @@
         }
         el[STATE] = { all, onAll, rowUnbinds };
       },
+      // #126: Idiomorph keeps the container and swaps children; rebind so the
+      // hook tracks the new nodes instead of stale references.
+      updated(el) {
+        bulk.disconnect(el);
+        bulk.connect(el);
+      },
       disconnect(el) {
         const st = el?.[STATE];
         if (!st) return;
@@ -943,6 +949,7 @@
   var OPEN = "_amarraDialogOpen";
   var CLOSE = "_amarraDialogClose";
   var ONCLOSE = "_amarraDialogOnClose";
+  var STATE2 = "_amarraDialogState";
   function makeDialog() {
     return {
       connect(el) {
@@ -950,8 +957,10 @@
         const dlg = el.querySelector("[data-amarra-dialog-target]");
         if (!dlg || typeof dlg.showModal !== "function") return;
         if (!dlg.getAttribute?.("aria-modal")) dlg.setAttribute?.("aria-modal", "true");
+        const openers = [...el.querySelectorAll?.("[data-amarra-dialog-open]") ?? []];
+        const closers = [...el.querySelectorAll?.("[data-amarra-dialog-close]") ?? []];
         let opener = null;
-        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-open]") ?? []) {
+        for (const btn of openers) {
           const fn = (ev) => {
             ev?.preventDefault?.();
             opener = btn;
@@ -960,7 +969,7 @@
           btn[OPEN] = fn;
           btn.addEventListener?.("click", fn);
         }
-        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-close]") ?? []) {
+        for (const btn of closers) {
           const fn = (ev) => {
             ev?.preventDefault?.();
             dlg.close?.();
@@ -971,28 +980,35 @@
         const onClose = () => opener?.focus?.();
         dlg[ONCLOSE] = onClose;
         dlg.addEventListener?.("close", onClose);
+        el[STATE2] = { dlg, openers, closers };
+      },
+      // #126: Idiomorph keeps the container and swaps children; rebind so the
+      // hook tracks the new nodes instead of stale references.
+      updated(el) {
+        dialog.disconnect(el);
+        dialog.connect(el);
       },
       disconnect(el) {
-        if (!el?.querySelector) return;
-        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-open]") ?? []) {
+        const st = el?.[STATE2];
+        if (!st) return;
+        for (const btn of st.openers ?? []) {
           const fn = btn?.[OPEN];
           if (!fn) continue;
           btn.removeEventListener?.("click", fn);
           delete btn[OPEN];
         }
-        for (const btn of el.querySelectorAll?.("[data-amarra-dialog-close]") ?? []) {
+        for (const btn of st.closers ?? []) {
           const fn = btn?.[CLOSE];
           if (!fn) continue;
           btn.removeEventListener?.("click", fn);
           delete btn[CLOSE];
         }
-        const dlg = el.querySelector("[data-amarra-dialog-target]");
-        if (!dlg) return;
-        const onClose = dlg?.[ONCLOSE];
+        const onClose = st.dlg?.[ONCLOSE];
         if (onClose) {
-          dlg.removeEventListener?.("close", onClose);
-          delete dlg[ONCLOSE];
+          st.dlg.removeEventListener?.("close", onClose);
+          delete st.dlg[ONCLOSE];
         }
+        delete el[STATE2];
       }
     };
   }
@@ -1001,8 +1017,7 @@
   // pkg/amarra/js/hook_dropdown.mjs
   var BTN = "_amarraDropdownToggle";
   var MENU = "_amarraDropdownMenuClick";
-  var DOC_CLICK = "_amarraDropdownDocClick";
-  var DOC_KEY = "_amarraDropdownDocKey";
+  var STATE3 = "_amarraDropdownState";
   function makeDropdown() {
     return {
       connect(el) {
@@ -1032,37 +1047,32 @@
         btn.addEventListener?.("click", toggle);
         menu[MENU] = close;
         menu.addEventListener?.("click", close);
-        el[DOC_CLICK] = onDocClick;
         doc?.addEventListener?.("click", onDocClick);
-        el[DOC_KEY] = onKey;
         doc?.addEventListener?.("keydown", onKey);
+        el[STATE3] = { btn, menu, doc, onDocClick, onKey };
+      },
+      // #126: Idiomorph keeps the container and swaps children; rebind so the
+      // hook tracks the new nodes and document listeners do not accumulate.
+      updated(el) {
+        dropdown.disconnect(el);
+        dropdown.connect(el);
       },
       disconnect(el) {
-        if (!el?.querySelector) return;
-        const btn = el.querySelector("[data-amarra-dropdown-button]");
-        const menu = el.querySelector("[data-amarra-dropdown-menu]");
-        if (!btn || !menu) return;
-        const doc = el.ownerDocument ?? globalThis.document;
-        const toggle = btn[BTN];
+        const st = el?.[STATE3];
+        if (!st) return;
+        const toggle = st.btn?.[BTN];
         if (toggle) {
-          btn.removeEventListener?.("click", toggle);
-          delete btn[BTN];
+          st.btn.removeEventListener?.("click", toggle);
+          delete st.btn[BTN];
         }
-        const menuClose = menu[MENU];
+        const menuClose = st.menu?.[MENU];
         if (menuClose) {
-          menu.removeEventListener?.("click", menuClose);
-          delete menu[MENU];
+          st.menu.removeEventListener?.("click", menuClose);
+          delete st.menu[MENU];
         }
-        const onDocClick = el[DOC_CLICK];
-        if (onDocClick) {
-          doc?.removeEventListener?.("click", onDocClick);
-          delete el[DOC_CLICK];
-        }
-        const onKey = el[DOC_KEY];
-        if (onKey) {
-          doc?.removeEventListener?.("keydown", onKey);
-          delete el[DOC_KEY];
-        }
+        if (st.onDocClick) st.doc?.removeEventListener?.("click", st.onDocClick);
+        if (st.onKey) st.doc?.removeEventListener?.("keydown", st.onKey);
+        delete el[STATE3];
       }
     };
   }
