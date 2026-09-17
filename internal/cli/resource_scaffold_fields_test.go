@@ -171,6 +171,9 @@ func TestScaffoldResource_ReferencesField(t *testing.T) {
 	}, true, false); err != nil {
 		t.Fatal(err)
 	}
+	if err := scaffoldResource(appDir, "category", resourceOpts{Fields: "name:string", Seed: false}); err != nil {
+		t.Fatal(err)
+	}
 	if err := scaffoldResource(appDir, "bookmark", resourceOpts{
 		Fields: "title:string,category_id:references",
 	}); err != nil {
