@@ -190,3 +190,42 @@ func TestExpandAll_unspecifiedIdentStaysDot(t *testing.T) {
 		t.Fatalf("unexpected attr rewrite: %q", got)
 	}
 }
+
+// #115: attrAssign used the raw attribute name as the Go variable, so any
+// data-*/aria-* attribute became `{{ $aria-label := ... }}` and the template
+// failed to parse at boot (unknown component expansion error pointed at the
+// blob, not the page).
+func TestExpandAll_hyphenatedAttributesParseAndRender(t *testing.T) {
+	components := map[string]string{
+		"input": `<input aria-label="{{ .Label }}" value="{{ .Value }}" data-roles="{{ .Roles }}">`,
+	}
+	got, err := ExpandAll(
+		`<.input label="Search" value="{{ .Item.Title }}" data-testid="email" aria-hidden="true" />`,
+		components,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl, err := template.New("t").Parse(got)
+	if err != nil {
+		t.Fatalf("expanded template does not parse: %v\nexpanded=%q", err, got)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, map[string]any{
+		"Item": map[string]string{"Title": "Ada"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	for _, want := range []string{
+		`aria-label="Search"`,
+		`value="Ada"`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in %q", want, out)
+		}
+	}
+	if strings.Contains(got, "$aria-label") || strings.Contains(got, "$data-testid") {
+		t.Errorf("hyphenated attr kept as an invalid variable name: %q", got)
+	}
+}
