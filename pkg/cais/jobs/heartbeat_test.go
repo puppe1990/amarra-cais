@@ -118,3 +118,68 @@ func TestList_filtersByKind(t *testing.T) {
 		t.Fatalf("list by kind = %+v", got)
 	}
 }
+
+// #111: ClaimFor increments attempts but never checks max_attempts, so a job
+// whose handler kills the process was requeued by RequeueOrphaned and claimed
+// again forever (poison job loop). An orphan at the attempt cap must fail.
+func TestRequeueOrphaned_failsJobAtMaxAttempts(t *testing.T) {
+	store := NewStore(testDB(t))
+	ctx := context.Background()
+	if _, err := Enqueue(ctx, store, Options{Kind: "Poison", MaxAttempts: 1}); err != nil {
+		t.Fatal(err)
+	}
+	job, err := store.ClaimFor(ctx, DefaultQueue, "dead")
+	if err != nil || job == nil {
+		t.Fatal(err)
+	}
+
+	if _, err := store.RequeueOrphaned(ctx, time.Minute); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != StatusFailed {
+		t.Fatalf("status = %q, want failed (attempt cap reached)", got.Status)
+	}
+	if got.LastError == "" {
+		t.Error("failed orphan should explain why")
+	}
+
+	again, err := store.ClaimFor(ctx, DefaultQueue, "w2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again != nil {
+		t.Fatal("exhausted job was claimed again")
+	}
+}
+
+// Jobs with attempts left keep the old behavior: back to ready and claimable.
+func TestRequeueOrphaned_requeuesJobWithRemainingAttempts(t *testing.T) {
+	store := NewStore(testDB(t))
+	ctx := context.Background()
+	if _, err := Enqueue(ctx, store, Options{Kind: "Transient", MaxAttempts: 3}); err != nil {
+		t.Fatal(err)
+	}
+	job, err := store.ClaimFor(ctx, DefaultQueue, "dead")
+	if err != nil || job == nil {
+		t.Fatal(err)
+	}
+
+	if _, err := store.RequeueOrphaned(ctx, time.Minute); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.Get(ctx, job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != StatusReady {
+		t.Fatalf("status = %q, want ready", got.Status)
+	}
+	again, err := store.ClaimFor(ctx, DefaultQueue, "w2")
+	if err != nil || again == nil || again.ID != job.ID {
+		t.Fatalf("job with attempts left should be claimable again: %v %v", again, err)
+	}
+}
