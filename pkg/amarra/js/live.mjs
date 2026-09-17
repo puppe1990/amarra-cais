@@ -121,7 +121,21 @@ export function start(opts = {}) {
     });
   }
 
-  doc.querySelectorAll?.("[amarra-live]").forEach((el) => connect(el));
+  // #113: Drive morphs the page on navigation; rescan on amarra:morphed so a
+  // chat reached via link still joins, and close sockets of replaced roots.
+  function sync() {
+    for (const [root, ws] of sockets) {
+      if (root.isConnected === false) {
+        ws?.close?.();
+        sockets.delete(root);
+      }
+    }
+    doc.querySelectorAll?.("[amarra-live]").forEach((el) => {
+      if (!sockets.has(el)) connect(el);
+    });
+  }
+  sync();
+  if (typeof doc.addEventListener === "function") doc.addEventListener("amarra:morphed", sync);
 
   function sendFrom(el, kind, extra) {
     const root = liveRoot(el);
