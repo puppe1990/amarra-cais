@@ -161,7 +161,9 @@ func TestWorker_panicInHandlerMarksJobFailed(t *testing.T) {
 		DispatchInterval: time.Hour,
 		Logger:           log.New(&logBuf, "", 0),
 	})
-	w.pollOnce(ctx)
+	if err := w.pollOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 
 	rec, err := store.Get(ctx, id)
 	if err != nil {
@@ -186,7 +188,9 @@ func TestWorker_panicInHandlerMarksJobFailed(t *testing.T) {
 	if _, err := Enqueue(ctx, store, Options{Kind: "Ping"}); err != nil {
 		t.Fatal(err)
 	}
-	w.pollOnce(ctx)
+	if err := w.pollOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	if !ran.Load() {
 		t.Fatal("worker stopped processing jobs after a handler panic")
 	}
