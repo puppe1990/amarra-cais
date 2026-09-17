@@ -125,3 +125,35 @@ test("dropdown hook closes when a menu item is clicked and unbinds on disconnect
   assert.equal((doc.listeners.click || []).length, 0);
   assert.equal((doc.listeners.keydown || []).length, 0);
 });
+
+// #126: document-level listeners leaked on every morph and the new menu/button
+// were never bound.
+test("dropdown hook updated rebinds nodes without leaking document listeners", () => {
+  const hook = makeDropdown();
+  const doc = documentStub();
+  const el = {
+    btn: button(),
+    menuEl: menu(),
+    ownerDocument: doc,
+    contains(t) {
+      return t === this.btn || t === this.menuEl;
+    },
+    querySelector(sel) {
+      if (sel === "[data-amarra-dropdown-button]") return this.btn;
+      if (sel === "[data-amarra-dropdown-menu]") return this.menuEl;
+      return null;
+    },
+  };
+  hook.connect(el);
+  el.btn.click();
+  assert.equal(el.menuEl.hidden, false);
+
+  el.btn = button();
+  el.menuEl = menu();
+  hook.updated(el);
+
+  assert.equal((doc.listeners.click || []).length, 1, "document listener must not leak");
+  assert.equal((doc.listeners.keydown || []).length, 1, "document key listener must not leak");
+  el.btn.click();
+  assert.equal(el.menuEl.hidden, false, "fresh button must toggle the fresh menu");
+});
