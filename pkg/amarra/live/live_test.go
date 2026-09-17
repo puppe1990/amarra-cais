@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -388,5 +389,50 @@ func TestLive_ignoresEventsBeforeJoin(t *testing.T) {
 	_, handles = view.counts()
 	if handles != 1 {
 		t.Fatalf("handles after join = %d, want 1", handles)
+	}
+}
+
+type failingView struct {
+	msg string
+}
+
+func (v *failingView) Mount(context.Context, Socket) error { return nil }
+
+func (v *failingView) Handle(context.Context, Event) error { return errors.New(v.msg) }
+
+func (v *failingView) Render() Rendered {
+	return Rendered{Target: "err", HTML: "<b></b>"}
+}
+
+func liveErrorMsg(t *testing.T, env, msg string) outMsg {
+	t.Helper()
+	h := NewHub(Config{Env: env, OriginPatterns: []string{"*"}})
+	h.Register("failing", func() View { return &failingView{msg: msg} })
+	s := httptest.NewServer(h.Handler())
+	t.Cleanup(s.Close)
+	c := dialLive(t, s, "failing", "tok")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
+	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "tok"})
+	_ = readJSON(t, c)
+	writeJSON(t, c, inMsg{Type: typeEvent, Event: "boom", Ref: "1"})
+	return readJSON(t, c)
+}
+
+// #98: Handle errors went verbatim to the websocket — SQL/path details leaked
+// to any client. Outside development the client sees a generic message.
+func TestLive_handleErrorHiddenOutsideDevelopment(t *testing.T) {
+	errMsg := liveErrorMsg(t, "production", "sql: no such table: secret_widgets")
+	if errMsg.Type != typeError {
+		t.Fatalf("expected error message, got %+v", errMsg)
+	}
+	if strings.Contains(errMsg.Message, "secret_widgets") {
+		t.Fatalf("internal error leaked to the client: %q", errMsg.Message)
+	}
+}
+
+func TestLive_handleErrorShownInDevelopment(t *testing.T) {
+	errMsg := liveErrorMsg(t, "development", "sql: no such table: secret_widgets")
+	if !strings.Contains(errMsg.Message, "secret_widgets") {
+		t.Fatalf("development should keep the detail, got %q", errMsg.Message)
 	}
 }
