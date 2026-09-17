@@ -9,6 +9,23 @@ import (
 	"testing"
 )
 
+func TestAuthPages_centeredOnScreen(t *testing.T) {
+	pages := map[string]string{
+		"login":           tplPageLogin,
+		"signup":          tplPageSignup,
+		"forgot-password": tplPageForgotPassword,
+		"reset-password":  tplPageResetPassword,
+	}
+	for name, tpl := range pages {
+		if !strings.Contains(tpl, "min-h-[calc(100vh-12rem)]") {
+			t.Errorf("%s page should center on screen with min-h-[calc(100vh-12rem)]", name)
+		}
+		if !strings.Contains(tpl, "items-center justify-center") {
+			t.Errorf("%s page should center content with items-center justify-center", name)
+		}
+	}
+}
+
 // #166: g auth on a blank/minimal app used to splice route statements at package
 // level (routes.go parse error) and reference errors.New without importing it.
 func TestScaffoldAuth_patchesBlankAppRoutesParse(t *testing.T) {
