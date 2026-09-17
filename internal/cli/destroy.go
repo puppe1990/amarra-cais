@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -85,6 +86,19 @@ func destroyResource(dir, name string, dryRun, force bool) error {
 		}
 	}
 
+	if !force {
+		refs, err := parentReferences(dir, data, files)
+		if err != nil {
+			return err
+		}
+		if len(refs) > 0 {
+			return fmt.Errorf(
+				"cannot destroy %s: still referenced by %s — destroy the referencing resource(s) first, or pass --force",
+				data.Snake, strings.Join(refs, ", "),
+			)
+		}
+	}
+
 	if err := removeGeneratedFiles(dir, files, dryRun, force); err != nil {
 		return err
 	}
@@ -92,7 +106,7 @@ func destroyResource(dir, name string, dryRun, force bool) error {
 	if err := unpatchRoutesForResource(dir, data, dryRun); err != nil {
 		return err
 	}
-	if err := unpatchStoreForResource(dir, data, dryRun); err != nil {
+	if err := unpatchStoreForResource(dir, data, files, dryRun); err != nil {
 		return err
 	}
 	if err := unpatchStoreTestForResource(dir, data, dryRun); err != nil {
@@ -128,7 +142,7 @@ func destroyModel(dir, name string, dryRun, force bool) error {
 	if err := removeGeneratedFiles(dir, files, dryRun, force); err != nil {
 		return err
 	}
-	return unpatchStoreForResource(dir, data, dryRun)
+	return unpatchStoreForResource(dir, data, files, dryRun)
 }
 
 func destroyHandler(dir, name string, dryRun, force bool) error {
@@ -236,7 +250,7 @@ func unpatchRoutesForHandler(dir string, data scaffoldData, dryRun bool) error {
 	return updateScaffoldFile(path, []byte(content), "internal/app/routes.go", dryRun)
 }
 
-func unpatchStoreForResource(dir string, data scaffoldData, dryRun bool) error {
+func unpatchStoreForResource(dir string, data scaffoldData, removed []string, dryRun bool) error {
 	path := filepath.Join(dir, "internal/store/store.go")
 	body, err := os.ReadFile(path)
 	if err != nil {
@@ -246,7 +260,174 @@ func unpatchStoreForResource(dir string, data scaffoldData, dryRun bool) error {
 	if err != nil {
 		return err
 	}
+	orphans, err := orphanOptionMethods(dir, removed, string(body))
+	if err != nil {
+		return err
+	}
+	if len(orphans) > 0 {
+		if content, err = removeDeclsByName(content, orphans); err != nil {
+			return err
+		}
+		if content, err = removeInterfaceMethods(content, "Store", orphans); err != nil {
+			return err
+		}
+	}
 	return updateScaffoldFile(path, []byte(content), "internal/store/store.go", dryRun)
+}
+
+// parentReferences lists surviving files that still use generated symbols of
+// data after its own store methods/tests are removed (#108). store.go and
+// store_test.go are evaluated post-unpatch so the parent's own generated code
+// does not count as a reference; anything left (a child's SeedDemo*, tests)
+// does.
+func parentReferences(dir string, data scaffoldData, removed []string) ([]string, error) {
+	storeRel := filepath.ToSlash(filepath.Join("internal", "store", "store.go"))
+	testRel := filepath.ToSlash(filepath.Join("internal", "store", "store_test.go"))
+	symbols := []string{
+		"models." + data.Pascal,
+		"Insert" + data.Pascal + "(",
+		"Update" + data.Pascal + "(",
+		"Delete" + data.Pascal + "(",
+		"Find" + data.Pascal + "ByID(",
+		"List" + data.Pascal + "Options(",
+	}
+	var refs []string
+
+	storeBody, err := os.ReadFile(filepath.Join(dir, storeRel))
+	if err == nil {
+		content, rmErr := removeStoreResourceMethods(string(storeBody), data)
+		if rmErr != nil {
+			return nil, rmErr
+		}
+		if containsAny(content, symbols) {
+			refs = append(refs, storeRel)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("read %s: %w", storeRel, err)
+	}
+
+	testBody, err := os.ReadFile(filepath.Join(dir, testRel))
+	if err == nil {
+		content, rmErr := removeDeclsByName(string(testBody), map[string]bool{"TestStore_Insert" + data.Pascal: true})
+		if rmErr != nil {
+			return nil, rmErr
+		}
+		if containsAny(content, symbols) {
+			refs = append(refs, testRel)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("read %s: %w", testRel, err)
+	}
+
+	skip := make(map[string]bool, len(removed)+2)
+	for _, rel := range removed {
+		skip[filepath.ToSlash(rel)] = true
+	}
+	skip[storeRel] = true
+	skip[testRel] = true
+	rels, err := survivingGoFiles(dir, skip)
+	if err != nil {
+		return nil, err
+	}
+	for _, rel := range rels {
+		body, readErr := os.ReadFile(filepath.Join(dir, rel))
+		if readErr != nil {
+			return nil, readErr
+		}
+		if containsAny(string(body), symbols) {
+			refs = append(refs, rel)
+		}
+	}
+	return refs, nil
+}
+
+// orphanOptionMethods names the List<X>Options methods declared in store.go
+// that no surviving file calls anymore (#108). They are generated when a
+// resource references another; destroying the last child must drop them, or a
+// later `destroy resource <parent>` would be refused by parentReferences.
+func orphanOptionMethods(dir string, removed []string, storeBody string) (map[string]bool, error) {
+	names := listOptionMethodNames(storeBody)
+	if len(names) == 0 {
+		return nil, nil
+	}
+	skip := make(map[string]bool, len(removed)+1)
+	for _, rel := range removed {
+		skip[filepath.ToSlash(rel)] = true
+	}
+	skip["internal/store/store.go"] = true
+	rels, err := survivingGoFiles(dir, skip)
+	if err != nil {
+		return nil, err
+	}
+	orphans := map[string]bool{}
+	for name := range names {
+		used := false
+		for _, rel := range rels {
+			body, readErr := os.ReadFile(filepath.Join(dir, rel))
+			if readErr != nil {
+				return nil, readErr
+			}
+			if strings.Contains(string(body), name+"(") {
+				used = true
+				break
+			}
+		}
+		if !used {
+			orphans[name] = true
+		}
+	}
+	return orphans, nil
+}
+
+// listOptionMethodNames returns the List<X>Options methods declared in src.
+func listOptionMethodNames(src string) map[string]bool {
+	_, file, err := parseGo(src, "store.go")
+	if err != nil {
+		return nil
+	}
+	names := map[string]bool{}
+	for _, decl := range file.Decls {
+		fd, ok := decl.(*ast.FuncDecl)
+		if !ok || fd.Recv == nil {
+			continue
+		}
+		if strings.HasPrefix(fd.Name.Name, "List") && strings.HasSuffix(fd.Name.Name, "Options") {
+			names[fd.Name.Name] = true
+		}
+	}
+	return names
+}
+
+// survivingGoFiles lists internal/**/*.go rel paths, skipping the given ones.
+func survivingGoFiles(dir string, skip map[string]bool) ([]string, error) {
+	var rels []string
+	err := filepath.WalkDir(filepath.Join(dir, "internal"), func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".go") {
+			return nil
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		relSlash := filepath.ToSlash(rel)
+		if !skip[relSlash] {
+			rels = append(rels, relSlash)
+		}
+		return nil
+	})
+	return rels, err
+}
+
+func containsAny(content string, needles []string) bool {
+	for _, needle := range needles {
+		if strings.Contains(content, needle) {
+			return true
+		}
+	}
+	return false
 }
 
 // removeStoreResourceMethods removes generated methods and interface entries by
