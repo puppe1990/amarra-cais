@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -88,14 +89,37 @@ func (s *Store) UpdateRecurringLastRun(ctx context.Context, id int64, at time.Ti
 	return err
 }
 
-// enqueueRecurring inserts the ready job and bumps last_run atomically (#174):
-// a crash between the two statements would double-enqueue on the next tick.
+// errRecurringClaimed means another scheduler won the compare-and-set for the
+// same cron tick (#119).
+var errRecurringClaimed = errors.New("recurring task already claimed")
+
+// enqueueRecurring claims the tick and inserts the ready job atomically (#174):
+// a crash between the statements would double-enqueue on the next tick. The
+// UPDATE is a compare-and-set on last_run, so two schedulers that listed the
+// task before any commit cannot both enqueue (#119); the loser gets
+// errRecurringClaimed.
 func (s *Store) enqueueRecurring(ctx context.Context, task RecurringTask, now time.Time) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
+
+	res, err := tx.ExecContext(ctx, `
+UPDATE recurring_tasks
+SET last_run = ?
+WHERE id = ?
+  AND (last_run IS NULL OR last_run < ?)`, formatTime(now), task.ID, formatTime(now))
+	if err != nil {
+		return fmt.Errorf("claim recurring: %w", err)
+	}
+	claimed, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("claim recurring: %w", err)
+	}
+	if claimed == 0 {
+		return errRecurringClaimed
+	}
 
 	payload := task.Payload
 	if len(payload) == 0 {
@@ -107,12 +131,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		task.Queue, task.Kind, string(payload), 0, DefaultMaxAttempts, formatTime(now), StatusReady,
 	); err != nil {
 		return fmt.Errorf("insert recurring job: %w", err)
-	}
-	if _, err := tx.ExecContext(ctx,
-		`UPDATE recurring_tasks SET last_run = ? WHERE id = ?`,
-		formatTime(now), task.ID,
-	); err != nil {
-		return fmt.Errorf("update recurring last_run: %w", err)
 	}
 	return tx.Commit()
 }
@@ -133,6 +151,9 @@ func RunScheduler(ctx context.Context, store *Store, now time.Time) (int, error)
 			continue
 		}
 		if err := store.enqueueRecurring(ctx, task, now); err != nil {
+			if errors.Is(err, errRecurringClaimed) {
+				continue
+			}
 			return n, err
 		}
 		n++
