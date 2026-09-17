@@ -60,6 +60,7 @@ func RenderPageOrPartial(w http.ResponseWriter, r *http.Request, renderer *cais.
 	if opts.Status != 0 {
 		w.WriteHeader(opts.Status)
 	}
+	//nolint:staticcheck // legacy HTMX rendering path, removed with the runtime at v1.0 (#99)
 	if cais.IsHTMX(r) {
 		if err := RenderPartial(w, renderer, opts.Partial, opts.Data); err != nil {
 			writeRenderError(w, err, cfg)

@@ -1,3 +1,7 @@
+// Package htmxattrs emits HTMX attribute bundles for leftover HTMX apps.
+//
+// Deprecated: HTMX is not the generated-app contract; use the Amarra kit
+// (pkg/amarra/view) and pkg/amarra hooks instead. Slated for removal at v1.0 (#99).
 package htmxattrs
 
 import (

@@ -39,13 +39,13 @@ Imperative. Prefer these when trading off effort.
 
 ### Repo red flags (split when you touch them)
 
-| Path                                          | Notes                                                         |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| `internal/cli/tpl_scaffold_handlers_*.go`     | Split done: home/contact/dashboard/auth + tests + testhelpers |
-| `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks             |
-| `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further        |
-| `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates               |
-| `pkg/cais/pwa/assets/cais*.js`                | Leftover HTMX runtime; generated apps ship `amarra.js` only   |
+| Path                                          | Notes                                                                                        |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `internal/cli/tpl_scaffold_handlers_*.go`     | Split done: home/contact/dashboard/auth + tests + testhelpers                                |
+| `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks                                            |
+| `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further                                       |
+| `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates                                              |
+| `pkg/cais/pwa/assets/cais*.js`                | Leftover HTMX runtime (deprecated, remove at v1.0 #99); generated apps ship `amarra.js` only |
 
 Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go`), never a mega template dump.
 
@@ -85,7 +85,7 @@ Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go
 | `pkg/cais/jobs/`          | SQLite background job queue                                                                                  |
 | `pkg/cais/jobsui/`        | Localhost `/jobs` dashboard (counts, failed retry/discard, recurring)                                        |
 | `pkg/cais/testdata/`      | Fixture HTML (legacy HTMX layouts + chat_sse partials for framework tests)                                   |
-| `pkg/cais/htmx.go`        | Leftover HTMX helpers — not the public generated-app contract                                                |
+| `pkg/cais/htmx.go`        | Leftover HTMX helpers (deprecated, remove at v1.0 #99) — not the generated-app contract                      |
 | `internal/cli/`           | Generators (`amarra-cais new`, `g`, `destroy`) — **HTML + Amarra scaffolds**                                 |
 | `cmd/amarra-cais/`        | CLI entry point                                                                                              |
 | `cmd/pwagen/`             | Write PWA assets into a target directory                                                                     |
