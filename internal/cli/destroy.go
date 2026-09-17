@@ -271,7 +271,12 @@ func removeStoreResourceMethods(content string, data scaffoldData) (string, erro
 	content = cleanupStoreImports(content)
 	content = regexp.MustCompile(`\nfunc strPtr\(s string\) \*string \{ return &s \}\n`).ReplaceAllString(content, "\n")
 	content = regexp.MustCompile(`\nfunc int64Ptr\(n int64\) \*int64 \{ return &n \}\n`).ReplaceAllString(content, "\n")
-	content = regexp.MustCompile(`\nfunc boolInt\(v bool\) int \{[^}]+\}\n`).ReplaceAllString(content, "\n")
+	// boolInt spans multiple lines (nested braces); a regex stops at the inner
+	// `}` and leaves `return 0` behind (#105). Remove the whole declaration.
+	content, err = removeDeclsByName(content, map[string]bool{"boolInt": true})
+	if err != nil {
+		return "", err
+	}
 	return content, nil
 }
 
