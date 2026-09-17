@@ -1,4 +1,5 @@
 import { morph } from "./morph.mjs";
+import { bumpSequence, isCurrentSequence } from "./sequence.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
 
 export function frameHeaders(id, csrfToken) {
@@ -51,12 +52,15 @@ export async function loadFrame(el, opts = {}) {
   const csrfToken =
     opts.csrfToken ??
     csrfTokenFromMeta(opts.document ?? (typeof document !== "undefined" ? document : ""));
+  const seq = bumpSequence(el);
   const res = await fetchFn(src, {
     headers: frameHeaders(id, csrfToken),
     credentials: "same-origin",
     redirect: "follow",
   });
   const html = await res.text();
+  if (!isCurrentSequence(el, seq)) return;
+  if (el.isConnected === false) return;
   (opts.morphFn ?? morph)(el, html);
   const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
   if (doc && typeof doc.dispatchEvent === "function") {

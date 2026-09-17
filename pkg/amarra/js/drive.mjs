@@ -1,4 +1,5 @@
 import { morph } from "./morph.mjs";
+import { bumpSequence, isCurrentSequence } from "./sequence.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
 import { visitIntoFrame } from "./frame.mjs";
 import { applyOp, isStreamResponse, parseSSE } from "./stream.mjs";
@@ -150,6 +151,7 @@ function applyLayoutMarker(doc, html) {
 export async function visit(url, opts = {}) {
   const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
   const doc = opts.document;
+  const seq = bumpSequence(doc);
   showProgress(doc);
   try {
     const res = await fetchFn(url, {
@@ -159,6 +161,9 @@ export async function visit(url, opts = {}) {
       redirect: "follow",
       credentials: "same-origin",
     });
+    if (!isCurrentSequence(doc, seq)) {
+      return { action: "superseded" };
+    }
     const win = opts.window ?? (typeof window !== "undefined" ? window : null);
     const location = opts.location ?? win?.location ?? null;
     const history = opts.history ?? win?.history ?? null;
@@ -181,7 +186,7 @@ export async function visit(url, opts = {}) {
       window: win,
     });
   } finally {
-    hideProgress(doc);
+    if (isCurrentSequence(doc, seq)) hideProgress(doc);
   }
 }
 

@@ -783,6 +783,23 @@
     if ("innerHTML" in el) el.innerHTML = html ?? "";
   }
 
+  // pkg/amarra/js/sequence.mjs
+  var counters = /* @__PURE__ */ new WeakMap();
+  var fallback = 0;
+  function bumpSequence(key) {
+    if (!key || typeof key !== "object") {
+      fallback += 1;
+      return fallback;
+    }
+    const next = (counters.get(key) ?? 0) + 1;
+    counters.set(key, next);
+    return next;
+  }
+  function isCurrentSequence(key, seq) {
+    if (!key || typeof key !== "object") return seq === fallback;
+    return seq === (counters.get(key) ?? 0);
+  }
+
   // pkg/amarra/js/hook.mjs
   var hook_exports = {};
   __export(hook_exports, {
@@ -1092,8 +1109,8 @@
       }
     };
   }
-  function classes(el, attr, fallback) {
-    const raw = el.getAttribute?.(attr) || fallback;
+  function classes(el, attr, fallback2) {
+    const raw = el.getAttribute?.(attr) || fallback2;
     if (!raw) return [];
     return raw.split(/\s+/).filter(Boolean);
   }
@@ -1468,12 +1485,15 @@
     const id = el.getAttribute?.("id") || el.id || "";
     const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
     const csrfToken = opts.csrfToken ?? csrfTokenFromMeta(opts.document ?? (typeof document !== "undefined" ? document : ""));
+    const seq = bumpSequence(el);
     const res = await fetchFn(src, {
       headers: frameHeaders(id, csrfToken),
       credentials: "same-origin",
       redirect: "follow"
     });
     const html = await res.text();
+    if (!isCurrentSequence(el, seq)) return;
+    if (el.isConnected === false) return;
     (opts.morphFn ?? morph)(el, html);
     const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
     if (doc && typeof doc.dispatchEvent === "function") {
@@ -1735,12 +1755,12 @@ ${lines.join("\n")}
     const fn = confirmFn ?? (typeof globalThis.confirm === "function" ? globalThis.confirm.bind(globalThis) : () => true);
     return !!fn(msg);
   }
-  function requestMethod(el, fallback = "GET") {
+  function requestMethod(el, fallback2 = "GET") {
     const attr = el?.getAttribute?.("data-amarra-method");
     if (attr) return String(attr).toUpperCase();
     const hidden = el?.querySelector?.('input[name="_method"]');
     if (hidden?.value) return String(hidden.value).toUpperCase();
-    return String(fallback || "GET").toUpperCase();
+    return String(fallback2 || "GET").toUpperCase();
   }
   function disableSubmit(el) {
     if (!el) return null;
@@ -1906,6 +1926,7 @@ ${lines.join("\n")}
   async function visit(url, opts = {}) {
     const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
     const doc = opts.document;
+    const seq = bumpSequence(doc);
     showProgress(doc);
     try {
       const res = await fetchFn(url, {
@@ -1915,6 +1936,9 @@ ${lines.join("\n")}
         redirect: "follow",
         credentials: "same-origin"
       });
+      if (!isCurrentSequence(doc, seq)) {
+        return { action: "superseded" };
+      }
       const win = opts.window ?? (typeof window !== "undefined" ? window : null);
       const location = opts.location ?? win?.location ?? null;
       const history = opts.history ?? win?.history ?? null;
@@ -1937,7 +1961,7 @@ ${lines.join("\n")}
         window: win
       });
     } finally {
-      hideProgress(doc);
+      if (isCurrentSequence(doc, seq)) hideProgress(doc);
     }
   }
   function start3(opts = {}) {

@@ -168,3 +168,58 @@ test("observeLazy waits for intersection before fetching", async () => {
   assert.equal(observed, el);
   assert.equal(fetchCount, 0);
 });
+
+// #125: the same frame could load twice; the older response could morph over
+// the newer one or over a frame already replaced by a Drive morph.
+test("loadFrame drops a superseded response", async () => {
+  const morphed = [];
+  const el = {
+    isConnected: true,
+    getAttribute: (name) => (name === "src" ? "/frame" : null),
+    hasAttribute: () => false,
+  };
+  let resolveA;
+  let resolveB;
+  let call = 0;
+  const fetchFn = () =>
+    new Promise((resolve) => {
+      call += 1;
+      const html = call === 1 ? "<p>first</p>" : "<p>second</p>";
+      const done = () => resolve({ text: async () => html });
+      if (call === 1) resolveA = done;
+      else resolveB = done;
+    });
+
+  const first = loadFrame(el, {
+    fetchFn,
+    document: null,
+    morphFn: (_el, html) => morphed.push(html),
+  });
+  const second = loadFrame(el, {
+    fetchFn,
+    document: null,
+    morphFn: (_el, html) => morphed.push(html),
+  });
+  resolveB();
+  await second;
+  resolveA();
+  await first;
+
+  assert.equal(morphed.length, 1);
+  assert.equal(morphed[0], "<p>second</p>");
+});
+
+test("loadFrame skips a frame replaced by a morph", async () => {
+  const morphed = [];
+  const el = {
+    isConnected: true,
+    getAttribute: (name) => (name === "src" ? "/frame" : null),
+    hasAttribute: () => false,
+  };
+  const fetchFn = async () => {
+    el.isConnected = false; // Drive morph replaced the frame mid-flight
+    return { text: async () => "<p>late</p>" };
+  };
+  await loadFrame(el, { fetchFn, document: null, morphFn: (_el, html) => morphed.push(html) });
+  assert.equal(morphed.length, 0);
+});
