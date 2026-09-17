@@ -119,3 +119,27 @@ test("nav hook works without off-classes and with relative hrefs (#27)", () => {
   assert.equal(rel.classes.has("on"), true);
   assert.equal(rel.attrs["aria-current"], "page");
 });
+
+// #133: new URL("#", loc.href).pathname === loc.pathname is true on every
+// page, so placeholder anchors and skip links got aria-current="page".
+test("nav hook ignores fragment-only and empty hrefs", () => {
+  const home = link("/");
+  const placeholder = link("#");
+  const skip = link("#content");
+  const empty = link("");
+  const el = container([home, placeholder, skip, empty], {
+    "data-amarra-nav-on": "on",
+    "data-amarra-nav-off": "off",
+  });
+  makeNav({ location: () => location("/"), window: window() }).connect(el);
+
+  assert.equal(home.getAttribute("aria-current"), "page");
+  for (const notActive of [placeholder, skip, empty]) {
+    assert.equal(
+      notActive.getAttribute("aria-current"),
+      null,
+      `href=${JSON.stringify(notActive.attrs.href)} must not be marked active`
+    );
+    assert.equal(notActive.classes.has("on"), false, "on-class leaked to fragment link");
+  }
+});

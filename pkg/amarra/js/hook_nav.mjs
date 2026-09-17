@@ -53,9 +53,11 @@ function classes(el, attr, fallback) {
 }
 
 // Query string ignored: /settings and /settings?tab=keys are the same page.
+// Fragment-only targets (placeholder "#", skip links "#content") are not
+// navigation and must never be marked active (#133).
 function isActive(link, loc) {
   const href = link.getAttribute?.("href");
-  if (!href) return false;
+  if (!href || href.startsWith("#")) return false;
   try {
     return new URL(href, loc.href).pathname === loc.pathname;
   } catch {
