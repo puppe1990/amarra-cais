@@ -295,3 +295,27 @@ func TestTruncate_keepsValidUTF8(t *testing.T) {
 		t.Errorf("missing truncation marker: %q", got)
 	}
 }
+
+// #136: UnsafeMessageHTML interpolated role into class="cais-msg-%s" without
+// escaping or a switch — a future caller passing an external role injects
+// markup/attributes.
+func TestUnsafeMessageHTML_neutralizesUnknownRole(t *testing.T) {
+	got := UnsafeMessageHTML(Role(`"><script>alert(1)</script>`), "<p>x</p>", timeFromTest())
+	if strings.Contains(got, "<script>") || strings.Contains(got, "alert(1)") {
+		t.Fatalf("role leaked into markup: %q", got)
+	}
+	if !strings.Contains(got, "cais-msg-assistant") {
+		t.Fatalf("unknown role should fall back to assistant, got %q", got)
+	}
+}
+
+func TestUnsafeMessageHTML_keepsKnownRoleClasses(t *testing.T) {
+	user := UnsafeMessageHTML(RoleUser, "hi", timeFromTest())
+	if !strings.Contains(user, "cais-msg-user") {
+		t.Fatalf("user role class missing: %q", user)
+	}
+	assistant := UnsafeMessageHTML(RoleAssistant, "hi", timeFromTest())
+	if !strings.Contains(assistant, "cais-msg-assistant") {
+		t.Fatalf("assistant role class missing: %q", assistant)
+	}
+}
