@@ -61,6 +61,9 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 	content = strings.Replace(content, ifaceMarker, ifaceInsert+ifaceMarker, 1)
 
 	implMarker := "\nfunc (s *SQLiteStore) Close()"
+	if !strings.Contains(prePatch, implMarker) {
+		return fmt.Errorf("could not patch store implementation: missing %q", "func (s *SQLiteStore) Close()")
+	}
 	implInsert := buildResourceStoreMethods(data)
 	implInsert += buildReferenceStoreMethods(data.Fields, prePatch, dir)
 	if data.Paginate {
