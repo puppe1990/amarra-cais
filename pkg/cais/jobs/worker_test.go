@@ -3,6 +3,7 @@ package jobs
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"log"
 	"strings"
@@ -338,4 +339,68 @@ func (b *syncBuffer) String() string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return b.buf.String()
+}
+
+// #121: the heartbeat wrote through the same pool as handlers. With
+// sqlite.Configure pinning one connection, a long handler starved the
+// heartbeat, so another worker (or the dashboard button) requeued a live job
+// after DefaultWorkerStale.
+func TestWorker_heartbeatUsesDedicatedPool(t *testing.T) {
+	db, dsn := fileTestDB(t)
+	store := NewStore(db)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	hbDB, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = hbDB.Close() })
+	hbStore := NewStore(hbDB)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	w := NewWorker(WorkerConfig{
+		Store:             store,
+		HeartbeatStore:    hbStore,
+		Registry:          NewRegistry(),
+		Concurrency:       1,
+		PollInterval:      5 * time.Millisecond,
+		DispatchInterval:  time.Hour,
+		SchedulerInterval: time.Hour,
+	})
+	done := make(chan error, 1)
+	go func() { done <- w.Run(ctx) }()
+
+	deadline := time.After(2 * time.Second)
+	for {
+		live, err := hbStore.ListLiveWorkers(context.Background(), time.Minute)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(live) == 1 {
+			break
+		}
+		select {
+		case <-deadline:
+			t.Fatal("worker never heartbeated through the dedicated pool")
+		default:
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("Run did not stop after cancel")
+	}
+	live, err := hbStore.ListLiveWorkers(context.Background(), time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(live) != 0 {
+		t.Fatalf("heartbeat survived shutdown: %+v", live)
+	}
 }
