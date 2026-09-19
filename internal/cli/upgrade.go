@@ -3,8 +3,72 @@ package cli
 import (
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 )
+
+func (c *CLI) cmdUpgrade(args []string) error {
+	dir, err := c.appDir()
+	if err != nil {
+		return err
+	}
+	dryRun, target, err := parseUpgradeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	body, err := os.ReadFile(filepath.Join(dir, "go.mod"))
+	if err != nil {
+		return err
+	}
+	content := string(body)
+	if strings.Contains(content, "replace "+frameworkModule) {
+		return fmt.Errorf("go.mod has a local replace for %s — run: amarra-cais link --unlink, then retry", frameworkModule)
+	}
+
+	fromRaw := extractCaisVersion(content)
+	from := parseSemverCore(fromRaw)
+	to := parseUpgradeTargetCore(target)
+	if from.OK && to.OK && compareSemverCore(to, from) < 0 {
+		return fmt.Errorf("target v%s is older than the current v%s", formatSemver(to), formatSemver(from))
+	}
+
+	_, _ = fmt.Fprintf(c.Out, "→ upgrade %s → %s\n", displayUpgradeVersion(fromRaw), target)
+	printMigrationChecklist(c.Out, from, to, fromRaw)
+
+	if dryRun {
+		_, _ = fmt.Fprintln(c.Out, "  --dry-run: no files changed")
+		return nil
+	}
+
+	_, _ = fmt.Fprintf(c.Out, "→ go get %s@%s\n", frameworkModule, target)
+	if err := runCmd(dir, "go", "get", frameworkModule+"@"+target); err != nil {
+		return fmt.Errorf("go get: %w", err)
+	}
+	if err := installAppDeps(c.Out, dir); err != nil {
+		return err
+	}
+	if err := runDoctor(c.Out, dir, doctorOptions{}); err != nil {
+		_, _ = fmt.Fprintf(c.Out, "⚠ doctor reported issues: %v — fix the checklist items above, then re-run doctor\n", err)
+	}
+	return nil
+}
+
+// parseUpgradeTargetCore returns semverCore{} for `latest` (unknown target).
+func parseUpgradeTargetCore(target string) semverCore {
+	if target == "latest" {
+		return semverCore{}
+	}
+	return parseSemverCore(target)
+}
+
+func displayUpgradeVersion(raw string) string {
+	if raw == "" || raw == "?" {
+		return "unknown"
+	}
+	return "v" + strings.TrimPrefix(raw, "v")
+}
 
 // parseUpgradeArgs separates flags from the optional target version.
 func parseUpgradeArgs(args []string) (dryRun bool, target string, err error) {
