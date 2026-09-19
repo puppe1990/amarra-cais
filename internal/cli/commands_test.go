@@ -83,6 +83,84 @@ func TestRunTailwindBuild_missingInput(t *testing.T) {
 	}
 }
 
+func TestTailwindCSSArgs_watchMinifiesLikeBuild(t *testing.T) {
+	oneshot := strings.Join(tailwindCSSArgs(false), " ")
+	watch := strings.Join(tailwindCSSArgs(true), " ")
+	if !strings.Contains(oneshot, "--minify") {
+		t.Fatalf("one-shot must minify, got %q", oneshot)
+	}
+	if strings.Contains(oneshot, "--watch") {
+		t.Fatalf("one-shot must not watch, got %q", oneshot)
+	}
+	if !strings.Contains(watch, "--minify") || !strings.Contains(watch, "--watch") {
+		t.Fatalf("watch must minify and watch, got %q", watch)
+	}
+}
+
+func TestRunTailwindBuild_oneShotMinifies(t *testing.T) {
+	dir := installFixture(t)
+	logPath := fakeToolchain(t)
+	if err := runTailwindBuild(dir, false); err != nil {
+		t.Fatal(err)
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(calls)
+	if !strings.Contains(got, "--minify") {
+		t.Errorf("one-shot must pass --minify, calls:\n%s", got)
+	}
+	if strings.Contains(got, "--watch") {
+		t.Errorf("one-shot must not pass --watch, calls:\n%s", got)
+	}
+}
+
+func TestRunTailwindBuild_watchMinifies(t *testing.T) {
+	dir := installFixture(t)
+	logPath := fakeToolchain(t)
+	if err := runTailwindBuild(dir, true); err != nil {
+		t.Fatal(err)
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(calls)
+	if !strings.Contains(got, "--minify") || !strings.Contains(got, "--watch") {
+		t.Errorf("watch must pass --minify and --watch, calls:\n%s", got)
+	}
+}
+
+func TestStartDevAssetWatchers_watchMinifies(t *testing.T) {
+	dir := installFixture(t)
+	logPath := fakeToolchain(t)
+	stop, err := startDevAssetWatchers(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if stop != nil {
+			stop()
+		}
+	})
+	deadline := time.Now().Add(2 * time.Second)
+	var got string
+	for time.Now().Before(deadline) {
+		b, readErr := os.ReadFile(logPath)
+		if readErr == nil {
+			got = string(b)
+			if strings.Contains(got, "tailwindcss") {
+				break
+			}
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if !strings.Contains(got, "--minify") || !strings.Contains(got, "--watch") {
+		t.Errorf("dev watch must pass --minify and --watch, calls:\n%s", got)
+	}
+}
+
 func TestEnsureStylesCSS_skipsWhenReady(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, cssOutput)

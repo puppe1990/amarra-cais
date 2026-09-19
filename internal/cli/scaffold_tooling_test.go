@@ -17,6 +17,12 @@ func TestTplPackageJSON_hasBuildScript(t *testing.T) {
 	}
 }
 
+func TestTplMakefile_cssWatchMinifies(t *testing.T) {
+	if !strings.Contains(tplMakefile, "npx tailwindcss -i $(CSS_IN) -o $(CSS_OUT) --minify --watch") {
+		t.Errorf("css-watch must minify like css/build (#193), makefile:\n%s", tplMakefile)
+	}
+}
+
 func TestScaffoldTooling_CITriggersMain(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "ciapp")

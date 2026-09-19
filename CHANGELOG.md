@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ### Fixed
 
+- `amarra-cais dev` Tailwind watch now passes `--minify`, matching `css`/`build` so `styles.css` is not rewritten unminified (#193).
 - `amarra-cais pwa --bump` now refreshes the vendored assets before incrementing `CACHE_VERSION`, matching the help text (#187).
 - `amarra-cais pwa` preserves existing app-owned brand assets (`manifest.webmanifest`, `offline.html`, `og.png`, icons) and only refreshes the framework runtime; `--force` overwrites them with defaults (#186).
 - `amarra-cais server`/`install` rebuild a stale `styles.css` and `doctor` warns when it predates `input.css` or `web/templates/` (#189).
