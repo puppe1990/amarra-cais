@@ -103,7 +103,7 @@ Usage:
   amarra-cais server                Run the app (go run ./cmd/server)
   amarra-cais test                  Run tests (go test ./...)
   amarra-cais doctor [--mobile]     Check app setup (amarra.js, air, go.mod, PWA/mobile)
-  amarra-cais pwa [--bump]          Write or refresh PWA assets; --bump invalidates SW cache
+  amarra-cais pwa [--bump] [--force]  Write/refresh PWA assets; --bump cache, --force resets brand
   amarra-cais link [path] [--unlink]  Add go.mod replace for local Cais dev (default: sibling ../amarra-cais or ../Cais)
   amarra-cais console               Interactive app console (Go REPL + SQL)
   amarra-cais db migrate            Run pending SQL migrations
