@@ -15,7 +15,7 @@ func TestCLI_Help_IncludesAppCommands(t *testing.T) {
 	if err := c.Run([]string{"help"}); err != nil {
 		t.Fatal(err)
 	}
-	for _, cmd := range []string{"amarra-cais install", "amarra-cais css", "amarra-cais dev", "amarra-cais build", "amarra-cais server", "amarra-cais db migrate", "amarra-cais db status", "amarra-cais db rollback", "amarra-cais db prune-sessions", "amarra-cais db seed", "amarra-cais routes", "amarra-cais version", "amarra-cais g [--dry-run] ci", "amarra-cais g [--dry-run] console", "amarra-cais destroy"} {
+	for _, cmd := range []string{"amarra-cais install", "amarra-cais css", "amarra-cais dev", "amarra-cais build", "amarra-cais server", "amarra-cais db migrate", "amarra-cais db status", "amarra-cais db rollback", "amarra-cais db prune-sessions", "amarra-cais db seed", "amarra-cais routes", "amarra-cais version", "amarra-cais g [--dry-run] ci", "amarra-cais g [--dry-run] console", "amarra-cais destroy", "amarra-cais upgrade"} {
 		if !strings.Contains(buf.String(), cmd) {
 			t.Errorf("help missing %q", cmd)
 		}
@@ -293,5 +293,45 @@ func TestCLI_Install_failsWhenStylesheetCannotBeBuilt(t *testing.T) {
 	}
 	if strings.Contains(buf.String(), "Done. Run: amarra-cais dev") {
 		t.Errorf("install must not report success after a failed css build:\n%s", buf.String())
+	}
+}
+
+func TestInstallAppDeps_npmAndTidy(t *testing.T) {
+	dir := installFixture(t)
+	logPath := fakeToolchain(t)
+	if err := installAppDeps(&bytes.Buffer{}, dir); err != nil {
+		t.Fatal(err)
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("no tool calls recorded: %v", err)
+	}
+	got := string(calls)
+	if !strings.Contains(got, "npm install --include=dev") {
+		t.Errorf("missing npm install --include=dev, calls:\n%s", got)
+	}
+	if !strings.Contains(got, "go mod tidy") {
+		t.Errorf("missing go mod tidy, calls:\n%s", got)
+	}
+}
+
+func TestInstallAppDeps_skipsNpmWithoutPackageJSON(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module github.com/example/up\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	logPath := fakeToolchain(t)
+	if err := installAppDeps(&bytes.Buffer{}, dir); err != nil {
+		t.Fatal(err)
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("no tool calls recorded: %v", err)
+	}
+	if strings.Contains(string(calls), "npm") {
+		t.Errorf("no package.json should skip npm, calls:\n%s", calls)
+	}
+	if !strings.Contains(string(calls), "go mod tidy") {
+		t.Errorf("expected go mod tidy, calls:\n%s", calls)
 	}
 }

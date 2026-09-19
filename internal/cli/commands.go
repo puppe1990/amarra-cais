@@ -40,17 +40,8 @@ func (c *CLI) cmdInstall() error {
 		return err
 	}
 
-	if _, err := os.Stat(filepath.Join(dir, "package.json")); err == nil {
-		_, _ = fmt.Fprintln(c.Out, "→ npm install")
-		// --include=dev: NODE_ENV=production would skip tailwindcss/prettier (#54).
-		if err := runCmd(dir, "npm", "install", "--include=dev"); err != nil {
-			return fmt.Errorf("npm install: %w", err)
-		}
-	}
-
-	_, _ = fmt.Fprintln(c.Out, "→ go mod tidy")
-	if err := runCmd(dir, "go", "mod", "tidy"); err != nil {
-		return fmt.Errorf("go mod tidy: %w", err)
+	if err := installAppDeps(c.Out, dir); err != nil {
+		return err
 	}
 
 	// Build Tailwind so styles.css exists after clone/install (#141).
@@ -63,6 +54,22 @@ func (c *CLI) cmdInstall() error {
 	}
 
 	_, _ = fmt.Fprintln(c.Out, "Done. Run: amarra-cais dev")
+	return nil
+}
+
+// installAppDeps runs the npm + go.mod steps shared by `install` and `upgrade`.
+func installAppDeps(w io.Writer, dir string) error {
+	if _, err := os.Stat(filepath.Join(dir, "package.json")); err == nil {
+		_, _ = fmt.Fprintln(w, "→ npm install")
+		// --include=dev: NODE_ENV=production would skip tailwindcss/prettier (#54).
+		if err := runCmd(dir, "npm", "install", "--include=dev"); err != nil {
+			return fmt.Errorf("npm install: %w", err)
+		}
+	}
+	_, _ = fmt.Fprintln(w, "→ go mod tidy")
+	if err := runCmd(dir, "go", "mod", "tidy"); err != nil {
+		return fmt.Errorf("go mod tidy: %w", err)
+	}
 	return nil
 }
 

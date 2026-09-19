@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Added
+
+- `amarra-cais upgrade [version] [--dry-run]`: bumps `github.com/puppe1990/amarra-cais` in `go.mod` (default `latest`), re-runs `npm install`/`go mod tidy`, runs `doctor`, and prints a curated migration checklist for the version range (#192).
+
 ### Fixed
 
 - `amarra-cais dev` Tailwind watch now passes `--minify`, matching `css`/`build` so `styles.css` is not rewritten unminified (#193).
