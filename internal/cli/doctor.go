@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type doctorCheck struct {
@@ -405,6 +406,14 @@ func checkCSS(dir string) doctorCheck {
 			Name:    "tailwind css",
 			Detail:  "styles.css empty or not built (app will look unstyled)",
 			FixHint: "amarra-cais css",
+		}
+	}
+	if stale, src, srcTime := stylesCSSStale(dir); stale {
+		return doctorCheck{
+			Name:     "tailwind css",
+			Optional: true,
+			Detail:   fmt.Sprintf("stale styles.css (older than %s since %s)", src, srcTime.UTC().Format(time.RFC3339)),
+			FixHint:  "amarra-cais css",
 		}
 	}
 	return doctorCheck{Name: "tailwind css", OK: true}

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestCLI_Help_IncludesAppCommands(t *testing.T) {
@@ -190,5 +191,42 @@ func TestCLI_Install_failsWhenStylesheetCannotBeBuilt(t *testing.T) {
 	}
 	if strings.Contains(buf.String(), "Done. Run: amarra-cais dev") {
 		t.Errorf("install must not report success after a failed css build:\n%s", buf.String())
+	}
+}
+
+func TestEnsureStylesCSS_rebuildsWhenStale(t *testing.T) {
+	dir := t.TempDir()
+	old := time.Now().Add(-2 * time.Hour)
+	newer := time.Now().Add(-time.Minute)
+	path := filepath.Join(dir, cssOutput)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(".p-4{padding:1rem}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(path, old, old); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, cssInput), []byte("@import \"tailwindcss\";\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(filepath.Join(dir, cssInput), newer, newer); err != nil {
+		t.Fatal(err)
+	}
+	logPath := fakeToolchain(t)
+	var buf bytes.Buffer
+	if err := ensureStylesCSS(&buf, dir); err != nil {
+		t.Fatalf("stale CSS should rebuild: %v", err)
+	}
+	if !strings.Contains(buf.String(), "stale") {
+		t.Errorf("expected stale build log, got %q", buf.String())
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("no tool calls recorded: %v", err)
+	}
+	if !strings.Contains(string(calls), "npx") {
+		t.Errorf("expected npx tailwind rebuild, calls:\n%s", calls)
 	}
 }

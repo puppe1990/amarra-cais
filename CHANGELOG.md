@@ -9,6 +9,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 ### Fixed
 
 - `amarra-cais pwa --bump` now refreshes the vendored assets before incrementing `CACHE_VERSION`, matching the help text (#187).
+- `amarra-cais doctor` warns when `styles.css` is older than `input.css` or `web/templates`, and `server`/`install` rebuild it instead of treating a leftover Tailwind artifact as ready (#189).
 
 ## [0.10.0] - 2026-09-17
 

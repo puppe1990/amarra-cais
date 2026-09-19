@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestCheckCSS_missing(t *testing.T) {
@@ -89,5 +90,106 @@ func TestStylesCSSReady(t *testing.T) {
 	}
 	if !stylesCSSReady(dir) {
 		t.Fatal("built CSS should be ready")
+	}
+}
+
+func writeBuiltCSSAt(t *testing.T, dir string, mtime time.Time) {
+	t.Helper()
+	path := filepath.Join(dir, cssOutput)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(".flex{display:flex}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(path, mtime, mtime); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStylesCSSStale_inputNewer(t *testing.T) {
+	dir := t.TempDir()
+	old := time.Now().Add(-2 * time.Hour)
+	newer := time.Now().Add(-time.Minute)
+	writeBuiltCSSAt(t, dir, old)
+	if err := os.WriteFile(filepath.Join(dir, cssInput), []byte("@import \"tailwindcss\";\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(filepath.Join(dir, cssInput), newer, newer); err != nil {
+		t.Fatal(err)
+	}
+	stale, src, _ := stylesCSSStale(dir)
+	if !stale {
+		t.Fatal("expected stale when input.css is newer")
+	}
+	if src != cssInput {
+		t.Errorf("src = %q, want %s", src, cssInput)
+	}
+}
+
+func TestStylesCSSStale_templateNewer(t *testing.T) {
+	dir := t.TempDir()
+	old := time.Now().Add(-2 * time.Hour)
+	newer := time.Now().Add(-time.Minute)
+	writeBuiltCSSAt(t, dir, old)
+	tpl := filepath.Join(dir, cssTemplates, "layout.html")
+	if err := os.MkdirAll(filepath.Dir(tpl), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(tpl, []byte(`<div class="group-hover:block"></div>`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(tpl, newer, newer); err != nil {
+		t.Fatal(err)
+	}
+	stale, src, _ := stylesCSSStale(dir)
+	if !stale {
+		t.Fatal("expected stale when a template is newer")
+	}
+	if !strings.Contains(src, "layout.html") {
+		t.Errorf("src = %q, want template path", src)
+	}
+}
+
+func TestStylesCSSStale_cssNewer(t *testing.T) {
+	dir := t.TempDir()
+	old := time.Now().Add(-2 * time.Hour)
+	newer := time.Now().Add(-time.Minute)
+	if err := os.WriteFile(filepath.Join(dir, cssInput), []byte("@import \"tailwindcss\";\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(filepath.Join(dir, cssInput), old, old); err != nil {
+		t.Fatal(err)
+	}
+	writeBuiltCSSAt(t, dir, newer)
+	stale, src, _ := stylesCSSStale(dir)
+	if stale {
+		t.Fatalf("expected not stale when styles.css is newest, src=%s", src)
+	}
+}
+
+func TestCheckCSS_staleWarns(t *testing.T) {
+	dir := t.TempDir()
+	old := time.Now().Add(-2 * time.Hour)
+	newer := time.Now().Add(-time.Minute)
+	writeBuiltCSSAt(t, dir, old)
+	if err := os.WriteFile(filepath.Join(dir, cssInput), []byte("@import \"tailwindcss\";\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(filepath.Join(dir, cssInput), newer, newer); err != nil {
+		t.Fatal(err)
+	}
+	c := checkCSS(dir)
+	if c.OK {
+		t.Fatal("expected warn (not OK) for stale styles.css")
+	}
+	if !c.Optional {
+		t.Fatal("stale CSS should warn, not FAIL doctor")
+	}
+	if !strings.Contains(c.Detail, "stale styles.css") {
+		t.Errorf("Detail = %q, want stale styles.css", c.Detail)
+	}
+	if !strings.Contains(c.FixHint, "amarra-cais css") {
+		t.Errorf("FixHint = %q", c.FixHint)
 	}
 }

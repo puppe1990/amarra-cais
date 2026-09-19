@@ -3,17 +3,20 @@ package cli
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/boot"
 )
 
 const (
-	cssInput  = "input.css"
-	cssOutput = "web/static/css/styles.css"
-	serverBin = "bin/server"
+	cssInput     = "input.css"
+	cssOutput    = "web/static/css/styles.css"
+	cssTemplates = "web/templates"
+	serverBin    = "bin/server"
 )
 
 func frameworkVersion() string {
@@ -192,16 +195,22 @@ func runTailwindBuild(dir string, watch bool) error {
 	return runCmd(dir, "npx", args...)
 }
 
-// ensureStylesCSS builds styles.css once when it is missing or still the scaffold stub (#141).
+// ensureStylesCSS builds styles.css when it is missing, still the scaffold stub (#141),
+// or older than input.css / web/templates (#189).
 // Returns an error only when CSS remains unusable after a build attempt (caller may still start the server).
 func ensureStylesCSS(w io.Writer, dir string) error {
-	if stylesCSSReady(dir) {
+	stale, _, _ := stylesCSSStale(dir)
+	if stylesCSSReady(dir) && !stale {
 		return nil
 	}
 	if _, err := os.Stat(filepath.Join(dir, cssInput)); err != nil {
 		return fmt.Errorf("%s missing and no %s to build — pages will be unstyled", cssOutput, cssInput)
 	}
-	_, _ = fmt.Fprintln(w, "→ tailwind build (styles.css missing or empty)")
+	reason := "styles.css missing or empty"
+	if stale {
+		reason = "styles.css stale"
+	}
+	_, _ = fmt.Fprintf(w, "→ tailwind build (%s)\n", reason)
 	if err := runTailwindBuild(dir, false); err != nil {
 		return fmt.Errorf("styles.css not ready: %w — run: amarra-cais css", err)
 	}
@@ -209,6 +218,46 @@ func ensureStylesCSS(w io.Writer, dir string) error {
 		return fmt.Errorf("%s still empty after build — run: amarra-cais css", cssOutput)
 	}
 	return nil
+}
+
+// stylesCSSStale reports whether styles.css is older than input.css or any file
+// under web/templates. Comparing mtimes is a cheap heuristic so git pull +
+// amarra-cais server rebuilds Tailwind instead of serving a false-green artifact (#189).
+func stylesCSSStale(dir string) (bool, string, time.Time) {
+	cssInfo, err := os.Stat(filepath.Join(dir, cssOutput))
+	if err != nil {
+		return false, "", time.Time{}
+	}
+	cssTime := cssInfo.ModTime()
+	var newestPath string
+	var newestTime time.Time
+	consider := func(rel string) {
+		info, statErr := os.Stat(filepath.Join(dir, rel))
+		if statErr != nil || info.IsDir() {
+			return
+		}
+		if info.ModTime().After(cssTime) && info.ModTime().After(newestTime) {
+			newestTime = info.ModTime()
+			newestPath = rel
+		}
+	}
+	consider(cssInput)
+	templates := filepath.Join(dir, cssTemplates)
+	_ = filepath.WalkDir(templates, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil || d.IsDir() {
+			return nil
+		}
+		rel, relErr := filepath.Rel(dir, path)
+		if relErr != nil {
+			return nil
+		}
+		consider(rel)
+		return nil
+	})
+	if newestPath == "" {
+		return false, "", time.Time{}
+	}
+	return true, newestPath, newestTime
 }
 
 func runCmd(dir string, name string, args ...string) error {
