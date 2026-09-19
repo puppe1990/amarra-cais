@@ -22,11 +22,12 @@ func checkCSS(dir string) doctorCheck {
 			FixHint: "amarra-cais css",
 		}
 	}
-	if stale, ref := stylesCSSStale(dir); stale {
+	if stale, ref, since := stylesCSSStale(dir); stale {
 		return doctorCheck{
-			Name:    "tailwind css",
-			Detail:  fmt.Sprintf("styles.css is older than %s — run amarra-cais css", ref),
-			FixHint: "amarra-cais css",
+			Name:     "tailwind css",
+			Optional: true,
+			Detail:   fmt.Sprintf("styles.css is older than %s (since %s) — run amarra-cais css", ref, since.UTC().Format(time.RFC3339)),
+			FixHint:  "amarra-cais css",
 		}
 	}
 	return doctorCheck{Name: "tailwind css", OK: true}
@@ -35,23 +36,23 @@ func checkCSS(dir string) doctorCheck {
 // stylesCSSFresh reports whether the built styles.css is at least as new as every
 // Tailwind input, so server/install rebuild after a template edit (#189).
 func stylesCSSFresh(dir string) bool {
-	stale, _ := stylesCSSStale(dir)
+	stale, _, _ := stylesCSSStale(dir)
 	return !stale
 }
 
 // stylesCSSStale compares styles.css modtime against input.css and web/templates/.
 // The gitignored artifact is not rebuilt by `git pull`, so templates newer than it
 // mean missing classes in production even though doctor would report [ok] (#189).
-func stylesCSSStale(dir string) (bool, string) {
+func stylesCSSStale(dir string) (bool, string, time.Time) {
 	info, err := os.Stat(filepath.Join(dir, cssOutput))
 	if err != nil {
-		return false, ""
+		return false, "", time.Time{}
 	}
 	newest, ref := newestTailwindInput(dir)
-	if ref == "" {
-		return false, ""
+	if ref == "" || !newest.After(info.ModTime()) {
+		return false, "", time.Time{}
 	}
-	return newest.After(info.ModTime()), ref
+	return true, ref, newest
 }
 
 func newestTailwindInput(dir string) (time.Time, string) {
