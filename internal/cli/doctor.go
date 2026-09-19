@@ -328,23 +328,6 @@ func checkSSEWriteTimeout(dir string) doctorCheck {
 	}
 }
 
-func checkJobsUI(dir string) doctorCheck {
-	path := filepath.Join(dir, "internal/app/app.go")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return doctorCheck{Name: "/jobs dashboard", OK: true, Detail: "skipped (no internal/app/app.go)"}
-	}
-	if strings.Contains(string(data), "jobsui.Register") {
-		return doctorCheck{Name: "/jobs dashboard", OK: true, Detail: "localhost queue viewer"}
-	}
-	return doctorCheck{
-		Name:     "/jobs dashboard",
-		Optional: true,
-		Detail:   "missing jobsui.Register — queue viewer not mounted",
-		FixHint:  "add jobsui.Register(r, deps.Store.DB()) in app.New (after routes)",
-	}
-}
-
 func checkAir() doctorCheck {
 	if path, err := exec.LookPath("air"); err == nil {
 		return doctorCheck{Name: "air", OK: true, Detail: path}
