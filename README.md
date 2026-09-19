@@ -67,6 +67,7 @@ export PATH="$HOME/go/bin:$PATH"
 | `amarra-cais jobs work\|status\|retry\|discard\|prune`                                                                 | SQLite background jobs + `/jobs` dashboard                 |
 | `amarra-cais doctor [--mobile]`                                                                                        | Verify amarra.js, `#amarra-main`, PWA, mobile              |
 | `amarra-cais pwa [--bump] [--force]`                                                                                   | Refresh PWA assets; `--bump` cache, `--force` resets brand |
+| `amarra-cais upgrade [version] [--dry-run]`                                                                            | Bump framework, tidy, doctor, migration checklist          |
 | `amarra-cais link [path] [--unlink]`                                                                                   | Local `go.mod replace` for framework dev                   |
 | `amarra-cais version`                                                                                                  | Framework version                                          |
 

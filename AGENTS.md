@@ -501,6 +501,7 @@ amarra-cais g [--dry-run] ci         # add CI/pre-commit to existing apps
 amarra-cais g [--dry-run] job send_welcome --cron "0 3 * * *"
 amarra-cais doctor [--mobile]        # verify amarra.js, layouts/app.html, air, go.mod, PWA/mobile
 amarra-cais pwa [--bump] [--force]   # refresh PWA assets; --bump cache, --force resets brand
+amarra-cais upgrade [version] [--dry-run]  # bump framework, run doctor, print migration steps
 amarra-cais link [path] [--unlink]   # go.mod replace for local framework dev (do not commit; unlink before push)
 amarra-cais routes                   # list routes from internal/app/routes.go
 ```
@@ -530,6 +531,7 @@ amarra-cais server   # go run ./cmd/server
 amarra-cais test     # go test ./...
 amarra-cais doctor [--mobile]  # verify amarra.js, air, go.mod, PWA/mobile
 amarra-cais pwa [--bump] [--force]  # refresh PWA assets; preserves brand unless --force
+amarra-cais upgrade [version]  # bump the framework in go.mod + migration checklist
 amarra-cais console  # Rails-style REPL (store, cfg, db + sql)
 amarra-cais routes   # list HTTP routes from internal/app/routes.go
 amarra-cais link [../amarra-cais] [--unlink]  # go.mod replace for local framework dev (unlink before push)
