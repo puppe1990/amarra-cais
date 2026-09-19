@@ -142,6 +142,52 @@ func TestCLI_PWA_BumpRefreshesFrameworkAssets(t *testing.T) {
 	}
 }
 
+// #186: a plain refresh must keep app branding; --force is the explicit reset.
+func TestCLI_PWA_PreservesBrandAssetsUnlessForced(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := t.TempDir()
+	if err := scaffoldNewApp(dir, scaffoldData{
+		AppName:    "pwa",
+		ModulePath: "github.com/puppe1990/pwa",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(dir, "web/static/manifest.webmanifest")
+	custom := `{"name":"Cifra","display":"standalone"}`
+	if err := os.WriteFile(manifest, []byte(custom), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	c := &CLI{Out: &bytes.Buffer{}}
+	orig, _ := os.Getwd()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+
+	if err := c.cmdPWA(nil); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != custom {
+		t.Errorf("plain pwa clobbered the app manifest:\n%s", body)
+	}
+
+	if err := c.cmdPWA([]string{"--force"}); err != nil {
+		t.Fatal(err)
+	}
+	body, err = os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) == custom {
+		t.Error("--force should rewrite the manifest with framework defaults")
+	}
+}
+
 func TestCLI_PWA_Bump(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	dir := t.TempDir()
