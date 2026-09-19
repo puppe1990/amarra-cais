@@ -7,23 +7,23 @@ import (
 	"testing"
 )
 
-func TestDefaultScaffoldCaisVersion_is0100(t *testing.T) {
-	if defaultScaffoldCaisVersion != "0.10.0" {
-		t.Errorf("defaultScaffoldCaisVersion = %q, want 0.10.0 so amarra-cais new pins the tagged release", defaultScaffoldCaisVersion)
+func TestDefaultScaffoldCaisVersion_is0110(t *testing.T) {
+	if defaultScaffoldCaisVersion != "0.11.0" {
+		t.Errorf("defaultScaffoldCaisVersion = %q, want 0.11.0 so amarra-cais new pins the tagged release", defaultScaffoldCaisVersion)
 	}
 }
 
-func TestREADME_goInstallPinsV0100(t *testing.T) {
+func TestREADME_goInstallPinsV0110(t *testing.T) {
 	body, err := os.ReadFile("../../README.md")
 	if err != nil {
 		t.Fatal(err)
 	}
 	text := string(body)
-	if !strings.Contains(text, "amarra-cais@v0.10.0") {
-		t.Error("README go install should pin @v0.10.0")
+	if !strings.Contains(text, "amarra-cais@v0.11.0") {
+		t.Error("README go install should pin @v0.11.0")
 	}
-	if strings.Contains(text, "amarra-cais@v0.9.0") {
-		t.Error("README still pins @v0.9.0")
+	if strings.Contains(text, "amarra-cais@v0.10.0") {
+		t.Error("README still pins @v0.10.0")
 	}
 }
 

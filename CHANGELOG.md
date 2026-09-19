@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.11.0] - 2026-09-19
+
 ### Added
 
 - `amarra-cais upgrade [version] [--dry-run]`: bumps `github.com/puppe1990/amarra-cais` in `go.mod` (default `latest`), re-runs `npm install`/`go mod tidy`, runs `doctor`, and prints a curated migration checklist for the version range (#192).
