@@ -192,21 +192,22 @@ func runTailwindBuild(dir string, watch bool) error {
 	return runCmd(dir, "npx", args...)
 }
 
-// ensureStylesCSS builds styles.css once when it is missing or still the scaffold stub (#141).
-// Returns an error only when CSS remains unusable after a build attempt (caller may still start the server).
+// ensureStylesCSS builds styles.css when it is missing, still the scaffold stub, or
+// older than its Tailwind inputs (#141, #189). Returns an error only when CSS remains
+// unusable after a build attempt (caller may still start the server).
 func ensureStylesCSS(w io.Writer, dir string) error {
-	if stylesCSSReady(dir) {
+	if stylesCSSReady(dir) && stylesCSSFresh(dir) {
 		return nil
 	}
 	if _, err := os.Stat(filepath.Join(dir, cssInput)); err != nil {
 		return fmt.Errorf("%s missing and no %s to build — pages will be unstyled", cssOutput, cssInput)
 	}
-	_, _ = fmt.Fprintln(w, "→ tailwind build (styles.css missing or empty)")
+	_, _ = fmt.Fprintln(w, "→ tailwind build (styles.css missing, empty, or stale)")
 	if err := runTailwindBuild(dir, false); err != nil {
 		return fmt.Errorf("styles.css not ready: %w — run: amarra-cais css", err)
 	}
-	if !stylesCSSReady(dir) {
-		return fmt.Errorf("%s still empty after build — run: amarra-cais css", cssOutput)
+	if !stylesCSSReady(dir) || !stylesCSSFresh(dir) {
+		return fmt.Errorf("%s still empty or stale after build — run: amarra-cais css", cssOutput)
 	}
 	return nil
 }
