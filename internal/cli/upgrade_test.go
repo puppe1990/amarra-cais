@@ -177,3 +177,17 @@ func TestCLI_Upgrade_requiresCaisApp(t *testing.T) {
 		t.Fatal("expected error outside a Cais app")
 	}
 }
+
+func TestCLI_Upgrade_dispatches(t *testing.T) {
+	dir := upgradeFixture(t, "0.2.2")
+	fakeToolchain(t)
+	t.Chdir(dir)
+
+	var buf bytes.Buffer
+	if err := (&CLI{Out: &buf}).Run([]string{"upgrade", "--dry-run"}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "migration checklist") {
+		t.Errorf("dispatch did not reach cmdUpgrade:\n%s", buf.String())
+	}
+}

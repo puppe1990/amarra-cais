@@ -15,7 +15,7 @@ func TestCLI_Help_IncludesAppCommands(t *testing.T) {
 	if err := c.Run([]string{"help"}); err != nil {
 		t.Fatal(err)
 	}
-	for _, cmd := range []string{"amarra-cais install", "amarra-cais css", "amarra-cais dev", "amarra-cais build", "amarra-cais server", "amarra-cais db migrate", "amarra-cais db status", "amarra-cais db rollback", "amarra-cais db prune-sessions", "amarra-cais db seed", "amarra-cais routes", "amarra-cais version", "amarra-cais g [--dry-run] ci", "amarra-cais g [--dry-run] console", "amarra-cais destroy"} {
+	for _, cmd := range []string{"amarra-cais install", "amarra-cais css", "amarra-cais dev", "amarra-cais build", "amarra-cais server", "amarra-cais db migrate", "amarra-cais db status", "amarra-cais db rollback", "amarra-cais db prune-sessions", "amarra-cais db seed", "amarra-cais routes", "amarra-cais version", "amarra-cais g [--dry-run] ci", "amarra-cais g [--dry-run] console", "amarra-cais destroy", "amarra-cais upgrade"} {
 		if !strings.Contains(buf.String(), cmd) {
 			t.Errorf("help missing %q", cmd)
 		}
