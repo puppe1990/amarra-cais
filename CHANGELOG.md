@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Fixed
+
+- `amarra-cais pwa --bump` now refreshes the vendored assets before incrementing `CACHE_VERSION`, matching the help text (#187).
+
 ## [0.10.0] - 2026-09-17
 
 ### Added

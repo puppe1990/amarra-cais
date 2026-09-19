@@ -21,14 +21,10 @@ func (c *CLI) cmdPWA(args []string) error {
 		}
 	}
 
+	bump := false
 	for _, arg := range args {
 		if arg == "--bump" {
-			v, err := pwa.BumpCacheVersion(dir)
-			if err != nil {
-				return err
-			}
-			_, _ = fmt.Fprintf(c.Out, "→ PWA cache version bumped to %d (reinstall PWA on phone to pick up changes)\n", v)
-			return nil
+			bump = true
 		}
 	}
 
@@ -59,6 +55,15 @@ func (c *CLI) cmdPWA(args []string) error {
 		_, _ = fmt.Fprintln(c.Out, "  tip: amarra-cais pwa --bump after deploy so installed PWAs drop old caches")
 	} else {
 		_, _ = fmt.Fprintf(c.Out, "→ sw.js network-first for Amarra (CACHE_VERSION=%d)\n", ver)
+	}
+	// #187: --bump refreshes vendored assets first (above) and then invalidates the
+	// cache, so a framework upgrade is one command instead of two.
+	if bump {
+		bumped, err := pwa.BumpCacheVersion(dir)
+		if err != nil {
+			return err
+		}
+		_, _ = fmt.Fprintf(c.Out, "→ PWA cache version bumped to %d (reinstall PWA on phone to pick up changes)\n", bumped)
 	}
 	return nil
 }
