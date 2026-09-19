@@ -120,8 +120,14 @@ func TestCheckCSS_staleWhenTemplateIsNewer(t *testing.T) {
 	if c.OK {
 		t.Fatal("stale styles.css must not be [ok]")
 	}
+	if !c.Optional {
+		t.Error("stale styles.css should warn, not fail doctor")
+	}
 	if !strings.Contains(c.Detail, "older") {
 		t.Errorf("Detail = %q, want staleness explanation", c.Detail)
+	}
+	if !strings.Contains(c.Detail, "since") {
+		t.Errorf("Detail = %q, want the newer input timestamp", c.Detail)
 	}
 	if !strings.Contains(c.FixHint, "amarra-cais css") {
 		t.Errorf("FixHint = %q, want amarra-cais css", c.FixHint)
