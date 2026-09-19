@@ -5,7 +5,22 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
+
+// writeFileAt writes body and pins mtime so staleness comparison is deterministic.
+func writeFileAt(t *testing.T, path, body string, mod time.Time) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(path, mod, mod); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestCheckCSS_missing(t *testing.T) {
 	dir := t.TempDir()
@@ -89,5 +104,50 @@ func TestStylesCSSReady(t *testing.T) {
 	}
 	if !stylesCSSReady(dir) {
 		t.Fatal("built CSS should be ready")
+	}
+}
+
+// #189: after a `git pull` deploy, the gitignored styles.css can be older than a
+// template edit that added new Tailwind classes. doctor must not report [ok].
+func TestCheckCSS_staleWhenTemplateIsNewer(t *testing.T) {
+	dir := t.TempDir()
+	built := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	edited := built.Add(time.Hour)
+	writeFileAt(t, filepath.Join(dir, cssOutput), ".flex{display:flex}", built)
+	writeFileAt(t, filepath.Join(dir, "web/templates/pages/home.html"), "<p>group-hover:block</p>", edited)
+
+	c := checkCSS(dir)
+	if c.OK {
+		t.Fatal("stale styles.css must not be [ok]")
+	}
+	if !strings.Contains(c.Detail, "older") {
+		t.Errorf("Detail = %q, want staleness explanation", c.Detail)
+	}
+	if !strings.Contains(c.FixHint, "amarra-cais css") {
+		t.Errorf("FixHint = %q, want amarra-cais css", c.FixHint)
+	}
+}
+
+func TestCheckCSS_staleWhenInputCSSIsNewer(t *testing.T) {
+	dir := t.TempDir()
+	built := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	edited := built.Add(time.Hour)
+	writeFileAt(t, filepath.Join(dir, cssOutput), ".flex{display:flex}", built)
+	writeFileAt(t, filepath.Join(dir, cssInput), "@import \"tailwindcss\";", edited)
+
+	if c := checkCSS(dir); c.OK {
+		t.Fatal("input.css newer than styles.css must not be [ok]")
+	}
+}
+
+func TestCheckCSS_freshAfterRebuild(t *testing.T) {
+	dir := t.TempDir()
+	template := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	rebuilt := template.Add(time.Hour)
+	writeFileAt(t, filepath.Join(dir, "web/templates/pages/home.html"), "<p>group-hover:block</p>", template)
+	writeFileAt(t, filepath.Join(dir, cssOutput), ".flex{display:flex}", rebuilt)
+
+	if c := checkCSS(dir); !c.OK {
+		t.Fatalf("fresh styles.css should be OK, got %+v", c)
 	}
 }

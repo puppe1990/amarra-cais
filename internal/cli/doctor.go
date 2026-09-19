@@ -395,42 +395,6 @@ func checkQualityTooling(dir string) doctorCheck {
 	return doctorCheck{Name: "quality tooling", OK: true}
 }
 
-func checkCSS(dir string) doctorCheck {
-	path := filepath.Join(dir, cssOutput)
-	if _, err := os.Stat(path); err != nil {
-		return doctorCheck{Name: "tailwind css", Detail: "styles.css missing", FixHint: "amarra-cais css"}
-	}
-	if !stylesCSSReady(dir) {
-		return doctorCheck{
-			Name:    "tailwind css",
-			Detail:  "styles.css empty or not built (app will look unstyled)",
-			FixHint: "amarra-cais css",
-		}
-	}
-	return doctorCheck{Name: "tailwind css", OK: true}
-}
-
-// stylesCSSReady reports whether web/static/css/styles.css looks like a real Tailwind build.
-// Scaffold writes a comment-only stub; git clones omit the gitignored file entirely (#141).
-func stylesCSSReady(dir string) bool {
-	body, err := os.ReadFile(filepath.Join(dir, cssOutput))
-	if err != nil {
-		return false
-	}
-	trimmed := strings.TrimSpace(string(body))
-	if trimmed == "" {
-		return false
-	}
-	// Comment-only / placeholder stubs ship with cais new until `cais css` runs.
-	withoutComments := regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(trimmed, "")
-	withoutComments = strings.TrimSpace(withoutComments)
-	if withoutComments == "" {
-		return false
-	}
-	// Real Tailwind output always contains a CSS rule (selector + block).
-	return strings.Contains(withoutComments, "{")
-}
-
 func checkSeedsInfo(dir string) *doctorCheck {
 	path := filepath.Join(dir, "internal/db/seeds.go")
 	if _, err := os.Stat(path); err != nil {

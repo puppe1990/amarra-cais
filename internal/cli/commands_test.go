@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestCLI_Help_IncludesAppCommands(t *testing.T) {
@@ -97,6 +98,30 @@ func TestEnsureStylesCSS_skipsWhenReady(t *testing.T) {
 	}
 	if buf.Len() != 0 {
 		t.Errorf("expected no build log when ready, got %q", buf.String())
+	}
+}
+
+// #189: a stale styles.css must trigger a Tailwind rebuild on server/install.
+func TestEnsureStylesCSS_rebuildsWhenStale(t *testing.T) {
+	dir := t.TempDir()
+	built := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	edited := built.Add(time.Hour)
+	writeFileAt(t, filepath.Join(dir, cssInput), "@import \"tailwindcss\";", edited)
+	writeFileAt(t, filepath.Join(dir, cssOutput), ".flex{display:flex}", built)
+	writeFileAt(t, filepath.Join(dir, "web/templates/pages/home.html"), "<p>group-hover:block</p>", edited)
+	logPath := fakeToolchain(t)
+
+	var buf bytes.Buffer
+	_ = ensureStylesCSS(&buf, dir)
+	if !strings.Contains(buf.String(), "tailwind build") {
+		t.Errorf("stale CSS should trigger a rebuild, log: %q", buf.String())
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("no tool calls recorded: %v", err)
+	}
+	if !strings.Contains(string(calls), "tailwindcss") {
+		t.Errorf("expected npx tailwindcss, calls:\n%s", calls)
 	}
 }
 
