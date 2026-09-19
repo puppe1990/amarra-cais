@@ -155,7 +155,7 @@ func startDevAssetWatchers(dir string) (func(), error) {
 	if _, err := os.Stat(filepath.Join(dir, cssInput)); err != nil {
 		return stop, nil
 	}
-	watch := exec.Command("npx", "tailwindcss", "-i", cssInput, "-o", cssOutput, "--watch")
+	watch := exec.Command("npx", tailwindCSSArgs(true)...)
 	watch.Dir = dir
 	watch.Stdout = os.Stdout
 	watch.Stderr = os.Stderr
@@ -183,13 +183,18 @@ func runTailwindBuild(dir string, watch bool) error {
 	if _, err := os.Stat(filepath.Join(dir, cssInput)); err != nil {
 		return fmt.Errorf("missing %s", cssInput)
 	}
-	args := []string{"tailwindcss", "-i", cssInput, "-o", cssOutput}
+	return runCmd(dir, "npx", tailwindCSSArgs(watch)...)
+}
+
+// tailwindCSSArgs is the npx tailwindcss argv for one-shot and watch builds.
+// Watch also minifies so `amarra-cais dev` does not rewrite a committed
+// minified styles.css as unminified (#193).
+func tailwindCSSArgs(watch bool) []string {
+	args := []string{"tailwindcss", "-i", cssInput, "-o", cssOutput, "--minify"}
 	if watch {
 		args = append(args, "--watch")
-	} else {
-		args = append(args, "--minify")
 	}
-	return runCmd(dir, "npx", args...)
+	return args
 }
 
 // ensureStylesCSS builds styles.css when it is missing, still the scaffold stub, or

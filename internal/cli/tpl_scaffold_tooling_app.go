@@ -44,7 +44,7 @@ css:
 	npx tailwindcss -i $(CSS_IN) -o $(CSS_OUT) --minify
 
 css-watch:
-	npx tailwindcss -i $(CSS_IN) -o $(CSS_OUT) --watch
+	npx tailwindcss -i $(CSS_IN) -o $(CSS_OUT) --minify --watch
 
 build: css
 	CGO_ENABLED=0 go build -ldflags="-s -w" -o $(BIN) ./cmd/server
