@@ -28,6 +28,10 @@ type Config struct {
 	Display     string
 	ThemeColor  string
 	IconPath    string
+	// Force rewrites app-owned brand assets (manifest, offline.html, og.png, icons)
+	// that already exist. Framework runtime (amarra.js, sw.js) is always refreshed;
+	// without Force `pwa` can upgrade the runtime without clobbering branding (#186).
+	Force bool
 }
 
 func DefaultConfig(name string) Config {
@@ -119,31 +123,38 @@ func WriteStatic(appDir string, cfg Config) error {
 		{"assets/cais-core.js", "js/cais-core.js"},
 		{"assets/cais-chat.js", "js/cais-chat.js"},
 		{"assets/cais-chat-logic.mjs", "js/cais-chat-logic.mjs"},
-		{"assets/offline.html", "offline.html"},
-		{"assets/go-on-cais.jpg", "img/go-on-cais.jpg"},
 	} {
 		if err := copyAsset(pair.src, filepath.Join(staticDir, pair.dst)); err != nil {
 			return err
 		}
+	}
+	if err := writeUserAsset("assets/offline.html", filepath.Join(staticDir, "offline.html"), cfg.Force); err != nil {
+		return err
+	}
+	if err := writeUserAsset("assets/go-on-cais.jpg", filepath.Join(staticDir, "img", "go-on-cais.jpg"), cfg.Force); err != nil {
+		return err
 	}
 	// SW via SyncServiceWorker so CACHE_VERSION is preserved on upgrades.
 	if _, _, err := SyncServiceWorker(appDir); err != nil {
 		return err
 	}
 
-	if err := writeOGImage(filepath.Join(staticDir, "og.png")); err != nil {
+	if err := writeOGImage(filepath.Join(staticDir, "og.png"), cfg.Force); err != nil {
 		return err
 	}
-	if err := writeAppIcons(filepath.Join(staticDir, "icons"), cfg.IconPath); err != nil {
+	if err := writeAppIcons(filepath.Join(staticDir, "icons"), cfg.IconPath, cfg.Force); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// InstallTo writes PWA assets using DefaultConfig(name).
+// InstallTo writes PWA assets using DefaultConfig(name), overwriting existing
+// app-owned assets (this is the explicit "write defaults" entry point).
 func InstallTo(appDir, name string) error {
-	return WriteStatic(appDir, DefaultConfig(name))
+	cfg := DefaultConfig(name)
+	cfg.Force = true
+	return WriteStatic(appDir, cfg)
 }
 
 // WriteStaticInertia writes PWA assets for Inertia+Svelte apps (no HTMX JS bundles).
@@ -172,21 +183,25 @@ func WriteStaticInertia(appDir string, cfg Config) error {
 
 	for _, pair := range []struct{ src, dst string }{
 		{"assets/amarra.js", "js/amarra.js"},
-		{"assets/offline.html", "offline.html"},
-		{"assets/go-on-cais.jpg", "img/go-on-cais.jpg"},
 	} {
 		if err := copyAsset(pair.src, filepath.Join(staticDir, pair.dst)); err != nil {
 			return err
 		}
 	}
+	if err := writeUserAsset("assets/offline.html", filepath.Join(staticDir, "offline.html"), cfg.Force); err != nil {
+		return err
+	}
+	if err := writeUserAsset("assets/go-on-cais.jpg", filepath.Join(staticDir, "img", "go-on-cais.jpg"), cfg.Force); err != nil {
+		return err
+	}
 	if _, _, err := SyncServiceWorker(appDir); err != nil {
 		return err
 	}
 
-	if err := writeOGImage(filepath.Join(staticDir, "og.png")); err != nil {
+	if err := writeOGImage(filepath.Join(staticDir, "og.png"), cfg.Force); err != nil {
 		return err
 	}
-	if err := writeAppIcons(filepath.Join(staticDir, "icons"), cfg.IconPath); err != nil {
+	if err := writeAppIcons(filepath.Join(staticDir, "icons"), cfg.IconPath, cfg.Force); err != nil {
 		return err
 	}
 
@@ -213,6 +228,11 @@ func InstallForAmarra(appDir, name string) error {
 }
 
 func writeManifest(path string, cfg Config) error {
+	if !cfg.Force {
+		if _, err := os.Stat(path); err == nil {
+			return nil
+		}
+	}
 	display := cfg.Display
 	if display == "" {
 		display = "fullscreen"
@@ -271,6 +291,20 @@ func copyAsset(src, dst string) error {
 	return writeFileSafe(dst, data)
 }
 
+// writeUserAsset writes an app-owned asset (offline page, brand image) only when
+// missing unless force, so `pwa` can refresh the runtime without losing branding (#186).
+func writeUserAsset(src, dst string, force bool) error {
+	if !force && fileExists(dst) {
+		return nil
+	}
+	return copyAsset(src, dst)
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
 // writeFileSafe refuses to follow a planted symlink at the destination (#134).
 func writeFileSafe(path string, data []byte) error {
 	if err := fsutil.RefuseSymlinkWrite(path); err != nil {
@@ -281,7 +315,10 @@ func writeFileSafe(path string, data []byte) error {
 
 // writeOGImage copies the neutral 1200x630 preview shipped with the framework.
 // Apps replace web/static/og.png with their own art (#64).
-func writeOGImage(path string) error {
+func writeOGImage(path string, force bool) error {
+	if !force && fileExists(path) {
+		return nil
+	}
 	return copyAsset("assets/og.png", path)
 }
 
@@ -292,14 +329,6 @@ func fill(img *image.RGBA, c color.RGBA) {
 			img.Set(x, y, c)
 		}
 	}
-}
-
-func encodePNG(path string, img image.Image) error {
-	body, err := encodePNGBytes(img)
-	if err != nil {
-		return err
-	}
-	return writeFileSafe(path, body)
 }
 
 func encodePNGBytes(img image.Image) ([]byte, error) {
@@ -319,30 +348,57 @@ func iconSource(iconPath string) ([]byte, error) {
 	return assets.ReadFile("assets/icon.png")
 }
 
-func writeAppIcons(dir string, iconPath string) error {
+func writeAppIcons(dir string, iconPath string, force bool) error {
+	if !force && iconsComplete(dir) {
+		return nil
+	}
 	data, err := iconSource(iconPath)
 	if err != nil {
-		return err
-	}
-	if err := writeFileSafe(filepath.Join(dir, "icon.png"), data); err != nil {
 		return err
 	}
 	src, err := png.Decode(bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
+	if err := writeIcon(dir, "icon.png", data, force); err != nil {
+		return err
+	}
 	for _, size := range []int{192, 512} {
 		dst := resizeNearest(src, size, size)
-		if err := encodePNG(filepath.Join(dir, fmt.Sprintf("icon-%d.png", size)), dst); err != nil {
+		body, err := encodePNGBytes(dst)
+		if err != nil {
+			return err
+		}
+		if err := writeIcon(dir, fmt.Sprintf("icon-%d.png", size), body, force); err != nil {
 			return err
 		}
 	}
 	// Separate maskable file: platforms crop `any` icons, so keep a version whose
 	// content sits inside the safe zone (#64).
-	if err := encodePNG(filepath.Join(dir, "icon-512-maskable.png"), maskableIcon(src, 512)); err != nil {
+	body, err := encodePNGBytes(maskableIcon(src, 512))
+	if err != nil {
 		return err
 	}
-	return nil
+	return writeIcon(dir, "icon-512-maskable.png", body, force)
+}
+
+// writeIcon leaves an existing icon untouched unless force, so a refresh can
+// backfill a missing file (e.g. maskable) without clobbering replaced icons (#186).
+func writeIcon(dir, name string, data []byte, force bool) error {
+	path := filepath.Join(dir, name)
+	if !force && fileExists(path) {
+		return nil
+	}
+	return writeFileSafe(path, data)
+}
+
+func iconsComplete(dir string) bool {
+	for _, name := range []string{"icon.png", "icon-192.png", "icon-512.png", "icon-512-maskable.png"} {
+		if !fileExists(filepath.Join(dir, name)) {
+			return false
+		}
+	}
+	return true
 }
 
 // maskableIcon insets src to 80% of the canvas over its own corner color, the

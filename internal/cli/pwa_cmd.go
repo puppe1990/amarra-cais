@@ -21,10 +21,13 @@ func (c *CLI) cmdPWA(args []string) error {
 		}
 	}
 
-	bump := false
+	bump, force := false, false
 	for _, arg := range args {
-		if arg == "--bump" {
+		switch arg {
+		case "--bump":
 			bump = true
+		case "--force":
+			force = true
 		}
 	}
 
@@ -40,8 +43,11 @@ func (c *CLI) cmdPWA(args []string) error {
 
 	_, _ = fmt.Fprintln(c.Out, "→ writing PWA assets")
 	// HTML Amarra apps: amarra.js + network-first SW. Never dump HTMX/Inertia bundles.
-	// InstallForAmarra uses SyncServiceWorker so CACHE_VERSION is preserved (#135).
-	err = pwa.InstallForAmarra(dir, name)
+	// Existing brand assets (manifest, offline.html, og.png, icons) are preserved
+	// unless --force; framework runtime is always refreshed (#186).
+	cfg := pwa.DefaultConfig(name)
+	cfg.Force = force
+	err = pwa.WriteStaticAmarra(dir, cfg)
 	if err != nil {
 		return err
 	}
