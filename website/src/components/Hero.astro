@@ -1,0 +1,114 @@
+---
+import { Image } from "astro:assets";
+import { LinkButton } from "@astrojs/starlight/components";
+
+const PAGE_TITLE_ID = "_top";
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline, image, actions = [] } = data.hero || {};
+const isPt = Astro.locals.starlightRoute.locale === "pt-br";
+const kicker = isPt ? "Go HTML-first · Views + Drive" : "HTML-first Go · Views + Drive";
+const copyLabel = isPt ? "copiar" : "copy";
+const copiedLabel = isPt ? "copiado" : "copied";
+const installCmd = "amarra-cais new myapp";
+
+const imageAttrs = {
+  loading: "eager" as const,
+  decoding: "async" as const,
+  width: 720,
+  height: 720,
+  alt: image?.alt || "",
+};
+
+let darkImage: ImageMetadata | undefined;
+let lightImage: ImageMetadata | undefined;
+if (image) {
+  if ("file" in image) {
+    darkImage = image.file;
+  } else if ("dark" in image) {
+    darkImage = image.dark;
+    lightImage = image.light;
+  }
+}
+---
+
+<div class="hero">
+  {
+    darkImage && (
+      <figure class:list={["hero-art", { "light:sl-hidden": Boolean(lightImage) }]}>
+        <Image src={darkImage} {...imageAttrs} />
+        <figcaption>// amarra no cais</figcaption>
+      </figure>
+    )
+  }
+  {
+    lightImage && (
+      <figure class="hero-art dark:sl-hidden">
+        <Image src={lightImage} {...imageAttrs} />
+        <figcaption>// amarra no cais</figcaption>
+      </figure>
+    )
+  }
+  <div class="sl-flex stack">
+    <div class="sl-flex copy">
+      <p class="kicker">{kicker}</p>
+      <h1 id={PAGE_TITLE_ID} data-page-title set:html={title} />
+      {tagline && <div class="tagline" set:html={tagline} />}
+    </div>
+    {
+      actions.length > 0 && (
+        <div class="sl-flex actions">
+          {actions.map(
+            ({ attrs: { class: className, ...attrs } = {}, icon, link: href, text, variant }) => (
+              <LinkButton {href} {variant} icon={icon?.name} class:list={[className]} {...attrs}>
+                {text}
+                {icon?.html && <Fragment set:html={icon.html} />}
+              </LinkButton>
+            )
+          )}
+        </div>
+      )
+    }
+    <amarra-install data-copied={copiedLabel}>
+      <span class="prompt">$</span>
+      <code>{installCmd}</code>
+      <button type="button" data-copy={installCmd}>{copyLabel}</button>
+    </amarra-install>
+  </div>
+</div>
+
+<script>
+  class AmarraInstall extends HTMLElement {
+    connectedCallback() {
+      const button = this.querySelector("button");
+      if (!(button instanceof HTMLButtonElement)) return;
+      const label = button.textContent;
+      const copied = this.dataset.copied || "copied";
+      button.addEventListener("click", async () => {
+        const text = button.dataset.copy || "";
+        let ok = false;
+        try {
+          await navigator.clipboard.writeText(text);
+          ok = true;
+        } catch {
+          const field = document.createElement("textarea");
+          field.value = text;
+          field.setAttribute("readonly", "");
+          field.style.position = "fixed";
+          field.style.left = "-9999px";
+          document.body.appendChild(field);
+          field.select();
+          ok = document.execCommand("copy");
+          field.remove();
+        }
+        if (!ok) return;
+        button.textContent = copied;
+        window.setTimeout(() => {
+          button.textContent = label;
+        }, 1600);
+      });
+    }
+  }
+  if (!customElements.get("amarra-install")) {
+    customElements.define("amarra-install", AmarraInstall);
+  }
+</script>
