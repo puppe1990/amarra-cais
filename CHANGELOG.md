@@ -9,6 +9,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 ### Added
 
 - `website/`: Astro Starlight docs site (English + pt-BR) — getting started, how-to guides, CLI/generator/views reference and explanations — with a GitHub Pages deploy workflow, a `Docs site` CI job and `make docs` / `make docs-build`.
+- `amarra-cais new` ships the docs boat mark as `web/static/favicon.svg` (tab icon). PWA PNG tiles stay the neutral placeholder until the app replaces them.
 
 ### Fixed
 

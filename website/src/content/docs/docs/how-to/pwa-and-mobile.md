@@ -41,7 +41,7 @@ The default CSP blocks `fonts.googleapis.com`. Scaffold `input.css` uses system 
 
 ## Brand assets
 
-Scaffolds ship a **neutral placeholder** tile (`pkg/cais/pwa/assets/icon.png`, 512×512) plus a generated `icons/icon-512-maskable.png`. The manifest splits `any` icons (192 + 512) from the `maskable` one. `amarra-cais doctor` warns while `web/static/icons/*` and `og.png` are still the shipped placeholders. Replace them with your own brand before you ship; `amarra-cais pwa --force` resets brand assets back to the defaults if you need a clean slate.
+Scaffolds ship the docs boat mark as `web/static/favicon.svg` (the tab icon), a **neutral placeholder** tile (`pkg/cais/pwa/assets/icon.png`, 512×512) plus a generated `icons/icon-512-maskable.png`. The manifest splits `any` icons (192 + 512) from the `maskable` one. `amarra-cais doctor` warns while `web/static/favicon.svg`, `web/static/icons/*` and `og.png` are still the shipped defaults. Replace them with your own brand before you ship; `amarra-cais pwa --force` resets brand assets back to the defaults if you need a clean slate.
 
 ## Mobile checklist
 

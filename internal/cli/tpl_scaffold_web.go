@@ -32,7 +32,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="{{.AppName}}" />
     <link rel="apple-touch-icon" href="/static/icons/icon.png" />
-    <link rel="icon" href="/static/icons/icon.png" type="image/png" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <script src="/static/js/amarra.js" defer></script>
   </head>
   <body class="min-h-screen bg-ink font-sans antialiased text-foam flex flex-col justify-between">

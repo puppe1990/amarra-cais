@@ -41,6 +41,6 @@ func checkBrandAssets(dir string) doctorCheck {
 		Name:     "brand assets",
 		Optional: true,
 		Detail:   "still the scaffold placeholder: " + strings.Join(stale, ", "),
-		FixHint:  "replace web/static/icons/*.png and web/static/og.png with the product brand",
+		FixHint:  "replace web/static/favicon.svg, web/static/icons/*.png and web/static/og.png with the product brand",
 	}
 }
