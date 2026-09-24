@@ -6,6 +6,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Added
+
+- `website/`: Astro Starlight docs site (English + pt-BR) — getting started, how-to guides, CLI/generator/views reference and explanations — with a GitHub Pages deploy workflow, a `Docs site` CI job and `make docs` / `make docs-build`.
+
+### Fixed
+
+- AGENTS.md router example: `r.Group` now shows `middleware.AdminAuth(cfg)`, since `middleware.Protect` is a handler wrapper, not a `cais.Middleware`.
+
 ## [0.11.0] - 2026-09-19
 
 ### Added

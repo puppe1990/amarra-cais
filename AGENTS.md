@@ -89,6 +89,7 @@ Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go
 | `internal/cli/`           | Generators (`amarra-cais new`, `g`, `destroy`) — **HTML + Amarra scaffolds**                                 |
 | `cmd/amarra-cais/`        | CLI entry point                                                                                              |
 | `cmd/pwagen/`             | Write PWA assets into a target directory                                                                     |
+| `website/`                | Starlight docs site (EN + pt-BR) for users — this AGENTS.md stays the agent contract                         |
 
 This repo is **framework + CLI only** (no dogfood app). Apps live outside; create with `amarra-cais new`.
 
@@ -108,7 +109,7 @@ Handlers do **not** check `HX-Request`. They call `view.Write`.
 r.Get("/blog/{slug}", cais.StringParam("slug", blog.Show))
 r.Post("/chat/{id}/permissions/{permID}/approve", cais.StringParams("id", "permID", chat.ApprovePermission))
 r.Get("/items/{id}/{slug}", cais.IntStringParams("id", "slug", items.Show))
-r.Group(middleware.Protect, func(g *cais.Router) {
+r.Group(middleware.AdminAuth(cfg), func(g *cais.Router) {
   g.Post("/admin/items/{id}", cais.IntParam("id", admin.Update))
 })
 ```

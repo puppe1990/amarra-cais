@@ -9,3 +9,5 @@ pkg/amarra/view/components/
 pkg/cais/testdata/
 package-lock.json
 go.sum
+website/dist/
+website/.astro/

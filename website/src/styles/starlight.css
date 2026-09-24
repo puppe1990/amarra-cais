@@ -1,0 +1,12 @@
+/* Amarra brand accent — sea teal. */
+:root {
+  --sl-color-accent-low: #0b2f3a;
+  --sl-color-accent: #1f8ba3;
+  --sl-color-accent-high: #a7dfe9;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #c9ecf2;
+  --sl-color-accent: #0f6b80;
+  --sl-color-accent-high: #082f3a;
+}

@@ -1,4 +1,4 @@
-.PHONY: build test test-v lint format format-check pre-commit-install ci install-cli js-build js-test js-bundle-check clean
+.PHONY: build test test-v lint format format-check pre-commit-install ci install-cli js-build js-test js-bundle-check docs docs-build clean
 
 BIN := bin/amarra-cais
 
@@ -38,6 +38,13 @@ ci: test js-test lint format-check js-bundle-check
 
 install-cli:
 	go install ./cmd/amarra-cais
+
+# Docs site (Astro Starlight) lives in website/.
+docs:
+	cd website && npm install && npm run dev
+
+docs-build:
+	cd website && npm ci && npm run build
 
 clean:
 	rm -rf bin/ tmp/

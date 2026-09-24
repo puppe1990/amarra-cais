@@ -1,0 +1,43 @@
+---
+title: Amarra
+description: HTML-first Go framework for mini apps — Amarra Views + Drive, Tailwind and SQLite, with a Rails-style CLI.
+template: splash
+hero:
+  tagline: The HTML-first Go framework for mini apps. Amarra Views + Drive, Tailwind and SQLite — with a Rails-style CLI.
+  actions:
+    - text: Get started
+      link: /amarra-cais/docs/getting-started/installation/
+      icon: right-arrow
+      variant: primary
+    - text: CLI reference
+      link: /amarra-cais/docs/reference/cli/
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+<CardGrid stagger>
+  <Card title="HTML first, no SPA" icon="pencil">
+    Handlers call `view.Write`; Drive morphs `#amarra-main` on navigation. No Vite, no Svelte, no
+    Inertia.
+  </Card>
+  <Card title="Rails-style CLI" icon="rocket">
+    `amarra-cais new`, `g resource`, `g auth`, `g job`, `g stream chat` — and `destroy` to undo
+    generator output.
+  </Card>
+  <Card title="Kit + hooks" icon="puzzle">
+    `<.table>`, `<.form>`, `<.stat>` and `amarra-hook` builtins like `dialog`, `dropdown`, `bulk`,
+    `nav` and `theme`.
+  </Card>
+  <Card title="One SQLite file" icon="database">
+    WAL, busy timeout and a background job queue in the same file — plus PWA and mobile testing
+    built in.
+  </Card>
+</CardGrid>
+
+## Start here
+
+- [Installation](/amarra-cais/docs/getting-started/installation/) — get the `amarra-cais` CLI.
+- [Your first app](/amarra-cais/docs/getting-started/your-first-app/) — scaffold and run in two commands.
+- [Project layout](/amarra-cais/docs/getting-started/project-layout/) — what lives where.
+- [Why HTML-first?](/amarra-cais/docs/explanation/views-and-drive/) — the reasoning behind Views + Drive.

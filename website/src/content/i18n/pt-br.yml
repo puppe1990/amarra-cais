@@ -1,0 +1,4 @@
+# Site-level overrides for Starlight's built-in pt-BR UI strings.
+# Defining the `i18n` collection also keeps `getCollection('i18n')` non-empty,
+# which Starlight calls on every build.
+"fileTree.directory": "Diretório"

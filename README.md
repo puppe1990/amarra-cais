@@ -6,6 +6,8 @@ Full-stack Go framework for mini apps (Lightsail-friendly): **Amarra Views + Dri
 
 This repository is the **framework + CLI** only. Generate apps with `amarra-cais new`. The CLI binary is `amarra-cais` (it does not overwrite `cais`). Cais v0.11.x remains the Inertia + Svelte product.
 
+**Docs:** [puppe1990.github.io/amarra-cais](https://puppe1990.github.io/amarra-cais/) — getting started, how-to guides, CLI/generator reference and explanations (English and Português). Source in [`website/`](website/).
+
 ## Stack
 
 | Layer    | Choice                                                                |
