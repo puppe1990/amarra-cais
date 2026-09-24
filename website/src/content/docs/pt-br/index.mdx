@@ -3,18 +3,22 @@ title: Amarra
 description: Framework Go HTML-first para mini apps — Amarra Views + Drive, Tailwind e SQLite, com uma CLI no estilo Rails.
 template: splash
 hero:
-  tagline: O framework Go HTML-first para mini apps. Amarra Views + Drive, Tailwind e SQLite — com uma CLI no estilo Rails.
+  title: O framework HTML-first<br />para Go.
+  tagline: Tudo para levar um mini app da ideia à produção — views, Drive, jobs, auth — gerado e ligado junto.
+  image:
+    file: ../../../assets/amarra-harbor.webp
+    alt: Um barco de pesca amarrado a um cais de madeira numa vila à beira-mar, com pessoas comemorando no píer.
   actions:
-    - text: Começar
+    - text: Começar a construir
       link: /amarra-cais/pt-br/docs/getting-started/installation/
       icon: right-arrow
       variant: primary
-    - text: Referência da CLI
-      link: /amarra-cais/pt-br/docs/reference/cli/
+    - text: GitHub
+      link: https://github.com/puppe1990/amarra-cais
       variant: minimal
 ---
 
-import { Card, CardGrid } from "@astrojs/starlight/components";
+import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 <CardGrid stagger>
   <Card title="HTML first, sem SPA" icon="pencil">
@@ -37,7 +41,25 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Comece por aqui
 
-- [Instalação](/amarra-cais/pt-br/docs/getting-started/installation/) — obtenha a CLI `amarra-cais`.
-- [Seu primeiro app](/amarra-cais/pt-br/docs/getting-started/your-first-app/) — faça o scaffold e rode em dois comandos.
-- [Estrutura do projeto](/amarra-cais/pt-br/docs/getting-started/project-layout/) — o que fica onde.
-- [Por que HTML-first?](/amarra-cais/pt-br/docs/explanation/views-and-drive/) — o raciocínio por trás de Views + Drive.
+<CardGrid>
+  <LinkCard
+    title="Instalação"
+    href="/amarra-cais/pt-br/docs/getting-started/installation/"
+    description="Obtenha a CLI amarra-cais."
+  />
+  <LinkCard
+    title="Seu primeiro app"
+    href="/amarra-cais/pt-br/docs/getting-started/your-first-app/"
+    description="Faça o scaffold e rode em dois comandos."
+  />
+  <LinkCard
+    title="Estrutura do projeto"
+    href="/amarra-cais/pt-br/docs/getting-started/project-layout/"
+    description="O que fica onde."
+  />
+  <LinkCard
+    title="Por que HTML-first?"
+    href="/amarra-cais/pt-br/docs/explanation/views-and-drive/"
+    description="O raciocínio por trás de Views + Drive."
+  />
+</CardGrid>

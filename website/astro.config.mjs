@@ -11,11 +11,34 @@ export default defineConfig({
       title: "Amarra",
       description:
         "HTML-first Go framework for mini apps: Amarra Views + Drive, Tailwind and SQLite — with a Rails-style CLI.",
+      logo: {
+        src: "./src/assets/amarra-mark.svg",
+        alt: "",
+      },
       defaultLocale: "root",
       locales: {
         root: { label: "English", lang: "en" },
         "pt-br": { label: "Português", lang: "pt-BR" },
       },
+      components: {
+        Hero: "./src/components/Hero.astro",
+      },
+      head: [
+        {
+          tag: "meta",
+          attrs: {
+            property: "og:image",
+            content: "https://puppe1990.github.io/amarra-cais/og.jpg",
+          },
+        },
+        {
+          tag: "meta",
+          attrs: {
+            name: "twitter:image",
+            content: "https://puppe1990.github.io/amarra-cais/og.jpg",
+          },
+        },
+      ],
       social: [
         {
           icon: "github",

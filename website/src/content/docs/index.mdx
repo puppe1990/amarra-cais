@@ -3,18 +3,22 @@ title: Amarra
 description: HTML-first Go framework for mini apps — Amarra Views + Drive, Tailwind and SQLite, with a Rails-style CLI.
 template: splash
 hero:
-  tagline: The HTML-first Go framework for mini apps. Amarra Views + Drive, Tailwind and SQLite — with a Rails-style CLI.
+  title: The HTML-first<br />framework for Go.
+  tagline: Everything you need to take a mini app from an idea to production — views, Drive, jobs, auth — generated and wired together.
+  image:
+    file: ../../assets/amarra-harbor.webp
+    alt: A teal fishing boat tied to a wooden pier in a seaside village, with people celebrating on the dock.
   actions:
-    - text: Get started
+    - text: Start building
       link: /amarra-cais/docs/getting-started/installation/
       icon: right-arrow
       variant: primary
-    - text: CLI reference
-      link: /amarra-cais/docs/reference/cli/
+    - text: GitHub
+      link: https://github.com/puppe1990/amarra-cais
       variant: minimal
 ---
 
-import { Card, CardGrid } from "@astrojs/starlight/components";
+import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 <CardGrid stagger>
   <Card title="HTML first, no SPA" icon="pencil">
@@ -37,7 +41,25 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Start here
 
-- [Installation](/amarra-cais/docs/getting-started/installation/) — get the `amarra-cais` CLI.
-- [Your first app](/amarra-cais/docs/getting-started/your-first-app/) — scaffold and run in two commands.
-- [Project layout](/amarra-cais/docs/getting-started/project-layout/) — what lives where.
-- [Why HTML-first?](/amarra-cais/docs/explanation/views-and-drive/) — the reasoning behind Views + Drive.
+<CardGrid>
+  <LinkCard
+    title="Installation"
+    href="/amarra-cais/docs/getting-started/installation/"
+    description="Get the amarra-cais CLI."
+  />
+  <LinkCard
+    title="Your first app"
+    href="/amarra-cais/docs/getting-started/your-first-app/"
+    description="Scaffold and run in two commands."
+  />
+  <LinkCard
+    title="Project layout"
+    href="/amarra-cais/docs/getting-started/project-layout/"
+    description="What lives where."
+  />
+  <LinkCard
+    title="Why HTML-first?"
+    href="/amarra-cais/docs/explanation/views-and-drive/"
+    description="The reasoning behind Views + Drive."
+  />
+</CardGrid>

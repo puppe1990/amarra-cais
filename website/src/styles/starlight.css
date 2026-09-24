@@ -1,12 +1,241 @@
-/* Amarra brand accent — sea teal. */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,620&display=swap");
+
+/* Harbor night + cream paper. Accent is sea teal. */
 :root {
+  --sl-font-heading: "Fraunces", "Iowan Old Style", Palatino, "Palatino Linotype", serif;
+  --amarra-cream: #f4ead8;
+  --amarra-ink: #081318;
+  --amarra-coral: #e07a4a;
   --sl-color-accent-low: #0b2f3a;
   --sl-color-accent: #1f8ba3;
   --sl-color-accent-high: #a7dfe9;
+  --sl-color-white: #f6f3ec;
+  --sl-color-gray-1: #e7efe8;
+  --sl-color-gray-2: #c3d0ce;
+  --sl-color-gray-3: #7f9694;
+  --sl-color-gray-4: #3d5556;
+  --sl-color-gray-5: #1c3336;
+  --sl-color-gray-6: #122428;
+  --sl-color-black: #081318;
+  --sl-color-bg: #081318;
+  --sl-color-bg-nav: #0c1c21;
+  --sl-color-bg-sidebar: #0c1c21;
 }
 
 :root[data-theme="light"] {
   --sl-color-accent-low: #c9ecf2;
   --sl-color-accent: #0f6b80;
   --sl-color-accent-high: #082f3a;
+  --sl-color-bg: #f7f1e6;
+  --sl-color-bg-nav: #f3ead9;
+  --sl-color-bg-sidebar: #f3ead9;
+  --sl-color-black: #f7f1e6;
+  --sl-color-white: #102126;
+  --sl-color-gray-1: #1a2e32;
+  --sl-color-gray-2: #3a5053;
+  --sl-color-gray-3: #5d7374;
+  --sl-color-gray-4: #c9bda8;
+  --sl-color-gray-5: #e4d9c4;
+  --sl-color-gray-6: #efe6d4;
+}
+
+.site-title {
+  font-family: var(--sl-font-heading);
+  font-weight: 560;
+  letter-spacing: -0.02em;
+}
+
+.site-title img {
+  height: 1.7rem;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--sl-font-heading);
+  letter-spacing: -0.02em;
+}
+
+/* Splash hero — Loco-like product landing, still Starlight underneath. */
+[data-has-hero] .hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 1.75rem;
+  padding-block: 1.5rem 0.5rem;
+}
+
+[data-has-hero] .hero .hero-art {
+  margin: 0;
+  order: -1;
+  justify-self: center;
+  width: min(100%, 28rem);
+}
+
+[data-has-hero] .hero .hero-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 1.35rem;
+  background: var(--amarra-cream);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--amarra-cream) 40%, transparent),
+    0 24px 48px -18px rgba(0, 0, 0, 0.45);
+}
+
+[data-has-hero] .hero .hero-art figcaption {
+  margin-top: 0.65rem;
+  font-family: var(--__sl-font-mono);
+  font-size: 0.78rem;
+  color: var(--sl-color-gray-3);
+  text-align: center;
+}
+
+[data-has-hero] .hero .stack {
+  flex-direction: column;
+  gap: 1.35rem;
+  text-align: center;
+}
+
+[data-has-hero] .hero .copy {
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+[data-has-hero] .hero .kicker {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sl-color-accent-high);
+}
+
+[data-has-hero] .hero h1 {
+  font-family: var(--sl-font-heading);
+  font-size: clamp(2.4rem, 1.2rem + 6vw, 4.35rem);
+  font-weight: 560;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--sl-color-white);
+  max-width: 14ch;
+}
+
+[data-has-hero] .hero .tagline {
+  font-size: clamp(1.05rem, 0.95rem + 0.6vw, 1.25rem);
+  line-height: 1.45;
+  color: var(--sl-color-gray-2);
+  max-width: 38ch;
+}
+
+[data-has-hero] .hero .actions {
+  gap: 0.85rem 1.25rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+[data-has-hero] .hero .sl-link-button.primary {
+  background: var(--sl-color-accent);
+  color: var(--amarra-ink);
+  border-color: transparent;
+  font-weight: 650;
+}
+
+[data-has-hero] .hero .sl-link-button.primary:hover {
+  background: var(--sl-color-accent-high);
+}
+
+amarra-install {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.55rem 0.55rem 0.55rem 0.95rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sl-color-gray-6) 80%, transparent);
+  font-family: var(--__sl-font-mono);
+  font-size: 0.85rem;
+}
+
+amarra-install .prompt {
+  flex-shrink: 0;
+  color: var(--sl-color-accent);
+  font-weight: 700;
+}
+
+amarra-install code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: none;
+  padding: 0;
+  color: var(--sl-color-white);
+}
+
+amarra-install button {
+  flex-shrink: 0;
+  margin-left: 0.15rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background: var(--sl-color-gray-5);
+  color: var(--sl-color-gray-1);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+amarra-install button:hover {
+  background: var(--sl-color-accent-low);
+  color: var(--sl-color-accent-high);
+}
+
+[data-has-hero] .card {
+  border-color: var(--sl-color-gray-5);
+  background: color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent);
+  --sl-card-border: var(--sl-color-accent);
+  --sl-card-bg: var(--sl-color-accent-low);
+}
+
+[data-has-hero] .card:nth-child(n) {
+  --sl-card-border: var(--sl-color-accent);
+  --sl-card-bg: var(--sl-color-accent-low);
+}
+
+[data-has-hero] .sl-markdown-content {
+  padding-block-start: 1.5rem;
+}
+
+@media (min-width: 50rem) {
+  [data-has-hero] .hero {
+    grid-template-columns: minmax(0, 1.05fr) minmax(16rem, 0.9fr);
+    gap: 3.5rem;
+    padding-block: clamp(2rem, 6vmin, 5.5rem) 1rem;
+  }
+
+  [data-has-hero] .hero .hero-art {
+    order: 2;
+    width: min(100%, 26rem);
+    justify-self: end;
+  }
+
+  [data-has-hero] .hero .hero-art figcaption {
+    text-align: start;
+  }
+
+  [data-has-hero] .hero .stack,
+  [data-has-hero] .hero .copy {
+    text-align: start;
+    align-items: flex-start;
+  }
+
+  [data-has-hero] .hero .actions {
+    justify-content: flex-start;
+  }
 }
