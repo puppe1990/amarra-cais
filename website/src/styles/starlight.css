@@ -196,7 +196,12 @@ amarra-install button:hover {
   color: var(--sl-color-accent-high);
 }
 
+[data-has-hero] .card-grid {
+  align-items: stretch;
+}
+
 [data-has-hero] .card {
+  height: 100%;
   border-color: var(--sl-color-gray-5);
   background: color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent);
   --sl-card-border: var(--sl-color-accent);
