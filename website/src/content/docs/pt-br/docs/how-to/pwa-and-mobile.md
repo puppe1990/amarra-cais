@@ -41,7 +41,7 @@ O CSP padrão bloqueia `fonts.googleapis.com`. O `input.css` do scaffold usa fon
 
 ## Assets de marca
 
-Os scaffolds entregam um tile **placeholder neutro** (`pkg/cais/pwa/assets/icon.png`, 512×512) mais um `icons/icon-512-maskable.png` gerado. O manifest separa os ícones `any` (192 + 512) do ícone `maskable`. `amarra-cais doctor` avisa enquanto `web/static/icons/*` e `og.png` ainda forem os placeholders entregues. Substitua-os pela sua própria marca antes de publicar; `amarra-cais pwa --force` restaura os assets de marca para os padrões se você precisar de uma folha em branco.
+Os scaffolds entregam a marca do barco da documentação em `web/static/favicon.svg` (ícone da aba), um tile **placeholder neutro** (`pkg/cais/pwa/assets/icon.png`, 512×512) e um `icons/icon-512-maskable.png` gerado. O manifest separa os ícones `any` (192 + 512) do ícone `maskable`. `amarra-cais doctor` avisa enquanto `web/static/favicon.svg`, `web/static/icons/*` e `og.png` ainda forem os padrões entregues. Substitua-os pela sua própria marca antes de publicar; `amarra-cais pwa --force` restaura os assets de marca para os padrões se você precisar de uma folha em branco.
 
 ## Checklist mobile
 

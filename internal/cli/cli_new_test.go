@@ -70,6 +70,7 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		"web/static/img/go-on-cais.jpg",
 		"web/static/og.png",
 		"web/static/icons/icon.png",
+		"web/static/favicon.svg",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err != nil {
 			t.Errorf("missing %s: %v", path, err)
@@ -180,6 +181,9 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	}
 	if !strings.Contains(layoutBody, `localStorage.getItem("amarra-theme")`) {
 		t.Error("layouts/app.html should include the theme FOUC snippet before CSS")
+	}
+	if !strings.Contains(layoutBody, `href="/static/favicon.svg"`) {
+		t.Error("layouts/app.html should use the docs boat favicon")
 	}
 
 	dash, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/dashboard.html"))

@@ -58,7 +58,7 @@ func HeadHTML() string {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Cais" />
     <link rel="apple-touch-icon" href="/static/icons/icon.png" />
-    <link rel="icon" href="/static/icons/icon.png" type="image/png" />`
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />`
 }
 
 // RegisterScript returns inline JS to register the service worker.
@@ -142,6 +142,9 @@ func WriteStatic(appDir string, cfg Config) error {
 	if err := writeOGImage(filepath.Join(staticDir, "og.png"), cfg.Force); err != nil {
 		return err
 	}
+	if err := writeUserAsset("assets/favicon.svg", filepath.Join(staticDir, "favicon.svg"), cfg.Force); err != nil {
+		return err
+	}
 	if err := writeAppIcons(filepath.Join(staticDir, "icons"), cfg.IconPath, cfg.Force); err != nil {
 		return err
 	}
@@ -199,6 +202,9 @@ func WriteStaticInertia(appDir string, cfg Config) error {
 	}
 
 	if err := writeOGImage(filepath.Join(staticDir, "og.png"), cfg.Force); err != nil {
+		return err
+	}
+	if err := writeUserAsset("assets/favicon.svg", filepath.Join(staticDir, "favicon.svg"), cfg.Force); err != nil {
 		return err
 	}
 	if err := writeAppIcons(filepath.Join(staticDir, "icons"), cfg.IconPath, cfg.Force); err != nil {
@@ -446,6 +452,9 @@ func DefaultBrandAssets() map[string][]byte {
 	}
 	if og, err := assets.ReadFile("assets/og.png"); err == nil {
 		out["og.png"] = og
+	}
+	if fav, err := assets.ReadFile("assets/favicon.svg"); err == nil {
+		out["favicon.svg"] = fav
 	}
 	return out
 }

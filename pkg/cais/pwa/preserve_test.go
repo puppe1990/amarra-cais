@@ -15,6 +15,7 @@ func brandFixture(t *testing.T, staticDir string) map[string]string {
 		"manifest.webmanifest":        `{"name":"Cifra","display":"standalone"}`,
 		"offline.html":                "<html><body>custom offline</body></html>",
 		"og.png":                      "custom og",
+		"favicon.svg":                 "custom favicon",
 		"icons/icon.png":              "custom icon",
 		"icons/icon-192.png":          "custom 192",
 		"icons/icon-512.png":          "custom 512",

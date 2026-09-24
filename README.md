@@ -1,6 +1,8 @@
 # Amarra-cais
 
-![Go on Cais](pkg/cais/pwa/assets/go-on-cais.jpg)
+<p align="center">
+  <img src="website/src/assets/amarra-harbor.webp" alt="A fishing boat tied to a wooden cais in a seaside village" width="420" />
+</p>
 
 Full-stack Go framework for mini apps (Lightsail-friendly): **Amarra Views + Drive**, Tailwind, and SQLite — with a Rails-style CLI.
 
