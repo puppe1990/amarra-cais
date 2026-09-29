@@ -114,7 +114,7 @@ func (c *Catalog) OGLocale() string {
 	}
 }
 
-// Funcs returns template helpers: t, htmlLang, ogLocale.
+// Funcs returns template helpers: t, htmlLang, ogLocale, localeBase.
 func (c *Catalog) Funcs() template.FuncMap {
 	return template.FuncMap{
 		"t": func(key string, args ...any) string {
@@ -122,6 +122,11 @@ func (c *Catalog) Funcs() template.FuncMap {
 		},
 		"htmlLang": func() string { return c.HTMLLang() },
 		"ogLocale": func() string { return c.OGLocale() },
+		// any: kit current may be missing when .Locale is unset (#209).
+		"localeBase": func(tag any) string {
+			s, _ := tag.(string)
+			return NormalizeLocale(s)
+		},
 	}
 }
 
