@@ -13,6 +13,8 @@ func destroyAuth(dir string, dryRun bool) error {
 		"internal/models/user.go",
 		"internal/handlers/auth.go",
 		"internal/handlers/auth_test.go",
+		"internal/handlers/auth_signup_test.go",
+		"internal/handlers/auth_reset_test.go",
 		"internal/store/password_reset.go",
 		"internal/store/password_reset_test.go",
 		"web/src/pages/Login.svelte",
@@ -76,6 +78,7 @@ func removeStoreAuthMethods(content string) (string, error) {
 		"FindUserByEmail",
 		"CreateUser",
 		"CreatePasswordResetToken",
+		"ClearPasswordResetTokens",
 		"FindPasswordResetUserID",
 		"ResetPasswordWithToken",
 	}
