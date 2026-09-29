@@ -6,14 +6,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.12.0] - 2026-09-29
+
 ### Added
 
-- `website/`: Astro Starlight docs site (English + pt-BR) — getting started, how-to guides, CLI/generator/views reference and explanations — with a GitHub Pages deploy workflow, a `Docs site` CI job and `make docs` / `make docs-build`.
-- `amarra-cais new` ships the docs boat mark as `web/static/favicon.svg` (tab icon). PWA PNG tiles stay the neutral placeholder until the app replaces them.
+- `amarra-hook="sidebar"`: off-canvas rail toggle (`data-amarra-sidebar-target`, `data-amarra-sidebar-open`, `aria-expanded`, Esc and outside-click close) (#212).
+- `amarra-cais doctor` warns when templates use colour tokens missing from `tailwind.config.js` (#207).
+- Password-reset tokens stored as SHA-256 digests; reset delivery failure does not enumerate accounts (#222, #223).
+- `MAX_BODY_BYTES` total request-body cap before multipart parse (#221).
+- Docs site (Starlight EN + pt-BR), harbor landing, and docs boat favicon on `amarra-cais new`.
 
 ### Fixed
 
-- AGENTS.md router example: `r.Group` now shows `middleware.AdminAuth(cfg)`, since `middleware.Protect` is a handler wrapper, not a `cais.Middleware`.
+- Stream no longer opens `EventSource("true")` from the `<html>` boot flag (#204).
+- Scaffold gates Dashboard and logout on `Site.LoggedIn`; public `<!-- cais:nav -->` links stay visible (#208).
+- Layout sidebar toggle is a 44px button instead of a 10px checkbox label (#212).
+- Per-request locale rendering; scaffolded handler store errors sanitized (#127).
 
 ## [0.11.0] - 2026-09-19
 
