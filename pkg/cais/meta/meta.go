@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
@@ -128,12 +129,12 @@ func PreviewHTML(p Preview) string {
 	b.WriteString(`" />` + "\n")
 	if p.ImageWidth > 0 {
 		b.WriteString(`    <meta property="og:image:width" content="`)
-		b.WriteString(fmt.Sprintf("%d", p.ImageWidth))
+		b.WriteString(strconv.Itoa(p.ImageWidth))
 		b.WriteString(`" />` + "\n")
 	}
 	if p.ImageHeight > 0 {
 		b.WriteString(`    <meta property="og:image:height" content="`)
-		b.WriteString(fmt.Sprintf("%d", p.ImageHeight))
+		b.WriteString(strconv.Itoa(p.ImageHeight))
 		b.WriteString(`" />` + "\n")
 	}
 	imageAlt := p.ImageAlt
