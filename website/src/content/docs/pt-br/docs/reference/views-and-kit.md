@@ -72,7 +72,7 @@ O kit fica em `web/templates/components/`. Sobrescreva um componente escrevendo 
 | `form`          | Shell de formulário                                               | `action`, `method`, `enctype`. Injeta `csrf_token` a partir de `.CSRFToken`.                                                                                                                        |
 | `input`         | Input de texto/email/arquivo                                      | `name`, `type`, `label`, `value`, `error`; `accept` em inputs de arquivo.                                                                                                                           |
 | `password`      | Input de senha com alternância do olho (`amarra-hook="password"`) | `name`, `label`, `value`, `error`, `autocomplete`, `required`.                                                                                                                                      |
-| `select`        | Campo select                                                      | O corpo é o contrato do markup.                                                                                                                                                                     |
+| `select`        | `<select>` nativo                                                 | As options vão no `.Inner`. `appearance: base-select` progressivo no `input.css` do scaffold atrás de `@supports`. Sem listbox JS.                                                                  |
 | `textarea`      | Input de múltiplas linhas                                         | —                                                                                                                                                                                                   |
 | `checkbox`      | Checkbox                                                          | —                                                                                                                                                                                                   |
 | `button`        | Botão                                                             | `type` (por exemplo, `type="submit"`).                                                                                                                                                              |
@@ -93,6 +93,8 @@ O kit fica em `web/templates/components/`. Sobrescreva um componente escrevendo 
 | `drawer`        | Painel lateral (`<dialog>` + hook `dialog`)                       | `id`, `title` opcional. Opener e drawer no mesmo container `amarra-hook="dialog"`. Submit de filtros com `frame` morph a tabela; o drawer fica aberto até fechar. O generator de resource não muda. |
 
 Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSRF para você, então não adicione outro dentro do slot. Para uploads, use `<.input type="file" accept="image/*" />` dentro de `<.form enctype="multipart/form-data">` e nunca defina `value` em um input de arquivo.
+
+Os campos do kit usam `:user-invalid` para não pintar vermelho no primeiro paint. Um 422 continua definindo `.Error` / `aria-invalid` no Go; os dois sinais convivem.
 
 ## Interpolação de atributos do kit
 

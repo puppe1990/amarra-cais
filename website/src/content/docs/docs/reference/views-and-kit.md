@@ -72,7 +72,7 @@ The kit lives in `web/templates/components/`. Override a component by writing a 
 | `form`          | Form shell                                                | `action`, `method`, `enctype`. Injects `csrf_token` from `.CSRFToken`.                                                                                                                                                        |
 | `input`         | Text/email/file input                                     | `name`, `type`, `label`, `value`, `error`; `accept` on file inputs.                                                                                                                                                           |
 | `password`      | Password input with eye toggle (`amarra-hook="password"`) | `name`, `label`, `value`, `error`, `autocomplete`, `required`.                                                                                                                                                                |
-| `select`        | Select field                                              | Body is the markup contract.                                                                                                                                                                                                  |
+| `select`        | Native `<select>`                                         | Options go in `.Inner`. Progressive `appearance: base-select` in scaffold `input.css` behind `@supports`. No JS listbox.                                                                                                      |
 | `textarea`      | Multi-line input                                          | —                                                                                                                                                                                                                             |
 | `checkbox`      | Checkbox                                                  | —                                                                                                                                                                                                                             |
 | `button`        | Button                                                    | `type` (for example `type="submit"`).                                                                                                                                                                                         |
@@ -93,6 +93,8 @@ The kit lives in `web/templates/components/`. Override a component by writing a 
 | `drawer`        | Side panel (`<dialog>` + `dialog` hook)                   | `id`, optional `title`. Put the opener and the drawer in the same `amarra-hook="dialog"` container. Filter submit with `frame` morphs the table; the drawer stays open unless closed. Resource generator layout is unchanged. |
 
 Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field for you, so do not add another inside the slot. For uploads, use `<.input type="file" accept="image/*" />` inside `<.form enctype="multipart/form-data">` and never set `value` on a file input.
+
+Kit fields use `:user-invalid` so the browser does not paint red on first paint. A 422 still sets `.Error` / `aria-invalid` from Go; the two signals coexist.
 
 ## Kit attribute interpolation
 
