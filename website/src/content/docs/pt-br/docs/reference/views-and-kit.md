@@ -91,6 +91,7 @@ O kit fica em `web/templates/components/`. Sobrescreva um componente escrevendo 
 | `tab`           | Painel exclusivo `<details name>`                                 | `title`; booleano `open`; `name` opcional (padrão `tabs`). Teclado nativo do `<summary>`.                                                                                                           |
 | `switch`        | Interruptor bool (checkbox estilizado)                            | `name`, `label`; booleano `checked`; `value` opcional (padrão `true`). Envia no `<.form>`. Bools de resource continuam checkbox até um follow-up.                                                   |
 | `drawer`        | Painel lateral (`<dialog>` + hook `dialog`)                       | `id`, `title` opcional. Opener e drawer no mesmo container `amarra-hook="dialog"`. Submit de filtros com `frame` morph a tabela; o drawer fica aberto até fechar. O generator de resource não muda. |
+| `tooltip`       | Dica curta em hover e foco de teclado                             | `text`. O slot é o trigger. Não use tooltip para copy obrigatória de form — isso vai no `error` do campo / hint visível.                                                                            |
 
 Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSRF para você, então não adicione outro dentro do slot. Para uploads, use `<.input type="file" accept="image/*" />` dentro de `<.form enctype="multipart/form-data">` e nunca defina `value` em um input de arquivo.
 

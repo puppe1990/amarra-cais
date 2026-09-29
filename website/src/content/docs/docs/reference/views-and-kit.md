@@ -91,6 +91,7 @@ The kit lives in `web/templates/components/`. Override a component by writing a 
 | `tab`           | Exclusive `<details name>` panel                          | `title`; boolean `open`; optional `name` (default `tabs`). Keyboard is native `<summary>`.                                                                                                                                    |
 | `switch`        | Bool toggle (styled checkbox)                             | `name`, `label`; boolean `checked`; optional `value` (default `true`). Posts with `<.form>`. Resource bools stay checkbox until a follow-up.                                                                                  |
 | `drawer`        | Side panel (`<dialog>` + `dialog` hook)                   | `id`, optional `title`. Put the opener and the drawer in the same `amarra-hook="dialog"` container. Filter submit with `frame` morphs the table; the drawer stays open unless closed. Resource generator layout is unchanged. |
+| `tooltip`       | Short hint on hover and keyboard focus                    | `text`. Slot is the trigger. Do not use a tooltip for required form copy — put that on the field `error` / a visible hint.                                                                                                    |
 
 Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field for you, so do not add another inside the slot. For uploads, use `<.input type="file" accept="image/*" />` inside `<.form enctype="multipart/form-data">` and never set `value` on a file input.
 
