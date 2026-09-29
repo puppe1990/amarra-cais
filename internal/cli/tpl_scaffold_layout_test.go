@@ -122,6 +122,35 @@ func TestViewData_setsLoggedInFromSession(t *testing.T) {
 	}
 }
 
+// #212: the off-canvas rail needs a real, reachable toggle (44px target,
+// aria-controls/expanded, sidebar hook) and must leave the accessibility tree
+// when closed instead of hiding only by transform.
+func TestLayoutTemplates_sidebarToggleAccessible(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		for _, token := range []string{
+			`id="amarra-sidebar-toggle"`,
+			`aria-controls="amarra-nav"`,
+			`aria-expanded="false"`,
+			`amarra-hook="sidebar"`,
+			`data-amarra-sidebar-target="#amarra-nav"`,
+			`h-11 w-11`,
+			`invisible`,
+			`lg:visible`,
+		} {
+			if !strings.Contains(tpl, token) {
+				t.Errorf("%s layout missing accessible sidebar token %q (#212)", name, token)
+			}
+		}
+		if strings.Contains(tpl, `peer-checked:`) {
+			t.Errorf("%s layout should not rely on the hidden checkbox peer (#212)", name)
+		}
+	}
+}
+
 func TestLayoutTemplates_dashboardUsesLogoutForm(t *testing.T) {
 	if !strings.Contains(tplPageDashboard, `action="/logout"`) {
 		t.Error("dashboard page should post logout")
@@ -219,7 +248,7 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 			`w-60`,
 			`lg:ml-60`,
 			`amarra-sidebar-toggle`,
-			`peer-checked:translate-x-0`,
+			`data-[amarra-sidebar-open]:translate-x-0`,
 			`amarra-hook="nav"`,
 			`data-amarra-nav-on`,
 			`data-amarra-nav-off`,
