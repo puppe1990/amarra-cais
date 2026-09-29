@@ -85,6 +85,8 @@ O kit fica em `web/templates/components/`. Sobrescreva um componente escrevendo 
 | `empty`         | Estado vazio                                                      | `title`, slot de corpo; link `href` ou `action` opcional.                                                                                                             |
 | `table`         | Tabela de dados                                                   | As linhas vão no slot `.Inner`; `cols` vêm dos dados da página (maps `Field`/`Label`/`Sortable`); `sort`/`dir` para links de ordenação no servidor; `frame` opcional. |
 | `filters`       | Formulário de filtro GET                                          | `action`; `frame`, `submit`, `clear` href opcionais. Os campos `.Inner` viram query params; inputs ocultos preservam `sort`/`page`.                                   |
+| `accordion`     | Grupo visual em volta dos collapses                               | O slot são os collapses.                                                                                                                                              |
+| `collapse`      | Painel nativo `<details>` / `<summary>`                           | `title`; booleano `open`; `name` opcional (mesmo name = grupo exclusivo).                                                                                             |
 
 Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSRF para você, então não adicione outro dentro do slot. Para uploads, use `<.input type="file" accept="image/*" />` dentro de `<.form enctype="multipart/form-data">` e nunca defina `value` em um input de arquivo.
 

@@ -85,6 +85,8 @@ The kit lives in `web/templates/components/`. Override a component by writing a 
 | `empty`         | Empty state                                               | `title`, body slot; optional `href` or `action` link.                                                                                             |
 | `table`         | Data table                                                | Rows go in the `.Inner` slot; `cols` from page data (`Field`/`Label`/`Sortable` maps); `sort`/`dir` for server-side sort links; optional `frame`. |
 | `filters`       | GET filter form                                           | `action`; optional `frame`, `submit`, `clear` href. `.Inner` fields become query params; hidden inputs preserve `sort`/`page`.                    |
+| `accordion`     | Visual group around collapses                             | Slot is the collapses.                                                                                                                            |
+| `collapse`      | Native `<details>` / `<summary>` panel                    | `title`; boolean `open`; optional `name` (same name = exclusive group).                                                                           |
 
 Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field for you, so do not add another inside the slot. For uploads, use `<.input type="file" accept="image/*" />` inside `<.form enctype="multipart/form-data">` and never set `value` on a file input.
 

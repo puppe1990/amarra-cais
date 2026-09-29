@@ -112,8 +112,14 @@ func parseComponentAttrs(src string, i int) ([]componentAttr, int, bool, error) 
 			return nil, 0, false, err
 		}
 		next = skipSpace(src, next)
-		if next >= len(src) || src[next] != '=' {
-			return nil, 0, false, fmt.Errorf("invalid amarra component tag")
+		if next >= len(src) {
+			return nil, 0, false, fmt.Errorf("unclosed amarra component tag")
+		}
+		if src[next] != '=' {
+			// Boolean flag: <.collapse open> — same as open="true".
+			attrs = append(attrs, componentAttr{Name: name, Value: "true"})
+			i = next
+			continue
 		}
 		next = skipSpace(src, next+1)
 		value, next, err := parseQuotedAttr(src, next)

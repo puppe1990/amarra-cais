@@ -1,0 +1,7 @@
+<details class="group border-b border-foam/20 last:border-b-0"{{ if .Open }} open{{ end }}{{ if .Name }} name="{{ .Name }}"{{ end }}>
+  <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-mono text-sm text-foam marker:content-none">
+    <span>{{ .Title }}</span>
+    <span class="text-foam/50 transition-transform group-open:rotate-180" aria-hidden="true">▾</span>
+  </summary>
+  <div class="border-t border-foam/10 px-4 py-3 text-sm text-foam/80">{{ .Inner }}</div>
+</details>
