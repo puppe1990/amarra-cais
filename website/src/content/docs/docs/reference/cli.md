@@ -83,12 +83,12 @@ The queue lives in the app's SQLite file; the `/jobs` dashboard is served in-pro
 
 ## Diagnostics and tooling
 
-| Command                                     | Description                                                                                |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `amarra-cais doctor [--mobile]`             | Verify `amarra.js`, `layouts/app.html`, air, `go.mod`, and PWA/mobile setup.               |
-| `amarra-cais pwa [--bump] [--force]`        | Refresh PWA assets; `--bump` bumps the SW cache, `--force` resets the brand.               |
-| `amarra-cais upgrade [version] [--dry-run]` | Bump the framework, run `doctor`, print migration steps.                                   |
-| `amarra-cais link [path] [--unlink]`        | Add a `go.mod` `replace` for local framework dev. Do not commit it; unlink before pushing. |
+| Command                                     | Description                                                                                                                                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `amarra-cais doctor [--mobile]`             | Verify `amarra.js`, `layouts/app.html`, air, `go.mod`, PWA/mobile setup, and the scaffold Tailwind palette (warns when `ink`/`foam`/`copper`/`tide` are missing from `tailwind.config.js`). |
+| `amarra-cais pwa [--bump] [--force]`        | Refresh PWA assets; `--bump` bumps the SW cache, `--force` resets the brand.                                                                                                                |
+| `amarra-cais upgrade [version] [--dry-run]` | Bump the framework, run `doctor`, print migration steps.                                                                                                                                    |
+| `amarra-cais link [path] [--unlink]`        | Add a `go.mod` `replace` for local framework dev. Do not commit it; unlink before pushing.                                                                                                  |
 
 ## Aliases
 

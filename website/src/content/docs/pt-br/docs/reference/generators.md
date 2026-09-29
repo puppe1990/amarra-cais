@@ -41,6 +41,8 @@ A CLI também inclui `g sitemap` (posts de blog + um `/sitemap.xml` dinâmico).
 
 Os métodos de store gerados recebem `(search, sort, dir string, ...)`; o sort é permitido por coluna via whitelist e a busca é um `LIKE` no campo de exibição. O index do admin renderiza `<.filters>` + `<.table>` + `<.empty>` + `<.pagination>`.
 
+A menos que você passe `--no-seed`, cada resource traz um `SeedDemo<Name>()` que insere uma linha de exemplo fixa e não faz nada quando a tabela não está vazia. Para valores de demonstração realistas, importe `pkg/cais/fakedata` (`Name`, `Title`, `Email`, `Sentence`, `URL`, `Date`); `fakedata.Seed(42)` torna uma execução reproduzível.
+
 ## Tipos de campo
 
 Cada campo é `name:type`; acrescente `?` para torná-lo opcional. `name:belongs_to` é um atalho para `name_id:references`.

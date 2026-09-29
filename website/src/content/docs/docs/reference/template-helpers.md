@@ -92,4 +92,4 @@ Options: `"method"` (for example `delete`), `"confirm"` (confirmation text), and
 
 `{{ t "key" }}` looks up a string in the locale catalog. The layout also uses `{{ htmlLang }}` and `{{ ogLocale }}`. Missing keys return the key itself, which is visible in development.
 
-The catalog is selected by the `LOCALE` env var (`en` is the default, `pt` is supported) and wired as `cais.Config.Locale`. Handlers receive the catalog for validation and flash strings (`catalog.T("contact.title")`), and the same functions reach pages and partials. See [i18n](/amarra-cais/docs/how-to/i18n/) for the locale files.
+The default catalog comes from the `LOCALE` env var (`en` is the default, `pt` is supported), wired as `cais.Config.Locale`; each request can override it with `?lang=` or the `cais_locale` cookie through `i18n.LocaleMiddleware`. Handlers receive the request catalog for validation and flash strings (`catalog.T("contact.title")`), and the same functions reach pages and partials. See [i18n](/amarra-cais/docs/how-to/i18n/) for the locale files.

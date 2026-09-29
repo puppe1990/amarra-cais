@@ -41,6 +41,8 @@ The CLI also ships `g sitemap` (blog posts + a dynamic `/sitemap.xml`).
 
 Generated store methods take `(search, sort, dir string, ...)`; sort is whitelisted per column and search is a `LIKE` on the display field. The admin index renders `<.filters>` + `<.table>` + `<.empty>` + `<.pagination>`.
 
+Unless you pass `--no-seed`, each resource ships a `SeedDemo<Name>()` that inserts one fixed sample row and skips when the table is not empty. For realistic demo values, import `pkg/cais/fakedata` (`Name`, `Title`, `Email`, `Sentence`, `URL`, `Date`); `fakedata.Seed(42)` makes a run reproducible.
+
 ## Field types
 
 Each field is `name:type`; append `?` to make it optional. `name:belongs_to` is shorthand for `name_id:references`.

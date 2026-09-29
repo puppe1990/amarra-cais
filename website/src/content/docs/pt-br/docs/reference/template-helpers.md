@@ -92,4 +92,4 @@ Opções: `"method"` (por exemplo, `delete`), `"confirm"` (texto de confirmaçã
 
 `{{ t "key" }}` procura uma string no catálogo de locale. O layout também usa `{{ htmlLang }}` e `{{ ogLocale }}`. Chaves ausentes devolvem a própria chave, o que fica visível em desenvolvimento.
 
-O catálogo é selecionado pela env var `LOCALE` (`en` é o padrão, `pt` é suportado) e conectado como `cais.Config.Locale`. Os handlers recebem o catálogo para validação e strings flash (`catalog.T("contact.title")`), e as mesmas funções chegam a páginas e partials. Veja [i18n](/amarra-cais/pt-br/docs/how-to/i18n/) para os arquivos de locale.
+O catálogo padrão vem da env var `LOCALE` (`en` é o padrão, `pt` é suportado), conectado como `cais.Config.Locale`; cada request pode sobrescrevê-lo com `?lang=` ou o cookie `cais_locale` através do `i18n.LocaleMiddleware`. Os handlers recebem o catálogo do request para validação e strings flash (`catalog.T("contact.title")`), e as mesmas funções chegam a páginas e partials. Veja [i18n](/amarra-cais/pt-br/docs/how-to/i18n/) para os arquivos de locale.

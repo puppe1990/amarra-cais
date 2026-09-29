@@ -15,7 +15,7 @@ O layout renderiza `<meta name="csrf-token">`, e o `amarra.js` envia `X-CSRF-Tok
 
 ## Sessions
 
-As sessions são baseadas em cookie (`pkg/cais/session`) com `SignIn` / `SignOut`. Uma session gira no login, invalidando o token anterior. Os cookies e suas linhas no SQLite expiram após 7 dias (`sessionTTL` / `defaultMaxAge`); o store mantém `expires_at` e ignora linhas expiradas na busca. As senhas são armazenadas como hashes bcrypt (`session.HashPassword` / `session.VerifyPassword`).
+As sessions são baseadas em cookie (`pkg/cais/session`) com `SignIn` / `SignOut`. Uma session gira no login, invalidando o token anterior. Os cookies e suas linhas no SQLite expiram após 7 dias (`sessionTTL` / `defaultMaxAge`); o store mantém `expires_at` e ignora linhas expiradas na busca. As senhas são armazenadas como hashes bcrypt (`session.HashPassword` / `session.VerifyPassword`). Os tokens de reset de senha são armazenados como digests SHA-256 (`passwordreset.Hash`), nunca o valor puro — um banco, backup ou log SQL vazado não pode ser reutilizado — e uma entrega que falha não revela se a conta existe (#222, #223).
 
 `session.CookieOptionsFromConfig(cfg)` marca os cookies como `Secure` quando `cfg.CookieSecure()` é true, o que acontece com `ENV=production`. Faça a poda das linhas expiradas com `amarra-cais db prune-sessions` ou `session.Store.PruneExpired()`.
 

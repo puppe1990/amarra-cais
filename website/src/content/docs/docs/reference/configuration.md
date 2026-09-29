@@ -16,6 +16,7 @@ Configuration is read once at boot by `cais.Load()`, which also applies a local 
 | `APP_URL`         | Absolute base URL for OG/Twitter image URLs. Required in production.                       | —                          |
 | `ADMIN_TOKEN`     | Bearer token for `middleware.AdminAuth`. Required in production.                           | —                          |
 | `TRUSTED_PROXIES` | Comma-separated proxy IPs/CIDRs; `X-Forwarded-For` is trusted only from these.             | —                          |
+| `MAX_BODY_BYTES`  | Total request-body cap before multipart parsing (`ParseMultipartForm`), in bytes.          | `33554432` (32 MiB)        |
 | `LOCALE`          | UI language for `pkg/cais/i18n` (`en` or `pt`).                                            | `en`                       |
 | `STATIC_DIR`      | Static files directory when the process `WorkingDirectory` is not the app root.            | `web/static`               |
 | `TEMPLATES_DIR`   | Templates directory, same override rule.                                                   | `web/templates`            |
