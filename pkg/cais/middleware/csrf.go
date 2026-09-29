@@ -38,7 +38,17 @@ func csrfHandler(cfg cais.Config, next http.Handler) http.Handler {
 		// of a classic multipart upload would never reach FormValue and every
 		// such request died with 403 (#26). ParseFormOrJSON also covers JSON
 		// posts that carry the token in the body instead of the header.
+		//
+		// Cap the total body first (#221): ParseMultipartForm's memory threshold
+		// bounds only the in-memory fraction, so an anonymous client could spill
+		// arbitrarily large uploads to disk before the token was ever checked.
+		httpx.LimitBody(w, r, cfg.BodyLimit())
 		if err := httpx.ParseFormOrJSON(r); err != nil {
+			httpx.CleanupMultipart(r)
+			if httpx.BodyTooLarge(err) {
+				http.Error(w, "request entity too large", http.StatusRequestEntityTooLarge)
+				return
+			}
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}

@@ -115,6 +115,62 @@ func TestCSRF_unsafeMethod_acceptsValidToken_multipart(t *testing.T) {
 	}
 }
 
+func TestCSRF_multipartBody_overLimit_returns413AndSkipsHandler(t *testing.T) {
+	// #221: an oversized upload without a valid token must be rejected before
+	// the handler runs and before net/http spills multipart temp files.
+	called := false
+	cfg := cais.Config{MaxBodyBytes: 512}
+	h := CSRF(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	if err := writer.WriteField("blob", strings.Repeat("x", 8<<10)); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteField(csrf.FormField, "secret"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/upload", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.AddCookie(&http.Cookie{Name: csrf.CookieName, Value: "secret"})
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if called {
+		t.Fatal("handler must not be called for oversized body")
+	}
+	if rr.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want 413", rr.Code)
+	}
+}
+
+func TestCSRF_jsonBody_overLimit_returns413(t *testing.T) {
+	called := false
+	cfg := cais.Config{MaxBodyBytes: 64}
+	h := CSRF(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	raw := []byte(`{"` + csrf.FormField + `":"secret","blob":"` + strings.Repeat("x", 200) + `"}`)
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(raw))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: csrf.CookieName, Value: "secret"})
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if called {
+		t.Fatal("handler must not be called for oversized body")
+	}
+	if rr.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want 413", rr.Code)
+	}
+}
+
 func TestCSRF_jsonBody_handlerCanParseFormOrJSON(t *testing.T) {
 	called := false
 	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

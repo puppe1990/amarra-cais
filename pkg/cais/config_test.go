@@ -31,6 +31,18 @@ func TestConfig_LoadFromEnv(t *testing.T) {
 	}
 }
 
+func TestConfig_BodyLimit_defaultAndEnv(t *testing.T) {
+	t.Setenv("MAX_BODY_BYTES", "")
+	if got := (Config{}).BodyLimit(); got != DefaultMaxBodyBytes {
+		t.Errorf("default BodyLimit() = %d, want %d", got, DefaultMaxBodyBytes)
+	}
+
+	t.Setenv("MAX_BODY_BYTES", "1048576")
+	if got := Load().BodyLimit(); got != 1<<20 {
+		t.Errorf("BodyLimit() from env = %d, want %d", got, 1<<20)
+	}
+}
+
 func TestConfig_StaticAndTemplatesDir(t *testing.T) {
 	t.Setenv("STATIC_DIR", "/opt/app/web/static")
 	t.Setenv("TEMPLATES_DIR", "/opt/app/web/templates")

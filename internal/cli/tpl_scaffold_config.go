@@ -64,6 +64,10 @@ ADMIN_TOKEN=
 # Reverse proxy (comma-separated IPs; trust X-Forwarded-For for client IP)
 TRUSTED_PROXIES=
 
+# Total request-body cap before any parse (bytes; default 33554432 = 32 MiB).
+# Raise for legitimate large uploads; oversized POSTs get 413. (#221)
+# MAX_BODY_BYTES=33554432
+
 # CSP extras (optional; space-separated hosts appended to defaults)
 # CSP_STYLE_SRC=https://fonts.googleapis.com
 # CSP_FONT_SRC=https://fonts.gstatic.com
