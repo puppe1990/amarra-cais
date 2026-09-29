@@ -22,6 +22,8 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"| 6        | **Early returns** — max ~2 nesting levels                                                              |\n" +
 	"| 7        | **Errors with values** — `fmt.Errorf(\"...: %w\", err)`                                                  |\n" +
 	"| 8        | **Headless tests** — SQLite `:memory:`; no manual seed for unit tests                                  |\n\n" +
+	"## Demo data\n\n" +
+	"Seeds and fixtures come from `pkg/cais/fakedata` (`Name`, `Title`, `Email`, `Sentence`, `URL`, `Date`) — `fakedata.Seed(42)` pins a reproducible sequence for tests.\n\n" +
 	"## Layout\n\n" +
 	"| Path                        | Responsibility                 |\n" +
 	"| --------------------------- | ------------------------------ |\n" +

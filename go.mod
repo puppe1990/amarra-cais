@@ -3,6 +3,8 @@ module github.com/puppe1990/amarra-cais
 go 1.26.4
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.17.1
+	github.com/coder/websocket v1.8.14
 	github.com/peterh/liner v1.2.2
 	github.com/traefik/yaegi v0.15.1
 	golang.org/x/crypto v0.53.0
@@ -10,7 +12,6 @@ require (
 )
 
 require (
-	github.com/coder/websocket v1.8.14 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

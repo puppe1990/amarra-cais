@@ -47,3 +47,29 @@ func TestScaffoldDocs_documentTemplateLoaderContract(t *testing.T) {
 		}
 	}
 }
+
+// TestScaffoldDocs_documentFakedata keeps new apps aware that sample data ships
+// with the framework, so seeds and fixtures call fakedata instead of inventing
+// literals by hand.
+func TestScaffoldDocs_documentFakedata(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "fakedataapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "fakedataapp",
+		ModulePath: "github.com/puppe1990/fakedataapp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, file := range []string{"README.md", "AGENTS.md"} {
+		body, err := os.ReadFile(filepath.Join(appDir, file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, needle := range []string{"pkg/cais/fakedata", "fakedata.Seed"} {
+			if !strings.Contains(string(body), needle) {
+				t.Errorf("%s must document fakedata: missing %q", file, needle)
+			}
+		}
+	}
+}

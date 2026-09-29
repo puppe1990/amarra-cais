@@ -56,6 +56,8 @@ const tplREADME = "# {{.AppName}}\n\n" +
 	"- `pages/*.html` and `pages/*/*.html` — the name is the path under `pages/` without `.html`, so `pages/blog/post.html` renders as `view.Page{Name: \"blog/post\"}`\n" +
 	"- `partials/*.html` — flat only; a nested partial never loads. A partial declares a named template that pages invoke\n" +
 	"- `components/*.html` — flat only; overrides the shipped kit component with the same file name; an unknown `<.x>` tag fails at boot\n\n" +
+	"## Demo data\n\n" +
+	"Seeds and fixtures can use `github.com/puppe1990/amarra-cais/pkg/cais/fakedata` (`Name`, `Title`, `Email`, `Sentence`, `URL`, `Date`); `fakedata.Seed(42)` makes values reproducible in tests.\n\n" +
 	"## Environment variables\n\n" +
 	"| Variable | Default       | Description      |\n" +
 	"| -------- | ------------- | ---------------- |\n" +
