@@ -15,7 +15,7 @@ The layout renders `<meta name="csrf-token">`, and `amarra.js` sends `X-CSRF-Tok
 
 ## Sessions
 
-Sessions are cookie-based (`pkg/cais/session`) with `SignIn` / `SignOut`. A session rotates on login, invalidating the previous token. Cookies and their SQLite rows expire after 7 days (`sessionTTL` / `defaultMaxAge`); the store keeps `expires_at` and ignores expired rows on lookup. Passwords are stored as bcrypt hashes (`session.HashPassword` / `session.VerifyPassword`).
+Sessions are cookie-based (`pkg/cais/session`) with `SignIn` / `SignOut`. A session rotates on login, invalidating the previous token. Cookies and their SQLite rows expire after 7 days (`sessionTTL` / `defaultMaxAge`); the store keeps `expires_at` and ignores expired rows on lookup. Passwords are stored as bcrypt hashes (`session.HashPassword` / `session.VerifyPassword`). Password-reset tokens are stored as SHA-256 digests (`passwordreset.Hash`), never the raw bearer value — a leaked database, backup or SQL log cannot be replayed — and a failed delivery does not reveal whether the account exists (#222, #223).
 
 `session.CookieOptionsFromConfig(cfg)` marks cookies `Secure` when `cfg.CookieSecure()` is true, which happens with `ENV=production`. Prune expired rows with `amarra-cais db prune-sessions` or `session.Store.PruneExpired()`.
 

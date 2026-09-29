@@ -19,7 +19,7 @@ Isso cria o handler, seu teste, `web/templates/pages/foo.html` e faz patch de `i
 
 Para ligar tudo na mão, siga os mesmos quatro passos:
 
-1. Teste Go em `internal/handlers/foo_test.go` — use `setupTestViews(t)` e verifique o HTML renderizado (`id="amarra-main"`, campos de formulário).
+1. Teste Go em `internal/handlers/foo_test.go` — use `setupTestViews(t)` e verifique o HTML renderizado (`id="amarra-main"`, campos de formulário). O helper do scaffold carrega o catálogo do app em `internal/i18n`, então as asserções veem as strings traduzidas de verdade.
 2. Página HTML em `web/templates/pages/foo.html`, definindo um bloco `{{ define "content" }}`.
 3. Handler que chama `view.Write`, ou `writeView` quando a página pode falhar na validação.
 4. Registre a rota em `internal/app/routes.go`.
@@ -67,7 +67,7 @@ writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[stri
 `writeView` é a variante de validação: ela nomeia o layout explicitamente (passe um segundo layout, como `"landing"`, se o app tiver um) e permite definir o status — `422` ao re-renderizar um formulário com erros.
 
 :::note
-Passe `meta.SiteFrom(appName, cfg.AppURL)` a partir do bootstrap, para que os dados da página tenham um valor `Site` para as tags OG/Twitter.
+Passe `meta.SiteFrom(appName, cfg.AppURL)` a partir do bootstrap, para que os dados da página tenham um valor `Site` para as tags OG/Twitter. Quando uma página monta o próprio `<head>`, `meta.PreviewHTML(meta.Preview{Title: …, Image: …, ImageWidth: …})` renderiza as tags, incluindo `og:image:width` / `og:image:height` (quando definidos), `og:image:alt` (com fallback para o título) e `<link rel="canonical">`.
 :::
 
 ## Drive vs HTML completo

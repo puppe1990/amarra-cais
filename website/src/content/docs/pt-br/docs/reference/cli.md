@@ -83,12 +83,12 @@ A fila fica no arquivo SQLite do app; o dashboard `/jobs` é servido no próprio
 
 ## Diagnóstico e ferramentas
 
-| Comando                                     | Descrição                                                                                                                           |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `amarra-cais doctor [--mobile]`             | Verifica `amarra.js`, `layouts/app.html`, air, `go.mod` e a configuração de PWA/mobile.                                             |
-| `amarra-cais pwa [--bump] [--force]`        | Atualiza os assets de PWA; `--bump` incrementa o cache do SW e `--force` reinicia a marca.                                          |
-| `amarra-cais upgrade [version] [--dry-run]` | Atualiza o framework, executa o `doctor` e imprime os passos de migração.                                                           |
-| `amarra-cais link [path] [--unlink]`        | Adiciona um `replace` no `go.mod` para desenvolvimento local do framework. Não faça commit disso; use `--unlink` antes de dar push. |
+| Comando                                     | Descrição                                                                                                                                                                                        |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `amarra-cais doctor [--mobile]`             | Verifica `amarra.js`, `layouts/app.html`, air, `go.mod`, a configuração de PWA/mobile e a paleta Tailwind do scaffold (avisa quando `ink`/`foam`/`copper`/`tide` somem do `tailwind.config.js`). |
+| `amarra-cais pwa [--bump] [--force]`        | Atualiza os assets de PWA; `--bump` incrementa o cache do SW e `--force` reinicia a marca.                                                                                                       |
+| `amarra-cais upgrade [version] [--dry-run]` | Atualiza o framework, executa o `doctor` e imprime os passos de migração.                                                                                                                        |
+| `amarra-cais link [path] [--unlink]`        | Adiciona um `replace` no `go.mod` para desenvolvimento local do framework. Não faça commit disso; use `--unlink` antes de dar push.                                                              |
 
 ## Aliases
 

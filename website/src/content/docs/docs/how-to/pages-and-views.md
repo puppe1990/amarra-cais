@@ -19,7 +19,7 @@ This creates the handler, its test, `web/templates/pages/foo.html`, and patches 
 
 To wire it by hand, follow the same four steps:
 
-1. Go test in `internal/handlers/foo_test.go` — use `setupTestViews(t)` and assert the rendered HTML (`id="amarra-main"`, form fields).
+1. Go test in `internal/handlers/foo_test.go` — use `setupTestViews(t)` and assert the rendered HTML (`id="amarra-main"`, form fields). The scaffolded helper loads the app catalog from `internal/i18n`, so assertions see real translated strings.
 2. HTML page in `web/templates/pages/foo.html`, defining a `{{ define "content" }}` block.
 3. Handler that calls `view.Write`, or `writeView` when the page can fail validation.
 4. Register the route in `internal/app/routes.go`.
@@ -67,7 +67,7 @@ writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[stri
 `writeView` is the validation variant: it names the layout explicitly (pass a second layout such as `"landing"` if the app has one) and lets you set the status — `422` when re-rendering a form with errors.
 
 :::note
-Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap so page data has a `Site` value for OG/Twitter tags.
+Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap so page data has a `Site` value for OG/Twitter tags. When a page builds its own `<head>`, `meta.PreviewHTML(meta.Preview{Title: …, Image: …, ImageWidth: …})` renders the tags, including `og:image:width` / `og:image:height` (when set), `og:image:alt` (falling back to the title) and `<link rel="canonical">`.
 :::
 
 ## Drive vs full HTML
