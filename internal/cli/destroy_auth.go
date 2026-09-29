@@ -13,6 +13,8 @@ func destroyAuth(dir string, dryRun bool) error {
 		"internal/models/user.go",
 		"internal/handlers/auth.go",
 		"internal/handlers/auth_test.go",
+		"internal/store/password_reset.go",
+		"internal/store/password_reset_test.go",
 		"web/src/pages/Login.svelte",
 		"web/src/pages/Signup.svelte",
 		"web/src/pages/ForgotPassword.svelte",

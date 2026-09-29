@@ -335,6 +335,61 @@ func TestScaffoldAuth_migrationIncludesExpiresAt(t *testing.T) {
 	}
 }
 
+func TestScaffoldAuth_hashesResetTokens(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "authhash")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "authhash",
+		ModulePath: "github.com/puppe1990/authhash",
+	}, false, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldAuth(appDir, scaffoldData{
+		AppName:    "authhash",
+		ModulePath: "github.com/puppe1990/authhash",
+	}, false); err != nil {
+		t.Fatal(err)
+	}
+
+	matches, err := filepath.Glob(filepath.Join(appDir, "internal/store/migrations/*_auth.sql"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 {
+		t.Fatalf("expected one *_auth.sql migration, got %v", matches)
+	}
+	migration, err := os.ReadFile(matches[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(migration), "token_hash TEXT PRIMARY KEY") {
+		t.Errorf("migration must key on token_hash, got:\n%s", migration)
+	}
+
+	store, err := os.ReadFile(filepath.Join(appDir, "internal/store/password_reset.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	storeBody := string(store)
+	if !strings.Contains(storeBody, "passwordreset.Hash(token)") {
+		t.Errorf("store must hash the token before persisting/looking up:\n%s", storeBody)
+	}
+	if !strings.Contains(storeBody, "token_hash") {
+		t.Errorf("store must query the token_hash column:\n%s", storeBody)
+	}
+
+	// The generated store test must prove the raw token never reaches the DB.
+	storeTest, err := os.ReadFile(filepath.Join(appDir, "internal/store/password_reset_test.go"))
+	if err != nil {
+		t.Fatalf("missing generated password reset store test: %v", err)
+	}
+	for _, needle := range []string{"token_hash", "passwordreset.Hash", "SELECT"} {
+		if !strings.Contains(string(storeTest), needle) {
+			t.Errorf("generated store test missing %q:\n%s", needle, storeTest)
+		}
+	}
+}
+
 func TestScaffoldNewApp_includesSeeds(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "seedapp")
