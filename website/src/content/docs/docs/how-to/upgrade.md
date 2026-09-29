@@ -9,7 +9,7 @@ sidebar:
 
 ```bash
 amarra-cais upgrade            # bump to the latest version
-amarra-cais upgrade v0.12.0    # pin a specific version
+amarra-cais upgrade v0.12.1    # pin a specific version
 amarra-cais upgrade --dry-run  # preview the changes without writing
 ```
 
@@ -35,7 +35,7 @@ amarra-cais pwa --bump
 Keep the CLI and the app's `go.mod` in step. The quick start installs a pinned CLI:
 
 ```bash
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.12.0
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.12.1
 amarra-cais version   # expect 0.11.0
 ```
 

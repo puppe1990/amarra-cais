@@ -6,6 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.12.1] - 2026-09-29
+
+### Added
+
+- `PreviewHTML` emits `og:image:width` / `og:image:height` (when set), `og:image:alt` (falls back to title), and `<link rel="canonical">` (#210).
+
+### Fixed
+
+- Generated handler tests load the app i18n catalog instead of the empty framework catalog (#206).
+- Kit `locale-toggle` marks the active language for region-qualified locales (`pt-BR`, `en-US`) (#209).
+
 ## [0.12.0] - 2026-09-29
 
 ### Added
