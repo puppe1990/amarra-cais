@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Changed
+
+- CI: `Test` runs as a `pkg` / `internal` matrix (`-race` everywhere on main, `pkg` only on PRs), docs-only PRs skip the Go jobs, and Prettier + JS tests + the committed-bundle check move to an always-on `Frontend` workflow.
+
 ## [0.12.2] - 2026-09-29
 
 ### Added
