@@ -34,6 +34,9 @@ type Preview struct {
 	SiteURL     string
 	Path        string
 	Image       string
+	ImageWidth  int
+	ImageHeight int
+	ImageAlt    string
 	Locale      string
 	Type        string
 }
@@ -123,12 +126,35 @@ func PreviewHTML(p Preview) string {
 	b.WriteString(`    <meta property="og:image" content="`)
 	b.WriteString(attr(image))
 	b.WriteString(`" />` + "\n")
+	if p.ImageWidth > 0 {
+		b.WriteString(`    <meta property="og:image:width" content="`)
+		b.WriteString(fmt.Sprintf("%d", p.ImageWidth))
+		b.WriteString(`" />` + "\n")
+	}
+	if p.ImageHeight > 0 {
+		b.WriteString(`    <meta property="og:image:height" content="`)
+		b.WriteString(fmt.Sprintf("%d", p.ImageHeight))
+		b.WriteString(`" />` + "\n")
+	}
+	imageAlt := p.ImageAlt
+	if imageAlt == "" {
+		imageAlt = p.Title
+	}
+	if imageAlt != "" {
+		b.WriteString(`    <meta property="og:image:alt" content="`)
+		b.WriteString(attr(imageAlt))
+		b.WriteString(`" />` + "\n")
+	}
 	b.WriteString(`    <meta property="og:locale" content="`)
 	b.WriteString(attr(p.Locale))
 	b.WriteString(`" />` + "\n")
 	if p.SiteURL != "" && p.Path != "" {
+		pageURL := attr(AbsoluteURL(p.SiteURL, p.Path))
 		b.WriteString(`    <meta property="og:url" content="`)
-		b.WriteString(attr(AbsoluteURL(p.SiteURL, p.Path)))
+		b.WriteString(pageURL)
+		b.WriteString(`" />` + "\n")
+		b.WriteString(`    <link rel="canonical" href="`)
+		b.WriteString(pageURL)
 		b.WriteString(`" />` + "\n")
 	}
 	b.WriteString(`    <meta name="twitter:card" content="summary_large_image" />` + "\n")
