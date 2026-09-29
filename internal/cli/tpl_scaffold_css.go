@@ -22,6 +22,22 @@ const tplInputCSS = `@tailwind base;
 }
 
 @layer components {
+  /* Progressive native select (#219). Unsupported browsers keep the current
+     OS picker. Do not add a JS listbox here — Drive/iOS keep a real <select>. */
+  @supports (appearance: base-select) {
+    select {
+      appearance: base-select;
+    }
+  }
+
+  /* Client-side invalid after interaction; server 422 still uses .Error. */
+  .amarra-field:user-invalid,
+  input:user-invalid,
+  select:user-invalid,
+  textarea:user-invalid {
+    border-color: rgb(220 38 38);
+  }
+
   .cais-nav-icon {
     width: 14px;
     height: 14px;
