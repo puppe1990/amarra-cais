@@ -2,11 +2,11 @@
   <form action="{{ if .Action }}{{ .Action }}{{ else }}/locale{{ end }}" method="post">
     {{ csrfField $.CSRFToken }}
     <input type="hidden" name="locale" value="en" />
-    <button type="submit" class="px-2 py-1 text-copper hover:text-foam"{{- if eq .Current "en" }} aria-pressed="true"{{ end }}>EN</button>
+    <button type="submit" class="px-2 py-1 text-copper hover:text-foam"{{- if eq (localeBase .Current) "en" }} aria-pressed="true"{{ end }}>EN</button>
   </form>
   <form action="{{ if .Action }}{{ .Action }}{{ else }}/locale{{ end }}" method="post">
     {{ csrfField $.CSRFToken }}
     <input type="hidden" name="locale" value="pt" />
-    <button type="submit" class="px-2 py-1 text-copper hover:text-foam"{{- if eq .Current "pt" }} aria-pressed="true"{{ end }}>PT</button>
+    <button type="submit" class="px-2 py-1 text-copper hover:text-foam"{{- if eq (localeBase .Current) "pt" }} aria-pressed="true"{{ end }}>PT</button>
   </form>
 </div>
