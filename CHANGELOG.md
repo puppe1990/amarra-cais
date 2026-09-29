@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.12.2] - 2026-09-29
+
 ### Added
 
 - Kit `<.accordion>` / `<.collapse>` with native `<details>` / `<summary>`; boolean kit flags such as `open` (#215).
@@ -14,6 +16,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - Kit `<.drawer>` as a side `<dialog>` using the existing `dialog` hook (#217).
 - Kit select stays native with progressive `appearance: base-select`; fields use `:user-invalid` alongside Go `.Errors` (#219).
 - Kit `<.tooltip>` with hover and focus-within hint text in the HTML (#216).
+- `pkg/cais/fakedata`: gofakeit-backed sample data for seeds and tests — `Name`, `Title`, `Email`, `Sentence`, `URL`, `Date` and `Seed` for reproducible values.
 
 ## [0.12.1] - 2026-09-29
 
