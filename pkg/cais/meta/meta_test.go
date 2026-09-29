@@ -52,6 +52,32 @@ func TestPreviewHTML(t *testing.T) {
 		`property="og:url" content="https://pulsefit.gestaobem.com/login"`,
 		`name="twitter:card" content="summary_large_image"`,
 		`name="twitter:image" content="https://pulsefit.gestaobem.com/static/og.png"`,
+		`rel="canonical" href="https://pulsefit.gestaobem.com/login"`,
+		`property="og:image:alt" content="PulseFit"`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("PreviewHTML missing %q in:\n%s", want, html)
+		}
+	}
+}
+
+func TestPreviewHTML_imageDimensionsAndAlt(t *testing.T) {
+	html := PreviewHTML(Preview{
+		Title:       "PulseFit",
+		Description: "Log workouts.",
+		SiteName:    "PulseFit",
+		SiteURL:     "https://pulsefit.gestaobem.com",
+		Path:        "/",
+		Image:       DefaultImagePath,
+		ImageWidth:  1200,
+		ImageHeight: 630,
+		ImageAlt:    "Harbor at dusk",
+	})
+	for _, want := range []string{
+		`property="og:image:width" content="1200"`,
+		`property="og:image:height" content="630"`,
+		`property="og:image:alt" content="Harbor at dusk"`,
+		`rel="canonical" href="https://pulsefit.gestaobem.com/"`,
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("PreviewHTML missing %q in:\n%s", want, html)
