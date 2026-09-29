@@ -87,6 +87,8 @@ O kit fica em `web/templates/components/`. Sobrescreva um componente escrevendo 
 | `filters`       | Formulário de filtro GET                                          | `action`; `frame`, `submit`, `clear` href opcionais. Os campos `.Inner` viram query params; inputs ocultos preservam `sort`/`page`.                                   |
 | `accordion`     | Grupo visual em volta dos collapses                               | O slot são os collapses.                                                                                                                                              |
 | `collapse`      | Painel nativo `<details>` / `<summary>`                           | `title`; booleano `open`; `name` opcional (mesmo name = grupo exclusivo).                                                                                             |
+| `tabs`          | Faixa de abas em volta de `<.tab>`                                | O slot são as abas. O morph do Drive restaura o painel com o `open` do HTML do servidor.                                                                              |
+| `tab`           | Painel exclusivo `<details name>`                                 | `title`; booleano `open`; `name` opcional (padrão `tabs`). Teclado nativo do `<summary>`.                                                                             |
 
 Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSRF para você, então não adicione outro dentro do slot. Para uploads, use `<.input type="file" accept="image/*" />` dentro de `<.form enctype="multipart/form-data">` e nunca defina `value` em um input de arquivo.
 

@@ -1,0 +1,4 @@
+<details class="group contents" name="{{ if .Name }}{{ .Name }}{{ else }}tabs{{ end }}"{{ if .Open }} open{{ end }}>
+  <summary class="cursor-pointer list-none px-4 py-2 font-mono text-[11px] uppercase tracking-[0.22em] text-foam/60 marker:content-none group-open:border-b group-open:border-copper group-open:text-foam">{{ .Title }}</summary>
+  <div class="order-last w-full py-4 text-sm text-foam/80">{{ .Inner }}</div>
+</details>
