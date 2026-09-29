@@ -9,10 +9,14 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 )
 
 func amarraData(r *http.Request, site meta.Site, extra map[string]any) map[string]any {
 	s := meta.ForRequest(site, r)
+	// #208: the layout gates auth chrome (rail, logout) on this flag, so a
+	// visitor without a session does not see navigation that bounces them.
+	_, s.LoggedIn = session.UserID(r)
 	data := map[string]any{
 		"Site":      s,
 		"CSRFToken": s.CSRFToken,

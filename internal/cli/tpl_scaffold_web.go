@@ -50,7 +50,9 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
               <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80">Amarra</span>
             </span>
           </a>
+          {{"{{"}} if not .Site.LoggedIn {{"}}"}}
           <a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+          {{"{{"}} end {{"}}"}}
         </div>
       </header>
       <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full transition-transform peer-checked:translate-x-0 lg:translate-x-0">
@@ -59,11 +61,13 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
           <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
             `
 
-const tplLayoutNavFull = `<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+const tplLayoutNavFull = `{{"{{"}} if .Site.LoggedIn {{"}}"}}<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+            {{"{{"}} end {{"}}"}}
             <!-- cais:nav -->
-            <.form action="/logout" method="post">
+            {{"{{"}} if .Site.LoggedIn {{"}}"}}<.form action="/logout" method="post">
               <.button type="submit">Sair</.button>
             </.form>
+            {{"{{"}} end {{"}}"}}
             <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />`
 
 const tplLayoutNavEmpty = tplLayoutNavFull
