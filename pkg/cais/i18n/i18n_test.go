@@ -96,6 +96,20 @@ func TestCatalog_Funcs_htmlLangAndOgLocale(t *testing.T) {
 	}
 }
 
+func TestCatalog_Funcs_localeBase(t *testing.T) {
+	c := NewCatalog("en")
+	fn, ok := c.Funcs()["localeBase"].(func(any) string)
+	if !ok {
+		t.Fatal("localeBase func missing")
+	}
+	if got := fn("pt-BR"); got != "pt" {
+		t.Errorf("localeBase(pt-BR) = %q", got)
+	}
+	if got := fn(nil); got != "en" {
+		t.Errorf("localeBase(nil) = %q, want en", got)
+	}
+}
+
 func TestMergeFuncs_includesMetaAndI18n(t *testing.T) {
 	c := NewCatalog("en")
 	funcs := MergeFuncs(c, template.FuncMap{"absURL": func(string, string) string { return "/x" }})

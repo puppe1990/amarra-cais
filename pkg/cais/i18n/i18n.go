@@ -120,9 +120,13 @@ func (c *Catalog) Funcs() template.FuncMap {
 		"t": func(key string, args ...any) string {
 			return c.T(key, args...)
 		},
-		"htmlLang":   func() string { return c.HTMLLang() },
-		"ogLocale":   func() string { return c.OGLocale() },
-		"localeBase": NormalizeLocale, // #209: pt-BR / en-US match catalog keys
+		"htmlLang": func() string { return c.HTMLLang() },
+		"ogLocale": func() string { return c.OGLocale() },
+		// any: kit current may be missing when .Locale is unset (#209).
+		"localeBase": func(tag any) string {
+			s, _ := tag.(string)
+			return NormalizeLocale(s)
+		},
 	}
 }
 

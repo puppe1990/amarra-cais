@@ -188,6 +188,27 @@ func TestKit_localeToggleMarksRegionQualifiedLocale(t *testing.T) {
 	}
 }
 
+func TestKit_localeToggleRendersWhenCurrentMissing(t *testing.T) {
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html":  &fstest.MapFile{Data: []byte(`{{ define "content" }}<.locale-toggle />{{ end }}`)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home", Data: map[string]any{"CSRFToken": "tok"},
+	}, cais.Config{})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), `value="en"`) {
+		t.Errorf("missing EN form: %s", rr.Body.String())
+	}
+}
+
 func TestKit_localeTogglePostsToLocale(t *testing.T) {
 	fsys := fstest.MapFS{
 		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
