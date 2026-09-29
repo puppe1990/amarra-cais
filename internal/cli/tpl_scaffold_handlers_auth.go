@@ -85,7 +85,7 @@ func (h *AuthHandler) LoginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := session.SignIn(w, h.sessions, r, user.ID, session.CookieOptionsFromConfig(h.cfg)); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	flash.Set(w, "notice", h.t(r, "auth.welcome"), h.cfg.CookieSecure())
@@ -136,7 +136,7 @@ func (h *AuthHandler) SignUpPost(w http.ResponseWriter, r *http.Request) {
 
 	hash, err := session.HashPassword(password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	userID, err := h.store.CreateUser(email, hash)
@@ -149,12 +149,12 @@ func (h *AuthHandler) SignUpPost(w http.ResponseWriter, r *http.Request) {
 			}, http.StatusUnprocessableEntity)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 
 	if err := session.SignIn(w, h.sessions, r, userID, session.CookieOptionsFromConfig(h.cfg)); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	flash.Set(w, "notice", h.t(r, "auth.welcome"), h.cfg.CookieSecure())
@@ -269,7 +269,7 @@ func (h *AuthHandler) ResetPasswordPost(w http.ResponseWriter, r *http.Request) 
 
 	hash, err := session.HashPassword(password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	if err := h.store.ResetPasswordWithToken(token, hash); err != nil {
