@@ -95,6 +95,7 @@ import (
 	"strings"
 
 	"%s/pkg/cais"
+	"%s/pkg/cais/httpx"
 	"%s/pkg/cais/meta"
 
 	"%s/internal/store"
@@ -114,7 +115,7 @@ func NewSitemapHandler(s store.Store, site meta.Site, cfg cais.Config) *SitemapH
 func (h *SitemapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	posts, err := h.store.ListAllPosts("", "id", "desc")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 	base := strings.TrimSuffix(strings.TrimSpace(h.site.AppURL), "/")
@@ -144,7 +145,7 @@ func writeSitemapURL(b *strings.Builder, loc string, lastmod ...string) {
 	}
 	b.WriteString("</url>\n")
 }
-`, frameworkModule, frameworkModule, modulePath)
+`, frameworkModule, frameworkModule, frameworkModule, modulePath)
 }
 
 func buildSitemapTest(modulePath string) string {

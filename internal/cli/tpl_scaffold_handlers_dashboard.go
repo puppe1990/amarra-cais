@@ -7,6 +7,7 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/httpx"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 
@@ -34,7 +35,7 @@ func (h *DashboardHandler) t(r *http.Request, key string, args ...any) string {
 func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	count, err := h.store.CountContacts()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 

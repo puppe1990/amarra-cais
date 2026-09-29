@@ -75,7 +75,7 @@ func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.store.InsertContact(models.Contact{Name: name, Email: email}); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.ServerError(w, err, h.cfg)
 		return
 	}
 
