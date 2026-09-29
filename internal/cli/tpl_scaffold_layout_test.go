@@ -87,6 +87,41 @@ func TestLayoutTemplates_contactFormUsesKitForm(t *testing.T) {
 	}
 }
 
+// #208: signed-in chrome (login link, dashboard link, logout) is gated on
+// Site.LoggedIn, and the cais:nav marker stays outside the gate so public
+// resource links still render for anonymous visitors.
+func TestLayoutTemplates_gateAuthChromeOnLoggedIn(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		for _, gate := range []string{
+			`{{"{{"}} if .Site.LoggedIn {{"}}"}}`,
+			`{{"{{"}} if not .Site.LoggedIn {{"}}"}}`,
+		} {
+			if !strings.Contains(tpl, gate) {
+				t.Errorf("%s layout missing %q gate", name, gate)
+			}
+		}
+		marker := strings.Index(tpl, layoutNavMarker)
+		if marker == -1 {
+			t.Errorf("%s layout missing cais:nav marker", name)
+			continue
+		}
+		nav := tpl[strings.Index(tpl, "<aside"):]
+		if strings.Index(nav, layoutNavMarker) > strings.Index(nav, "<.locale-toggle") {
+			t.Errorf("%s cais:nav marker must not sit behind the signed-in gate", name)
+		}
+	}
+}
+
+func TestViewData_setsLoggedInFromSession(t *testing.T) {
+	if !strings.Contains(tplViewData, "session.UserID(r)") || !strings.Contains(tplViewData, "s.LoggedIn") {
+		t.Error("amarraData should populate Site.LoggedIn from the session (#208)")
+	}
+}
+
 func TestLayoutTemplates_dashboardUsesLogoutForm(t *testing.T) {
 	if !strings.Contains(tplPageDashboard, `action="/logout"`) {
 		t.Error("dashboard page should post logout")

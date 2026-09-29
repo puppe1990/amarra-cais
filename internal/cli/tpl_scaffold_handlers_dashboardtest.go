@@ -11,6 +11,7 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
+	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 )
 
 func TestDashboardHandler_RendersHTML(t *testing.T) {
@@ -41,6 +42,24 @@ func TestDashboardHandler_includesFlash(t *testing.T) {
 	}
 	if !strings.Contains(rr.Body.String(), "Welcome back!") {
 		t.Errorf("missing flash notice, got: %s", rr.Body.String())
+	}
+}
+
+// #208: signed-in pages keep the rail and the sign-out form.
+func TestDashboardHandler_signedInShowsAuthChrome(t *testing.T) {
+	h := NewDashboardHandler(setupTestViews(t), setupTestStore(t), testSite(), i18n.DefaultCatalog(), cais.Config{})
+
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	req = session.WithUserID(req, 1)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	body := rr.Body.String()
+	if !strings.Contains(body, ` + "`" + `action="/logout"` + "`" + `) {
+		t.Errorf("signed-in page should offer sign-out (#208), got: %s", body)
+	}
+	if !strings.Contains(body, ` + "`" + `href="/dashboard"` + "`" + `) {
+		t.Errorf("signed-in page should link to /dashboard (#208), got: %s", body)
 	}
 }
 `

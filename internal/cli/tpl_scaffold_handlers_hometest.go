@@ -57,4 +57,22 @@ func TestHomeHandler_ContentType(t *testing.T) {
 		t.Errorf("Content-Type = %q, want text/html", ct)
 	}
 }
+
+// #208: a visitor without a session must not be offered app chrome that bounces
+// (Dashboard) or signs out a session that does not exist.
+func TestHomeHandler_anonymousHidesAuthChrome(t *testing.T) {
+	h := newHomeHandler(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	body := rr.Body.String()
+	if strings.Contains(body, ` + "`" + `action="/logout"` + "`" + `) {
+		t.Errorf("anonymous page must not offer sign-out (#208), got: %s", body)
+	}
+	if strings.Contains(body, ` + "`" + `href="/dashboard"` + "`" + `) {
+		t.Errorf("anonymous page must not link to /dashboard (#208), got: %s", body)
+	}
+}
 `
