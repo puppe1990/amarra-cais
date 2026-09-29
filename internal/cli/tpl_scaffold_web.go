@@ -37,10 +37,11 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
   </head>
   <body class="min-h-screen bg-ink font-sans antialiased text-foam flex flex-col justify-between">
     <div>
-      <input id="amarra-sidebar-toggle" type="checkbox" class="peer sr-only" aria-label="Menu" />
       <header class="bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-          <label for="amarra-sidebar-toggle" class="lg:hidden font-mono text-[10px] uppercase tracking-[0.22em] text-copper cursor-pointer">Menu</label>
+          <button type="button" id="amarra-sidebar-toggle" class="lg:hidden inline-flex h-11 w-11 items-center justify-center border border-copper/40 text-copper hover:border-copper hover:text-foam transition-colors" aria-label="Menu" aria-controls="amarra-nav" aria-expanded="false" amarra-hook="sidebar" data-amarra-sidebar-target="#amarra-nav">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
           <a href="/" class="flex items-center gap-3 group">
             <span class="flex h-9 w-9 items-center justify-center border border-copper/70 text-copper group-hover:bg-copper group-hover:text-ink transition-colors" aria-hidden="true">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 20V8m0 0a3 3 0 116 0v1H5m14 11V9a3 3 0 00-3-3h-3" /></svg>
@@ -55,7 +56,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
           {{"{{"}} end {{"}}"}}
         </div>
       </header>
-      <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full transition-transform peer-checked:translate-x-0 lg:translate-x-0">
+      <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full invisible transition-transform data-[amarra-sidebar-open]:translate-x-0 data-[amarra-sidebar-open]:visible lg:translate-x-0 lg:visible">
         <div class="h-full flex flex-col gap-1 p-3 overflow-y-auto no-scrollbar">
           <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
           <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
