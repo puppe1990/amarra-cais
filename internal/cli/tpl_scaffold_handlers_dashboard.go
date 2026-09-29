@@ -25,6 +25,12 @@ func NewDashboardHandler(views *view.Renderer, s store.Store, site meta.Site, ca
 	return &DashboardHandler{views: views, store: s, site: site, catalog: catalog, cfg: cfg}
 }
 
+// t translates Go-side copy with the request locale (#211); h.catalog is the
+// boot fallback for requests that skipped LocaleMiddleware (unit tests).
+func (h *DashboardHandler) t(r *http.Request, key string, args ...any) string {
+	return i18n.CatalogOr(r, h.catalog).T(key, args...)
+}
+
 func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	count, err := h.store.CountContacts()
 	if err != nil {
@@ -33,7 +39,7 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeView(w, r, h.views, h.cfg, "app", "dashboard", amarraData(r, h.site, map[string]any{
-		"Title":         h.catalog.T("dashboard.title"),
+		"Title":         h.t(r, "dashboard.title"),
 		"ActiveNav":     "dashboard",
 		"TotalContacts": count,
 		"Env":           h.cfg.Env,

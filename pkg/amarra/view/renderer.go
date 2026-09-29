@@ -19,6 +19,9 @@ import (
 type Renderer struct {
 	mu    sync.RWMutex
 	pages map[string]*template.Template
+	// byLocale holds one parsed set per additional catalog so the i18n funcs
+	// (t/htmlLang/ogLocale) resolve per request instead of at boot (#211).
+	byLocale map[string]map[string]*template.Template
 }
 
 type namedTemplateSrc struct {
@@ -26,9 +29,16 @@ type namedTemplateSrc struct {
 	src  string
 }
 
+type pageSrc struct {
+	name string
+	src  string
+}
+
 // Load parses layouts, pages, partials, and components once at boot.
 // Unknown <.component> tags fail here so apps do not serve broken views.
-func Load(fsys fs.FS, catalog *i18n.Catalog) (*Renderer, error) {
+// The extra catalogs are parsed into per-locale page sets; Write picks one by
+// the catalog LocaleMiddleware stored on the request (#211).
+func Load(fsys fs.FS, catalog *i18n.Catalog, catalogs ...*i18n.Catalog) (*Renderer, error) {
 	if catalog == nil {
 		catalog = i18n.DefaultCatalog()
 	}
@@ -51,12 +61,40 @@ func Load(fsys fs.FS, catalog *i18n.Catalog) (*Renderer, error) {
 		return nil, err
 	}
 
-	pagePaths, err := listPagePaths(fsys)
+	pageSources, err := loadPageSources(fsys, components)
 	if err != nil {
 		return nil, err
 	}
 
-	pages := make(map[string]*template.Template, len(pagePaths))
+	pages, err := parsePages(layouts, partials, pageSources, catalog)
+	if err != nil {
+		return nil, err
+	}
+
+	rec := &Renderer{pages: pages, byLocale: map[string]map[string]*template.Template{}}
+	for _, extra := range catalogs {
+		if extra == nil || extra.Locale() == catalog.Locale() {
+			continue
+		}
+		if _, done := rec.byLocale[extra.Locale()]; done {
+			continue
+		}
+		localized, err := parsePages(layouts, partials, pageSources, extra)
+		if err != nil {
+			return nil, err
+		}
+		rec.byLocale[extra.Locale()] = localized
+	}
+
+	return rec, nil
+}
+
+func loadPageSources(fsys fs.FS, components map[string]string) ([]pageSrc, error) {
+	pagePaths, err := listPagePaths(fsys)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]pageSrc, 0, len(pagePaths))
 	for _, pagePath := range pagePaths {
 		raw, err := fs.ReadFile(fsys, pagePath)
 		if err != nil {
@@ -66,15 +104,21 @@ func Load(fsys fs.FS, catalog *i18n.Catalog) (*Renderer, error) {
 		if err != nil {
 			return nil, fmt.Errorf("expand %s: %w", pagePath, err)
 		}
-		name := pageNameFromPath(pagePath)
-		tmpl, err := parsePageTemplates(layouts, partials, name, expanded, catalog)
-		if err != nil {
-			return nil, fmt.Errorf("parse page %s: %w", name, err)
-		}
-		pages[name] = tmpl
+		out = append(out, pageSrc{name: pageNameFromPath(pagePath), src: expanded})
 	}
+	return out, nil
+}
 
-	return &Renderer{pages: pages}, nil
+func parsePages(layouts, partials []namedTemplateSrc, pages []pageSrc, catalog *i18n.Catalog) (map[string]*template.Template, error) {
+	parsed := make(map[string]*template.Template, len(pages))
+	for _, page := range pages {
+		tmpl, err := parsePageTemplates(layouts, partials, page.name, page.src, catalog)
+		if err != nil {
+			return nil, fmt.Errorf("parse page %s: %w", page.name, err)
+		}
+		parsed[page.name] = tmpl
+	}
+	return parsed, nil
 }
 
 func loadComponentSources(fsys fs.FS) (map[string]string, error) {

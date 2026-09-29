@@ -15,6 +15,7 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/boot"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 
 	"{{.ModulePath}}/internal/app"
@@ -24,20 +25,26 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	cfg := cais.Load()
 	if err := cfg.Validate(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 	preferredPort := cfg.Port
 	port, shifted, err := cais.ResolvePort(cfg.Port, cfg.Env)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	cfg.Port = port
 
 	a, err := bootstrapWithConfig(cfg)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	shiftedFrom := ""
@@ -53,11 +60,11 @@ func main() {
 	// Graceful shutdown on SIGINT/SIGTERM (air sends SIGINT before each
 	// rebuild when send_interrupt is set) so the listener and sqlite close
 	// instead of lingering as a zombie holding :8080 and data/app.db (#77).
+	// The error is returned to main rather than exiting here so this defer
+	// still runs (gocritic exitAfterDefer, #205).
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := a.RunContext(ctx); err != nil {
-		log.Fatal(err)
-	}
+	return a.RunContext(ctx)
 }
 
 func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {
@@ -67,7 +74,11 @@ func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {
 	}
 
 	catalog := appi18n.NewCatalog(cfg.Locale)
-	views, err := view.Load(tmplFS, catalog)
+	catalogs := map[string]*i18n.Catalog{
+		"en": appi18n.NewCatalog("en"),
+		"pt": appi18n.NewCatalog("pt"),
+	}
+	views, err := view.Load(tmplFS, catalog, catalogs["en"], catalogs["pt"])
 	if err != nil {
 		return nil, fmt.Errorf("views: %w", err)
 	}
@@ -89,6 +100,7 @@ func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {
 		StaticDir: staticDir,
 		Site:      meta.SiteFrom("{{.AppName}}", cfg.AppURL),
 		Catalog:   catalog,
+		Catalogs:  catalogs,
 	})
 }
 `
