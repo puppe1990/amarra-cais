@@ -75,6 +75,20 @@ func CatalogFromRequest(r *http.Request) *Catalog {
 	return c
 }
 
+// CatalogOr returns the request catalog when LocaleMiddleware resolved one,
+// then fallback, then the default catalog. Handlers use it to translate Go-side
+// copy (titles, errors, flash) with the same locale as the rendered templates
+// (#211) instead of a catalog captured at boot.
+func CatalogOr(r *http.Request, fallback *Catalog) *Catalog {
+	if c := CatalogFromRequest(r); c != nil {
+		return c
+	}
+	if fallback != nil {
+		return fallback
+	}
+	return DefaultCatalog()
+}
+
 // SetCookie writes cais_locale for app language-switcher handlers (GET /locale?lang=).
 func SetCookie(w http.ResponseWriter, locale string, secure bool) {
 	SetCookieOpts(w, locale, CookieSettings{Secure: secure, HTTPOnly: true})

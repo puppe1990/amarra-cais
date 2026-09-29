@@ -9,6 +9,7 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/amarra"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 )
 
 type Page struct {
@@ -27,7 +28,7 @@ type Page struct {
 // Status is committed only after the template executes so a missing page/frame
 // cannot stick a 422 on a 500 error body.
 func Write(w http.ResponseWriter, r *http.Request, rec *Renderer, p Page, cfg cais.Config) {
-	tmpl, err := rec.lookupPage(p.Name)
+	tmpl, err := rec.pageForRequest(p.Name, r)
 	if err != nil {
 		writeRenderError(w, err, cfg)
 		return
@@ -54,6 +55,26 @@ func Write(w http.ResponseWriter, r *http.Request, rec *Renderer, p Page, cfg ca
 	if _, err := w.Write(buf.Bytes()); err != nil {
 		log.Printf("write html: %v", err)
 	}
+}
+
+// pageForRequest renders with the locale catalog LocaleMiddleware resolved for
+// this request, falling back to the boot catalog when it is absent or unknown
+// (#211). The per-locale template sets are parsed once at Load so no clone or
+// re-parse happens per request.
+func (rec *Renderer) pageForRequest(name string, r *http.Request) (*template.Template, error) {
+	if rec != nil {
+		if cat := i18n.CatalogFromRequest(r); cat != nil {
+			rec.mu.RLock()
+			pages, ok := rec.byLocale[cat.Locale()]
+			rec.mu.RUnlock()
+			if ok {
+				if tmpl, ok := pages[name]; ok {
+					return tmpl, nil
+				}
+			}
+		}
+	}
+	return rec.lookupPage(name)
 }
 
 func (rec *Renderer) lookupPage(name string) (*template.Template, error) {

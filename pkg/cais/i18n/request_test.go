@@ -206,6 +206,25 @@ func TestCatalogFromRequest_nilWithoutMiddleware(t *testing.T) {
 	}
 }
 
+func TestCatalogOr_requestCatalogWins(t *testing.T) {
+	var got *Catalog
+	h := LocaleMiddleware(requestCatalogs(), "en")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = CatalogOr(r, requestCatalogs()["en"])
+	}))
+	req := newLocaleRequest(t, "/?lang=pt")
+	h.ServeHTTP(httptest.NewRecorder(), req)
+	assertLocale(t, got, "pt")
+}
+
+func TestCatalogOr_fallsBackWithoutMiddleware(t *testing.T) {
+	fallback := requestCatalogs()["en"]
+	got := CatalogOr(newLocaleRequest(t, "/"), fallback)
+	if got != fallback {
+		t.Fatalf("CatalogOr = %v, want fallback", got)
+	}
+	assertLocale(t, CatalogOr(newLocaleRequest(t, "/"), nil), DefaultLocale)
+}
+
 func TestCatalogForRequest_esAndZhFromCustomMaps(t *testing.T) {
 	catalogs := requestCatalogs()
 	esReq := newLocaleRequest(t, "/?lang=es-MX")

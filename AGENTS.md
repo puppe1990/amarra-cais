@@ -476,6 +476,8 @@ Set `TRUSTED_PROXIES` (comma-separated IPs) when behind a reverse proxy so `midd
 
 Set `LOCALE=en` (default) or `LOCALE=pt` for UI strings via `pkg/cais/i18n`. See [i18n design](docs/superpowers/specs/2026-07-01-i18n-design.md).
 
+Per-request locale is wired: `i18n.LocaleMiddleware` resolves `?lang=` / the `cais_locale` cookie, `view.Load(fsys, bootCatalog, enCatalog, ptCatalog…)` parses one page set per catalog and `view.Write` picks it from the request, and handlers translate Go-side copy with `i18n.CatalogOr(r, h.catalog).T(...)` (`h.t(r, ...)` in the scaffold). Do not capture a catalog at boot for request copy — the language toggle would silently do nothing (#211).
+
 ## CLI generators
 
 ```bash

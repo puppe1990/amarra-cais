@@ -30,9 +30,15 @@ func NewContactHandler(views *view.Renderer, s store.Store, site meta.Site, cata
 	return &ContactHandler{views: views, store: s, site: site, catalog: catalog, cfg: cfg}
 }
 
+// t translates Go-side copy with the request locale (#211); h.catalog is the
+// boot fallback for requests that skipped LocaleMiddleware (unit tests).
+func (h *ContactHandler) t(r *http.Request, key string, args ...any) string {
+	return i18n.CatalogOr(r, h.catalog).T(key, args...)
+}
+
 func (h *ContactHandler) Get(w http.ResponseWriter, r *http.Request) {
 	writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
-		"Title":     h.catalog.T("contact.title"),
+		"Title":     h.t(r, "contact.title"),
 		"ActiveNav": "contact",
 	}), 0)
 }
@@ -48,18 +54,18 @@ func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {
 
 	var errs validate.FieldErrors
 	if name == "" {
-		errs.Add("name", h.catalog.T("contact.name_required"))
+		errs.Add("name", h.t(r, "contact.name_required"))
 	}
 	if err := validate.Email(email); err != nil {
-		msg := h.catalog.T("contact.email_required")
+		msg := h.t(r, "contact.email_required")
 		if email != "" {
-			msg = h.catalog.T("contact.email_invalid")
+			msg = h.t(r, "contact.email_invalid")
 		}
 		errs.Add("email", msg)
 	}
 	if errs.Any() {
 		writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
-			"Title":     h.catalog.T("contact.title"),
+			"Title":     h.t(r, "contact.title"),
 			"ActiveNav": "contact",
 			"Errors":    errs,
 			"Name":      name,
@@ -73,7 +79,7 @@ func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flash.Set(w, "success", "Message sent successfully.", h.cfg.CookieSecure())
+	flash.Set(w, "success", h.t(r, "contact.success"), h.cfg.CookieSecure())
 	http.Redirect(w, r, "/contact", http.StatusSeeOther)
 }
 `

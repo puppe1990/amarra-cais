@@ -52,6 +52,30 @@ func TestScaffoldNewApp_ConsoleDoesNotFatalAfterDefer(t *testing.T) {
 	}
 }
 
+func TestScaffoldNewApp_ServerDoesNotFatalAfterDefer(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "srvfatal")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "srvfatal",
+		ModulePath: "github.com/puppe1990/srvfatal",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(appDir, "cmd/server/main.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := string(body)
+	runSrc := sourceFunc(src, "run")
+	if strings.Contains(runSrc, "log.Fatal") {
+		t.Error("func run must not call log.Fatal (os.Exit skips defers)")
+	}
+	mainSrc := sourceFunc(src, "main")
+	if strings.Contains(mainSrc, "defer ") && strings.Contains(mainSrc, "log.Fatal") {
+		t.Error("func main must not call log.Fatal after defer (gocritic exitAfterDefer)")
+	}
+}
+
 func TestScaffoldNewApp_JSConfigsMatchPrettier(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "fmtjs")

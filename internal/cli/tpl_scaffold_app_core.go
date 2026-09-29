@@ -31,6 +31,9 @@ type Deps struct {
 	StaticDir string
 	Site      meta.Site
 	Catalog   *i18n.Catalog
+	// Catalogs is the full locale set for LocaleMiddleware and the per-request
+	// view renderer (#211). Catalog stays the boot fallback for handler copy.
+	Catalogs map[string]*i18n.Catalog
 }
 
 type App struct {
@@ -59,9 +62,12 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 	r.Use(middleware.CSRF(cfg))
 	r.Use(middleware.LoadSession(deps.Store.Sessions()))
 	r.Use(middleware.Flash(cfg))
-	catalogs := map[string]*i18n.Catalog{
-		"en": appi18n.NewCatalog("en"),
-		"pt": appi18n.NewCatalog("pt"),
+	catalogs := deps.Catalogs
+	if len(catalogs) == 0 {
+		catalogs = map[string]*i18n.Catalog{
+			"en": appi18n.NewCatalog("en"),
+			"pt": appi18n.NewCatalog("pt"),
+		}
 	}
 	r.Use(i18n.LocaleMiddleware(catalogs, cfg.Locale))
 	buf := devlog.Prepare(cfg.Env)

@@ -146,11 +146,12 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 	if strings.Contains(authBody, "inertia.SetFlash(") {
 		t.Error("auth.go must not call inertia.SetFlash; use flash.Set + Redirect instead")
 	}
-	loginFlash := "flash.Set(w, \"notice\", h.catalog.T(\"auth.welcome\")"
+	// #211: handler copy resolves through the request catalog (h.t), not the boot catalog.
+	loginFlash := "flash.Set(w, \"notice\", h.t(r, \"auth.welcome\")"
 	if !strings.Contains(authBody, loginFlash) {
 		t.Error("auth.go login/signup welcome must call flash.Set(notice, auth.welcome)")
 	}
-	if !strings.Contains(authBody, "h.catalog.T(\"auth.reset_success\")") || !strings.Contains(authBody, "flash.Set") {
+	if !strings.Contains(authBody, "h.t(r, \"auth.reset_success\")") || !strings.Contains(authBody, "flash.Set") {
 		t.Error("auth.go reset success must call flash.Set")
 	}
 	viewData, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/viewdata.go"))

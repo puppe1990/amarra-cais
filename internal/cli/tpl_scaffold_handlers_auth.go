@@ -34,12 +34,18 @@ func NewAuthHandler(views *view.Renderer, s store.Store, site meta.Site, session
 	return &AuthHandler{views: views, store: s, site: site, sessions: sessions, cfg: cfg, catalog: catalog}
 }
 
+// t translates Go-side copy with the request locale (#211); h.catalog is the
+// boot fallback for requests that skipped LocaleMiddleware (unit tests).
+func (h *AuthHandler) t(r *http.Request, key string, args ...any) string {
+	return i18n.CatalogOr(r, h.catalog).T(key, args...)
+}
+
 func (h *AuthHandler) renderAuth(w http.ResponseWriter, r *http.Request, name string, extra map[string]any, status int) {
 	if extra == nil {
 		extra = map[string]any{}
 	}
 	if _, ok := extra["Title"]; !ok {
-		extra["Title"] = h.catalog.T("auth.login_title")
+		extra["Title"] = h.t(r, "auth.login_title")
 	}
 	writeView(w, r, h.views, h.cfg, "app", name, amarraData(r, h.site, extra), status)
 }
@@ -54,7 +60,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		email = "demo@example.com"
 	}
 	h.renderAuth(w, r, "login", map[string]any{
-		"Title": h.catalog.T("auth.login_title"),
+		"Title": h.t(r, "auth.login_title"),
 		"Email": email,
 	}, 0)
 }
@@ -70,9 +76,9 @@ func (h *AuthHandler) LoginPost(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.FindUserByEmail(email)
 	if err != nil || !session.VerifyPassword(user.PasswordHash, password) {
 		h.renderAuth(w, r, "login", map[string]any{
-			"Title":  h.catalog.T("auth.login_title"),
+			"Title":  h.t(r, "auth.login_title"),
 			"Email":  email,
-			"Errors": validate.FieldErrors{"email": h.catalog.T("auth.invalid_credentials")},
+			"Errors": validate.FieldErrors{"email": h.t(r, "auth.invalid_credentials")},
 		}, http.StatusUnprocessableEntity)
 		return
 	}
@@ -81,7 +87,7 @@ func (h *AuthHandler) LoginPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	flash.Set(w, "notice", h.catalog.T("auth.welcome"), h.cfg.CookieSecure())
+	flash.Set(w, "notice", h.t(r, "auth.welcome"), h.cfg.CookieSecure())
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
@@ -95,7 +101,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
-	h.renderAuth(w, r, "signup", map[string]any{"Title": h.catalog.T("auth.signup_title")}, 0)
+	h.renderAuth(w, r, "signup", map[string]any{"Title": h.t(r, "auth.signup_title")}, 0)
 }
 
 func (h *AuthHandler) SignUpPost(w http.ResponseWriter, r *http.Request) {
@@ -110,17 +116,17 @@ func (h *AuthHandler) SignUpPost(w http.ResponseWriter, r *http.Request) {
 
 	var errs validate.FieldErrors
 	if err := validate.Email(email); err != nil {
-		errs.Add("email", h.catalog.T("contact.email_invalid"))
+		errs.Add("email", h.t(r, "contact.email_invalid"))
 	}
 	if err := validate.MinLength(password, 8); err != nil {
-		errs.Add("password", h.catalog.T("auth.password_too_short"))
+		errs.Add("password", h.t(r, "auth.password_too_short"))
 	}
 	if password != confirm {
-		errs.Add("password_confirmation", h.catalog.T("auth.password_mismatch"))
+		errs.Add("password_confirmation", h.t(r, "auth.password_mismatch"))
 	}
 	if errs.Any() {
 		h.renderAuth(w, r, "signup", map[string]any{
-			"Title":  h.catalog.T("auth.signup_title"),
+			"Title":  h.t(r, "auth.signup_title"),
 			"Email":  email,
 			"Errors": errs,
 		}, http.StatusUnprocessableEntity)
@@ -136,9 +142,9 @@ func (h *AuthHandler) SignUpPost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, store.ErrEmailTaken) {
 			h.renderAuth(w, r, "signup", map[string]any{
-				"Title":  h.catalog.T("auth.signup_title"),
+				"Title":  h.t(r, "auth.signup_title"),
 				"Email":  email,
-				"Errors": validate.FieldErrors{"email": h.catalog.T("auth.email_taken")},
+				"Errors": validate.FieldErrors{"email": h.t(r, "auth.email_taken")},
 			}, http.StatusUnprocessableEntity)
 			return
 		}
@@ -150,7 +156,7 @@ func (h *AuthHandler) SignUpPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	flash.Set(w, "notice", h.catalog.T("auth.welcome"), h.cfg.CookieSecure())
+	flash.Set(w, "notice", h.t(r, "auth.welcome"), h.cfg.CookieSecure())
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
@@ -159,7 +165,7 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
-	h.renderAuth(w, r, "forgot_password", map[string]any{"Title": h.catalog.T("auth.forgot_password_title")}, 0)
+	h.renderAuth(w, r, "forgot_password", map[string]any{"Title": h.t(r, "auth.forgot_password_title")}, 0)
 }
 
 func (h *AuthHandler) ForgotPasswordPost(w http.ResponseWriter, r *http.Request) {
@@ -171,11 +177,11 @@ func (h *AuthHandler) ForgotPasswordPost(w http.ResponseWriter, r *http.Request)
 	email := strings.TrimSpace(r.FormValue("email"))
 	var errs validate.FieldErrors
 	if err := validate.Email(email); err != nil {
-		errs.Add("email", h.catalog.T("contact.email_invalid"))
+		errs.Add("email", h.t(r, "contact.email_invalid"))
 	}
 	if errs.Any() {
 		h.renderAuth(w, r, "forgot_password", map[string]any{
-			"Title":  h.catalog.T("auth.forgot_password_title"),
+			"Title":  h.t(r, "auth.forgot_password_title"),
 			"Email":  email,
 			"Errors": errs,
 		}, http.StatusUnprocessableEntity)
@@ -191,7 +197,7 @@ func (h *AuthHandler) ForgotPasswordPost(w http.ResponseWriter, r *http.Request)
 		_ = h.resetNotifier().NotifyReset(user.Email, token)
 	}
 
-	flash.Set(w, "notice", h.catalog.T("auth.reset_email_sent"), h.cfg.CookieSecure())
+	flash.Set(w, "notice", h.t(r, "auth.reset_email_sent"), h.cfg.CookieSecure())
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
@@ -202,14 +208,14 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := strings.TrimSpace(r.URL.Query().Get("token"))
-	extra := map[string]any{"Title": h.catalog.T("auth.reset_password_title"), "Token": token}
+	extra := map[string]any{"Title": h.t(r, "auth.reset_password_title"), "Token": token}
 	if token == "" {
-		extra["Errors"] = validate.FieldErrors{"token": h.catalog.T("auth.reset_invalid_token")}
+		extra["Errors"] = validate.FieldErrors{"token": h.t(r, "auth.reset_invalid_token")}
 		h.renderAuth(w, r, "reset_password", extra, http.StatusUnprocessableEntity)
 		return
 	}
 	if _, ok := h.store.FindPasswordResetUserID(token); !ok {
-		extra["Errors"] = validate.FieldErrors{"token": h.catalog.T("auth.reset_invalid_token")}
+		extra["Errors"] = validate.FieldErrors{"token": h.t(r, "auth.reset_invalid_token")}
 		h.renderAuth(w, r, "reset_password", extra, http.StatusUnprocessableEntity)
 		return
 	}
@@ -228,24 +234,24 @@ func (h *AuthHandler) ResetPasswordPost(w http.ResponseWriter, r *http.Request) 
 
 	var errs validate.FieldErrors
 	if token == "" {
-		errs.Add("token", h.catalog.T("auth.reset_invalid_token"))
+		errs.Add("token", h.t(r, "auth.reset_invalid_token"))
 	} else if _, ok := h.store.FindPasswordResetUserID(token); !ok {
 		h.renderAuth(w, r, "reset_password", map[string]any{
-			"Title":  h.catalog.T("auth.reset_password_title"),
+			"Title":  h.t(r, "auth.reset_password_title"),
 			"Token":  token,
-			"Errors": validate.FieldErrors{"token": h.catalog.T("auth.reset_invalid_token")},
+			"Errors": validate.FieldErrors{"token": h.t(r, "auth.reset_invalid_token")},
 		}, http.StatusUnprocessableEntity)
 		return
 	}
 	if err := validate.MinLength(password, 8); err != nil {
-		errs.Add("password", h.catalog.T("auth.password_too_short"))
+		errs.Add("password", h.t(r, "auth.password_too_short"))
 	}
 	if password != confirm {
-		errs.Add("password_confirmation", h.catalog.T("auth.password_mismatch"))
+		errs.Add("password_confirmation", h.t(r, "auth.password_mismatch"))
 	}
 	if errs.Any() {
 		h.renderAuth(w, r, "reset_password", map[string]any{
-			"Title":  h.catalog.T("auth.reset_password_title"),
+			"Title":  h.t(r, "auth.reset_password_title"),
 			"Token":  token,
 			"Errors": errs,
 		}, http.StatusUnprocessableEntity)
@@ -259,14 +265,14 @@ func (h *AuthHandler) ResetPasswordPost(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := h.store.ResetPasswordWithToken(token, hash); err != nil {
 		h.renderAuth(w, r, "reset_password", map[string]any{
-			"Title":  h.catalog.T("auth.reset_password_title"),
+			"Title":  h.t(r, "auth.reset_password_title"),
 			"Token":  token,
-			"Errors": validate.FieldErrors{"token": h.catalog.T("auth.reset_invalid_token")},
+			"Errors": validate.FieldErrors{"token": h.t(r, "auth.reset_invalid_token")},
 		}, http.StatusUnprocessableEntity)
 		return
 	}
 
-	flash.Set(w, "notice", h.catalog.T("auth.reset_success"), h.cfg.CookieSecure())
+	flash.Set(w, "notice", h.t(r, "auth.reset_success"), h.cfg.CookieSecure())
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
