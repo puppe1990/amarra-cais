@@ -13,6 +13,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - Kit `<.switch>` for bool fields as an accessible checkbox (#218).
 - Kit `<.drawer>` as a side `<dialog>` using the existing `dialog` hook (#217).
 - Kit select stays native with progressive `appearance: base-select`; fields use `:user-invalid` alongside Go `.Errors` (#219).
+- Kit `<.tooltip>` with hover and focus-within hint text in the HTML (#216).
 
 ## [0.12.1] - 2026-09-29
 
