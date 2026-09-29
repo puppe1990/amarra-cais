@@ -18,6 +18,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - Kit `<.tooltip>` with hover and focus-within hint text in the HTML (#216).
 - `pkg/cais/fakedata`: gofakeit-backed sample data for seeds and tests — `Name`, `Title`, `Email`, `Sentence`, `URL`, `Date` and `Seed` for reproducible values.
 
+### Fixed
+
+- `amarra-cais new` drops VCS build metadata from the pinned framework version: a dirty dev build pinned `v0.12.1+dirty`, which `go.mod` rejects.
+
 ## [0.12.1] - 2026-09-29
 
 ### Added
