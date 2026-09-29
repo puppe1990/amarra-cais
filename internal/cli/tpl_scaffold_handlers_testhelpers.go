@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
-	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 
+	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
 )
 
@@ -40,7 +40,7 @@ func setupTestViews(t *testing.T) *view.Renderer {
 	t.Helper()
 	root := projectRoot(t)
 	fsys := os.DirFS(filepath.Join(root, "web", "templates"))
-	r, err := view.Load(fsys, i18n.DefaultCatalog())
+	r, err := view.Load(fsys, appi18n.DefaultCatalog())
 	if err != nil {
 		t.Fatal(err)
 	}

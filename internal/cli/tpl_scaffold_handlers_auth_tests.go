@@ -10,16 +10,16 @@ import (
 	"testing"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 
+	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
 )
 
 func newAuthHandler(t *testing.T) (*AuthHandler, store.Store) {
 	t.Helper()
 	s := setupTestStore(t)
-	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog())
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, appi18n.DefaultCatalog())
 	return h, s
 }
 
@@ -60,7 +60,7 @@ func TestAuth_LoginPost_validCredentials_redirects(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = s.Close() })
-	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog())
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, appi18n.DefaultCatalog())
 
 	form := url.Values{"email": {"demo@example.com"}, "password": {"password"}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
@@ -96,8 +96,8 @@ import (
 	"testing"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 
+	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
 )
 
@@ -108,7 +108,7 @@ func newAuthHandlerForSignup(t *testing.T) (*AuthHandler, store.Store) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = s.Close() })
-	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, i18n.DefaultCatalog())
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{}, appi18n.DefaultCatalog())
 	return h, s
 }
 
@@ -196,10 +196,10 @@ import (
 	"testing"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/passwordreset"
 	"github.com/puppe1990/amarra-cais/pkg/cais/session"
 
+	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
 )
 
@@ -227,7 +227,7 @@ func (f *failingNotifier) NotifyReset(email, token string) error {
 
 func newAuthHandlerForReset(t *testing.T, s store.Store, notify passwordreset.Notifier) *AuthHandler {
 	t.Helper()
-	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{AppURL: "http://localhost:8080"}, i18n.DefaultCatalog())
+	h := NewAuthHandler(setupTestViews(t), s, testSite(), s.Sessions(), cais.Config{AppURL: "http://localhost:8080"}, appi18n.DefaultCatalog())
 	h.resetNotify = notify
 	return h
 }

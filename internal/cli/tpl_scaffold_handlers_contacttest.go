@@ -10,15 +10,15 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
-	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 
+	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
 )
 
 func newContactHandler(t *testing.T) (*ContactHandler, store.Store) {
 	t.Helper()
 	s := setupTestStore(t)
-	h := NewContactHandler(setupTestViews(t), s, testSite(), i18n.DefaultCatalog(), cais.Config{})
+	h := NewContactHandler(setupTestViews(t), s, testSite(), appi18n.DefaultCatalog(), cais.Config{})
 	return h, s
 }
 
