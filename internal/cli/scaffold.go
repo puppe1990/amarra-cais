@@ -26,10 +26,20 @@ func qualityToolingFiles() map[string]string {
 
 // defaultScaffoldCaisVersion is used when the CLI is built from source ((devel)).
 // Keep aligned with the latest published tag so `amarra-cais new` resolves without a local replace.
-const defaultScaffoldCaisVersion = "0.12.1"
+const defaultScaffoldCaisVersion = "0.12.2"
 
 func scaffoldModuleVersion() string {
-	v := strings.TrimPrefix(frameworkVersion(), "v")
+	return scaffoldVersion(frameworkVersion())
+}
+
+// scaffoldVersion turns a CLI build version into the module version a scaffold
+// pins. `go build` stamps a dirty dev tree as "<tag>+dirty" (VCS metadata),
+// which is not a valid module version, so the metadata is dropped.
+func scaffoldVersion(v string) string {
+	v = strings.TrimPrefix(v, "v")
+	if i := strings.IndexByte(v, '+'); i >= 0 {
+		v = v[:i]
+	}
 	if v == "" || v == "dev" {
 		return defaultScaffoldCaisVersion
 	}
