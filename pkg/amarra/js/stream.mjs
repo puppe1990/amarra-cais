@@ -118,6 +118,10 @@ export function start(opts = {}) {
         ? doc.querySelectorAll("[data-amarra-stream]")
         : [];
     for (const el of nodes) {
+      // #204: the boot guard below flags <html> with data-amarra-stream="true",
+      // which the [data-amarra-stream] selector otherwise matches — the browser
+      // then opens EventSource("true") (GET /true).
+      if (el === doc.documentElement) continue;
       if (sources.has(el)) continue;
       const url = el.getAttribute?.("data-amarra-stream");
       if (!url) continue;

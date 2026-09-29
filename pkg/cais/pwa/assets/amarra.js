@@ -1662,6 +1662,7 @@
       }
       const nodes = typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("[data-amarra-stream]") : [];
       for (const el of nodes) {
+        if (el === doc.documentElement) continue;
         if (sources.has(el)) continue;
         const url = el.getAttribute?.("data-amarra-stream");
         if (!url) continue;
