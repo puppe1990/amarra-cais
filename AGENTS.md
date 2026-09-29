@@ -75,6 +75,7 @@ Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go
 | `pkg/cais/pwa/`           | Default PWA assets (`InstallForAmarra` ships `amarra.js`)                                                    |
 | `pkg/cais/cache/`         | In-memory TTL cache + stable `Key`/`Hash` for ETags                                                          |
 | `pkg/cais/pagination/`    | Offset/limit helpers for list pages                                                                          |
+| `pkg/cais/fakedata/`      | Sample data for seeds/tests (`Name`, `Title`, `Email`, `Sentence`, `URL`, `Date`, `Seed`)                    |
 | `pkg/cais/chat/`          | Chat bubbles, tool UI (`LiveBubble`, `MessageBubble`)                                                        |
 | `pkg/cais/middleware/`    | CSRF, sessions, auth, rate limits, security headers                                                          |
 | `pkg/cais/passwordreset/` | Password-reset tokens + notifier interface                                                                   |
