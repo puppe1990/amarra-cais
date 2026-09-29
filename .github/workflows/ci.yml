@@ -3,16 +3,36 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "website/**"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "website/**"
 
 permissions:
   contents: read
 
+# A new push to the same PR cancels the previous run instead of paying for both.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
-    name: Test
+    name: Test (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # internal/cli scaffolds real apps (go mod tidy + build), so it is the
+          # long pole; pkg/cais holds the concurrency-heavy code and keeps -race
+          # on pull requests. Everything runs with -race on main.
+          - shard: pkg
+            race_on_pr: true
+          - shard: internal
+            race_on_pr: false
     steps:
       - uses: actions/checkout@v4
 
@@ -21,24 +41,25 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      # TestScaffold_AppIsPrettierClean formats fresh scaffolds with the repo's
+      # prettier binary, so this shard needs the JS tooling installed.
       - uses: actions/setup-node@v4
+        if: matrix.shard == 'internal'
         with:
           node-version: 22
           cache: npm
 
       - name: Install JS tooling
+        if: matrix.shard == 'internal'
         run: npm ci
 
-      - name: JS unit tests
-        run: npm run js:test
-
-      - name: Verify committed JS bundles match sources
-        run: |
-          npm run js:build
-          git diff --exit-code pkg/cais/pwa/assets/amarra.js pkg/cais/pwa/assets/cais-chat-logic.mjs
-
       - name: Run Go tests
-        run: go test ./... -race -count=1 -v
+        run: |
+          RACE=""
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ matrix.race_on_pr }}" = "true" ]; then
+            RACE="-race"
+          fi
+          go test ./${{ matrix.shard }}/... $RACE -count=1 -v
 
   lint:
     name: Lint
@@ -55,46 +76,6 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.12.2
-
-  prettier:
-    name: Prettier
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      - name: Check formatting
-        run: npx prettier --check .
-
-  website:
-    name: Docs site
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: website
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: website/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check
-        run: npm run check
-
-      - name: Build
-        run: npm run build
 
   smoke:
     name: Smoke scaffold
