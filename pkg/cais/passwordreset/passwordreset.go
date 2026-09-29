@@ -2,6 +2,7 @@ package passwordreset
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -51,4 +52,13 @@ func NewToken() (string, error) {
 		return "", fmt.Errorf("generate token: %w", err)
 	}
 	return hex.EncodeToString(b), nil
+}
+
+// Hash returns the hex-encoded SHA-256 digest persisted at rest. Reset tokens
+// already carry 256 bits of entropy, so a fast digest is enough: a leaked DB,
+// backup or SQL log then holds a non-replayable value instead of a live bearer
+// credential, without paying bcrypt on every lookup (#222).
+func Hash(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
 }
