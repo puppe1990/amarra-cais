@@ -48,8 +48,8 @@ import (
 // and return the raw value to the notifier, so a DB, backup or SQL-log leak
 // cannot be replayed (#222). Lookup/consume hash the presented token first.
 func (s *SQLiteStore) CreatePasswordResetToken(userID int64) (string, error) {
-	if _, err := s.db.Exec("DELETE FROM password_reset_tokens WHERE user_id = ?", userID); err != nil {
-		return "", fmt.Errorf("clear reset tokens: %w", err)
+	if err := s.ClearPasswordResetTokens(userID); err != nil {
+		return "", err
 	}
 
 	token, err := passwordreset.NewToken()
@@ -64,6 +64,13 @@ func (s *SQLiteStore) CreatePasswordResetToken(userID int64) (string, error) {
 		return "", fmt.Errorf("insert reset token: %w", err)
 	}
 	return token, nil
+}
+
+func (s *SQLiteStore) ClearPasswordResetTokens(userID int64) error {
+	if _, err := s.db.Exec("DELETE FROM password_reset_tokens WHERE user_id = ?", userID); err != nil {
+		return fmt.Errorf("clear reset tokens: %w", err)
+	}
+	return nil
 }
 
 func (s *SQLiteStore) FindPasswordResetUserID(token string) (int64, bool) {

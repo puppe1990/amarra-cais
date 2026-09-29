@@ -4,6 +4,7 @@ const tplAuthHandler = `package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 
@@ -191,10 +192,18 @@ func (h *AuthHandler) ForgotPasswordPost(w http.ResponseWriter, r *http.Request)
 	if user, err := h.store.FindUserByEmail(email); err == nil {
 		token, err := h.store.CreatePasswordResetToken(user.ID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			// Log without the token: a DB failure must not change the public
+			// response or reveal whether the account exists (#223).
+			log.Printf("password reset: create token for %s: %v", user.Email, err)
+		} else if err := h.resetNotifier().NotifyReset(user.Email, token); err != nil {
+			// Delivery failed. Log it and invalidate the token so no live
+			// credential is left behind; the response stays identical to a
+			// missing account so we do not enumerate users (#223).
+			log.Printf("password reset: deliver for %s: %v", user.Email, err)
+			if err := h.store.ClearPasswordResetTokens(user.ID); err != nil {
+				log.Printf("password reset: clear failed token for %s: %v", user.Email, err)
+			}
 		}
-		_ = h.resetNotifier().NotifyReset(user.Email, token)
 	}
 
 	flash.Set(w, "notice", h.t(r, "auth.reset_email_sent"), h.cfg.CookieSecure())

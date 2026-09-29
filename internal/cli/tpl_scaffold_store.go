@@ -40,6 +40,7 @@ type Store interface {
 	FindUserByEmail(email string) (models.User, error)
 	CreateUser(email, passwordHash string) (int64, error)
 	CreatePasswordResetToken(userID int64) (string, error)
+	ClearPasswordResetTokens(userID int64) error
 	FindPasswordResetUserID(token string) (int64, bool)
 	ResetPasswordWithToken(token, passwordHash string) error
 	Sessions() session.Store

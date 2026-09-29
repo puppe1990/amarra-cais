@@ -185,9 +185,13 @@ func TestAuth_SignUp_RendersForm(t *testing.T) {
 const tplAuthResetTest = `package handlers
 
 import (
+	"bytes"
+	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -208,6 +212,17 @@ func (c *captureNotifier) NotifyReset(email, token string) error {
 	c.emails = append(c.emails, email)
 	c.tokens = append(c.tokens, token)
 	return nil
+}
+
+type failingNotifier struct {
+	email string
+	token string
+}
+
+func (f *failingNotifier) NotifyReset(email, token string) error {
+	f.email = email
+	f.token = token
+	return errors.New("smtp down")
 }
 
 func newAuthHandlerForReset(t *testing.T, s store.Store, notify passwordreset.Notifier) *AuthHandler {
@@ -260,6 +275,48 @@ func TestAuth_ForgotPasswordPost_knownEmail_notifiesAndRedirects(t *testing.T) {
 	}
 	if len(notify.tokens) != 1 || notify.tokens[0] == "" {
 		t.Fatalf("notify tokens = %v", notify.tokens)
+	}
+}
+
+// #223: a delivery failure must stay observably identical to a missing account
+// (no enumeration) while logging the failure and invalidating the token.
+func TestAuth_ForgotPasswordPost_deliveryFailure_logsAndInvalidatesToken(t *testing.T) {
+	s, err := store.NewSQLiteStore(":memory:", "development")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+
+	notify := &failingNotifier{}
+	h := newAuthHandlerForReset(t, s, notify)
+
+	var logs bytes.Buffer
+	log.SetOutput(&logs)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+	form := url.Values{"email": {"demo@example.com"}}
+	req := httptest.NewRequest(http.MethodPost, "/forgot-password", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr := httptest.NewRecorder()
+	h.ForgotPasswordPost(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("status = %d, want 303 (must match missing account)", rr.Code)
+	}
+	if notify.token == "" {
+		t.Fatal("notifier must receive the token")
+	}
+	if !strings.Contains(logs.String(), "password reset") {
+		t.Errorf("delivery failure must be logged server-side, got %q", logs.String())
+	}
+	if strings.Contains(logs.String(), notify.token) {
+		t.Error("log must never contain the reset token")
+	}
+	if strings.Contains(rr.Body.String(), notify.token) {
+		t.Error("response must never contain the reset token")
+	}
+	if _, ok := s.FindPasswordResetUserID(notify.token); ok {
+		t.Fatal("token must be invalidated when delivery fails")
 	}
 }
 

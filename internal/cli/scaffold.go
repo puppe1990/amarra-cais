@@ -59,6 +59,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		"internal/models/contact.go":                 tplContactModel,
 		"internal/store/store.go":                    tplStore,
 		"internal/store/password_reset.go":           tplStorePasswordReset,
+		"internal/store/password_reset_test.go":      tplStorePasswordResetTest,
 		"internal/store/store_test.go":               tplStoreTest,
 		"internal/store/migrations.go":               tplMigrations,
 		"internal/store/migrations/001_contacts.sql": tplMigration001,
