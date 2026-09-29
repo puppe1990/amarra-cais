@@ -139,7 +139,7 @@ type Store interface {`,
 	if !strings.Contains(content, ifaceMarker) {
 		return fmt.Errorf("could not patch store interface for auth")
 	}
-	ifaceInsert := "\n\tFindUserByEmail(email string) (models.User, error)\n\tCreateUser(email, passwordHash string) (int64, error)\n\tCreatePasswordResetToken(userID int64) (string, error)\n\tFindPasswordResetUserID(token string) (int64, bool)\n\tResetPasswordWithToken(token, passwordHash string) error"
+	ifaceInsert := "\n\tFindUserByEmail(email string) (models.User, error)\n\tCreateUser(email, passwordHash string) (int64, error)\n\tCreatePasswordResetToken(userID int64) (string, error)\n\tClearPasswordResetTokens(userID int64) error\n\tFindPasswordResetUserID(token string) (int64, bool)\n\tResetPasswordWithToken(token, passwordHash string) error"
 	if !strings.Contains(content, "Sessions() session.Store") {
 		ifaceInsert += "\n\tSessions() session.Store"
 	}
