@@ -7,6 +7,6 @@ tmp/
 .DS_Store
 .worktrees/
 .commandcode/
-.worktrees/
+.grok/
 .superpowers/
 .playwright-cli/
