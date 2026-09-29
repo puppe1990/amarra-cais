@@ -9,12 +9,13 @@ import (
 	"testing"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
+
+	appi18n "{{.ModulePath}}/internal/i18n"
 )
 
 func newHomeHandler(t *testing.T) *HomeHandler {
 	t.Helper()
-	return NewHomeHandler(setupTestViews(t), testSite(), i18n.DefaultCatalog(), cais.Config{})
+	return NewHomeHandler(setupTestViews(t), testSite(), appi18n.DefaultCatalog(), cais.Config{})
 }
 
 func TestHomeHandler_Returns200(t *testing.T) {

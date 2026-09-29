@@ -10,12 +10,13 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/flash"
-	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/session"
+
+	appi18n "{{.ModulePath}}/internal/i18n"
 )
 
 func TestDashboardHandler_RendersHTML(t *testing.T) {
-	h := NewDashboardHandler(setupTestViews(t), setupTestStore(t), testSite(), i18n.DefaultCatalog(), cais.Config{})
+	h := NewDashboardHandler(setupTestViews(t), setupTestStore(t), testSite(), appi18n.DefaultCatalog(), cais.Config{})
 
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
 	rr := httptest.NewRecorder()
@@ -30,7 +31,7 @@ func TestDashboardHandler_RendersHTML(t *testing.T) {
 }
 
 func TestDashboardHandler_includesFlash(t *testing.T) {
-	h := NewDashboardHandler(setupTestViews(t), setupTestStore(t), testSite(), i18n.DefaultCatalog(), cais.Config{})
+	h := NewDashboardHandler(setupTestViews(t), setupTestStore(t), testSite(), appi18n.DefaultCatalog(), cais.Config{})
 
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
 	req = flash.WithMessage(req, flash.Message{Kind: "notice", Message: "Welcome back!"})
@@ -47,7 +48,7 @@ func TestDashboardHandler_includesFlash(t *testing.T) {
 
 // #208: signed-in pages keep the rail and the sign-out form.
 func TestDashboardHandler_signedInShowsAuthChrome(t *testing.T) {
-	h := NewDashboardHandler(setupTestViews(t), setupTestStore(t), testSite(), i18n.DefaultCatalog(), cais.Config{})
+	h := NewDashboardHandler(setupTestViews(t), setupTestStore(t), testSite(), appi18n.DefaultCatalog(), cais.Config{})
 
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
 	req = session.WithUserID(req, 1)

@@ -203,6 +203,31 @@ func TestScaffoldNewApp_driveFlashLoginEmailHomeTest(t *testing.T) {
 	}
 }
 
+func TestScaffoldNewApp_helpersTestUsesAppCatalog(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "catalogapp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "catalogapp",
+		ModulePath: "github.com/puppe1990/catalogapp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	helpers, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/helpers_test.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(helpers)
+	if !strings.Contains(body, `appi18n "github.com/puppe1990/catalogapp/internal/i18n"`) {
+		t.Error("helpers_test.go must import the app i18n catalog")
+	}
+	if !strings.Contains(body, "appi18n.DefaultCatalog()") {
+		t.Error("setupTestViews must load appi18n.DefaultCatalog, not the empty framework catalog")
+	}
+	if strings.Contains(body, `"github.com/puppe1990/amarra-cais/pkg/cais/i18n"`) {
+		t.Error("helpers_test.go still imports the empty framework catalog")
+	}
+}
+
 func TestScaffoldNewApp_i18nIncludesSignupKeys(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "i18napp")
