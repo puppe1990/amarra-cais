@@ -6,6 +6,7 @@ import { dropdown } from "./hook_dropdown.mjs";
 import { nav } from "./hook_nav.mjs";
 import { password } from "./hook_password.mjs";
 import { reveal } from "./hook_reveal.mjs";
+import { sidebar } from "./hook_sidebar.mjs";
 import { theme } from "./hook_theme.mjs";
 
 export { register, scan, dispatchLivePush, reset };
@@ -17,6 +18,7 @@ register("dropdown", dropdown);
 register("nav", nav);
 register("password", password);
 register("reveal", reveal);
+register("sidebar", sidebar);
 register("theme", theme);
 
 const ON_CLASSES = ["bg-green-50", "text-green-700"];
@@ -129,6 +131,7 @@ export function start(opts = {}) {
   register("nav", nav);
   register("password", password);
   register("reveal", reveal);
+  register("sidebar", sidebar);
   register("theme", theme);
   scan(doc);
 

@@ -87,6 +87,75 @@ func TestLayoutTemplates_contactFormUsesKitForm(t *testing.T) {
 	}
 }
 
+// #208: signed-in chrome (login link, dashboard link, logout) is gated on
+// Site.LoggedIn, and the cais:nav marker stays outside the gate so public
+// resource links still render for anonymous visitors.
+func TestLayoutTemplates_gateAuthChromeOnLoggedIn(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		for _, gate := range []string{
+			`{{"{{"}} if .Site.LoggedIn {{"}}"}}`,
+			`{{"{{"}} if not .Site.LoggedIn {{"}}"}}`,
+		} {
+			if !strings.Contains(tpl, gate) {
+				t.Errorf("%s layout missing %q gate", name, gate)
+			}
+		}
+		marker := strings.Index(tpl, layoutNavMarker)
+		if marker == -1 {
+			t.Errorf("%s layout missing cais:nav marker", name)
+			continue
+		}
+		aside := strings.Index(tpl, "<aside")
+		if aside == -1 {
+			t.Errorf("%s layout missing <aside>", name)
+			continue
+		}
+		nav := tpl[aside:]
+		if strings.Index(nav, layoutNavMarker) > strings.Index(nav, "<.locale-toggle") {
+			t.Errorf("%s cais:nav marker must not sit behind the signed-in gate", name)
+		}
+	}
+}
+
+func TestViewData_setsLoggedInFromSession(t *testing.T) {
+	if !strings.Contains(tplViewData, "session.UserID(r)") || !strings.Contains(tplViewData, "s.LoggedIn") {
+		t.Error("amarraData should populate Site.LoggedIn from the session (#208)")
+	}
+}
+
+// #212: the off-canvas rail needs a real, reachable toggle (44px target,
+// aria-controls/expanded, sidebar hook) and must leave the accessibility tree
+// when closed instead of hiding only by transform.
+func TestLayoutTemplates_sidebarToggleAccessible(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		for _, token := range []string{
+			`id="amarra-sidebar-toggle"`,
+			`aria-controls="amarra-nav"`,
+			`aria-expanded="false"`,
+			`amarra-hook="sidebar"`,
+			`data-amarra-sidebar-target="#amarra-nav"`,
+			`h-11 w-11`,
+			`invisible`,
+			`lg:visible`,
+		} {
+			if !strings.Contains(tpl, token) {
+				t.Errorf("%s layout missing accessible sidebar token %q (#212)", name, token)
+			}
+		}
+		if strings.Contains(tpl, `peer-checked:`) {
+			t.Errorf("%s layout should not rely on the hidden checkbox peer (#212)", name)
+		}
+	}
+}
+
 func TestLayoutTemplates_dashboardUsesLogoutForm(t *testing.T) {
 	if !strings.Contains(tplPageDashboard, `action="/logout"`) {
 		t.Error("dashboard page should post logout")
@@ -184,7 +253,7 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 			`w-60`,
 			`lg:ml-60`,
 			`amarra-sidebar-toggle`,
-			`peer-checked:translate-x-0`,
+			`data-[amarra-sidebar-open]:translate-x-0`,
 			`amarra-hook="nav"`,
 			`data-amarra-nav-on`,
 			`data-amarra-nav-off`,

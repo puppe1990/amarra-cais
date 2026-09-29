@@ -1237,6 +1237,59 @@
   }
   var reveal = makeReveal();
 
+  // pkg/amarra/js/hook_sidebar.mjs
+  var OPEN_ATTR = "data-amarra-sidebar-open";
+  var STATE4 = "_amarraSidebar";
+  function makeSidebar(deps = {}) {
+    const isDesktop = deps.isDesktop ?? (() => false);
+    return {
+      connect(el) {
+        if (!el?.getAttribute) return;
+        const doc = el.ownerDocument ?? deps.document ?? null;
+        const sel = el.getAttribute("data-amarra-sidebar-target") || "";
+        const panel = sel && doc?.querySelector ? doc.querySelector(sel) : null;
+        if (!panel) return;
+        const state = {};
+        const apply = (next) => {
+          state.open = next;
+          if (next) panel.setAttribute?.(OPEN_ATTR, "");
+          else panel.removeAttribute?.(OPEN_ATTR);
+          el.setAttribute?.("aria-expanded", next ? "true" : "false");
+        };
+        const onToggle = () => apply(!state.open);
+        const onKey = (ev) => {
+          if (ev?.key !== "Escape" || !state.open) return;
+          apply(false);
+          el.focus?.();
+        };
+        const onDocClick = (ev) => {
+          if (!state.open || isDesktop()) return;
+          const target = ev?.target;
+          if (el.contains?.(target) || panel.contains?.(target)) return;
+          apply(false);
+        };
+        state.onToggle = onToggle;
+        state.onKey = onKey;
+        state.onDocClick = onDocClick;
+        el.addEventListener?.("click", onToggle);
+        doc?.addEventListener?.("keydown", onKey);
+        doc?.addEventListener?.("click", onDocClick, true);
+        apply(false);
+        el[STATE4] = state;
+      },
+      disconnect(el) {
+        const state = el?.[STATE4];
+        if (!state) return;
+        el.removeEventListener?.("click", state.onToggle);
+        const doc = el.ownerDocument ?? deps.document ?? null;
+        doc?.removeEventListener?.("keydown", state.onKey);
+        doc?.removeEventListener?.("click", state.onDocClick, true);
+        delete el[STATE4];
+      }
+    };
+  }
+  var sidebar = makeSidebar();
+
   // pkg/amarra/js/hook_theme.mjs
   var CLICK3 = "_amarraThemeClick";
   var DEFAULT_KEY = "amarra-theme";
@@ -1316,6 +1369,7 @@
   register("nav", nav);
   register("password", password);
   register("reveal", reveal);
+  register("sidebar", sidebar);
   register("theme", theme);
   var ON_CLASSES = ["bg-green-50", "text-green-700"];
   var OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
@@ -1415,6 +1469,7 @@
     register("nav", nav);
     register("password", password);
     register("reveal", reveal);
+    register("sidebar", sidebar);
     register("theme", theme);
     scan(doc);
     let optimistic = null;
@@ -1662,6 +1717,7 @@
       }
       const nodes = typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("[data-amarra-stream]") : [];
       for (const el of nodes) {
+        if (el === doc.documentElement) continue;
         if (sources.has(el)) continue;
         const url = el.getAttribute?.("data-amarra-stream");
         if (!url) continue;

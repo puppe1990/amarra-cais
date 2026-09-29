@@ -133,6 +133,37 @@ test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });
 
+// #204: the boot flag lives on <html> as data-amarra-stream="true", and the
+// root selector used to be [data-amarra-stream] — so the document element
+// matched itself and the browser opened EventSource("true") (GET /true).
+test("stream start ignores the <html> boot flag root", () => {
+  const instances = [];
+  class FakeEventSource {
+    constructor(url) {
+      this.url = url;
+      instances.push(this);
+    }
+    addEventListener() {}
+    close() {}
+  }
+  const node = (url) => ({
+    isConnected: true,
+    getAttribute: (name) => (name === "data-amarra-stream" ? url : ""),
+  });
+  const docRoots = [];
+  const doc = {
+    documentElement: { dataset: {}, getAttribute: () => "true" },
+    querySelectorAll: () => docRoots,
+    addEventListener() {},
+  };
+  docRoots.push(doc.documentElement, node("/stream/x"));
+
+  start({ document: doc, EventSource: FakeEventSource });
+
+  assert.equal(instances.length, 1, "only the real stream root should connect");
+  assert.equal(instances[0].url, "/stream/x");
+});
+
 // #113: Drive intercepts navigation and morphs #amarra-main, so a chat page
 // reached via a link had no EventSource at all — stream.start only scanned at
 // boot. Nodes added by a morph must connect; stale nodes must disconnect.
