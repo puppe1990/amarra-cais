@@ -11,6 +11,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - Kit `<.accordion>` / `<.collapse>` with native `<details>` / `<summary>`; boolean kit flags such as `open` (#215).
 - Kit `<.tabs>` / `<.tab>` with exclusive native `<details name>` (#214).
 - Kit `<.switch>` for bool fields as an accessible checkbox (#218).
+- Kit `<.drawer>` as a side `<dialog>` using the existing `dialog` hook (#217).
 
 ## [0.12.1] - 2026-09-29
 
