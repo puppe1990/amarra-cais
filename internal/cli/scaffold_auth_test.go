@@ -335,6 +335,51 @@ func TestScaffoldAuth_migrationIncludesExpiresAt(t *testing.T) {
 	}
 }
 
+func TestScaffoldAuth_handlesResetDeliveryFailure(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "authsmtp")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "authsmtp",
+		ModulePath: "github.com/puppe1990/authsmtp",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+
+	handler, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/auth.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(handler)
+	if strings.Contains(body, "_ = h.resetNotifier()") {
+		t.Error("ForgotPasswordPost must not discard the NotifyReset error (#223)")
+	}
+	for _, needle := range []string{
+		"if err := h.resetNotifier().NotifyReset(user.Email, token); err != nil",
+		"ClearPasswordResetTokens(user.ID)",
+		"log.Printf(",
+	} {
+		if !strings.Contains(body, needle) {
+			t.Errorf("auth.go missing %q:\n%s", needle, body)
+		}
+	}
+
+	store, err := os.ReadFile(filepath.Join(appDir, "internal/store/password_reset.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(store), "func (s *SQLiteStore) ClearPasswordResetTokens") {
+		t.Errorf("store missing ClearPasswordResetTokens:\n%s", store)
+	}
+
+	handlerTest, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/auth_reset_test.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(handlerTest), "TestAuth_ForgotPasswordPost_deliveryFailure_logsAndInvalidatesToken") {
+		t.Errorf("generated auth test missing delivery-failure regression:\n%s", handlerTest)
+	}
+}
+
 func TestScaffoldAuth_hashesResetTokens(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "authhash")
