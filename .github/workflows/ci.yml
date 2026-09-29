@@ -41,6 +41,18 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      # TestScaffold_AppIsPrettierClean formats fresh scaffolds with the repo's
+      # prettier binary, so this shard needs the JS tooling installed.
+      - uses: actions/setup-node@v4
+        if: matrix.shard == 'internal'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install JS tooling
+        if: matrix.shard == 'internal'
+        run: npm ci
+
       - name: Run Go tests
         run: |
           RACE=""
