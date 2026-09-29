@@ -89,6 +89,7 @@ The kit lives in `web/templates/components/`. Override a component by writing a 
 | `collapse`      | Native `<details>` / `<summary>` panel                    | `title`; boolean `open`; optional `name` (same name = exclusive group).                                                                           |
 | `tabs`          | Tab strip wrapping `<.tab>`                               | Slot is the tabs. Drive morph restores the panel with `open` from the server HTML.                                                                |
 | `tab`           | Exclusive `<details name>` panel                          | `title`; boolean `open`; optional `name` (default `tabs`). Keyboard is native `<summary>`.                                                        |
+| `switch`        | Bool toggle (styled checkbox)                             | `name`, `label`; boolean `checked`; optional `value` (default `true`). Posts with `<.form>`. Resource bools stay checkbox until a follow-up.      |
 
 Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field for you, so do not add another inside the slot. For uploads, use `<.input type="file" accept="image/*" />` inside `<.form enctype="multipart/form-data">` and never set `value` on a file input.
 
