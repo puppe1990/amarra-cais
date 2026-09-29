@@ -3,6 +3,7 @@ package cais
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/dotenv"
@@ -25,6 +26,23 @@ type Config struct {
 	CSPMediaSrc       string
 	CSPImgSrc         string
 	CSPFontSrc        string
+	// MaxBodyBytes caps the total size of a request body before any parse, so
+	// oversized uploads are rejected before net/http spills them to temp files
+	// (#221). Zero falls back to DefaultMaxBodyBytes; raise via MAX_BODY_BYTES.
+	MaxBodyBytes int64
+}
+
+// DefaultMaxBodyBytes is the safe total request-body cap: ParseMultipartForm's
+// 32 MiB only bounds the in-memory fraction and never the request size (#221).
+const DefaultMaxBodyBytes int64 = 32 << 20
+
+// BodyLimit returns the configured total request-body cap, falling back to the
+// safe default when unset/invalid.
+func (c Config) BodyLimit() int64 {
+	if c.MaxBodyBytes > 0 {
+		return c.MaxBodyBytes
+	}
+	return DefaultMaxBodyBytes
 }
 
 func Load() Config {
@@ -98,6 +116,11 @@ func Load() Config {
 	}
 	if v := os.Getenv("CSP_FONT_SRC"); v != "" {
 		cfg.CSPFontSrc = v
+	}
+	if v := os.Getenv("MAX_BODY_BYTES"); v != "" {
+		if n, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64); err == nil && n > 0 {
+			cfg.MaxBodyBytes = n
+		}
 	}
 
 	return cfg
