@@ -141,7 +141,7 @@ func TestGenerateComponent_listShippedKit(t *testing.T) {
 		t.Fatalf("--list should not require an app: %v\n%s", err, buf.String())
 	}
 	out := buf.String()
-	for _, name := range []string{"input", "form", "table", "locale-toggle", "password"} {
+	for _, name := range []string{"input", "form", "table", "locale-toggle", "password", "accordion", "collapse"} {
 		if !strings.Contains(out, name) {
 			t.Errorf("--list missing shipped component %q:\n%s", name, out)
 		}

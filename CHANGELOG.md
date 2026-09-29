@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Added
+
+- Kit `<.accordion>` / `<.collapse>` with native `<details>` / `<summary>`; boolean kit flags such as `open` (#215).
+
 ## [0.12.1] - 2026-09-29
 
 ### Added

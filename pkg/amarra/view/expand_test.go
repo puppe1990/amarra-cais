@@ -70,6 +70,19 @@ func TestExpandAll_unknownComponent(t *testing.T) {
 	}
 }
 
+func TestExpandAll_booleanAttrWithoutValue(t *testing.T) {
+	components := map[string]string{
+		"collapse": `{{ if .Open }}open{{ end }}`,
+	}
+	got, err := ExpandAll(`<.collapse open />`, components)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got, `{{ $open := "true" }}`) {
+		t.Errorf("boolean attr should assign true: %q", got)
+	}
+}
+
 func TestExpandAll_dynamicAttr(t *testing.T) {
 	components := map[string]string{
 		"input": `<input value="{{ .Value }}">`,
