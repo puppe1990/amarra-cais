@@ -1,0 +1,8 @@
+<dialog data-amarra-dialog-target class="backdrop:bg-ink/70 backdrop:backdrop-blur-sm m-0 ml-auto h-full max-h-full w-full max-w-sm border-0 bg-ink p-0 text-foam"{{ if .Id }} id="{{ .Id }}"{{ end }} closedby="any">
+  <div class="flex h-full flex-col">
+    {{ if .Title }}
+    <p class="border-b border-foam/20 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.22em] text-foam/60">{{ .Title }}</p>
+    {{ end }}
+    <div class="flex-1 overflow-y-auto p-4">{{ .Inner }}</div>
+  </div>
+</dialog>
