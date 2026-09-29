@@ -109,7 +109,12 @@ func TestLayoutTemplates_gateAuthChromeOnLoggedIn(t *testing.T) {
 			t.Errorf("%s layout missing cais:nav marker", name)
 			continue
 		}
-		nav := tpl[strings.Index(tpl, "<aside"):]
+		aside := strings.Index(tpl, "<aside")
+		if aside == -1 {
+			t.Errorf("%s layout missing <aside>", name)
+			continue
+		}
+		nav := tpl[aside:]
 		if strings.Index(nav, layoutNavMarker) > strings.Index(nav, "<.locale-toggle") {
 			t.Errorf("%s cais:nav marker must not sit behind the signed-in gate", name)
 		}
