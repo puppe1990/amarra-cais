@@ -3,6 +3,7 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -11,6 +12,31 @@ import (
 	"strconv"
 	"strings"
 )
+
+// LimitBody wraps r.Body so reads past limit fail with *http.MaxBytesError.
+// Apply before ParseFormOrJSON: ParseMultipartForm's memory threshold bounds
+// only the in-memory fraction, never the total request size (#221).
+func LimitBody(w http.ResponseWriter, r *http.Request, limit int64) {
+	if limit > 0 && r.Body != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, limit)
+	}
+}
+
+// BodyTooLarge reports whether err is net/http's MaxBytesReader limit error, so
+// callers answer 413 Request Entity Too Large instead of a generic 400.
+func BodyTooLarge(err error) bool {
+	var maxErr *http.MaxBytesError
+	return errors.As(err, &maxErr)
+}
+
+// CleanupMultipart removes temp files created by ParseMultipartForm. On a parse
+// error net/http's server-level cleanup is not reached for this request, so
+// callers must invoke it to avoid leaking upload temp files (#221).
+func CleanupMultipart(r *http.Request) {
+	if r != nil && r.MultipartForm != nil {
+		_ = r.MultipartForm.RemoveAll()
+	}
+}
 
 // ParseFormOrJSON fills r.Form (and r.PostForm) from urlencoded/multipart forms
 // or a JSON object body so FormValue works for both classic HTML forms and
