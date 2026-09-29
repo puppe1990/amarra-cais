@@ -49,3 +49,24 @@ func TestNewToken_unique(t *testing.T) {
 		t.Fatalf("tokens = %q, %q", a, b)
 	}
 }
+
+func TestHash_hidesTokenAndIsDeterministic(t *testing.T) {
+	token, err := NewToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := Hash(token)
+
+	if digest == token {
+		t.Fatal("Hash must not return the raw bearer token")
+	}
+	if len(digest) != 64 {
+		t.Fatalf("Hash length = %d, want 64 hex chars (sha-256)", len(digest))
+	}
+	if Hash(token) != digest {
+		t.Fatal("Hash must be deterministic for lookup by digest")
+	}
+	if Hash(token) == Hash(token+"x") {
+		t.Fatal("distinct tokens must hash differently")
+	}
+}

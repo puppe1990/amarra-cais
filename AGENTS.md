@@ -164,6 +164,8 @@ flash.Set(w, "notice", "Bem-vindo!", cfg.CookieSecure())
 
 Dev seed user: `demo@example.com` / `password`. Sessions persist in SQLite via `session.NewSQLiteStore`.
 
+**Reset tokens at rest** — `password_reset_tokens.token_hash` stores `passwordreset.Hash(token)` (SHA-256), never the raw bearer value; lookup/consume hash the presented token. Apps generated before this change keep the raw `token` column: invalidate outstanding tokens and migrate (`token TEXT` → `token_hash TEXT`), since a leaked DB/backup/SQL log would otherwise be replayable (#222).
+
 **Session expiry** — cookies and DB rows expire after 7 days (`sessionTTL` / `defaultMaxAge`). SQLite stores `expires_at`; expired rows are ignored on lookup. Prune stale rows with `amarra-cais db prune-sessions` (or call `session.Store.PruneExpired()`).
 
 **Production cookies** — `session.CookieOptionsFromConfig(cfg)` sets `Secure` when `cfg.CookieSecure()` is true (`ENV=production`).
