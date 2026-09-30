@@ -64,7 +64,7 @@ Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go
 | `pkg/cais/session/`       | Cookie sessions (`SignIn`, `SignOut`, `Store`)                                                               |
 | `pkg/cais/boot/`          | Rails-style startup banner                                                                                   |
 | `pkg/cais/devlog/`        | Development log buffer + `/logs` viewer                                                                      |
-| `pkg/cais/sqllog/`        | SQL query logging wrapper (`Wrap`, `EnabledForEnv`)                                                          |
+| `pkg/cais/sqllog/`        | SQL query logging wrapper (`Wrap`, `EnabledForEnv`, `*Context`)                                              |
 | `pkg/cais/console/`       | Interactive REPL (yaegi + SQL)                                                                               |
 | `pkg/cais/csrf/`          | CSRF tokens (double-submit cookie)                                                                           |
 | `pkg/cais/validate/`      | Form field validation helpers                                                                                |
@@ -446,7 +446,7 @@ Success: `303`. Validation: `422` HTML containing the field error. Handler tests
 1. Store test with `":memory:"` before the migration
 2. SQL in `internal/store/migrations/NNN_name.sql`
 3. Methods on the `store.Store` interface
-4. Wrap DB with `sqllog.Wrap` in `NewSQLiteStore` for development query logs
+4. Wrap DB with `sqllog.Wrap` in `NewSQLiteStore` for development query logs (`Exec`/`Query`/`QueryRow` plus `*Context`; short methods use `context.Background()`, #264)
 5. Migrations tracked in `schema_migrations` via `pkg/cais/migrate` (idempotent on boot)
 
 **SQLite concurrency (SSE / chat)** — scaffold `NewSQLiteStore` calls `sqlite.Configure`: `journal_mode=WAL`, `busy_timeout=5000`, `foreign_keys=ON`, `MaxOpenConns(1)`. WAL allows concurrent readers while a writer holds the lock briefly; `busy_timeout` retries instead of immediate `SQLITE_BUSY`. SSE handlers poll the DB in a loop — keep writes short and avoid long transactions during streams. For heavy write concurrency, consider a dedicated writer queue.
@@ -468,7 +468,7 @@ DROP TABLE IF EXISTS bookmarks;
 In `ENV=development`:
 
 - `middleware.LoggerTo(devlog.MirrorDefault(...))` — JSON request logs when `cfg.LogJSON()` (`kind: request`); `LOG_FORMAT=text` opts out
-- `sqllog.ConfigForEnv(env)` — SQL JSON logs in development (`kind: sql`); plain text when `JSON: false`
+- `sqllog.ConfigForEnv(env)` — SQL JSON logs in development (`kind: sql`); plain text when `JSON: false`. `sqllog.DB`/`Tx` log `ExecContext`/`QueryContext`/`QueryRowContext`; short methods delegate to `context.Background()`. Generated stores may keep the short methods (#264).
 - `devlog.Register(r, cfg.Env, buf)` — mounts `/logs` (localhost only)
 - `jobsui.Register(r, db)` — mounts `/jobs` (localhost only, all envs; SSH tunnel in production)
 

@@ -32,7 +32,7 @@ The framework is **SQL-first already**. There is no ORM today, by design.
 | Migrations          | `.sql` files + `pkg/cais/migrate` | Markers `-- up` / `-- down`                                                   |
 | Jobs                | `*sql.DB`                         | `pkg/cais/jobs` — same file as the app                                        |
 | Sessions            | `*sql.DB`                         | `pkg/cais/session`                                                            |
-| SQL logs            | wrapper around `*sql.DB`          | `sqllog.Wrap` — `Exec` / `Query` / `QueryRow` only; **no `*Context` methods** |
+| SQL logs            | wrapper around `*sql.DB`          | `sqllog.Wrap` — `Exec` / `Query` / `QueryRow` plus `*Context` variants; short methods delegate to `context.Background()` (#264) |
 | Driver              | `modernc.org/sqlite`              | DSN pragmas in `pkg/cais/sqlite.DSN`                                          |
 
 Generated CRUD is already explicit SQL:
@@ -44,7 +44,7 @@ s.db.Query("SELECT ... FROM %s"+where+" ORDER BY "+orderCol+" "+orderDir+" LIMIT
 
 List endpoints whitelist `sort`/`dir` in Go (`OrderClause`) and concatenate the column name after the whitelist. That dynamic `ORDER BY` is the hardest query shape for compile-time SQL tools.
 
-`sqllog.DB` is **not** a `*sql.DB`. Anything that requires `database/sql.DBTX` with `ExecContext` / `QueryContext` cannot sit on `s.db` until Context methods exist on the wrapper.
+`sqllog.DB` is **not** a `*sql.DB`. It implements `ExecContext` / `QueryContext` / `QueryRowContext` so sqlc's `DBTX` can sit on `s.db`. `PrepareContext` and `BeginTx` are still absent if generated code needs them.
 
 ---
 
@@ -73,7 +73,7 @@ A library that cannot satisfy a row is out as the **default**.
 | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- | ------------------ | ------------------- |
 | No CGO / `modernc.org/sqlite`                              | Yes (official tutorial)                                                                                   | Yes if we open modernc ourselves and pass `*sql.DB` (avoid relying on `sqliteshim` swapping drivers)                                  | Possible via custom `*sql.DB`; docs/examples are CGO    | Official driver is CGO; extra community dialector | Yes                | Yes                 |
 | Keep SQL file migrations + `pkg/cais/migrate`              | Yes — sqlc **does not migrate**; it only parses schema                                                    | Has its own migrator; can be ignored                                                                                                  | Atlas / `Schema.Create` fights our runner               | `AutoMigrate` fights our runner                   | Yes                | Yes                 |
-| Keep `sqllog.Wrap`                                         | Needs `*Context` on `sqllog.DB` (gap today)                                                               | Logs via Bun hooks **or** wrap `*sql.DB` before `bun.NewDB`                                                                           | Own logger; bypasses `sqllog` unless we wrap the driver | Own logger; same                                  | Can wrap `*sql.DB` | Yes                 |
+| Keep `sqllog.Wrap`                                         | Yes — `*Context` on `sqllog.DB`/`Tx` (#264). `PrepareContext` / `BeginTx` still missing if sqlc emits them | Logs via Bun hooks **or** wrap `*sql.DB` before `bun.NewDB`                                                                           | Own logger; bypasses `sqllog` unless we wrap the driver | Own logger; same                                  | Can wrap `*sql.DB` | Yes                 |
 | `MaxOpenConns(1)` + WAL + busy_timeout                     | Unchanged (we still `sql.Open`)                                                                           | Compatible if we configure the underlying `*sql.DB`                                                                                   | Compatible if we configure the underlying `*sql.DB`     | Easy to lose if `gorm.Open` owns the pool         | Yes                | Yes                 |
 | `:memory:` tests                                           | Yes                                                                                                       | Shim examples use `SetMaxIdleConns(1000)` for in-memory — **conflicts** with our `MaxOpenConns(1)` unless we keep our DSN/`Configure` | Yes with care                                           | Yes with care                                     | Yes                | Yes                 |
 | `Store.DB() *sql.DB` for jobs/session/`jobsui`             | Yes — sqlc sits on `DBTX`                                                                                 | Yes — `db.DB` is the `*sql.DB`                                                                                                        | Yes if we keep the raw DB                               | Awkward (`*gorm.DB` is the unit)                  | Yes                | Yes                 |
@@ -136,7 +136,7 @@ sqlc's own SQLite tutorial opens `modernc.org/sqlite` and uses `database/sql`. G
 
 **Cons / work we would owe**
 
-1. **`sqllog.DB` has no Context methods.** sqlc will not compile against it until we add `ExecContext` / `QueryContext` / `QueryRowContext` (and ideally `BeginTx`) that log like the existing methods. That is useful even without sqlc.
+1. **`PrepareContext` / `BeginTx`.** `sqllog.DB`/`Tx` now log `ExecContext` / `QueryContext` / `QueryRowContext` (#264). sqlc's full `DBTX` also wants `PrepareContext`; transactional sqlc wants `BeginTx`. Add them if generated code needs them.
 2. **Migration markers.** sqlc will not skip our `-- down` sections. Options: emit a `schema.sql` from up-sections for sqlc; or add goose-style `-- +goose Up` **in addition to** `-- up` (keep `pkg/cais/migrate` as the runner); or teach a tiny adapter. Do not replace `pkg/cais/migrate`.
 3. **Dynamic `ORDER BY`.** Resource indexes pass `sort`/`dir` from the query string. sqlc wants static SQL. Keep `OrderClause` + a small raw `Query` for `List*` / `ListAll*`, or expand `ORDER BY CASE WHEN @sort = 'title' THEN title END` per column. Do not interpolate untrusted identifiers into sqlc SQL.
 4. **CI / doctor.** `sqlc generate` must run in app CI and `amarra-cais doctor` should fail if generated files are stale.
@@ -220,7 +220,7 @@ DELETE FROM bookmarks WHERE id = ?;
 | sqlc is the only upgrade path worth a later PR       | SQL-first, `database/sql`, official modernc tutorial, no runtime ORM                                                                                       |
 | Keep `-- up` / `-- down` + `pkg/cais/migrate`        | Do not switch to goose/Atlas just to please sqlc; adapt schema input if we add sqlc                                                                        |
 | Dynamic sort stays a Go whitelist                    | Untrusted `?sort=` must never be concatenated into sqlc SQL without the existing allow-list                                                                |
-| `sqllog` Context methods are a prerequisite for sqlc | Generated `Queries` need `DBTX` with `*Context`                                                                                                            |
+| `sqllog` Context methods are a prerequisite for sqlc | Done for `ExecContext` / `QueryContext` / `QueryRowContext` (#264). `PrepareContext` / `BeginTx` remain if sqlc emits them                                                                 |
 
 ---
 
@@ -238,7 +238,7 @@ None blocking this recommendation. Resolve only if we start Approach B:
 
 | PR  | Title                                                                                                 | Touches                                            | Depends on |
 | --- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---------- |
-| 1   | `sqllog`: add `ExecContext` / `QueryContext` / `QueryRowContext` / `BeginTx`                          | `pkg/cais/sqllog`, tests                           | —          |
+| 1   | `sqllog`: add `ExecContext` / `QueryContext` / `QueryRowContext` (done, #264). `BeginTx` still open   | `pkg/cais/sqllog`, tests                           | —          |
 | 2   | Optional `sqlc.yaml` + `queries/` in `amarra-cais new --sqlc`                                         | `internal/cli` scaffold, doctor, CI template, docs | PR 1       |
 | 3   | `g resource` / `g model` emit sqlc queries for insert/find/update/delete; `List*` stays whitelist SQL | `resource_gen_store.go`, scaffold tests            | PR 2       |
 | 4   | Website how-to: typed queries with sqlc                                                               | `website/src/content/docs/` EN + pt-BR             | PR 3       |

@@ -14,7 +14,7 @@ Siga a mesma ordem que os geradores usam — teste primeiro:
 1. Escreva um teste de store em `internal/store/` contra o SQLite `:memory:`.
 2. Adicione o arquivo SQL `internal/store/migrations/NNN_name.sql`.
 3. Adicione métodos à interface `store.Store` e à sua implementação.
-4. Envolva o DB com `sqllog.Wrap` em `NewSQLiteStore`, para que os logs de query de desenvolvimento sejam capturados.
+4. Envolva o DB com `sqllog.Wrap` em `NewSQLiteStore`, para que os logs de query de desenvolvimento sejam capturados. O wrapper registra `Exec`/`Query`/`QueryRow` e as variantes `*Context`; os métodos curtos usam `context.Background()`. Prefira `ExecContext(r.Context(), …)` nos handlers de request para um cliente que desiste não ocupar o writer do SQLite.
 5. A migration é registrada em `schema_migrations` por `pkg/cais/migrate`, que é idempotente no boot.
 
 Ou faça o scaffold da camada de dados:
