@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.13.1] - 2026-09-30
+
 ### Added
 
 - `sqllog.DB` and `sqllog.Tx` implement `ExecContext` / `QueryContext` / `QueryRowContext` with the same logging as the short methods. `Exec` / `Query` / `QueryRow` delegate to `context.Background()` (#264).
