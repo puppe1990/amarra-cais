@@ -57,7 +57,10 @@ func destroyAuth(dir string, dryRun bool) error {
 	if err := unpatchAppForAuth(dir, dryRun); err != nil {
 		return err
 	}
-	return unpatchRoutesForAuthDestroy(dir, dryRun)
+	if err := unpatchRoutesForAuthDestroy(dir, dryRun); err != nil {
+		return err
+	}
+	return ensureMigrationPlaceholder(dir, dryRun)
 }
 
 func unpatchStoreForAuth(dir string, dryRun bool) error {
@@ -193,5 +196,5 @@ func destroyMigration(dir, name string, dryRun bool) error {
 	if removed == 0 {
 		return fmt.Errorf("no migration matching %q", suffix)
 	}
-	return nil
+	return ensureMigrationPlaceholder(dir, dryRun)
 }
