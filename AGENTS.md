@@ -516,7 +516,7 @@ amarra-cais routes                   # list routes from internal/app/routes.go
 
 Field types: `string`, `text`, `url`, `bool`, `int`, `date`, `references` (or `name:belongs_to`). Suffix `?` for optional.
 
-**Resource options:** `--public` (public list page), `--paginate` (admin index pagination, 25/page), `--no-seed` (skip demo data), `--admin-auth session|bearer` (default: session).
+**Resource options:** `--public` (public list page — read-only; bool fields are not toggled from that page, #261), `--paginate` (admin index pagination, 25/page), `--no-seed` (skip demo data), `--admin-auth session|bearer` (default: session).
 
 **Model generator** — `amarra-cais g model` creates model struct, migration, and store methods only (no handlers, templates, or routes). Use for data layer without admin CRUD.
 

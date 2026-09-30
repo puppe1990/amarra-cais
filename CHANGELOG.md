@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Fixed
+
+- `g resource --public` with a bool field no longer registers an anonymous `POST /{plural}/{id}/toggle`. The public list renders the bool read-only; admin edit still owns the write (#261).
+
 ## [0.13.0] - 2026-09-30
 
 ### Added

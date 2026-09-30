@@ -30,14 +30,14 @@ The CLI also ships `g sitemap` (blog posts + a dynamic `/sitemap.xml`).
 
 `amarra-cais g resource bookmark --fields title:string,url:url,notes:text? --public --paginate`
 
-| Option                         | Effect                                                                              |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| `--fields <spec>`              | Comma-separated field list. Defaults to `name:string`.                              |
-| `--public`                     | Also generate a public list page (kit `<.filters>` / `<.empty>` / `<.pagination>`). |
-| `--paginate`                   | Paginate the admin index, 25 rows per page.                                         |
-| `--no-seed`                    | Skip the `SeedDemo*` demo data.                                                     |
-| `--admin-auth session\|bearer` | Admin protection mode: browser session (default) or bearer token.                   |
-| `--force`                      | Overwrite files that already exist.                                                 |
+| Option                         | Effect                                                                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--fields <spec>`              | Comma-separated field list. Defaults to `name:string`.                                                                                           |
+| `--public`                     | Also generate a public list page (kit `<.filters>` / `<.empty>` / `<.pagination>`). Bool fields render read-only; writes stay on the admin form. |
+| `--paginate`                   | Paginate the admin index, 25 rows per page.                                                                                                      |
+| `--no-seed`                    | Skip the `SeedDemo*` demo data.                                                                                                                  |
+| `--admin-auth session\|bearer` | Admin protection mode: browser session (default) or bearer token.                                                                                |
+| `--force`                      | Overwrite files that already exist.                                                                                                              |
 
 Generated store methods take `(search, sort, dir string, ...)`; sort is whitelisted per column and search is a `LIKE` on the display field. The admin index renders `<.filters>` + `<.table>` + `<.empty>` + `<.pagination>`.
 
