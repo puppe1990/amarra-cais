@@ -59,6 +59,24 @@ func TestRegister_BlocksNonLocalhost(t *testing.T) {
 	}
 }
 
+func TestRegister_scriptCarriesCSPNonce(t *testing.T) {
+	r := cais.NewRouter()
+	buf := NewBuffer(100)
+	_, _ = buf.Write([]byte("Started GET \"/\" for 127.0.0.1\n"))
+	Register(r, "development", buf)
+
+	req := httptest.NewRequest(http.MethodGet, "/logs", nil)
+	req.RemoteAddr = "127.0.0.1:1234"
+	req = req.WithContext(cais.WithScriptNonce(req.Context(), "logs-nonce"))
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	body := rr.Body.String()
+	if !strings.Contains(body, `nonce="logs-nonce"`) {
+		t.Fatalf("logs page missing CSP nonce: %s", body)
+	}
+}
+
 func TestRegister_PageDoesNotLoadHTMX(t *testing.T) {
 	r := cais.NewRouter()
 	buf := NewBuffer(100)
