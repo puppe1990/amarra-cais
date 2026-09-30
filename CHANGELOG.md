@@ -14,6 +14,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 ### Fixed
 
 - `amarra-cais destroy model` drops the model's store methods/interface entries, its `RunSeeds` insert and its `store_test.go` tests, and refuses — naming the caller — while another file still calls them (`internal/handlers/dashboard.go still calls CountContacts — run amarra-cais destroy handler dashboard`) (#245).
+- `doctor` palette scan reads only `class` attributes — not `stroke-linecap="round"` and friends — and ignores `fontSize`/`fontFamily`/`boxShadow` keys plus alignment/gradient utilities (`text-center`, `bg-gradient-to-r`), so design-system typography no longer warns as missing colours (#246).
 
 ## [0.12.2] - 2026-09-29
 
