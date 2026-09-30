@@ -58,6 +58,24 @@ func TestLayoutTemplates_hasDriveShell(t *testing.T) {
 	}
 }
 
+// #249: the shell (rail/topbar vs centered auth) is part of the same layout,
+// so the body carries a shell marker and Drive does a full navigation when the
+// login POST swaps it.
+func TestLayoutTemplates_shellMarkerTracksLogin(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		if !strings.Contains(tpl, `data-amarra-shell="`) {
+			t.Errorf("%s layout missing data-amarra-shell marker (#249)", name)
+		}
+	}
+	if !strings.Contains(tplLayout, `data-amarra-shell="{{"{{"}} if .Site.LoggedIn {{"}}"}}app{{"{{"}} else {{"}}"}}auth{{"{{"}} end {{"}}"}}"`) {
+		t.Error("full layout shell marker must follow Site.LoggedIn")
+	}
+}
+
 func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 	dir := t.TempDir()
 	data := scaffoldData{AppName: "demo", ModulePath: "github.com/acme/demo"}

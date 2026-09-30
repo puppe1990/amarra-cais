@@ -18,6 +18,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - `amarra-cais css` restamps `styles.css` after a successful Tailwind build, so the doctor staleness check clears even when the build output was byte-identical (a template edit that adds no class) (#247).
 - `destroy handler` / `destroy auth` drop the rate-limiter declarations and the auth routes whose only user was destroyed, and prune imports left orphaned (e.g. `strings` after `CreateUser`), so the app builds again right after the destroy (#248).
 - Destroy commands keep the generated app buildable end to end: an emptied `internal/store/migrations/` gets the scaffold `001_init.sql` back (`//go:embed migrations/*.sql` would not match) and `routes.go` drops imports only the destroyed routes used (#254).
+- Drive forced a full navigation when the response marked a different layout (`data-amarra-layout`) but not when the shell changed inside the same layout: logging in morphed the authenticated page into the anonymous shell until a manual reload. The layout now marks the shell on `<body>` (`data-amarra-shell`, `auth`/`app` from `.Site.LoggedIn`) and Drive reloads on a change (#249).
 
 ## [0.12.2] - 2026-09-29
 

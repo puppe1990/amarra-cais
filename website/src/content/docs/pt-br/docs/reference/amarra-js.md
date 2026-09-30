@@ -13,24 +13,27 @@ O Drive intercepta **todos os cliques e submits same-origin por padrão** — n�
 
 O primeiro carregamento, o `curl` e os crawlers recebem o layout completo. Remova um elemento do Drive com `data-amarra-skip`.
 
+Uma requisição que troca o **shell** do layout (login, signup, logout) precisa mudar o marcador `data-amarra-shell` no `<body>` — o scaffold emite `auth`/`app` a partir de `.Site.LoggedIn`. O Drive compara o valor e faz navegação completa em vez de morfar `#amarra-main`, para a página não ficar dentro do shell anterior (#249).
+
 O layout renderiza `<meta name="csrf-token">`, e o Drive envia `X-CSRF-Token` em suas requisições (em par com o cookie double-submit `cais_csrf`).
 
 ## Atributos
 
-| Atributo                        | Aplica-se a               | Efeito                                                                        |
-| ------------------------------- | ------------------------- | ----------------------------------------------------------------------------- |
-| `data-amarra-skip`              | `<a>`, `<form>`           | Remove esse elemento do Drive; ele navega ou envia normalmente.               |
-| `data-amarra-confirm`           | click / submit            | Pede confirmação (o texto é o valor) antes de executar a requisição.          |
-| `data-amarra-method`            | link                      | Usa este método HTTP para o link (por exemplo, `delete`).                     |
-| `data-amarra-disable-with`      | submit / button           | Rótulo para o qual o controle muda enquanto sua requisição está em andamento. |
-| `data-amarra-frame`             | link / form               | Aponta para um frame nomeado em vez do morph padrão de `#amarra-main`.        |
-| `amarra-click`                  | element                   | Vincula uma ação de click.                                                    |
-| `amarra-change`                 | element                   | Vincula uma ação de change.                                                   |
-| `amarra-submit`                 | element                   | Vincula uma ação de submit.                                                   |
-| `amarra-debounce`               | element                   | Aplica debounce à ação vinculada.                                             |
-| `amarra-hook`                   | element                   | Anexa um hook embutido pelo nome (veja abaixo).                               |
-| `amarra-live`                   | element                   | Habilita o elemento no hub Live via WebSocket.                                |
-| `<amarra-frame loading="lazy">` | elemento `<amarra-frame>` | Elemento de frame; `loading="lazy"` o adia até que seja necessário.           |
+| Atributo                        | Aplica-se a               | Efeito                                                                                    |
+| ------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
+| `data-amarra-skip`              | `<a>`, `<form>`           | Remove esse elemento do Drive; ele navega ou envia normalmente.                           |
+| `data-amarra-shell`             | `<body>`                  | Marcador de shell (`auth` / `app`); valor diferente na resposta força navegação completa. |
+| `data-amarra-confirm`           | click / submit            | Pede confirmação (o texto é o valor) antes de executar a requisição.                      |
+| `data-amarra-method`            | link                      | Usa este método HTTP para o link (por exemplo, `delete`).                                 |
+| `data-amarra-disable-with`      | submit / button           | Rótulo para o qual o controle muda enquanto sua requisição está em andamento.             |
+| `data-amarra-frame`             | link / form               | Aponta para um frame nomeado em vez do morph padrão de `#amarra-main`.                    |
+| `amarra-click`                  | element                   | Vincula uma ação de click.                                                                |
+| `amarra-change`                 | element                   | Vincula uma ação de change.                                                               |
+| `amarra-submit`                 | element                   | Vincula uma ação de submit.                                                               |
+| `amarra-debounce`               | element                   | Aplica debounce à ação vinculada.                                                         |
+| `amarra-hook`                   | element                   | Anexa um hook embutido pelo nome (veja abaixo).                                           |
+| `amarra-live`                   | element                   | Habilita o elemento no hub Live via WebSocket.                                            |
+| `<amarra-frame loading="lazy">` | elemento `<amarra-frame>` | Elemento de frame; `loading="lazy"` o adia até que seja necessário.                       |
 
 ## Hooks embutidos (`amarra-hook`)
 
