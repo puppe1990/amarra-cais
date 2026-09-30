@@ -39,7 +39,7 @@ A CLI também inclui `g sitemap` (posts de blog + um `/sitemap.xml` dinâmico).
 | `--admin-auth session\|bearer` | Modo de proteção do admin: sessão de navegador (padrão) ou bearer token.                                                                                        |
 | `--force`                      | Sobrescreve arquivos que já existem.                                                                                                                            |
 
-Os métodos de store gerados recebem `(search, sort, dir string, ...)`; o sort é permitido por coluna via whitelist e a busca é um `LIKE` no campo de exibição. O index do admin renderiza `<.filters>` + `<.table>` + `<.empty>` + `<.pagination>`.
+Os métodos de store gerados recebem `(search, sort, dir string, ...)`; o sort é permitido por coluna via whitelist e a busca é um `LIKE` no campo de exibição. O index do admin renderiza `<.filters>` + `<.table>` + `<.empty>` + `<.pagination>`. O create do admin continua `POST`; o update é `PUT` (form de edição com `_method=put`) e o destroy é `DELETE` (`linkTo` com `method` delete). O bulk-delete continua `POST`. Apps gerados antes disso mantêm `POST` até você regenerar (#269).
 
 A menos que você passe `--no-seed`, cada resource traz um `SeedDemo<Name>()` que insere uma linha de exemplo fixa e não faz nada quando a tabela não está vazia. Para valores de demonstração realistas, importe `pkg/cais/fakedata` (`Name`, `Title`, `Email`, `Sentence`, `URL`, `Date`); `fakedata.Seed(42)` torna uma execução reproduzível.
 
