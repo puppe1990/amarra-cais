@@ -192,16 +192,20 @@
 
 ## Remaining
 
-Deferred or not part of the original six phases:
+Still open (not part of the original six phases):
 
 - [ ] Cache render integration (fragment caching in renderer)
-- [ ] External docs site
-- [ ] Nonce-based CSP (HTMX inline scripts conflict)
 - [ ] Accept-Language i18n v2 / `cais g locale` (basic `LOCALE` catalog shipped)
-- [ ] esbuild / JS bundling
-- [ ] REST PUT/DELETE in generated admin (still POST)
-- [ ] Resource show page in generator
 - [ ] Richer FK/associations in generator (basic `references` / `belongs_to` field shipped)
+- [ ] HTMX helpers and `cais*.js` / `htmx.min.js` — remove at v1.0 (#268)
+
+Shipped after the six phases:
+
+- [x] External docs site (`website/`)
+- [x] esbuild / JS bundling (`pkg/amarra/js` → `amarra.js`)
+- [x] Resource show page in generator
+- [x] REST PUT/DELETE in generated admin (#269)
+- [x] Nonce-based CSP (#263)
 
 ---
 
