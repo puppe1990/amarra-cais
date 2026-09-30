@@ -30,9 +30,10 @@ const tplREADME = "# {{.AppName}}\n\n" +
 	"amarra-cais doctor                # verify setup\n" +
 	"```\n\n" +
 	"## CI and pre-commit\n\n" +
-	"GitHub Actions runs Go tests, `golangci-lint`, Prettier, and `npm test` on every push/PR to `main`.\n\n" +
+	"GitHub Actions runs Go tests, `golangci-lint`, Prettier, and `npm test` on every push/PR to `main`.\n" +
+	"`amarra-cais new` already ran `git init` and installed these hooks when `pre-commit` is on your PATH.\n\n" +
 	"```bash\n" +
-	"make pre-commit-install   # once: installs git hooks\n" +
+	"make pre-commit-install   # if hooks are not active yet\n" +
 	"make ci                   # test + lint + format-check locally\n" +
 	"```\n\n" +
 	"Pre-commit hooks run: trailing whitespace, Prettier, `goimports`, `go test`, `golangci-lint`, and `npm test`.\n" +
@@ -85,7 +86,7 @@ const tplREADMEBlank = "# {{.AppName}}\n\n" +
 	"```\n\n" +
 	"## CI and pre-commit\n\n" +
 	"```bash\n" +
-	"make pre-commit-install   # once: installs git hooks\n" +
+	"make pre-commit-install   # if hooks are not active yet\n" +
 	"make ci                   # test + lint + format-check locally\n" +
 	"```\n\n" +
 	"## Add your first resource\n\n" +
