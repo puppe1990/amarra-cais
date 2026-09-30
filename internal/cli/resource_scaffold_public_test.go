@@ -165,8 +165,8 @@ func TestScaffoldResource_PublicBoolIsReadOnly(t *testing.T) {
 	if !strings.Contains(routes, `r.Get("/posts"`) {
 		t.Error("public GET list is still required")
 	}
-	if !strings.Contains(routes, `g.Post("/admin/posts/{id}"`) {
-		t.Error("admin update must remain so the bool stays editable (#261)")
+	if !strings.Contains(routes, `g.Put("/admin/posts/{id}"`) {
+		t.Error("admin update must remain so the bool stays editable (#261, #269)")
 	}
 
 	page := mustReadFile(t, filepath.Join(appDir, "web/templates/pages/posts.html"))
