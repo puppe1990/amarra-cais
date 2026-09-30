@@ -270,15 +270,6 @@ func boolImport(cond bool, s string) string {
 	return ""
 }
 
-func firstBoolField(fields []FieldDef) *FieldDef {
-	for i, f := range fields {
-		if f.GoType == "bool" {
-			return &fields[i]
-		}
-	}
-	return nil
-}
-
 func firstIntField(fields []FieldDef) *FieldDef {
 	for i, f := range fields {
 		if f.Widget == "select" {

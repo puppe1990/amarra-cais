@@ -30,14 +30,14 @@ A CLI também inclui `g sitemap` (posts de blog + um `/sitemap.xml` dinâmico).
 
 `amarra-cais g resource bookmark --fields title:string,url:url,notes:text? --public --paginate`
 
-| Opção                          | Efeito                                                                                        |
-| ------------------------------ | --------------------------------------------------------------------------------------------- |
-| `--fields <spec>`              | Lista de campos separados por vírgula. O padrão é `name:string`.                              |
-| `--public`                     | Também gera uma página de listagem pública (kit `<.filters>` / `<.empty>` / `<.pagination>`). |
-| `--paginate`                   | Pagina o index do admin, 25 linhas por página.                                                |
-| `--no-seed`                    | Pula os dados de demonstração `SeedDemo*`.                                                    |
-| `--admin-auth session\|bearer` | Modo de proteção do admin: sessão de navegador (padrão) ou bearer token.                      |
-| `--force`                      | Sobrescreve arquivos que já existem.                                                          |
+| Opção                          | Efeito                                                                                                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--fields <spec>`              | Lista de campos separados por vírgula. O padrão é `name:string`.                                                                                                |
+| `--public`                     | Também gera uma página de listagem pública (kit `<.filters>` / `<.empty>` / `<.pagination>`). Campos bool aparecem só leitura; a escrita fica no form do admin. |
+| `--paginate`                   | Pagina o index do admin, 25 linhas por página.                                                                                                                  |
+| `--no-seed`                    | Pula os dados de demonstração `SeedDemo*`.                                                                                                                      |
+| `--admin-auth session\|bearer` | Modo de proteção do admin: sessão de navegador (padrão) ou bearer token.                                                                                        |
+| `--force`                      | Sobrescreve arquivos que já existem.                                                                                                                            |
 
 Os métodos de store gerados recebem `(search, sort, dir string, ...)`; o sort é permitido por coluna via whitelist e a busca é um `LIKE` no campo de exibição. O index do admin renderiza `<.filters>` + `<.table>` + `<.empty>` + `<.pagination>`.
 

@@ -208,9 +208,9 @@ func buildAdminShowHTML(data scaffoldData) string {
 		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d/delete" .Item.ID) "Delete" (dict "method" "post") }}`, data.Plural)))
 }
 
-func publicToggleForm(data scaffoldData, f FieldDef) string {
-	// csrf_token comes from the <.form> kit (root $.CSRFToken) — no duplicate field here.
-	return fmt.Sprintf(`<.form action="{{ printf "/%s/%%d/toggle" .ID }}" method="post"><button type="submit" class="cursor-pointer inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}Pending{{ end }}</button></.form>`, data.Plural, f.Pascal, f.Pascal, f.Pascal)
+func publicBoolBadge(f FieldDef) string {
+	// #261: public list is read-only; mutating the bool belongs on the admin form.
+	return fmt.Sprintf(`<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}No{{ end }}</span>`, f.Pascal, f.Pascal, f.Pascal)
 }
 
 func buildPublicListItemHTML(data scaffoldData) string {
@@ -237,7 +237,7 @@ func buildPublicListItemHTML(data scaffoldData) string {
 		}
 		switch f.GoType {
 		case "bool":
-			meta = append(meta, publicToggleForm(data, f))
+			meta = append(meta, publicBoolBadge(f))
 		case "int64", "*int64", "float64", "*float64":
 			meta = append(meta, fmt.Sprintf(`<span class="text-sm text-slate-500">%s: {{ .%s }}</span>`, f.Pascal, f.Pascal))
 		}
@@ -322,13 +322,4 @@ func buildPublicListHTML(data scaffoldData) string {
 </div>
 {{ end }}
 `, pluralTitle, pluralTitle, totalBlock, listBlock)
-}
-
-func buildPublicTogglePartial(data scaffoldData) string {
-	boolField := firstBoolField(data.Fields)
-	if boolField == nil {
-		return ""
-	}
-	return fmt.Sprintf(`{{- define "%s_toggle" -}}%s{{- end -}}
-`, data.Plural, publicToggleForm(data, *boolField))
 }

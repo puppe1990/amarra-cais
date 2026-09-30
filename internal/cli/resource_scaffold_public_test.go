@@ -137,6 +137,61 @@ func TestScaffoldResource_PublicListRichFields(t *testing.T) {
 	}
 }
 
+// #261: --public + bool must not emit an anonymous POST /{plural}/{id}/toggle.
+// CSRF only stops a third-party site; any visitor with the page cookie could
+// flip published/active/done. The public list renders the bool read-only;
+// admin edit/update still owns the write.
+func TestScaffoldResource_PublicBoolIsReadOnly(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "posts")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "posts",
+		ModulePath: "github.com/puppe1990/posts",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldResource(appDir, "post", resourceOpts{
+		Fields: "title:string,published:bool",
+		Public: true,
+		Seed:   false,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	routes := mustReadFile(t, filepath.Join(appDir, "internal/app/routes.go"))
+	if strings.Contains(routes, `r.Post("/posts/{id}/toggle"`) {
+		t.Error("public list must not register anonymous POST /posts/{id}/toggle (#261)")
+	}
+	if !strings.Contains(routes, `r.Get("/posts"`) {
+		t.Error("public GET list is still required")
+	}
+	if !strings.Contains(routes, `g.Post("/admin/posts/{id}"`) {
+		t.Error("admin update must remain so the bool stays editable (#261)")
+	}
+
+	page := mustReadFile(t, filepath.Join(appDir, "web/templates/pages/posts.html"))
+	if strings.Contains(page, "/toggle") {
+		t.Error("public page must not emit a toggle form (#261)")
+	}
+	if !strings.Contains(page, ".Published") {
+		t.Error("public list should still render the bool read-only")
+	}
+
+	handler := mustReadFile(t, filepath.Join(appDir, "internal/handlers/posts.go"))
+	if strings.Contains(handler, "func (h *PostsHandler) Toggle") {
+		t.Error("public handler must not expose Toggle (#261)")
+	}
+
+	adminForm := mustReadFile(t, filepath.Join(appDir, "web/templates/pages/admin_post_form.html"))
+	if !strings.Contains(adminForm, `<.checkbox name="published"`) {
+		t.Error("admin form should still edit the bool")
+	}
+
+	if _, err := os.Stat(filepath.Join(appDir, "web/templates/partials/posts_toggle.html")); err == nil {
+		t.Error("must not write a public toggle partial (#261)")
+	}
+}
+
 // #127: generated handlers must not write store errors to the client.
 func TestScaffoldResource_handlersUseSanitizedServerError(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")

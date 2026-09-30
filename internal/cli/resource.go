@@ -263,10 +263,6 @@ func resourceFilesHTML(data scaffoldData, migrationPath string) map[string]strin
 		files[filepath.Join("internal/handlers", data.Plural+".go")] = buildResourcePublicHandler(data)
 		files[filepath.Join("internal/handlers", data.Plural+"_test.go")] = buildResourcePublicTest(data)
 		files[filepath.Join("web/templates/pages", data.Plural+".html")] = buildPublicListHTML(data)
-		togglePartial := buildPublicTogglePartial(data)
-		if togglePartial != "" {
-			files[filepath.Join("web/templates/partials", data.Plural+"_toggle.html")] = togglePartial
-		}
 		if data.Paginate {
 			files[filepath.Join("web/templates/partials", data.Plural+"_list.html")] = buildPublicListPartial(data)
 		}
