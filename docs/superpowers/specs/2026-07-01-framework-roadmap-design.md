@@ -129,7 +129,7 @@ Add `docs/packages/auth.md` (or README section) matrix:
 | `AdminAuth(cfg)`        | API/scripts with Bearer token             |
 | `Protect(cfg, h)`       | Single handler + Bearer (deprecated path) |
 
-Remove `TokenAuth` in v0.2; mark deprecated in godoc now.
+The load-at-call-time admin wrapper is gone (#271). Use `AdminAuth(cfg)`.
 
 ### Tests
 
