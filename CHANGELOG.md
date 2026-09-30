@@ -9,6 +9,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 ### Fixed
 
 - `g resource --public` with a bool field no longer registers an anonymous `POST /{plural}/{id}/toggle`. The public list renders the bool read-only; admin edit still owns the write (#261).
+- Development defaults no longer open the camera or `images.openfoodfacts.org`. `Permissions-Policy` is `camera=()` in every env and `img-src` stays `'self' data:` unless `PERMISSIONS_POLICY` / `CSP_IMG_SRC` are set (#262).
 
 ## [0.13.0] - 2026-09-30
 

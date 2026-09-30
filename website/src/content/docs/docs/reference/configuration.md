@@ -23,7 +23,7 @@ Configuration is read once at boot by `cais.Load()`, which also applies a local 
 | `LOG_FORMAT`      | Request/SQL log format: `json` or `text`.                                                  | JSON in dev and production |
 
 :::note
-Additional overrides exist for the security headers: `DB_PATH`, `PERMISSIONS_POLICY`, and `CSP_STYLE_SRC` / `CSP_CONNECT_SRC` / `CSP_MEDIA_SRC` / `CSP_IMG_SRC` / `CSP_FONT_SRC` (a hosted webfont needs both `CSP_FONT_SRC` and `CSP_STYLE_SRC`).
+Additional overrides exist for the security headers: `DB_PATH`, `PERMISSIONS_POLICY`, and `CSP_STYLE_SRC` / `CSP_CONNECT_SRC` / `CSP_MEDIA_SRC` / `CSP_IMG_SRC` / `CSP_FONT_SRC` (a hosted webfont needs both `CSP_FONT_SRC` and `CSP_STYLE_SRC`). Defaults deny the camera (`camera=()`) and keep `img-src` at `'self' data:`. A scanner or catalog app opts in with `PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()` and `CSP_IMG_SRC=https://images.example.com`.
 :::
 
 ## Loading and precedence

@@ -312,6 +312,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 
 - `middleware.SecurityHeaders(cfg)` on the router (after `Recover`)
 - Sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`
+- Default `Permissions-Policy` is `camera=(), microphone=(), geolocation=()` in every env; `img-src` is `'self' data:` unless `CSP_IMG_SRC` is set (#262). A scanner app sets `PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()` and a remote image CDN via `CSP_IMG_SRC=https://images.example.com`
 - CSP keeps `script-src 'self' 'unsafe-inline'` for the FOUC theme snippet / Drive inline init (escaping is the primary defense); roadmap: per-request nonce or SRI hashes (#97)
 - Adds `Strict-Transport-Security` in production (`ENV=production`)
 - CSRF and flash cookies use `Secure` when `cfg.CookieSecure()` is true

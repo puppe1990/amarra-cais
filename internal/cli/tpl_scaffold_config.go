@@ -74,6 +74,9 @@ TRUSTED_PROXIES=
 # CSP_CONNECT_SRC=
 # CSP_MEDIA_SRC=
 # CSP_IMG_SRC=
+# Camera and remote images stay off unless the app needs them (#262):
+# PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()
+# CSP_IMG_SRC=https://images.example.com
 
 # SMTP (optional; password reset emails — logs to stdout when unset)
 SMTP_HOST=
