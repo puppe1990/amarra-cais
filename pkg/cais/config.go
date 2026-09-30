@@ -92,10 +92,9 @@ func Load() Config {
 	}
 	if v := os.Getenv("PERMISSIONS_POLICY"); v != "" {
 		cfg.PermissionsPolicy = v
-	} else if cfg.Env == "development" {
-		// Barcode scan in dev needs camera=(self); camera=() blocks the prompt entirely.
-		cfg.PermissionsPolicy = "camera=(self), microphone=(), geolocation=()"
 	} else {
+		// #262: camera=() in every env. Apps that scan barcodes set
+		// PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=().
 		cfg.PermissionsPolicy = "camera=(), microphone=(), geolocation=()"
 	}
 	if v := os.Getenv("CSP_STYLE_SRC"); v != "" {
@@ -111,8 +110,6 @@ func Load() Config {
 	}
 	if v := os.Getenv("CSP_IMG_SRC"); v != "" {
 		cfg.CSPImgSrc = v
-	} else if cfg.Env == "development" {
-		cfg.CSPImgSrc = "https://images.openfoodfacts.org"
 	}
 	if v := os.Getenv("CSP_FONT_SRC"); v != "" {
 		cfg.CSPFontSrc = v

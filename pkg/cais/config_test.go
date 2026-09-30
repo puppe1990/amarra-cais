@@ -217,10 +217,16 @@ func TestConfig_SecurityPolicy_developmentDefaults(t *testing.T) {
 	t.Setenv("CSP_STYLE_SRC", "")
 	t.Setenv("CSP_CONNECT_SRC", "")
 	t.Setenv("CSP_MEDIA_SRC", "")
+	t.Setenv("CSP_IMG_SRC", "")
 
 	cfg := Load()
-	if cfg.PermissionsPolicy != "camera=(self), microphone=(), geolocation=()" {
+	// #262: development matches production for camera and img-src. Barcode
+	// leftovers (camera=(self), images.openfoodfacts.org) are env overrides.
+	if cfg.PermissionsPolicy != "camera=(), microphone=(), geolocation=()" {
 		t.Errorf("PermissionsPolicy = %q", cfg.PermissionsPolicy)
+	}
+	if cfg.CSPImgSrc != "" {
+		t.Errorf("CSPImgSrc = %q, want empty (img-src stays 'self' data:)", cfg.CSPImgSrc)
 	}
 	if cfg.CSPMediaSrc != "blob:" {
 		t.Errorf("CSPMediaSrc = %q, want blob:", cfg.CSPMediaSrc)
