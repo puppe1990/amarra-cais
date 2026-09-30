@@ -19,7 +19,7 @@ func TestParseTailwindColorKeys_readsExtendColors(t *testing.T) {
 
 func TestMissingPaletteTokens_reportsUnknownCustomColor(t *testing.T) {
 	markup := `<p class="text-copper bg-ink border-foam text-slate-900 text-xs border-r">hi</p>`
-	missing := missingPaletteTokens(markup, map[string]bool{"ink": true})
+	missing := missingPaletteTokens(markup, tailwindThemeKeys{colors: map[string]bool{"ink": true}})
 	joined := strings.Join(missing, ",")
 	if !strings.Contains(joined, "copper") || !strings.Contains(joined, "foam") {
 		t.Errorf("missing = %v, want copper and foam", missing)
@@ -80,5 +80,40 @@ func writePaletteFixture(t *testing.T, dir, config, html string) {
 	}
 	if err := os.WriteFile(filepath.Join(dir, "web/templates/pages/home.html"), []byte(html), 0o644); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// #246: a fresh scaffold warned about center/linecap/linejoin/width because the
+// scanner read SVG attributes (stroke-linecap="round") as colour tokens.
+func TestCheckPalette_ignoresSvgAttributes(t *testing.T) {
+	dir := t.TempDir()
+	writePaletteFixture(t, dir, `theme: { extend: { colors: { ink: "#000" } } }`,
+		`<svg class="text-ink" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="4 4"></svg>`)
+	if c := checkPalette(dir); !c.OK {
+		t.Fatalf("SVG attributes must not count as colour tokens, got %+v", c)
+	}
+}
+
+func TestCheckPalette_ignoresAlignmentAndGradientUtilities(t *testing.T) {
+	dir := t.TempDir()
+	writePaletteFixture(t, dir, `theme: { extend: { colors: { ink: "#000" } } }`,
+		`<p class="text-center text-left text-right text-justify bg-gradient-to-r from-ink to-ink">x</p>`)
+	if c := checkPalette(dir); !c.OK {
+		t.Fatalf("alignment/gradient utilities are not palette colours, got %+v", c)
+	}
+}
+
+func TestCheckPalette_ignoresTypographyScaleKeys(t *testing.T) {
+	dir := t.TempDir()
+	config := `theme: { extend: {
+		colors: { ink: "#000" },
+		fontSize: { "headline-xl": ["2rem", { lineHeight: "2.4rem" }], "code-sm": ["0.875rem", {}] },
+		fontFamily: { "code-md": ["monospace"] },
+		boxShadow: { "card-lg": "0 1px 2px" }
+	} }`
+	writePaletteFixture(t, dir, config,
+		`<p class="text-headline-xl text-code-sm font-code-md shadow-card-lg text-ink">x</p>`)
+	if c := checkPalette(dir); !c.OK {
+		t.Fatalf("fontSize/fontFamily/boxShadow keys are not palette colours, got %+v", c)
 	}
 }
