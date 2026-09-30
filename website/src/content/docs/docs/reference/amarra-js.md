@@ -13,24 +13,27 @@ Drive intercepts **all same-origin clicks and submits by default** — there is 
 
 The first load, `curl`, and crawlers get the full layout. Opt an element out of Drive with `data-amarra-skip`.
 
+A request that swaps the layout **shell** (login, signup, logout) must change the `data-amarra-shell` marker on `<body>` — the scaffold emits `auth`/`app` from `.Site.LoggedIn`. Drive compares it and does a full navigation instead of morphing `#amarra-main`, so the page does not stay inside the previous shell (#249).
+
 The layout renders `<meta name="csrf-token">`, and Drive sends `X-CSRF-Token` on its requests (paired with the double-submit `cais_csrf` cookie).
 
 ## Attributes
 
-| Attribute                       | Applies to               | Effect                                                               |
-| ------------------------------- | ------------------------ | -------------------------------------------------------------------- |
-| `data-amarra-skip`              | `<a>`, `<form>`          | Opt that element out of Drive; it navigates or submits normally.     |
-| `data-amarra-confirm`           | click / submit source    | Ask for confirmation (text is the value) before running the request. |
-| `data-amarra-method`            | link                     | Use this HTTP method for the link (for example `delete`).            |
-| `data-amarra-disable-with`      | submit / button          | Label the control switches to while its request is in flight.        |
-| `data-amarra-frame`             | link / form              | Target a named frame instead of the default `#amarra-main` morph.    |
-| `amarra-click`                  | element                  | Bind a click action.                                                 |
-| `amarra-change`                 | element                  | Bind a change action.                                                |
-| `amarra-submit`                 | element                  | Bind a submit action.                                                |
-| `amarra-debounce`               | element                  | Debounce the bound action.                                           |
-| `amarra-hook`                   | element                  | Attach a built-in hook by name (see below).                          |
-| `amarra-live`                   | element                  | Opt the element into the Live WebSocket hub.                         |
-| `<amarra-frame loading="lazy">` | `<amarra-frame>` element | Frame element; `loading="lazy"` defers it until needed.              |
+| Attribute                       | Applies to               | Effect                                                                                |
+| ------------------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
+| `data-amarra-skip`              | `<a>`, `<form>`          | Opt that element out of Drive; it navigates or submits normally.                      |
+| `data-amarra-shell`             | `<body>`                 | Shell marker (`auth` / `app`); a different value in the response forces a full visit. |
+| `data-amarra-confirm`           | click / submit source    | Ask for confirmation (text is the value) before running the request.                  |
+| `data-amarra-method`            | link                     | Use this HTTP method for the link (for example `delete`).                             |
+| `data-amarra-disable-with`      | submit / button          | Label the control switches to while its request is in flight.                         |
+| `data-amarra-frame`             | link / form              | Target a named frame instead of the default `#amarra-main` morph.                     |
+| `amarra-click`                  | element                  | Bind a click action.                                                                  |
+| `amarra-change`                 | element                  | Bind a change action.                                                                 |
+| `amarra-submit`                 | element                  | Bind a submit action.                                                                 |
+| `amarra-debounce`               | element                  | Debounce the bound action.                                                            |
+| `amarra-hook`                   | element                  | Attach a built-in hook by name (see below).                                           |
+| `amarra-live`                   | element                  | Opt the element into the Live WebSocket hub.                                          |
+| `<amarra-frame loading="lazy">` | `<amarra-frame>` element | Frame element; `loading="lazy"` defers it until needed.                               |
 
 ## Built-in hooks (`amarra-hook`)
 

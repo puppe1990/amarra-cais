@@ -35,7 +35,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <script src="/static/js/amarra.js" defer></script>
   </head>
-  <body class="min-h-screen bg-ink font-sans antialiased text-foam flex flex-col justify-between">
+  <body class="min-h-screen bg-ink font-sans antialiased text-foam flex flex-col justify-between" data-amarra-shell="{{"{{"}} if .Site.LoggedIn {{"}}"}}app{{"{{"}} else {{"}}"}}auth{{"{{"}} end {{"}}"}}">
     <div>
       <header class="bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">

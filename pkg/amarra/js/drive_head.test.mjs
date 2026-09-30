@@ -1,6 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { extractTitle, applyHead, showProgress, hideProgress } from "./drive_head.mjs";
+import {
+  extractTitle,
+  extractHTMLAttr,
+  extractBodyAttr,
+  applyHead,
+  showProgress,
+  hideProgress,
+} from "./drive_head.mjs";
+
+// #249: the layout shell marker sits on <body>, and extractHTMLAttr only reads
+// the <html> tag.
+test("extractBodyAttr reads a marker off the body tag", () => {
+  const html = `<html lang="pt-BR"><body class="min-h-screen" data-amarra-shell="auth"><main id="amarra-main"></main></body></html>`;
+  assert.equal(extractBodyAttr(html, "data-amarra-shell"), "auth");
+  assert.equal(extractHTMLAttr(html, "data-amarra-shell"), null);
+  assert.equal(extractBodyAttr(`<body data-amarra-shell="app">`, "data-amarra-shell"), "app");
+  assert.equal(extractBodyAttr(`<html><body></body></html>`, "data-amarra-shell"), null);
+});
 
 test("extractTitle reads the document title", () => {
   assert.equal(extractTitle("<html><head><title>Hi</title></head></html>"), "Hi");

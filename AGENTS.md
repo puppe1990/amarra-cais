@@ -214,7 +214,7 @@ Drive requests still render the layout so JS can morph `#amarra-main`. Frame req
 | `partials/*.html`                | `{{ template "card" . }}`      | **flat only** — `partials/posts/card.html` never loads; the miss surfaces at render time, not at boot |
 | `components/*.html`              | `<.input>` override            | flat only; shipped kit + app overrides keyed by file stem; an unknown `<.x>` fails at boot            |
 
-**Public HTML contract** (`amarra.js`): `data-amarra-skip` (opt out of Drive), `data-amarra-confirm`, `data-amarra-method`, `data-amarra-disable-with`, `data-amarra-frame`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-debounce` / `amarra-hook` / `amarra-live`, `<amarra-frame loading="lazy">`. Drive intercepts all same-origin clicks/submits by default — no opt-in attribute exists. HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
+**Public HTML contract** (`amarra.js`): `data-amarra-skip` (opt out of Drive), `data-amarra-confirm`, `data-amarra-method`, `data-amarra-disable-with`, `data-amarra-frame`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-debounce` / `amarra-hook` / `amarra-live`, `<amarra-frame loading="lazy">`. Drive intercepts all same-origin clicks/submits by default — no opt-in attribute exists. A layout with more than one shell marks it on `<body>` (`data-amarra-shell`, the scaffold emits `auth`/`app` from `.Site.LoggedIn`): when the response carries a different value Drive does a full navigation instead of morphing `#amarra-main` (#249). HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
 
 ```html
 {{ define "content" }}

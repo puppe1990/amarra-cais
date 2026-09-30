@@ -3,7 +3,13 @@ import { bumpSequence, isCurrentSequence } from "./sequence.mjs";
 import { csrfTokenFromMeta } from "./hook.mjs";
 import { visitIntoFrame } from "./frame.mjs";
 import { applyOp, isStreamResponse, parseSSE } from "./stream.mjs";
-import { applyHead, extractHTMLAttr, hideProgress, showProgress } from "./drive_head.mjs";
+import {
+  applyHead,
+  extractBodyAttr,
+  extractHTMLAttr,
+  hideProgress,
+  showProgress,
+} from "./drive_head.mjs";
 import {
   confirmOk,
   disableSubmit,
@@ -109,6 +115,7 @@ export function applyDriveResponse({
   }
   applyHead(doc, html);
   applyLayoutMarker(doc, html);
+  applyShellMarker(doc, html);
   if (main) (morphFn ?? morph)(main, fragment);
   if (status === 200 && push && url && history?.pushState) {
     if (!location?.href || url !== location.href) {
@@ -124,13 +131,29 @@ export function applyDriveResponse({
   return { action: "morph" };
 }
 
+// #249: a login/logout POST swaps the layout shell in the same request (rail +
+// topbar vs centered auth card), but Drive only morphs #amarra-main — the
+// authenticated page would then sit inside the anonymous shell until a manual
+// reload. The layout marks the shell on <body>, so a change means full visit.
 function needsFullVisit({ html, main, document: doc }) {
-  const currentLayout = doc?.documentElement?.dataset?.amarraLayout;
-  const nextLayout = extractHTMLAttr(html, "data-amarra-layout");
-  if (currentLayout && nextLayout && currentLayout !== nextLayout) return true;
+  if (
+    markerChanged(
+      doc?.documentElement?.dataset?.amarraLayout,
+      extractHTMLAttr(html, "data-amarra-layout")
+    )
+  ) {
+    return true;
+  }
+  if (markerChanged(doc?.body?.dataset?.amarraShell, extractBodyAttr(html, "data-amarra-shell"))) {
+    return true;
+  }
   const currentTag = main?.tagName?.toUpperCase?.();
   const nextTag = extractMainTagName(html);
   return !!(currentTag && nextTag && currentTag !== nextTag);
+}
+
+function markerChanged(current, next) {
+  return !!(current && next && current !== next);
 }
 
 function assignLocation(location, url) {
@@ -145,6 +168,13 @@ function applyLayoutMarker(doc, html) {
   const layout = extractHTMLAttr(html, "data-amarra-layout");
   if (layout != null && doc?.documentElement?.dataset) {
     doc.documentElement.dataset.amarraLayout = layout;
+  }
+}
+
+function applyShellMarker(doc, html) {
+  const shell = extractBodyAttr(html, "data-amarra-shell");
+  if (shell != null && doc?.body?.dataset) {
+    doc.body.dataset.amarraShell = shell;
   }
 }
 

@@ -1759,7 +1759,13 @@ ${lines.join("\n")}
     return m ? m[1].trim() : null;
   }
   function extractHTMLAttr(html, name) {
-    const open = String(html ?? "").match(/<html\b[^>]*>/i)?.[0] ?? "";
+    return extractTagAttr(html, "html", name);
+  }
+  function extractBodyAttr(html, name) {
+    return extractTagAttr(html, "body", name);
+  }
+  function extractTagAttr(html, tag, name) {
+    const open = String(html ?? "").match(new RegExp(`<${tag}\\b[^>]*>`, "i"))?.[0] ?? "";
     const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const m = open.match(new RegExp(`\\s${escaped}\\s*=\\s*["']([^"']*)["']`, "i"));
     return m ? m[1] : null;
@@ -1962,6 +1968,7 @@ ${lines.join("\n")}
     }
     applyHead(doc, html);
     applyLayoutMarker(doc, html);
+    applyShellMarker(doc, html);
     if (main) (morphFn ?? morph)(main, fragment);
     if (status === 200 && push && url && history?.pushState) {
       if (!location?.href || url !== location.href) {
@@ -1977,12 +1984,21 @@ ${lines.join("\n")}
     return { action: "morph" };
   }
   function needsFullVisit({ html, main, document: doc }) {
-    const currentLayout = doc?.documentElement?.dataset?.amarraLayout;
-    const nextLayout = extractHTMLAttr(html, "data-amarra-layout");
-    if (currentLayout && nextLayout && currentLayout !== nextLayout) return true;
+    if (markerChanged(
+      doc?.documentElement?.dataset?.amarraLayout,
+      extractHTMLAttr(html, "data-amarra-layout")
+    )) {
+      return true;
+    }
+    if (markerChanged(doc?.body?.dataset?.amarraShell, extractBodyAttr(html, "data-amarra-shell"))) {
+      return true;
+    }
     const currentTag = main?.tagName?.toUpperCase?.();
     const nextTag = extractMainTagName(html);
     return !!(currentTag && nextTag && currentTag !== nextTag);
+  }
+  function markerChanged(current, next) {
+    return !!(current && next && current !== next);
   }
   function assignLocation(location, url) {
     if (url && typeof location?.assign === "function") {
@@ -1995,6 +2011,12 @@ ${lines.join("\n")}
     const layout = extractHTMLAttr(html, "data-amarra-layout");
     if (layout != null && doc?.documentElement?.dataset) {
       doc.documentElement.dataset.amarraLayout = layout;
+    }
+  }
+  function applyShellMarker(doc, html) {
+    const shell = extractBodyAttr(html, "data-amarra-shell");
+    if (shell != null && doc?.body?.dataset) {
+      doc.body.dataset.amarraShell = shell;
     }
   }
   async function visit(url, opts = {}) {

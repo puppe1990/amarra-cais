@@ -159,6 +159,107 @@ test("applyDriveResponse does full visit on layout mismatch", () => {
   assert.equal(main.innerHTML, "old");
 });
 
+// #249: POST /login swaps the layout shell in the same request (anonymous →
+// signed in). Morphing #amarra-main then leaves the authenticated page inside
+// the anonymous shell until a manual reload, so a shell marker change must be a
+// full navigation.
+test("applyDriveResponse does full visit when the shell marker changes", () => {
+  const assigned = [];
+  const main = { tagName: "MAIN", innerHTML: "old" };
+  const result = applyDriveResponse({
+    status: 200,
+    html: `<html data-amarra-layout="app"><body data-amarra-shell="app"><main id="amarra-main"><p>new</p></main></body></html>`,
+    url: "http://a/dashboard",
+    main,
+    document: {
+      documentElement: { dataset: { amarraLayout: "app" } },
+      body: { dataset: { amarraShell: "auth" } },
+    },
+    morphFn() {
+      throw new Error("shell mismatch should not morph");
+    },
+    location: {
+      assign(url) {
+        assigned.push(url);
+      },
+    },
+  });
+
+  assert.equal(result.action, "assign");
+  assert.deepEqual(assigned, ["http://a/dashboard"]);
+  assert.equal(main.innerHTML, "old");
+});
+
+test("applyDriveResponse morphs when the shell marker matches", () => {
+  const main = { innerHTML: "old" };
+  const result = applyDriveResponse({
+    status: 200,
+    html: `<html data-amarra-layout="app"><body data-amarra-shell="app"><main id="amarra-main"><p>new</p></main></body></html>`,
+    url: "http://a/items",
+    main,
+    document: {
+      documentElement: { dataset: { amarraLayout: "app" } },
+      body: { dataset: { amarraShell: "app" } },
+    },
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: { pushState() {} },
+  });
+  assert.equal(result.action, "morph");
+  assert.equal(main.innerHTML.trim(), "<p>new</p>");
+});
+
+test("applyDriveResponse morphs when the page carries no shell marker", () => {
+  const main = { innerHTML: "old" };
+  const result = applyDriveResponse({
+    status: 200,
+    html: `<main id="amarra-main"><p>new</p></main>`,
+    url: "http://a/x",
+    main,
+    document: { documentElement: { dataset: {} }, body: { dataset: {} } },
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: { pushState() {} },
+  });
+  assert.equal(result.action, "morph");
+});
+
+// #249: the reported flow — the document still shows the anonymous shell when
+// the POST /login response (after the 303) carries the signed-in one.
+test("visit reloads after a login POST that swaps the shell", async () => {
+  const assigned = [];
+  const main = { tagName: "MAIN", innerHTML: "anon" };
+  const doc = {
+    querySelector: (sel) => (sel === "#amarra-main" ? main : null),
+    getElementById: () => null,
+    body: { dataset: { amarraShell: "auth" } },
+    documentElement: { dataset: { amarraLayout: "app" } },
+    dispatchEvent() {},
+  };
+  await visit("http://a/login", {
+    method: "POST",
+    body: "email=demo%40example.com&password=password",
+    fetchFn: async () => ({
+      status: 200,
+      url: "http://a/dashboard",
+      headers: { get: () => null },
+      text: async () =>
+        `<html data-amarra-layout="app"><body data-amarra-shell="app"><main id="amarra-main"><p>signed in</p></main></body></html>`,
+    }),
+    document: doc,
+    location: { href: "http://a/login", assign: (url) => assigned.push(url) },
+    history: { pushState() {}, replaceState() {} },
+    morphFn() {
+      throw new Error("a shell swap must not morph the anonymous shell");
+    },
+  });
+
+  assert.deepEqual(assigned, ["http://a/dashboard"]);
+  assert.equal(main.innerHTML, "anon");
+});
+
 test("applyDriveResponse does full visit when #amarra-main tag changes", () => {
   const assigned = [];
   const main = { tagName: "MAIN", innerHTML: "old" };

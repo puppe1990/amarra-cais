@@ -6,7 +6,16 @@ export function extractTitle(html) {
 }
 
 export function extractHTMLAttr(html, name) {
-  const open = String(html ?? "").match(/<html\b[^>]*>/i)?.[0] ?? "";
+  return extractTagAttr(html, "html", name);
+}
+
+// #249: the layout shell marker lives on <body>; extractHTMLAttr only reads <html>.
+export function extractBodyAttr(html, name) {
+  return extractTagAttr(html, "body", name);
+}
+
+function extractTagAttr(html, tag, name) {
+  const open = String(html ?? "").match(new RegExp(`<${tag}\\b[^>]*>`, "i"))?.[0] ?? "";
   const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const m = open.match(new RegExp(`\\s${escaped}\\s*=\\s*["']([^"']*)["']`, "i"));
   return m ? m[1] : null;
