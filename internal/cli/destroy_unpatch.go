@@ -38,10 +38,10 @@ func unpatchResourceRoutes(content string, data scaffoldData) (string, error) {
 	pubVar := lowerFirst(data.PluralPascal)
 	adminPaths := map[string]bool{
 		"/admin/" + data.Plural:                  true,
-		"/admin/" + data.Plural + "/{id}":        true,
+		"/admin/" + data.Plural + "/{id}":        true, // GET show, PUT update, DELETE destroy (#269)
 		"/admin/" + data.Plural + "/new":         true,
 		"/admin/" + data.Plural + "/{id}/edit":   true,
-		"/admin/" + data.Plural + "/{id}/delete": true,
+		"/admin/" + data.Plural + "/{id}/delete": true, // pre-#269 POST destroy
 		"/admin/" + data.Plural + "/bulk-delete": true,
 	}
 	pubPaths := map[string]bool{

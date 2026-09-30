@@ -11,6 +11,7 @@ type migrationStep struct {
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
 	{Version: "0.13.1", Title: "CSP script-src drops unsafe-inline", Action: "add nonce=\"{{ .CSPNonce }}\" to every inline script in layouts (view.Write injects CSPNonce on map[string]any data); or set CSP_SCRIPT_SRC='unsafe-inline' to restore the old policy"},
+	{Version: "0.13.1", Title: "g resource update/delete use PUT and DELETE", Action: "new generators emit PUT /admin/{plural}/{id} and DELETE /admin/{plural}/{id} (edit form _method=put, delete link method delete); existing POST routes keep working until you regenerate"},
 	{Version: "0.13.1", Title: "formatMoney and pkg/cais/barcode removed", Action: "if templates call formatMoney, register a local helper; copy Open Food Facts lookup into the app if it imported pkg/cais/barcode"},
 	{Version: "0.10.0", Title: "netutil.HealthPayload gained an env argument", Action: "call netutil.HealthPayload(status, port, cfg.Env)"},
 	{Version: "0.10.0", Title: "jobs dashboard needs Store.DB()", Action: "add DB() *sql.DB to the Store interface in internal/store/store.go"},

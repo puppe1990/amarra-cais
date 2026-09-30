@@ -30,7 +30,8 @@ r.Get("/blog/{slug}", cais.StringParam("slug", blog.Show))
 r.Post("/chat/{id}/permissions/{permID}/approve", cais.StringParams("id", "permID", chat.ApprovePermission))
 r.Get("/items/{id}/{slug}", cais.IntStringParams("id", "slug", items.Show))
 r.Group(middleware.RequireAuth("/login"), func(g *cais.Router) {
-  g.Post("/admin/items/{id}", cais.IntParam("id", admin.Update))
+  g.Put("/admin/items/{id}", cais.IntParam("id", admin.Update))
+  g.Delete("/admin/items/{id}", cais.IntParam("id", admin.Delete))
 })
 ```
 

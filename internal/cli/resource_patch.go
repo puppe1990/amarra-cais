@@ -220,8 +220,8 @@ func patchRoutesForResource(dir string, data scaffoldData, dryRun bool, force bo
 	fmt.Fprintf(&insert, "\t\tg.Get(\"/admin/%s/new\", %s.New)\n", data.Plural, adminVar)
 	fmt.Fprintf(&insert, "\t\tg.Post(\"/admin/%s\", %s.Create)\n", data.Plural, adminVar)
 	fmt.Fprintf(&insert, "\t\tg.Get(\"/admin/%s/{id}/edit\", cais.IntParam(\"id\", %s.Edit))\n", data.Plural, adminVar)
-	fmt.Fprintf(&insert, "\t\tg.Post(\"/admin/%s/{id}\", cais.IntParam(\"id\", %s.Update))\n", data.Plural, adminVar)
-	fmt.Fprintf(&insert, "\t\tg.Post(\"/admin/%s/{id}/delete\", cais.IntParam(\"id\", %s.Delete))\n", data.Plural, adminVar)
+	fmt.Fprintf(&insert, "\t\tg.Put(\"/admin/%s/{id}\", cais.IntParam(\"id\", %s.Update))\n", data.Plural, adminVar)    // Drive _method=put
+	fmt.Fprintf(&insert, "\t\tg.Delete(\"/admin/%s/{id}\", cais.IntParam(\"id\", %s.Delete))\n", data.Plural, adminVar) // linkTo method delete
 	fmt.Fprintf(&insert, "\t\tg.Post(\"/admin/%s/bulk-delete\", %s.BulkDelete)\n", data.Plural, adminVar)
 	fmt.Fprintf(&insert, "\t})\n")
 

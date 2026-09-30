@@ -111,7 +111,8 @@ r.Get("/blog/{slug}", cais.StringParam("slug", blog.Show))
 r.Post("/chat/{id}/permissions/{permID}/approve", cais.StringParams("id", "permID", chat.ApprovePermission))
 r.Get("/items/{id}/{slug}", cais.IntStringParams("id", "slug", items.Show))
 r.Group(middleware.AdminAuth(cfg), func(g *cais.Router) {
-  g.Post("/admin/items/{id}", cais.IntParam("id", admin.Update))
+  g.Put("/admin/items/{id}", cais.IntParam("id", admin.Update))
+  g.Delete("/admin/items/{id}", cais.IntParam("id", admin.Delete))
 })
 ```
 
@@ -148,7 +149,7 @@ Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `Ad
 
 `amarra-cais g resource` defaults to session auth (`--admin-auth session`). Use `--admin-auth bearer` for token-only admin APIs without login pages.
 
-**Resource index uses the kit** (#24): the admin index renders `<.filters>` (q on the display field, sort/dir preserved via hidden inputs) + `<.table>` (sortable headers, `?sort=&dir=`, `aria-sort`) + `<.empty>` + `<.pagination base>`; the public index gets `<.filters>`/`<.empty>`/`<.pagination>` too. Generated store methods take `(search, sort, dir string, ...)` — sort is whitelisted per column, search is a LIKE on the display field. Required reference fields seed their parent row in generated tests and `SeedDemo*` (FK constraints).
+**Resource index uses the kit** (#24): the admin index renders `<.filters>` (q on the display field, sort/dir preserved via hidden inputs) + `<.table>` (sortable headers, `?sort=&dir=`, `aria-sort`) + `<.empty>` + `<.pagination base>`; the public index gets `<.filters>`/`<.empty>`/`<.pagination>` too. Generated store methods take `(search, sort, dir string, ...)` — sort is whitelisted per column, search is a LIKE on the display field. Required reference fields seed their parent row in generated tests and `SeedDemo*` (FK constraints). Admin mutations are `POST` create, `PUT` update (`_method=put` on the edit form), `DELETE` destroy (`linkTo` + `method` delete); bulk-delete stays `POST`. Apps generated before this keep POST until regenerated (#269).
 
 ## Session auth
 
