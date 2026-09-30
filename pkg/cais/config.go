@@ -26,6 +26,7 @@ type Config struct {
 	CSPMediaSrc       string
 	CSPImgSrc         string
 	CSPFontSrc        string
+	CSPScriptSrc      string
 	// MaxBodyBytes caps the total size of a request body before any parse, so
 	// oversized uploads are rejected before net/http spills them to temp files
 	// (#221). Zero falls back to DefaultMaxBodyBytes; raise via MAX_BODY_BYTES.
@@ -113,6 +114,9 @@ func Load() Config {
 	}
 	if v := os.Getenv("CSP_FONT_SRC"); v != "" {
 		cfg.CSPFontSrc = v
+	}
+	if v := os.Getenv("CSP_SCRIPT_SRC"); v != "" {
+		cfg.CSPScriptSrc = v
 	}
 	if v := os.Getenv("MAX_BODY_BYTES"); v != "" {
 		if n, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64); err == nil && n > 0 {

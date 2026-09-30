@@ -35,7 +35,7 @@ func Write(w http.ResponseWriter, r *http.Request, rec *Renderer, p Page, cfg ca
 	}
 	name := writeTemplateName(r, p)
 	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, name, p.Data); err != nil {
+	if err := tmpl.ExecuteTemplate(&buf, name, attachScriptNonce(p.Data, cais.ScriptNonceFromRequest(r))); err != nil {
 		writeRenderError(w, err, cfg)
 		return
 	}
@@ -101,6 +101,25 @@ func writeTemplateName(r *http.Request, p Page) string {
 		return "app"
 	}
 	return p.Layout
+}
+
+// attachScriptNonce stamps CSPNonce onto map[string]any page data so the
+// layout FOUC snippet can use nonce="{{ .CSPNonce }}" (#263). A reused map
+// from a previous request is overwritten so the attribute matches this
+// response's CSP. Struct or map[string]string data is left alone.
+func attachScriptNonce(data any, nonce string) any {
+	if nonce == "" {
+		return data
+	}
+	switch m := data.(type) {
+	case map[string]any:
+		m["CSPNonce"] = nonce
+		return m
+	case nil:
+		return map[string]any{"CSPNonce": nonce}
+	default:
+		return data
+	}
 }
 
 func writeRenderError(w http.ResponseWriter, err error, cfg cais.Config) {

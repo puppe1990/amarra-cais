@@ -34,7 +34,8 @@ func serveLogs(w http.ResponseWriter, r *http.Request, buf *Buffer) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = fmt.Fprintf(w, pageHTML, body)
+	nonce := html.EscapeString(cais.ScriptNonceFromRequest(r))
+	_, _ = fmt.Fprintf(w, pageHTML, body, nonce)
 }
 
 const pageHTML = `<!DOCTYPE html>
@@ -57,7 +58,7 @@ const pageHTML = `<!DOCTYPE html>
     <span class="badge">development · localhost only · auto-refresh 2s</span>
   </header>
   <pre id="logs">%s</pre>
-  <script>
+  <script nonce="%s">
     setInterval(function () {
       fetch("/logs?partial=1").then(function (r) { return r.text(); }).then(function (t) {
         var el = document.getElementById("logs");
