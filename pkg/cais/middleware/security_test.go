@@ -83,6 +83,27 @@ func TestSecurityHeaders_mediaSrc(t *testing.T) {
 	}
 }
 
+func TestSecurityHeaders_development_defaultsAreNeutral(t *testing.T) {
+	// #262: an empty Config (what Load() now yields in development) must not
+	// open the camera or a third-party image CDN.
+	cfg := cais.Config{Env: "development", CSPMediaSrc: "blob:"}
+	h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	if got := rr.Header().Get("Permissions-Policy"); got != "camera=(), microphone=(), geolocation=()" {
+		t.Errorf("Permissions-Policy = %q, want camera=()", got)
+	}
+	csp := rr.Header().Get("Content-Security-Policy")
+	if !strings.Contains(csp, "img-src 'self' data:") {
+		t.Errorf("CSP missing img-src 'self' data:, got %q", csp)
+	}
+	if strings.Contains(csp, "openfoodfacts") {
+		t.Errorf("CSP still allows Open Food Facts images: %q", csp)
+	}
+}
+
 func TestSecurityHeaders_development_allowsCamera(t *testing.T) {
 	cfg := cais.Config{Env: "development", PermissionsPolicy: "camera=(self), microphone=(), geolocation=()", CSPMediaSrc: "blob:"}
 	h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
