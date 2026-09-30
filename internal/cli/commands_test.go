@@ -215,6 +215,31 @@ func TestEnsureStylesCSS_errorsWithoutInput(t *testing.T) {
 	}
 }
 
+// #247: when a template edit adds no new class, Tailwind exits 0 leaving
+// styles.css byte-identical and the mtime old — doctor then kept warning after
+// the suggested `amarra-cais css`.
+func TestRunTailwindBuild_refreshesStylesModTimeOnNoOpBuild(t *testing.T) {
+	dir := installFixture(t)
+	built := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	edited := built.Add(time.Hour)
+	writeFileAt(t, filepath.Join(dir, cssOutput), ".flex{display:flex}", built)
+	writeFileAt(t, filepath.Join(dir, "web/templates/pages/home.html"), "<p>hi</p>", edited)
+	fakeToolchain(t)
+
+	if stale, _, _ := stylesCSSStale(dir); !stale {
+		t.Fatal("fixture must start with a stale styles.css")
+	}
+	if err := runTailwindBuild(dir, false); err != nil {
+		t.Fatal(err)
+	}
+	if stale, ref, since := stylesCSSStale(dir); stale {
+		t.Errorf("styles.css still older than %s (%s) after a successful build", ref, since)
+	}
+	if c := checkCSS(dir); !c.OK {
+		t.Errorf("doctor must stop warning once the suggested command ran, got %+v", c)
+	}
+}
+
 // fakeToolchain puts stub npm/npx/go first on PATH and returns the call log.
 // The npm stub encodes the real contract (#54): npm skips devDependencies when
 // NODE_ENV=production unless --include=dev is passed.

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/boot"
 )
@@ -190,7 +191,27 @@ func runTailwindBuild(dir string, watch bool) error {
 	if _, err := os.Stat(filepath.Join(dir, cssInput)); err != nil {
 		return fmt.Errorf("missing %s", cssInput)
 	}
-	return runCmd(dir, "npx", tailwindCSSArgs(watch)...)
+	if err := runCmd(dir, "npx", tailwindCSSArgs(watch)...); err != nil {
+		return err
+	}
+	return refreshStylesModTime(dir)
+}
+
+// refreshStylesModTime stamps the built styles.css. Tailwind skips the write
+// when the output is byte-identical (a template edit that adds no class), so
+// without the stamp the staleness check keeps warning after the suggested
+// command ran (#247).
+func refreshStylesModTime(dir string) error {
+	path := filepath.Join(dir, cssOutput)
+	now := time.Now()
+	if err := os.Chtimes(path, now, now); err != nil {
+		if os.IsNotExist(err) {
+			// doctor reports the missing output itself.
+			return nil
+		}
+		return fmt.Errorf("stamp %s: %w", cssOutput, err)
+	}
+	return nil
 }
 
 // tailwindCSSArgs is the npx tailwindcss argv for one-shot and watch builds.
