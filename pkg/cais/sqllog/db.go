@@ -1,6 +1,7 @@
 package sqllog
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io"
@@ -45,22 +46,35 @@ func (d *DB) Close() error {
 }
 
 func (d *DB) Exec(query string, args ...any) (sql.Result, error) {
+	return d.ExecContext(context.Background(), query, args...)
+}
+
+func (d *DB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	start := time.Now()
-	result, err := d.inner.Exec(query, args...)
+	result, err := d.inner.ExecContext(ctx, query, args...)
 	d.log(query, args, start, time.Since(start), err)
 	return result, err
 }
 
 func (d *DB) Query(query string, args ...any) (*sql.Rows, error) {
+	return d.QueryContext(context.Background(), query, args...)
+}
+
+func (d *DB) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	start := time.Now()
-	rows, err := d.inner.Query(query, args...)
+	rows, err := d.inner.QueryContext(ctx, query, args...)
 	d.log(query, args, start, time.Since(start), err)
 	return rows, err
 }
 
 func (d *DB) QueryRow(query string, args ...any) *sql.Row {
+	return d.QueryRowContext(context.Background(), query, args...)
+}
+
+func (d *DB) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	start := time.Now()
-	row := d.inner.QueryRow(query, args...)
+	row := d.inner.QueryRowContext(ctx, query, args...)
+	// *sql.Row defers the error until Scan, including context.Canceled.
 	d.log(query, args, start, time.Since(start), nil)
 	return row
 }
@@ -74,22 +88,34 @@ func (d *DB) Begin() (*Tx, error) {
 }
 
 func (t *Tx) Exec(query string, args ...any) (sql.Result, error) {
+	return t.ExecContext(context.Background(), query, args...)
+}
+
+func (t *Tx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	start := time.Now()
-	result, err := t.inner.Exec(query, args...)
+	result, err := t.inner.ExecContext(ctx, query, args...)
 	t.log(query, args, start, time.Since(start), err)
 	return result, err
 }
 
 func (t *Tx) Query(query string, args ...any) (*sql.Rows, error) {
+	return t.QueryContext(context.Background(), query, args...)
+}
+
+func (t *Tx) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	start := time.Now()
-	rows, err := t.inner.Query(query, args...)
+	rows, err := t.inner.QueryContext(ctx, query, args...)
 	t.log(query, args, start, time.Since(start), err)
 	return rows, err
 }
 
 func (t *Tx) QueryRow(query string, args ...any) *sql.Row {
+	return t.QueryRowContext(context.Background(), query, args...)
+}
+
+func (t *Tx) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	start := time.Now()
-	row := t.inner.QueryRow(query, args...)
+	row := t.inner.QueryRowContext(ctx, query, args...)
 	t.log(query, args, start, time.Since(start), nil)
 	return row
 }

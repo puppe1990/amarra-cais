@@ -14,7 +14,7 @@ Follow the same order the generators use — test first:
 1. Write a store test in `internal/store/` against SQLite `:memory:`.
 2. Add the SQL file `internal/store/migrations/NNN_name.sql`.
 3. Add methods to the `store.Store` interface and its implementation.
-4. Wrap the DB with `sqllog.Wrap` in `NewSQLiteStore` so development query logs are captured.
+4. Wrap the DB with `sqllog.Wrap` in `NewSQLiteStore` so development query logs are captured. The wrapper logs `Exec`/`Query`/`QueryRow` and the `*Context` variants; short methods use `context.Background()`. Prefer `ExecContext(r.Context(), …)` in request handlers so a canceled client does not keep the SQLite writer busy.
 5. The migration is recorded in `schema_migrations` by `pkg/cais/migrate`, which is idempotent on boot.
 
 Or scaffold the data layer:

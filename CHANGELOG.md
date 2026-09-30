@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Added
+
+- `sqllog.DB` and `sqllog.Tx` implement `ExecContext` / `QueryContext` / `QueryRowContext` with the same logging as the short methods. `Exec` / `Query` / `QueryRow` delegate to `context.Background()` (#264).
+
 ### Changed
 
 - Default CSP `script-src` is `'self'` plus a per-request nonce. `view.Write` injects `.CSPNonce` into `map[string]any` page data so the FOUC theme snippet and service-worker inline scripts can run. Apps that still need unsigned inline scripts set `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
