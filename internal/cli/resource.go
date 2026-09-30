@@ -339,7 +339,7 @@ func TestAdmin%sHandler_Delete(t *testing.T) {
 	}
 	h := NewAdmin%sHandler(setupTestViews(t), s, testSite(), cais.Config{})
 	rr := httptest.NewRecorder()
-	h.Delete(rr, testutil.NewRequest(http.MethodPost, "/admin/%s/1/delete", testutil.PathValue("id", "1")), id)
+	h.Delete(rr, testutil.NewRequest(http.MethodDelete, "/admin/%s/1", testutil.PathValue("id", "1")), id)
 	if rr.Code != http.StatusSeeOther {
 		t.Errorf("status = %%d", rr.Code)
 	}

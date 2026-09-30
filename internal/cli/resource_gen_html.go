@@ -35,6 +35,7 @@ func buildAdminFormHTML(data scaffoldData) string {
   <h1 class="text-3xl font-bold text-slate-900 mb-6">{{ if .IsNew }}New %s{{ else }}Edit %s{{ end }}</h1>
   {{ $action := "/admin/%s" }}{{ if not .IsNew }}{{ $action = printf "/admin/%s/%%d" .Item.ID }}{{ end }}
   <.form action="{{ $action }}" method="post">
+    {{ if not .IsNew }}<input type="hidden" name="_method" value="put" />{{ end }}
     <div id="admin-%s-errors"></div>
 %s
     <.button type="submit">{{ if .IsNew }}Create{{ else }}Save{{ end }}</.button>
@@ -143,7 +144,7 @@ func buildAdminIndexPanel(data scaffoldData) string {
     <.empty title="No %[3]s yet" href="/admin/%[1]s/new" action="+ New">Nothing here yet.</.empty>
     {{ end }}
 %[4]s`, data.Plural, rowCells.String(), data.Title, buildAdminPaginationBlock(data),
-		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d/delete" .ID) "Delete" (dict "method" "post") }}`, data.Plural)))
+		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d" .ID) "Delete" (dict "method" "delete") }}`, data.Plural)))
 }
 
 func buildAdminIndexPartial(data scaffoldData) string {
@@ -205,7 +206,7 @@ func buildAdminShowHTML(data scaffoldData) string {
 </div>
 {{ end }}
 `, data.Title, data.Plural, data.Title, fields.String(), data.Plural,
-		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d/delete" .Item.ID) "Delete" (dict "method" "post") }}`, data.Plural)))
+		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d" .Item.ID) "Delete" (dict "method" "delete") }}`, data.Plural)))
 }
 
 func publicBoolBadge(f FieldDef) string {
