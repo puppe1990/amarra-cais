@@ -23,7 +23,7 @@ func TestDB_LogsQueryInDevelopment(t *testing.T) {
 
 	var buf bytes.Buffer
 	db := Wrap(raw, Config{Enabled: true, Writer: &buf})
-	if _, err := db.Exec(`INSERT INTO users (email) VALUES (?)`, "demo@pulsefit.local"); err != nil {
+	if _, err := db.Exec(`INSERT INTO users (email) VALUES (?)`, "demo@example.com"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -34,7 +34,7 @@ func TestDB_LogsQueryInDevelopment(t *testing.T) {
 	if !strings.Contains(out, `INSERT INTO users`) {
 		t.Errorf("missing SQL, got:\n%s", out)
 	}
-	if !strings.Contains(out, `["demo@pulsefit.local"]`) {
+	if !strings.Contains(out, `["demo@example.com"]`) {
 		t.Errorf("missing args, got:\n%s", out)
 	}
 	if !strings.Contains(out, "User Create (") {

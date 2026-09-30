@@ -47,7 +47,7 @@ func (r *Repl) Loop() error {
 
 	_, _ = fmt.Fprintf(r.out, "=> %s console (%s)\n", r.opts.AppName, r.opts.Config.Env)
 	_, _ = fmt.Fprintln(r.out, "=> Variables: store, cfg, db + custom bindings. Commands: help, sql, reload, history, exit")
-	_, _ = fmt.Fprintln(r.out, "=> Example: store.FindUserByEmail(\"demo@pulsefit.local\")")
+	_, _ = fmt.Fprintln(r.out, "=> Example: store.FindUserByEmail(\"demo@example.com\")")
 
 	for {
 		line, err := r.readLine()
@@ -161,7 +161,7 @@ func (r *Repl) printHelp() {
 	_, _ = fmt.Fprintln(r.out, "  !N / !!       rerun history entry")
 	_, _ = fmt.Fprintln(r.out, "  exit          leave console")
 	_, _ = fmt.Fprintln(r.out, "Go examples:")
-	_, _ = fmt.Fprintln(r.out, `  store.FindUserByEmail("demo@pulsefit.local")`)
+	_, _ = fmt.Fprintln(r.out, `  store.FindUserByEmail("demo@example.com")`)
 	_, _ = fmt.Fprintln(r.out, `  import "fmt"; fmt.Println(cfg.DBPath)`)
 }
 
