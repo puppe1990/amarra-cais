@@ -91,3 +91,45 @@ func TestDestroyAuth_leavesCompilableApp(t *testing.T) {
 
 	buildGeneratedApp(t, appDir)
 }
+
+// #254: internal/store/migrations.go embeds //go:embed migrations/*.sql, so a
+// destroy that removes the last migration left an app that cannot build.
+func TestDestroyMigration_keepsEmbeddableMigration(t *testing.T) {
+	appDir := scaffoldDestroyModelProbe(t, "destmig")
+	for _, name := range []string{"contacts", "auth"} {
+		if err := destroyMigration(appDir, name, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	assertMigrationSQLExists(t, appDir)
+}
+
+func TestDestroyAll_leavesCompilableApp(t *testing.T) {
+	appDir := scaffoldCompileProbe(t, "destroynothing")
+	for _, destroy := range []func() error{
+		func() error { return destroyAuth(appDir, false) },
+		func() error { return destroyHandler(appDir, "contact", false, false) },
+		func() error { return destroyHandler(appDir, "dashboard", false, false) },
+		func() error { return destroyModel(appDir, "contact", false, false) },
+	} {
+		if err := destroy(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	assertMigrationSQLExists(t, appDir)
+	buildGeneratedApp(t, appDir)
+}
+
+func assertMigrationSQLExists(t *testing.T, appDir string) {
+	t.Helper()
+	entries, err := os.ReadDir(filepath.Join(appDir, "internal/store/migrations"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".sql") {
+			return
+		}
+	}
+	t.Error("migrations dir is empty — //go:embed migrations/*.sql will not match")
+}

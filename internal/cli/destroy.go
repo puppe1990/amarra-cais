@@ -115,7 +115,10 @@ func destroyResource(dir, name string, dryRun, force bool) error {
 	if err := unpatchMainForSeed(dir, data, dryRun); err != nil {
 		return err
 	}
-	return unpatchLayoutNavForResource(dir, data, dryRun)
+	if err := unpatchLayoutNavForResource(dir, data, dryRun); err != nil {
+		return err
+	}
+	return ensureMigrationPlaceholder(dir, dryRun)
 }
 
 func destroyModel(dir, name string, dryRun, force bool) error {
@@ -159,7 +162,10 @@ func destroyModel(dir, name string, dryRun, force bool) error {
 	if err := unpatchSeedsForModel(dir, data, methodNames, dryRun); err != nil {
 		return err
 	}
-	return unpatchMainForSeed(dir, data, dryRun)
+	if err := unpatchMainForSeed(dir, data, dryRun); err != nil {
+		return err
+	}
+	return ensureMigrationPlaceholder(dir, dryRun)
 }
 
 func destroyHandler(dir, name string, dryRun, force bool) error {

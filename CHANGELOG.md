@@ -17,6 +17,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - `doctor` palette scan reads only `class` attributes — not `stroke-linecap="round"` and friends — and ignores `fontSize`/`fontFamily`/`boxShadow` keys plus alignment/gradient utilities (`text-center`, `bg-gradient-to-r`), so design-system typography no longer warns as missing colours (#246).
 - `amarra-cais css` restamps `styles.css` after a successful Tailwind build, so the doctor staleness check clears even when the build output was byte-identical (a template edit that adds no class) (#247).
 - `destroy handler` / `destroy auth` drop the rate-limiter declarations and the auth routes whose only user was destroyed, and prune imports left orphaned (e.g. `strings` after `CreateUser`), so the app builds again right after the destroy (#248).
+- Destroy commands keep the generated app buildable end to end: an emptied `internal/store/migrations/` gets the scaffold `001_init.sql` back (`//go:embed migrations/*.sql` would not match) and `routes.go` drops imports only the destroyed routes used (#254).
 
 ## [0.12.2] - 2026-09-29
 

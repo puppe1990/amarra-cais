@@ -108,6 +108,8 @@ func unpatchRoutesForHandler(dir string, data scaffoldData, dryRun bool) error {
 	if err != nil {
 		return err
 	}
+	content = dropUnusedImport(content, "http")
+	content = dropUnusedImport(content, "middleware")
 	return updateScaffoldFile(path, []byte(content), "internal/app/routes.go", dryRun)
 }
 
