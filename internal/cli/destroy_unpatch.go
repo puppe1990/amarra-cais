@@ -45,7 +45,9 @@ func unpatchResourceRoutes(content string, data scaffoldData) (string, error) {
 		"/admin/" + data.Plural + "/bulk-delete": true,
 	}
 	pubPaths := map[string]bool{
-		"/" + data.Plural:                  true,
+		"/" + data.Plural: true,
+		// Pre-#261 generators registered this anonymous POST; destroy still
+		// removes it from apps that were generated with the toggle.
 		"/" + data.Plural + "/{id}/toggle": true,
 	}
 	drop := func(st ast.Stmt) bool {

@@ -205,9 +205,8 @@ func patchRoutesForResource(dir string, data scaffoldData, dryRun bool, force bo
 	if data.Public {
 		pubVar := lowerFirst(data.PluralPascal)
 		fmt.Fprintf(&insert, "\t%s := handlers.New%sHandler(deps.Views, deps.Store, deps.Site, cfg)\n", pubVar, data.PluralPascal)
-		if firstBoolField(data.Fields) != nil {
-			fmt.Fprintf(&insert, "\tr.Post(\"/%s/{id}/toggle\", cais.IntParam(\"id\", %s.Toggle))\n", data.Plural, pubVar)
-		}
+		// #261: public list is read-only. A bool field used to register
+		// POST /{plural}/{id}/toggle next to the GET with no RequireAuth.
 		fmt.Fprintf(&insert, "\tr.Get(\"/%s\", %s.List)\n", data.Plural, pubVar)
 	}
 	fmt.Fprintf(&insert, "\t%s := handlers.NewAdmin%sHandler(deps.Views, deps.Store, deps.Site, cfg)\n", adminVar, data.PluralPascal)

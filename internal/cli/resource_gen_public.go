@@ -3,7 +3,6 @@ package cli
 import "fmt"
 
 func buildResourcePublicHandler(data scaffoldData) string {
-	boolField := firstBoolField(data.Fields)
 	intField := firstIntField(data.Fields)
 
 	sumField := "Total"
@@ -21,26 +20,6 @@ func buildResourcePublicHandler(data scaffoldData) string {
 	}
 
 	listMethod := buildPublicListMethod(data, sumField, listSum)
-
-	toggleMethod := ""
-	if boolField != nil {
-		toggleMethod = fmt.Sprintf(`
-
-func (h *%sHandler) Toggle(w http.ResponseWriter, r *http.Request, id int64) {
-	item, err := h.store.Find%sByID(id)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-	item.%s = !item.%s
-	if err := h.store.Update%s(item); err != nil {
-		httpx.ServerError(w, err, h.cfg)
-		return
-	}
-	http.Redirect(w, r, "/%s", http.StatusSeeOther)
-}
-`, data.PluralPascal, data.Pascal, boolField.Pascal, boolField.Pascal, data.Pascal, data.Plural)
-	}
 
 	extraStd := "\t\"net/url\"\n\t\"strings\"\n"
 	paginationImport := ""
@@ -73,14 +52,13 @@ func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.
 	return &%sHandler{views: views, store: s, site: site, cfg: cfg}
 }
 
-%s%s`,
+%s`,
 		extraStd,
 		paginationImport,
 		frameworkModule, frameworkModule, frameworkModule, frameworkModule, data.ModulePath,
 		data.PluralPascal,
 		data.PluralPascal, data.PluralPascal, data.PluralPascal,
 		listMethod,
-		toggleMethod,
 	)
 }
 
