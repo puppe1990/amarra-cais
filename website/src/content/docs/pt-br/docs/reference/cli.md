@@ -39,7 +39,7 @@ sidebar:
 | -------------------------- | ------------------------------------------------------------------------- |
 | `destroy resource <name>`  | Arquivos do resource e patches de rota/store/seeds/nav.                   |
 | `destroy handler <name>`   | Handler, teste, página e patch de rota.                                   |
-| `destroy model <name>`     | Model, migration e métodos de store.                                      |
+| `destroy model <name>`     | Model, migration, métodos de store, seed e testes.                        |
 | `destroy auth`             | Scaffolding de login/auth e o middleware de sessão do `app.go`.           |
 | `destroy migration <name>` | Apenas o `*_<name>.sql` correspondente (não reverte `schema_migrations`). |
 | `destroy component <name>` | O arquivo de override do kit.                                             |

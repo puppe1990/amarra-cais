@@ -522,7 +522,7 @@ Field types: `string`, `text`, `url`, `bool`, `int`, `date`, `references` (or `n
 
 **Dry-run** — `amarra-cais g --dry-run ...` and `amarra-cais destroy --dry-run ...` print planned changes without writing files.
 
-**Destroy** — `amarra-cais destroy resource|handler|model <name>` removes generated files and unpatches `routes.go`, `store.go`, `seeds.go`, and layout nav where applicable. `destroy auth` also reverts `app.go` session middleware. `destroy migration` removes matching `*_<name>.sql` only (does not roll back `schema_migrations`).
+**Destroy** — `amarra-cais destroy resource|handler|model <name>` removes generated files and unpatches `routes.go`, `store.go`, `seeds.go`, and layout nav where applicable. `destroy model` also drops the model's store methods/interface entries, its `RunSeeds` insert and its `store_test.go` tests — and refuses, naming the caller, while another file still uses them (`internal/handlers/dashboard.go still calls CountContacts — run amarra-cais destroy handler dashboard`) (#245). `destroy auth` also reverts `app.go` session middleware. `destroy migration` removes matching `*_<name>.sql` only (does not roll back `schema_migrations`).
 
 **Demo seed** — `amarra-cais g resource` (unless `--no-seed`) generates `SeedDemo*` store methods and wires them into `cmd/server/main.go` at boot.
 

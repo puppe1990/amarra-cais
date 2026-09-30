@@ -120,6 +120,7 @@ func destroyResource(dir, name string, dryRun, force bool) error {
 
 func destroyModel(dir, name string, dryRun, force bool) error {
 	data := dataForResource(name)
+	methodNames := modelStoreMethodNames(data)
 
 	files := []string{
 		filepath.Join("internal/models", data.Snake+".go"),
@@ -136,10 +137,29 @@ func destroyModel(dir, name string, dryRun, force bool) error {
 		}
 	}
 
+	if !force {
+		refs, refErr := externalModelRefs(dir, data.Pascal, methodNames, modelDestroySkip(files))
+		if refErr != nil {
+			return refErr
+		}
+		if len(refs) > 0 {
+			return modelStillReferenced(data, refs[0])
+		}
+	}
+
 	if err := removeGeneratedFiles(dir, files, dryRun, force); err != nil {
 		return err
 	}
-	return unpatchStoreForResource(dir, data, files, dryRun)
+	if err := unpatchStoreForModel(dir, data, methodNames, dryRun); err != nil {
+		return err
+	}
+	if err := unpatchStoreTestForModel(dir, data, methodNames, dryRun); err != nil {
+		return err
+	}
+	if err := unpatchSeedsForModel(dir, data, methodNames, dryRun); err != nil {
+		return err
+	}
+	return unpatchMainForSeed(dir, data, dryRun)
 }
 
 func destroyHandler(dir, name string, dryRun, force bool) error {

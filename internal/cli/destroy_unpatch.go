@@ -261,25 +261,40 @@ func listOptionMethodNames(src string) map[string]bool {
 // survivingGoFiles lists internal/**/*.go rel paths, skipping the given ones.
 
 func survivingGoFiles(dir string, skip map[string]bool) ([]string, error) {
+	return goFilesUnder(dir, []string{"internal"}, skip)
+}
+
+// goFilesUnder lists .go paths under the given roots as forward-slash rel
+// paths, skipping the ones in skip. Missing roots are not an error (#245).
+
+func goFilesUnder(dir string, roots []string, skip map[string]bool) ([]string, error) {
 	var rels []string
-	err := filepath.WalkDir(filepath.Join(dir, "internal"), func(path string, d fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if d.IsDir() || !strings.HasSuffix(d.Name(), ".go") {
+	for _, root := range roots {
+		walkErr := filepath.WalkDir(filepath.Join(dir, root), func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				if os.IsNotExist(err) {
+					return nil
+				}
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(d.Name(), ".go") {
+				return nil
+			}
+			rel, relErr := filepath.Rel(dir, path)
+			if relErr != nil {
+				return relErr
+			}
+			relSlash := filepath.ToSlash(rel)
+			if !skip[relSlash] {
+				rels = append(rels, relSlash)
+			}
 			return nil
+		})
+		if walkErr != nil {
+			return nil, walkErr
 		}
-		rel, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-		relSlash := filepath.ToSlash(rel)
-		if !skip[relSlash] {
-			rels = append(rels, relSlash)
-		}
-		return nil
-	})
-	return rels, err
+	}
+	return rels, nil
 }
 
 func containsAny(content string, needles []string) bool {
@@ -296,20 +311,14 @@ func containsAny(content string, needles []string) bool {
 // resource bookmark even though countBookmarks does not.
 
 func removeStoreResourceMethods(content string, data scaffoldData) (string, error) {
-	patterns := []string{
-		"Insert" + data.Pascal,
-		"Update" + data.Pascal,
-		"Delete" + data.Pascal,
-		"Find" + data.Pascal + "ByID",
-		"ListAll" + data.PluralPascal,
-		"List" + data.PluralPascal,
-		"SeedDemo" + data.PluralPascal,
-		"count" + data.PluralPascal,
-	}
-	names := make(map[string]bool, len(patterns))
-	for _, p := range patterns {
-		names[p] = true
-	}
+	return removeStoreMethodsNamed(content, resourceStoreMethodNames(data))
+}
+
+// removeStoreMethodsNamed cuts the named methods from the SQLiteStore receiver
+// and the Store interface, then prunes the imports and helpers they were the
+// last user of (#105, #245).
+
+func removeStoreMethodsNamed(content string, names map[string]bool) (string, error) {
 	content, err := removeDeclsByName(content, names)
 	if err != nil {
 		return "", err
@@ -323,23 +332,28 @@ func removeStoreResourceMethods(content string, data scaffoldData) (string, erro
 	content = regexp.MustCompile(`\nfunc int64Ptr\(n int64\) \*int64 \{ return &n \}\n`).ReplaceAllString(content, "\n")
 	// boolInt spans multiple lines (nested braces); a regex stops at the inner
 	// `}` and leaves `return 0` behind (#105). Remove the whole declaration.
-	content, err = removeDeclsByName(content, map[string]bool{"boolInt": true})
-	if err != nil {
-		return "", err
-	}
-	return content, nil
+	return removeDeclsByName(content, map[string]bool{"boolInt": true})
 }
 
 func cleanupStoreImports(content string) string {
-	if !strings.Contains(content, "models.") {
-		re := regexp.MustCompile(`(?m)^\s*"[^"]+/internal/models"\s*\n`)
-		content = re.ReplaceAllString(content, "")
-		content = regexp.MustCompile(`import \(\n\n`).ReplaceAllString(content, "import (\n")
-	}
+	content = dropModelsImport(content)
 	if !strings.Contains(content, "pagination.") {
 		content = strings.Replace(content, "\t\""+frameworkModule+"/pkg/cais/pagination\"\n", "", 1)
 	}
 	return content
+}
+
+// dropModelsImport removes the internal/models import once nothing qualifies
+// with it — store.go and seeds.go both lose their last models.<T> when the
+// model they belonged to is destroyed (#245).
+
+func dropModelsImport(content string) string {
+	if strings.Contains(content, "models.") {
+		return content
+	}
+	re := regexp.MustCompile(`(?m)^\s*"[^"]+/internal/models"\s*\n`)
+	content = re.ReplaceAllString(content, "")
+	return regexp.MustCompile(`import \(\n\n`).ReplaceAllString(content, "import (\n")
 }
 
 func unpatchStoreTestForResource(dir string, data scaffoldData, dryRun bool) error {
@@ -387,6 +401,9 @@ func unpatchMainForSeed(dir string, data scaffoldData, dryRun bool) error {
 		return nil, fmt.Errorf("seed: %%w", err)
 	}
 `, data.PluralPascal)
+	if !strings.Contains(string(body), block) {
+		return nil
+	}
 	content := strings.Replace(string(body), block, "", 1)
 	return updateScaffoldFile(path, []byte(content), "cmd/server/main.go", dryRun)
 }

@@ -11,6 +11,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - `amarra-cais new` initializes a git repo and installs the shipped pre-commit hooks when `pre-commit` is on PATH; an app created inside an existing work tree is left to the outer repo, and `--no-git` opts out.
 - CI: `Test` runs as a `pkg` / `internal` matrix (`-race` everywhere on main, `pkg` only on PRs), docs-only PRs skip the Go jobs, and Prettier + JS tests + the committed-bundle check move to an always-on `Frontend` workflow.
 
+### Fixed
+
+- `amarra-cais destroy model` drops the model's store methods/interface entries, its `RunSeeds` insert and its `store_test.go` tests, and refuses — naming the caller — while another file still calls them (`internal/handlers/dashboard.go still calls CountContacts — run amarra-cais destroy handler dashboard`) (#245).
+
 ## [0.12.2] - 2026-09-29
 
 ### Added

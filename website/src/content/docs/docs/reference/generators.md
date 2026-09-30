@@ -75,7 +75,7 @@ amarra-cais g resource post --fields title:string,category_id:references
 
 ## Destroy
 
-`amarra-cais destroy resource|handler|model|component <name>` removes the generated files and unpatches `routes.go`, `store.go`, `seeds.go` and the layout nav where applicable. `destroy auth` also reverts the `app.go` session middleware. `destroy migration <name>` removes the matching `*_<name>.sql` only — it does not roll back `schema_migrations`.
+`amarra-cais destroy resource|handler|model|component <name>` removes the generated files and unpatches `routes.go`, `store.go`, `seeds.go` and the layout nav where applicable. `destroy model` also drops the model's store methods, its `RunSeeds` insert and its `store_test.go` tests, and refuses while another file still calls one of them — the error names the file and the command that clears it. `destroy auth` also reverts the `app.go` session middleware. `destroy migration <name>` removes the matching `*_<name>.sql` only — it does not roll back `schema_migrations`.
 
 :::caution
 After `g resource`, `g model` or `g auth`, run `amarra-cais db migrate`. If a patch fails with `could not patch routes.go` or `could not patch store`, check that the `registerRoutes` and `Close() error` markers still exist; public nav needs the `<!-- cais:nav -->` marker (or `</nav>`).
