@@ -23,7 +23,7 @@ Drive requests still render the layout so the morph target exists and flash mess
 
 There is no Inertia, no Svelte, and no Vite in generated apps. The browser loads one script and never mounts a component tree. The server owns routing, data, and markup, so you debug one language and ship without a bundler step. Crawlers, `curl`, and the first paint see the real page.
 
-Repeating UI is not a framework's job here. It comes from the shipped kit — `<.form>`, `<.input>`, `<.table>`, `<.filters>`, `<.stat>`, `<.empty>`, `<.password>` — plus `amarra-hook` builtins such as `dialog`, `dropdown`, `bulk`, `nav`, `theme`, and `password`. An app restyles a real contract by dropping a same-named file into `web/templates/components/` instead of recreating a widget. Sort and filter are plain `GET ?q=&sort=` round-trips the server re-renders.
+Repeating UI is not a framework's job here. It comes from the shipped kit and `amarra-hook` builtins — full tables in [Views and the shipped kit](/amarra-cais/docs/reference/views-and-kit/#shipped-kit) (`amarra-cais g component --list`) and [amarra.js](/amarra-cais/docs/reference/amarra-js/). An app restyles a real contract by dropping a same-named file into `web/templates/components/` instead of recreating a widget. Sort and filter are plain `GET ?q=&sort=` round-trips the server re-renders.
 
 :::note
 The sidebar shell lives outside `#amarra-main`, so a Drive morph never disturbs it. `amarra-hook="nav"` with `data-amarra-nav-on` / `data-amarra-nav-off` re-syncs the active link after each morph.
