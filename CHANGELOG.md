@@ -19,6 +19,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ### Removed
 
+- Deprecated `middleware.TokenAuth` (it called `cais.Load()` on every request). Use `AdminAuth(cfg)` (#271).
 - `pkg/cais/barcode` (Open Food Facts client) and `pkg/cais/money` (`FormatBRL`). The default view and leftover HTMX renderer no longer register `formatMoney`; an app that still needs currency formatting adds a local template func (#265).
 
 ### Fixed

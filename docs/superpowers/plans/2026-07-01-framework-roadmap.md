@@ -55,9 +55,9 @@
 - [x] `cais g auth` migration includes `expires_at` with 7-day default
 - [x] `TestScaffoldAuth_migrationIncludesExpiresAt`
 
-### Task 5: Deprecate TokenAuth + README auth matrix
+### Task 5: Drop load-at-call-time admin middleware + README auth matrix
 
-- [x] `TokenAuth` deprecation godoc
+- [x] Removed the deprecated wrapper that called `cais.Load()` per request; `AdminAuth(cfg)` is the remaining API (#271)
 - [x] README / AGENTS admin auth matrix (session vs Bearer)
 
 ---
