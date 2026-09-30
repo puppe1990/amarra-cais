@@ -105,7 +105,7 @@ Um scaffold novo já embarca esse toggle na sidebar e a paleta em CSS variables 
 Coloque isto no `<head>` do layout antes do CSS para que um tema claro armazenado não pisque escuro. Se você definir um `data-amarra-theme-key` personalizado, copie essa chave para o snippet para que a restauração corresponda.
 
 ```html
-<script>
+<script nonce="{{ .CSPNonce }}">
   try {
     if (localStorage.getItem("amarra-theme") === "light")
       document.documentElement.classList.add("light");
@@ -114,7 +114,7 @@ Coloque isto no `<head>` do layout antes do CSS para que um tema claro armazenad
 ```
 
 :::note
-A Content Security Policy mantém `script-src 'self' 'unsafe-inline'` para que este snippet de FOUC e o init inline do Drive rodem; o escaping é a defesa principal. Veja o [modelo de segurança](/amarra-cais/pt-br/docs/explanation/security-model/).
+A Content Security Policy em `script-src` é `'self'` mais um nonce por requisição (`view.Write` injeta `.CSPNonce`). Veja o [modelo de segurança](/amarra-cais/pt-br/docs/explanation/security-model/).
 :::
 
 :::tip

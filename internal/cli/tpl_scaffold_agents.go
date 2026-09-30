@@ -68,13 +68,14 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"The scaffold ships the toggle in the sidebar and the palette in CSS variables (`input.css`: `--amarra-ink`/`-foam`/`-copper`/`-tide`, `:root` dark + `html.light`), read by `tailwind.config.js` as `rgb(var(--amarra-*) / <alpha-value>)` — re-theme through the variables so every kit class follows both themes (#258).\n" +
 	"Theme FOUC snippet belongs in the layout `<head>` before CSS:\n\n" +
 	"```html\n" +
-	"<script>\n" +
+	"<script nonce=\"{{\"{{\"}} .CSPNonce {{\"}}\"}}\">\n" +
 	"  try {\n" +
 	"    if (localStorage.getItem(\"amarra-theme\") === \"light\")\n" +
 	"      document.documentElement.classList.add(\"light\");\n" +
 	"  } catch (e) {}\n" +
 	"</script>\n" +
 	"```\n\n" +
+	"`view.Write` injects `.CSPNonce` into `map[string]any` data. Inline `<script>` needs `nonce=\"{{\"{{\"}} .CSPNonce {{\"}}\"}}\"`; unsigned inline is `CSP_SCRIPT_SRC='unsafe-inline'` (#263).\n\n" +
 	"Parse bodies with `httpx.ParseFormOrJSON`.\n\n" +
 	"## Auth, CSRF, flash\n\n" +
 	"- Session middleware: `LoadSession` + `Flash` + `CSRF(cfg)`\n" +
