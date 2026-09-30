@@ -15,7 +15,6 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/cais/htmxattrs" //nolint:staticcheck // legacy renderer, removed at v1.0 (#99)
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
-	"github.com/puppe1990/amarra-cais/pkg/cais/money"
 )
 
 func NewRendererFromDir(dir string, catalog *i18n.Catalog) (*Renderer, error) {
@@ -121,7 +120,6 @@ func templateFuncs(catalog *i18n.Catalog) template.FuncMap {
 	for k, v := range htmxattrs.Funcs() {
 		extra[k] = v
 	}
-	extra["formatMoney"] = money.FormatBRL
 	return i18n.MergeFuncs(catalog, extra)
 }
 
