@@ -20,7 +20,7 @@ Amarra is the HTML-first Go framework behind the `amarra-cais` CLI. It ships a s
 
 The browser does not mount a SPA. Handlers call `view.Write` and Drive morphs `#amarra-main` — no Vite, no Svelte, no Inertia, no HTMX in generated apps.
 
-Repeating UI comes from the shipped **kit + hooks** — `<.table>`, `<.filters>`, `<.stat>`, `<.empty>`, `<.password>`, plus `amarra-hook` builtins like `dialog`, `dropdown`, `bulk`, `nav`, `theme` and `password`. Sort and filter are plain `GET ?q=&sort=` round-trips; `amarra-cais g resource` emits all of it.
+Repeating UI comes from the shipped **kit + hooks**. Full tables live in [Views and the shipped kit](/amarra-cais/docs/reference/views-and-kit/#shipped-kit) (`amarra-cais g component --list`) and [amarra.js](/amarra-cais/docs/reference/amarra-js/). Sort and filter are plain `GET ?q=&sort=` round-trips; `amarra-cais g resource` emits the kit.
 
 ## One SQLite file, one replica
 

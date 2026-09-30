@@ -23,7 +23,7 @@ Requests do Drive ainda renderizam o layout para que o alvo do morph exista e as
 
 Não há Inertia, nem Svelte, nem Vite nos apps gerados. O navegador carrega um script e nunca monta uma árvore de componentes. O servidor é dono do roteamento, dos dados e da marcação, então você depura uma única linguagem e faz o deploy sem etapa de bundler. Crawlers, `curl` e o primeiro paint veem a página real.
 
-UI repetitiva não é trabalho de um framework aqui. Ela vem do kit incluído — `<.form>`, `<.input>`, `<.table>`, `<.filters>`, `<.stat>`, `<.empty>`, `<.password>` — além dos builtins do `amarra-hook`, como `dialog`, `dropdown`, `bulk`, `nav`, `theme` e `password`. Um app reestiliza um contrato real jogando um arquivo de mesmo nome em `web/templates/components/` em vez de recriar um widget. Ordenação e filtro são round-trips simples de `GET ?q=&sort=` que o servidor re-renderiza.
+UI repetitiva não é trabalho de um framework aqui. Ela vem do kit incluído e dos builtins do `amarra-hook` — tabelas completas em [Views e o kit incluso](/amarra-cais/pt-br/docs/reference/views-and-kit/#kit-incluso) (`amarra-cais g component --list`) e [amarra.js](/amarra-cais/pt-br/docs/reference/amarra-js/). Um app reestiliza um contrato real jogando um arquivo de mesmo nome em `web/templates/components/` em vez de recriar um widget. Ordenação e filtro são round-trips simples de `GET ?q=&sort=` que o servidor re-renderiza.
 
 :::note
 O shell da sidebar fica fora de `#amarra-main`, então um morph do Drive nunca o perturba. `amarra-hook="nav"` com `data-amarra-nav-on` / `data-amarra-nav-off` ressincroniza o link ativo após cada morph.

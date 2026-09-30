@@ -20,7 +20,7 @@ Amarra é o framework Go HTML-first por trás da CLI `amarra-cais`. Ele traz um 
 
 O navegador não monta um SPA. Os handlers chamam `view.Write` e o Drive faz morph de `#amarra-main` — sem Vite, sem Svelte, sem Inertia, sem HTMX nos apps gerados.
 
-UI repetitiva vem do **kit + hooks** que acompanha o framework — `<.table>`, `<.filters>`, `<.stat>`, `<.empty>`, `<.password>`, além de builtins do `amarra-hook` como `dialog`, `dropdown`, `bulk`, `nav`, `theme` e `password`. Ordenação e filtro são round-trips `GET ?q=&sort=` simples; o `amarra-cais g resource` emite tudo isso.
+UI repetitiva vem do **kit + hooks**. Tabelas completas em [Views e o kit incluso](/amarra-cais/pt-br/docs/reference/views-and-kit/#kit-incluso) (`amarra-cais g component --list`) e [amarra.js](/amarra-cais/pt-br/docs/reference/amarra-js/). Ordenação e filtro são round-trips `GET ?q=&sort=` simples; o `amarra-cais g resource` emite o kit.
 
 ## Um arquivo SQLite, uma réplica
 
