@@ -40,6 +40,7 @@ func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
 				"web/templates/pages",
 				`amarra-hook="password"`,
 				`localStorage.getItem("amarra-theme")`,
+				`nonce="{{ .CSPNonce }}"`,
 				"Fullbleed",
 				"page-owned chrome",
 				"IIFE",

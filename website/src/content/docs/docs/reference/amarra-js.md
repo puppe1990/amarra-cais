@@ -105,7 +105,7 @@ A fresh scaffold ships this toggle in the sidebar and the palette in CSS variabl
 Put this in the layout `<head>` before CSS so a stored light theme does not flash dark. If you set a custom `data-amarra-theme-key`, copy that key into the snippet so restore matches.
 
 ```html
-<script>
+<script nonce="{{ .CSPNonce }}">
   try {
     if (localStorage.getItem("amarra-theme") === "light")
       document.documentElement.classList.add("light");
@@ -114,7 +114,7 @@ Put this in the layout `<head>` before CSS so a stored light theme does not flas
 ```
 
 :::note
-The Content Security Policy keeps `script-src 'self' 'unsafe-inline'` so this FOUC snippet and Drive's inline init run; escaping is the primary defense. See the [security model](/amarra-cais/docs/explanation/security-model/).
+The Content Security Policy `script-src` is `'self'` plus a per-request nonce (`view.Write` injects `.CSPNonce`). See the [security model](/amarra-cais/docs/explanation/security-model/).
 :::
 
 :::tip

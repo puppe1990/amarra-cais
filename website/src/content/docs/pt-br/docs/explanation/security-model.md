@@ -23,7 +23,7 @@ As sessions são baseadas em cookie (`pkg/cais/session`) com `SignIn` / `SignOut
 
 `middleware.SecurityHeaders(cfg)` roda depois do `Recover` e define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Permissions-Policy`. Em produção ele também adiciona `Strict-Transport-Security`. Câmera e imagens de terceiros ficam desligadas por default (`camera=()`, `img-src 'self' data:`). Apps que precisam de scanner ou de um CDN de imagens setam `PERMISSIONS_POLICY` e `CSP_IMG_SRC`.
 
-A Content-Security-Policy mantém `script-src 'self' 'unsafe-inline'`. Isso é um trade-off deliberado: o snippet de tema roda antes do paint, e o Drive adiciona uma pequena inicialização inline, então o escaping continua sendo a defesa primária. O roadmap é substituir `'unsafe-inline'` por um nonce por request ou hashes SRI (#97).
+A Content-Security-Policy em `script-src` é `'self'` mais um nonce por requisição. `view.Write` injeta `.CSPNonce` em dados `map[string]any` para o snippet FOUC do tema e os scripts inline do service worker. Coloque `nonce="{{ .CSPNonce }}"` em todo `<script>` inline. Apps que ainda precisam de inline sem nonce setam `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
 
 ## Rate limiting
 

@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Changed
+
+- Default CSP `script-src` is `'self'` plus a per-request nonce. `view.Write` injects `.CSPNonce` into `map[string]any` page data so the FOUC theme snippet and service-worker inline scripts can run. Apps that still need unsigned inline scripts set `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
+
 ### Removed
 
 - `pkg/cais/barcode` (Open Food Facts client) and `pkg/cais/money` (`FormatBRL`). The default view and leftover HTMX renderer no longer register `formatMoney`; an app that still needs currency formatting adds a local template func (#265).

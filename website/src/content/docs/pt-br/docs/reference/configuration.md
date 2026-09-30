@@ -23,7 +23,7 @@ A configuração é lida uma vez no boot por `cais.Load()`, que também aplica u
 | `LOG_FORMAT`      | Formato do log de requisições/SQL: `json` ou `text`.                                              | JSON em dev e produção |
 
 :::note
-Existem overrides adicionais para os security headers: `DB_PATH`, `PERMISSIONS_POLICY` e `CSP_STYLE_SRC` / `CSP_CONNECT_SRC` / `CSP_MEDIA_SRC` / `CSP_IMG_SRC` / `CSP_FONT_SRC` (uma webfont hospedada precisa tanto de `CSP_FONT_SRC` quanto de `CSP_STYLE_SRC`). O default nega a câmera (`camera=()`) e mantém `img-src` em `'self' data:`. Um app com scanner ou catálogo libera com `PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()` e `CSP_IMG_SRC=https://images.example.com`.
+Existem overrides adicionais para os security headers: `DB_PATH`, `PERMISSIONS_POLICY` e `CSP_STYLE_SRC` / `CSP_CONNECT_SRC` / `CSP_MEDIA_SRC` / `CSP_IMG_SRC` / `CSP_FONT_SRC` / `CSP_SCRIPT_SRC` (uma webfont hospedada precisa tanto de `CSP_FONT_SRC` quanto de `CSP_STYLE_SRC`). O default nega a câmera (`camera=()`) e mantém `img-src` em `'self' data:`. `script-src` é `'self'` mais um nonce por requisição; `CSP_SCRIPT_SRC='unsafe-inline'` restaura inline sem nonce. Um app com scanner ou catálogo libera com `PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()` e `CSP_IMG_SRC=https://images.example.com`.
 :::
 
 ## Carregamento e precedência

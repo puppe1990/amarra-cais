@@ -253,6 +253,7 @@ func TestConfig_SecurityPolicy_loadFromEnv(t *testing.T) {
 	t.Setenv("CSP_CONNECT_SRC", "https://tile.openstreetmap.org")
 	t.Setenv("CSP_MEDIA_SRC", "blob:")
 	t.Setenv("CSP_FONT_SRC", "https://fonts.gstatic.com")
+	t.Setenv("CSP_SCRIPT_SRC", "https://cdn.example.com")
 
 	cfg := Load()
 	if cfg.PermissionsPolicy != "camera=(self), geolocation=(self)" {
@@ -269,6 +270,9 @@ func TestConfig_SecurityPolicy_loadFromEnv(t *testing.T) {
 	}
 	if cfg.CSPFontSrc != "https://fonts.gstatic.com" {
 		t.Errorf("CSPFontSrc = %q", cfg.CSPFontSrc)
+	}
+	if cfg.CSPScriptSrc != "https://cdn.example.com" {
+		t.Errorf("CSPScriptSrc = %q", cfg.CSPScriptSrc)
 	}
 }
 

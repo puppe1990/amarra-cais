@@ -23,7 +23,7 @@ Sessions are cookie-based (`pkg/cais/session`) with `SignIn` / `SignOut`. A sess
 
 `middleware.SecurityHeaders(cfg)` runs after `Recover` and sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. In production it also adds `Strict-Transport-Security`. Camera and third-party images are off by default (`camera=()`, `img-src 'self' data:`). Apps that need a scanner or a remote image CDN set `PERMISSIONS_POLICY` and `CSP_IMG_SRC`.
 
-The Content-Security-Policy keeps `script-src 'self' 'unsafe-inline'`. That is a deliberate trade-off: the theme snippet runs before paint, and Drive adds small inline initialization, so escaping remains the primary defense. The roadmap is to replace `'unsafe-inline'` with a per-request nonce or SRI hashes (#97).
+The Content-Security-Policy `script-src` is `'self'` plus a per-request nonce. `view.Write` injects `.CSPNonce` into `map[string]any` page data so the FOUC theme snippet and the service-worker inline scripts can run. Stamp `nonce="{{ .CSPNonce }}"` on every inline `<script>`. Apps that still need unsigned inline scripts set `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
 
 ## Rate limiting
 

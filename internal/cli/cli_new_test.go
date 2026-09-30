@@ -182,6 +182,9 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	if !strings.Contains(layoutBody, `localStorage.getItem("amarra-theme")`) {
 		t.Error("layouts/app.html should include the theme FOUC snippet before CSS")
 	}
+	if strings.Count(layoutBody, `nonce="{{ .CSPNonce }}"`) < 3 {
+		t.Error("layouts/app.html should stamp CSPNonce on the FOUC snippet and both SW scripts (#263)")
+	}
 	if !strings.Contains(layoutBody, `href="/static/favicon.svg"`) {
 		t.Error("layouts/app.html should use the docs boat favicon")
 	}

@@ -44,7 +44,7 @@ r.Use(middleware.SecurityHeaders(cfg))
 
 `Flash` roda depois de `LoadSession` (precisa da sessão), e `SecurityHeaders` é registrado depois de `Recover`. O CSRF cobre os métodos que alteram estado em toda rota.
 
-A CSP mantém `script-src 'self' 'unsafe-inline'` para o snippet de tema FOUC e o init inline do Drive; o escaping é a defesa principal, com um nonce por requisição no roadmap.
+A CSP em `script-src` é `'self'` mais um nonce por requisição (`view.Write` injeta `.CSPNonce` em dados `map[string]any`). Scripts inline precisam de `nonce="{{ .CSPNonce }}"`. O escape hatch é `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
 
 ## Middleware no nível da rota
 

@@ -131,3 +131,114 @@ func TestSecurityHeaders_development_noHSTS(t *testing.T) {
 		t.Error("HSTS should not be set in development")
 	}
 }
+
+func TestSecurityHeaders_scriptSrcOmitsUnsafeInline(t *testing.T) {
+	// #263: the FOUC snippet and SW register/unregister ride a per-request
+	// nonce so script-src can drop 'unsafe-inline'. style-src still allows it.
+	cfg := cais.Config{Env: "development"}
+	h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	csp := rr.Header().Get("Content-Security-Policy")
+	script := cspDirective(csp, "script-src")
+	if script == "" {
+		t.Fatalf("missing script-src in %q", csp)
+	}
+	if strings.Contains(script, "'unsafe-inline'") {
+		t.Errorf("script-src still allows unsafe-inline: %q", script)
+	}
+	if !strings.Contains(script, "'self'") {
+		t.Errorf("script-src missing 'self': %q", script)
+	}
+	if !strings.Contains(script, "'nonce-") {
+		t.Errorf("script-src missing nonce: %q", script)
+	}
+}
+
+func TestSecurityHeaders_nonceDiffersPerRequest(t *testing.T) {
+	cfg := cais.Config{Env: "development"}
+	h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	rr1 := httptest.NewRecorder()
+	h.ServeHTTP(rr1, httptest.NewRequest(http.MethodGet, "/", nil))
+	rr2 := httptest.NewRecorder()
+	h.ServeHTTP(rr2, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	n1 := cspDirective(rr1.Header().Get("Content-Security-Policy"), "script-src")
+	n2 := cspDirective(rr2.Header().Get("Content-Security-Policy"), "script-src")
+	if n1 == "" || n1 == n2 {
+		t.Errorf("expected distinct script-src nonces, got %q and %q", n1, n2)
+	}
+}
+
+func TestSecurityHeaders_unsafeInlineEscapeHatchSkipsNonce(t *testing.T) {
+	// A nonce would make 'unsafe-inline' a no-op in CSP3, so the hatch
+	// must omit the nonce entirely (#263).
+	cfg := cais.Config{Env: "development", CSPScriptSrc: "'unsafe-inline'"}
+	var got string
+	h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = cais.ScriptNonceFromRequest(r)
+	}))
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	script := cspDirective(rr.Header().Get("Content-Security-Policy"), "script-src")
+	if !strings.Contains(script, "'unsafe-inline'") {
+		t.Errorf("script-src missing unsafe-inline hatch: %q", script)
+	}
+	if strings.Contains(script, "'nonce-") {
+		t.Errorf("script-src still issued a nonce: %q", script)
+	}
+	if got != "" {
+		t.Errorf("request nonce = %q, want empty when hatch is set", got)
+	}
+}
+
+func TestSecurityHeaders_cspScriptSrcAppendsHosts(t *testing.T) {
+	cfg := cais.Config{Env: "development", CSPScriptSrc: "https://cdn.example.com"}
+	h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	script := cspDirective(rr.Header().Get("Content-Security-Policy"), "script-src")
+	if !strings.Contains(script, "https://cdn.example.com") {
+		t.Errorf("script-src missing extra host: %q", script)
+	}
+	if strings.Contains(script, "'unsafe-inline'") {
+		t.Errorf("script-src gained unsafe-inline: %q", script)
+	}
+	if !strings.Contains(script, "'nonce-") {
+		t.Errorf("script-src missing nonce: %q", script)
+	}
+}
+
+func TestSecurityHeaders_exposesNonceOnRequest(t *testing.T) {
+	cfg := cais.Config{Env: "development"}
+	var got string
+	h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = cais.ScriptNonceFromRequest(r)
+	}))
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	script := cspDirective(rr.Header().Get("Content-Security-Policy"), "script-src")
+	want := "'nonce-" + got + "'"
+	if got == "" || !strings.Contains(script, want) {
+		t.Errorf("request nonce %q missing from script-src %q", got, script)
+	}
+}
+
+func cspDirective(csp, name string) string {
+	for _, part := range strings.Split(csp, ";") {
+		part = strings.TrimSpace(part)
+		if strings.HasPrefix(part, name+" ") || part == name {
+			return part
+		}
+	}
+	return ""
+}

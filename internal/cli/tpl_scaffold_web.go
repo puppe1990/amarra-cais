@@ -9,7 +9,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
 <html lang="{{"{{"}} htmlLang {{"}}"}}" data-amarra-layout="app">
   <head>
     <meta charset="UTF-8" />
-    <script>
+    <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">
       try {
         if (localStorage.getItem("amarra-theme") === "light") document.documentElement.classList.add("light");
       } catch (e) {}
@@ -90,7 +90,7 @@ const tplLayoutBaseClose = `
       <p>© 2026 {{.AppName}} · Built with Amarra</p>
     </footer>
     {{"{{"}} if eq .Site.Env "development" {{"}}"}}
-    <script>
+    <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (regs) {
           regs.forEach(function (r) { r.unregister(); });
@@ -103,7 +103,7 @@ const tplLayoutBaseClose = `
       }
     </script>
     {{"{{"}} else {{"}}"}}
-    <script>
+    <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/static/js/sw.js");
       }

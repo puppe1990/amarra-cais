@@ -44,7 +44,7 @@ r.Use(middleware.SecurityHeaders(cfg))
 
 `Flash` runs after `LoadSession` (it needs the session), and `SecurityHeaders` is registered after `Recover`. CSRF covers the state-changing methods for every route.
 
-The CSP keeps `script-src 'self' 'unsafe-inline'` for the FOUC theme snippet and Drive inline init; escaping is the primary defense, with a per-request nonce on the roadmap.
+The CSP `script-src` is `'self'` plus a per-request nonce (`view.Write` injects `.CSPNonce` on `map[string]any` page data). Inline scripts need `nonce="{{ .CSPNonce }}"`. Restore unsigned inline with `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
 
 ## Route-level middleware
 
