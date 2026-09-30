@@ -12,6 +12,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ### Changed
 
+- Superpowers roadmap Remaining no longer lists shipped work (docs site, esbuild, admin show, PUT/DELETE, CSP nonce); the design spec is no longer Draft (#270).
 - `g resource` admin update is `PUT` and destroy is `DELETE` on `/admin/{plural}/{id}`. Edit forms send `_method=put`; delete links use `linkTo` with `method` delete. Create and bulk-delete stay `POST`. Existing apps keep POST until regenerated (#269).
 - Getting-started and the splash “One SQLite file” card name the single-writer / Live single-replica ceiling (WAL, `busy_timeout`, `MaxOpenConns(1)`, server + `jobs work` on one file) and point at the Jobs and SQLite explanation (#267).
 - Default CSP `script-src` is `'self'` plus a per-request nonce. `view.Write` injects `.CSPNonce` into `map[string]any` page data so the FOUC theme snippet and service-worker inline scripts can run. Apps that still need unsigned inline scripts set `CSP_SCRIPT_SRC='unsafe-inline'` (#263).

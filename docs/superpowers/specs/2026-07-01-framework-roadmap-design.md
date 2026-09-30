@@ -1,7 +1,7 @@
 # Cais Framework Roadmap — Full Audit Remediation
 
 **Date:** 2026-07-01
-**Status:** Draft — awaiting review
+**Status:** Shipped — six phases complete; leftover items live in the plan Remaining section (#270)
 **Scope:** Option C — complete remediation of audit findings
 **Prerequisite:** `docs/superpowers/plans/2026-07-01-cais-framework-improvements.md` (Phases 1–4 largely shipped)
 
@@ -200,7 +200,7 @@ When `ENV=development` and seed user exists, `boot.Print` shows:
 
 ### 2.6 CSP (document, not block)
 
-Keep `'unsafe-inline'` for HTMX compatibility. Document tradeoff in README; nonce-based CSP deferred.
+Default `script-src` is `'self'` plus a per-request nonce (#263). HTMX leftover helpers are not the generated-app contract; remove them at v1.0 (#268).
 
 ### Tests
 
