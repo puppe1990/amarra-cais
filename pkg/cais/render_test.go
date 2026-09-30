@@ -23,6 +23,13 @@ func testRenderer(t *testing.T) *Renderer {
 	return r
 }
 
+func TestTemplateFuncs_omitFormatMoney(t *testing.T) {
+	funcs := templateFuncs(nil)
+	if _, ok := funcs["formatMoney"]; ok {
+		t.Error("formatMoney must not be a default renderer helper (#265)")
+	}
+}
+
 func TestRender_Page(t *testing.T) {
 	r := testRenderer(t)
 
