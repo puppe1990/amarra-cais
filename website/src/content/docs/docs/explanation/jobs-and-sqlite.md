@@ -37,7 +37,7 @@ One database file means one host. Multiple goroutines via `--concurrency` on tha
 Expired sessions accumulate, so prune them with `session.Store.PruneExpired()` or `amarra-cais db prune-sessions`; the built-in `PruneSessions` job does this on a schedule. Finished jobs are cleared by `PruneFinished` (`amarra-cais jobs prune [--older 24h]`), and the worker registers a daily `0 4 * * *` recurring task for it.
 
 :::caution
-Scaling past one host means moving the queue, the rate limiter, and the Live hub off in-process state. Until then, keep requests and the job worker on the same machine and database file.
+Scaling past one host means moving the queue, the rate limiter, and the Live hub off in-process state. Until then, keep requests and the job worker on the same machine and database file. Leaving the mini-app cut is another store or generated sqlc on `database/sql` — not a second replica of this SQLite file.
 :::
 
 See the [background jobs how-to](/amarra-cais/docs/how-to/background-jobs/), the [live updates guide](/amarra-cais/docs/how-to/live-updates/), and the [jobs API reference](/amarra-cais/docs/reference/jobs-api/).

@@ -12,6 +12,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ### Changed
 
+- Getting-started and the splash “One SQLite file” card name the single-writer / Live single-replica ceiling (WAL, `busy_timeout`, `MaxOpenConns(1)`, server + `jobs work` on one file) and point at the Jobs and SQLite explanation (#267).
 - Default CSP `script-src` is `'self'` plus a per-request nonce. `view.Write` injects `.CSPNonce` into `map[string]any` page data so the FOUC theme snippet and service-worker inline scripts can run. Apps that still need unsigned inline scripts set `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
 
 ### Removed

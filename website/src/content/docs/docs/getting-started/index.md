@@ -22,6 +22,14 @@ The browser does not mount a SPA. Handlers call `view.Write` and Drive morphs `#
 
 Repeating UI comes from the shipped **kit + hooks** — `<.table>`, `<.filters>`, `<.stat>`, `<.empty>`, `<.password>`, plus `amarra-hook` builtins like `dialog`, `dropdown`, `bulk`, `nav`, `theme` and `password`. Sort and filter are plain `GET ?q=&sort=` round-trips; `amarra-cais g resource` emits all of it.
 
+## One SQLite file, one replica
+
+The scaffold opens one SQLite file with `sqlite.Configure`: `journal_mode=WAL`, `busy_timeout=5000`, `foreign_keys=ON`, and `MaxOpenConns(1)`. That is a single writer. The HTTP server and `amarra-cais jobs work` are meant to share that file on one host.
+
+Live (`GET /amarra/live`) is opt-in and in-process — **single-replica**. Two app replicas do not share sockets; cross-replica fan-out needs an external bus.
+
+This is the mini-app cut. Leaving it means another store, or generated sqlc on top of `database/sql` — not a second replica of the same SQLite file. The default scaffold stays one file. See [Jobs and SQLite](/amarra-cais/docs/explanation/jobs-and-sqlite/).
+
 ## Where to go next
 
 - [Installation](/amarra-cais/docs/getting-started/installation/) — install the CLI and check the version.

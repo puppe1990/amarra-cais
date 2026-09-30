@@ -22,6 +22,14 @@ O navegador não monta um SPA. Os handlers chamam `view.Write` e o Drive faz mor
 
 UI repetitiva vem do **kit + hooks** que acompanha o framework — `<.table>`, `<.filters>`, `<.stat>`, `<.empty>`, `<.password>`, além de builtins do `amarra-hook` como `dialog`, `dropdown`, `bulk`, `nav`, `theme` e `password`. Ordenação e filtro são round-trips `GET ?q=&sort=` simples; o `amarra-cais g resource` emite tudo isso.
 
+## Um arquivo SQLite, uma réplica
+
+O scaffold abre um arquivo SQLite com `sqlite.Configure`: `journal_mode=WAL`, `busy_timeout=5000`, `foreign_keys=ON` e `MaxOpenConns(1)`. Isso é um único writer. O servidor HTTP e o `amarra-cais jobs work` compartilham esse arquivo na mesma máquina.
+
+O Live (`GET /amarra/live`) é opt-in e in-process — **réplica única**. Duas réplicas do app não compartilham sockets; fan-out entre réplicas precisa de um bus externo.
+
+Esse é o recorte de mini app. Sair dele significa outra store, ou sqlc gerado em cima de `database/sql` — não uma segunda réplica do mesmo arquivo SQLite. O scaffold default continua em um arquivo. Veja [Jobs e SQLite](/amarra-cais/pt-br/docs/explanation/jobs-and-sqlite/).
+
 ## Para onde ir em seguida
 
 - [Instalação](/amarra-cais/pt-br/docs/getting-started/installation/) — instale a CLI e confira a versão.
