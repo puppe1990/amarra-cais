@@ -85,6 +85,8 @@ var enMessages = map[string]string{
 	"dashboard.env":      "Environment:",
 
 	"layout.footer": "Running light on Lightsail",
+	"layout.theme_light": "Light mode",
+	"layout.theme_dark":  "Dark mode",
 }
 `
 
@@ -151,6 +153,8 @@ var ptMessages = map[string]string{
 	"dashboard.env":      "Ambiente:",
 
 	"layout.footer": "Rodando leve no Lightsail",
+	"layout.theme_light": "Modo claro",
+	"layout.theme_dark":  "Modo escuro",
 }
 `
 

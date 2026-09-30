@@ -5,6 +5,23 @@ const tplInputCSS = `@tailwind base;
 @tailwind utilities;
 
 @layer base {
+  /* Palette as CSS variables so the sidebar toggle flips the theme: :root is
+     the default dark harbor, html.light (amarra-theme hook) the light one. Keep
+     the ink/foam/copper/tide keys — kit classes and the doctor read them (#258). */
+  :root {
+    --amarra-ink: 8 16 20;
+    --amarra-foam: 243 234 216;
+    --amarra-copper: 201 137 58;
+    --amarra-tide: 20 52 60;
+  }
+
+  html.light {
+    --amarra-ink: 246 241 231;
+    --amarra-foam: 12 24 28;
+    --amarra-copper: 150 96 28;
+    --amarra-tide: 217 228 228;
+  }
+
   body {
     @apply font-sans antialiased text-foam bg-ink;
   }
@@ -406,10 +423,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        ink: "#081014",
-        foam: "#f3ead8",
-        copper: "#c9893a",
-        tide: "#14343c",
+        /* CSS variables (input.css) so html.light can flip the palette (#258). */
+        ink: "rgb(var(--amarra-ink) / <alpha-value>)",
+        foam: "rgb(var(--amarra-foam) / <alpha-value>)",
+        copper: "rgb(var(--amarra-copper) / <alpha-value>)",
+        tide: "rgb(var(--amarra-tide) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Avenir Next", "Segoe UI", "Helvetica Neue", "system-ui", "sans-serif"],
