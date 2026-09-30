@@ -109,6 +109,106 @@ func hasFuncDecl(src, name string) bool {
 	return false
 }
 
+// pruneUnusedAssigns cuts `x := ...` statements whose identifiers nothing else
+// in the function references. A destroyed route was often the only user of a
+// rate limiter, and the declaration left behind broke `go build` (#248).
+// Re-parses after each cut because byte offsets shift.
+func pruneUnusedAssigns(src, funcName string) (string, error) {
+	for {
+		fset, file, err := parseGo(src, "routes.go")
+		if err != nil {
+			return "", err
+		}
+		fd := findFuncDecl(file, funcName)
+		if fd == nil || fd.Body == nil {
+			return src, nil
+		}
+		unused, ok := firstUnusedAssign(fset, fd, src)
+		if !ok {
+			return src, nil
+		}
+		src = cutSpans(src, []span{unused})
+	}
+}
+
+func findFuncDecl(file *ast.File, name string) *ast.FuncDecl {
+	for _, decl := range file.Decls {
+		if fd, ok := decl.(*ast.FuncDecl); ok && fd.Name.Name == name {
+			return fd
+		}
+	}
+	return nil
+}
+
+func firstUnusedAssign(fset *token.FileSet, fd *ast.FuncDecl, src string) (span, bool) {
+	for _, st := range fd.Body.List {
+		assign, ok := st.(*ast.AssignStmt)
+		if !ok || assign.Tok != token.DEFINE {
+			continue
+		}
+		if !targetsOnlyUnused(fd, assign) {
+			continue
+		}
+		return spanOf(fset, st, src), true
+	}
+	return span{}, false
+}
+
+func targetsOnlyUnused(fd *ast.FuncDecl, assign *ast.AssignStmt) bool {
+	for _, lhs := range assign.Lhs {
+		id, ok := lhs.(*ast.Ident)
+		if !ok || id.Name == "_" {
+			return false
+		}
+		if identUsedOutside(fd, id.Name, assign) {
+			return false
+		}
+	}
+	return true
+}
+
+// identUsedOutside reports whether name appears in fd outside origin — the
+// declaration's own LHS does not count as a use.
+func identUsedOutside(fd *ast.FuncDecl, name string, origin ast.Node) bool {
+	used := false
+	ast.Inspect(fd, func(n ast.Node) bool {
+		if used {
+			return false
+		}
+		id, ok := n.(*ast.Ident)
+		if !ok || id.Name != name {
+			return true
+		}
+		if id.Pos() >= origin.Pos() && id.End() <= origin.End() {
+			return true
+		}
+		used = true
+		return false
+	})
+	return used
+}
+
+// stmtCallsIdent reports whether stmt uses a method of ident, as the auth
+// routes do (auth.Login, auth.LogoutPost) (#248).
+func stmtCallsIdent(st ast.Stmt, name string) bool {
+	found := false
+	ast.Inspect(st, func(n ast.Node) bool {
+		if found {
+			return false
+		}
+		sel, ok := n.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		if id, ok := sel.X.(*ast.Ident); ok && id.Name == name {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
+}
+
 // removeInterfaceMethods cuts fields with exactly matching names from the named
 // interface; other interfaces sharing method names are untouched.
 func removeInterfaceMethods(src, ifaceName string, names map[string]bool) (string, error) {

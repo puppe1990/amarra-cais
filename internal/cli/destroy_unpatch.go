@@ -104,6 +104,10 @@ func unpatchRoutesForHandler(dir string, data scaffoldData, dryRun bool) error {
 	if err != nil {
 		return err
 	}
+	content, err = pruneUnusedAssigns(content, "registerRoutes")
+	if err != nil {
+		return err
+	}
 	return updateScaffoldFile(path, []byte(content), "internal/app/routes.go", dryRun)
 }
 
@@ -336,22 +340,20 @@ func removeStoreMethodsNamed(content string, names map[string]bool) (string, err
 }
 
 func cleanupStoreImports(content string) string {
-	content = dropModelsImport(content)
-	if !strings.Contains(content, "pagination.") {
-		content = strings.Replace(content, "\t\""+frameworkModule+"/pkg/cais/pagination\"\n", "", 1)
-	}
-	return content
+	content = dropUnusedImport(content, "models")
+	return dropUnusedImport(content, "pagination")
 }
 
-// dropModelsImport removes the internal/models import once nothing qualifies
-// with it — store.go and seeds.go both lose their last models.<T> when the
-// model they belonged to is destroyed (#245).
+// dropUnusedImport removes the import whose path ends in qualifier once nothing
+// qualifies with it — store.go and seeds.go both lose their last models.<T>
+// when the model they belonged to is destroyed (#245), and the same applies to
+// strings after CreateUser goes (#248).
 
-func dropModelsImport(content string) string {
-	if strings.Contains(content, "models.") {
+func dropUnusedImport(content, qualifier string) string {
+	if strings.Contains(content, qualifier+".") {
 		return content
 	}
-	re := regexp.MustCompile(`(?m)^\s*"[^"]+/internal/models"\s*\n`)
+	re := regexp.MustCompile(`(?m)^\s*(?:\w+\s+)?"[^"]*` + regexp.QuoteMeta(qualifier) + `"\s*\n`)
 	content = re.ReplaceAllString(content, "")
 	return regexp.MustCompile(`import \(\n\n`).ReplaceAllString(content, "import (\n")
 }
