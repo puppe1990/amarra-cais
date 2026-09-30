@@ -98,6 +98,8 @@ O hook `theme` é configurável por elemento:
 | `data-amarra-theme-color` / `data-amarra-theme-color-off`    | —              | Hex para o meta `theme-color`.                  |
 | `data-amarra-theme-on-label` / `data-amarra-theme-off-label` | —              | Troca o texto do botão (mantém `aria-pressed`). |
 
+Um scaffold novo já embarca esse toggle na sidebar e a paleta em CSS variables — o `input.css` declara `--amarra-ink` / `-foam` / `-copper` / `-tide` (`:root` escuro, `html.light` claro) e o `tailwind.config.js` lê como `rgb(var(--amarra-*) / <alpha-value>)`, então a troca de classe re-tematiza o kit em vez de uns poucos overrides.
+
 ## Snippet de FOUC do tema
 
 Coloque isto no `<head>` do layout antes do CSS para que um tema claro armazenado não pisque escuro. Se você definir um `data-amarra-theme-key` personalizado, copie essa chave para o snippet para que a restauração corresponda.

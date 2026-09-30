@@ -26,7 +26,7 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="manifest" href="/static/manifest.webmanifest" />
-    <meta name="theme-color" content="#c9893a" />
+    <meta name="theme-color" content="#081014" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -69,7 +69,10 @@ const tplLayoutNavFull = `{{"{{"}} if .Site.LoggedIn {{"}}"}}<a href="/dashboard
               <.button type="submit">Sair</.button>
             </.form>
             {{"{{"}} end {{"}}"}}
-            <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />`
+            <div class="mt-1 flex items-center justify-between gap-2">
+              <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
+              <button type="button" class="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f6f1e7" data-amarra-theme-color-off="#081014" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}"><span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span></button>
+            </div>`
 
 const tplLayoutNavEmpty = tplLayoutNavFull
 

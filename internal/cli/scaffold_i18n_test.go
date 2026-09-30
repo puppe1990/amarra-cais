@@ -55,3 +55,30 @@ func scaffoldRead(t *testing.T, dir, rel string) string {
 	}
 	return string(body)
 }
+
+// #258: the sidebar theme toggle swaps its label, so both catalogs carry the
+// light/dark copy.
+func TestScaffoldNewApp_i18nIncludesThemeKeys(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "themei18n")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "themei18n",
+		ModulePath: "github.com/puppe1990/themei18n",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		file string
+		want []string
+	}{
+		{"internal/i18n/en.go", []string{`"layout.theme_light"`, `"layout.theme_dark"`, "Light mode", "Dark mode"}},
+		{"internal/i18n/pt.go", []string{`"layout.theme_light"`, `"layout.theme_dark"`, "Modo claro", "Modo escuro"}},
+	} {
+		body := scaffoldRead(t, appDir, tc.file)
+		for _, want := range tc.want {
+			if !strings.Contains(body, want) {
+				t.Errorf("%s missing %q", tc.file, want)
+			}
+		}
+	}
+}

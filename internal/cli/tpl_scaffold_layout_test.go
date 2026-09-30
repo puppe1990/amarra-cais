@@ -76,6 +76,48 @@ func TestLayoutTemplates_shellMarkerTracksLogin(t *testing.T) {
 	}
 }
 
+// #258: the sidebar ships the light/dark toggle; the hook needs the label slot
+// so swapping the text never drops the button's children.
+func TestLayoutTemplates_themeToggleInSidebar(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		aside := navAside(t, name, tpl)
+		for _, token := range []string{
+			`amarra-hook="theme"`,
+			`data-amarra-theme-label`,
+			`aria-pressed="false"`,
+			`data-amarra-theme-color="#f6f1e7"`,
+			`data-amarra-theme-color-off="#081014"`,
+		} {
+			if !strings.Contains(aside, token) {
+				t.Errorf("%s layout sidebar missing %q (#258)", name, token)
+			}
+		}
+	}
+	for _, label := range []string{
+		`data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}"`,
+		`data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}"`,
+		`data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}`,
+	} {
+		if !strings.Contains(tplLayout, label) {
+			t.Errorf("full layout theme toggle missing %q (#258)", label)
+		}
+	}
+}
+
+func navAside(t *testing.T, name, tpl string) string {
+	t.Helper()
+	open := strings.Index(tpl, "<aside")
+	close := strings.Index(tpl, "</aside>")
+	if open == -1 || close == -1 || close < open {
+		t.Fatalf("%s layout has no complete <aside> sidebar", name)
+	}
+	return tpl[open:close]
+}
+
 func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 	dir := t.TempDir()
 	data := scaffoldData{AppName: "demo", ModulePath: "github.com/acme/demo"}

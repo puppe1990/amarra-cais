@@ -98,6 +98,8 @@ The `theme` hook is configurable per element:
 | `data-amarra-theme-color` / `data-amarra-theme-color-off`    | —              | Hex for the `theme-color` meta.              |
 | `data-amarra-theme-on-label` / `data-amarra-theme-off-label` | —              | Swap the button text (keeps `aria-pressed`). |
 
+A fresh scaffold ships this toggle in the sidebar and the palette in CSS variables — `input.css` declares `--amarra-ink` / `-foam` / `-copper` / `-tide` (`:root` dark, `html.light` light) and `tailwind.config.js` reads them as `rgb(var(--amarra-*) / <alpha-value>)`, so the class flip re-themes the kit instead of a few overrides.
+
 ## Theme FOUC snippet
 
 Put this in the layout `<head>` before CSS so a stored light theme does not flash dark. If you set a custom `data-amarra-theme-key`, copy that key into the snippet so restore matches.
