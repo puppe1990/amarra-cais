@@ -37,7 +37,7 @@ Um arquivo de banco de dados significa um host. Várias goroutines via `--concur
 As sessions expiradas se acumulam, então faça a poda delas com `session.Store.PruneExpired()` ou `amarra-cais db prune-sessions`; o job `PruneSessions`, já incluído, faz isso em um agendamento. Jobs finalizados são limpos por `PruneFinished` (`amarra-cais jobs prune [--older 24h]`), e o worker registra uma recurring task diária `0 4 * * *` para isso.
 
 :::caution
-Escalar além de um host significa tirar a fila, o rate limiter e o hub do Live do estado em processo. Até então, mantenha as requests e o worker de jobs na mesma máquina e no mesmo arquivo de banco de dados.
+Escalar além de um host significa tirar a fila, o rate limiter e o hub do Live do estado em processo. Até então, mantenha as requests e o worker de jobs na mesma máquina e no mesmo arquivo de banco de dados. Sair do recorte de mini app é outra store ou sqlc gerado em `database/sql` — não uma segunda réplica deste arquivo SQLite.
 :::
 
 Veja o [how-to de jobs em background](/amarra-cais/pt-br/docs/how-to/background-jobs/), o [guia de live updates](/amarra-cais/pt-br/docs/how-to/live-updates/) e a [referência da API de jobs](/amarra-cais/pt-br/docs/reference/jobs-api/).
