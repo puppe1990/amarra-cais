@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"go/ast"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -95,17 +95,10 @@ func removeStoreAuthMethods(content string) (string, error) {
 		return "", err
 	}
 	content = cleanupStoreImports(content)
-	content = cleanupSessionImport(content)
+	content = dropUnusedImport(content, "session")
+	// CreateUser's UNIQUE check was the only strings user (#248).
+	content = dropUnusedImport(content, "strings")
 	return content, nil
-}
-
-func cleanupSessionImport(content string) string {
-	if strings.Contains(content, "session.") {
-		return content
-	}
-	content = strings.Replace(content, "\t\"github.com/puppe1990/amarra-cais/pkg/cais/session\"\n", "", 1)
-	content = regexp.MustCompile(`import \(\n\n`).ReplaceAllString(content, "import (\n")
-	return content
 }
 
 func unpatchAppForAuth(dir string, dryRun bool) error {
@@ -129,58 +122,45 @@ func unpatchRoutesForAuthDestroy(dir string, dryRun bool) error {
 	if err != nil {
 		return err
 	}
-	content := unpatchAuthRoutes(string(body))
+	content, err := unpatchAuthRoutes(string(body))
+	if err != nil {
+		return err
+	}
 	return updateScaffoldFile(path, []byte(content), "internal/app/routes.go", dryRun)
 }
 
-func unpatchAuthRoutes(content string) string {
-	lines := strings.Split(content, "\n")
-	var out []string
-	for _, line := range lines {
-		if strings.Contains(line, "loginLimit :=") ||
-			strings.Contains(line, "NewAuthHandler") ||
-			strings.Contains(line, `"/login"`) ||
-			strings.Contains(line, `"/logout"`) ||
-			strings.Contains(line, "auth.Login") ||
-			strings.Contains(line, "auth.LogoutPost") {
-			continue
-		}
-		if strings.Contains(line, "RequireAuthFunc") && strings.Contains(line, "dashboard") {
-			line = strings.Replace(line,
-				`middleware.RequireAuthFunc("/login", dashboard.ServeHTTP)`,
-				`dashboard.ServeHTTP`,
-				1,
-			)
-		}
-		out = append(out, line)
-	}
-	content = strings.Join(out, "\n")
-	if !strings.Contains(content, "middleware.") {
-		content = strings.Replace(content,
-			`"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
-`,
-			"",
-			1,
-		)
-		content = strings.Replace(content,
-			`
-	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"`,
-			"",
-			1,
-		)
-	}
-	if !strings.Contains(content, "http.HandlerFunc") && !strings.Contains(content, "http.") {
-		lines = strings.Split(content, "\n")
-		out = nil
-		for _, line := range lines {
-			if line == "\t\"net/http\"" || line == `"net/http"` {
-				continue
+// unpatchAuthRoutes drops the auth handler assignment and every route that
+// calls it (#248); login/reset limiters were only used by those routes, so the
+// unused-declaration prune takes their statements too.
+func unpatchAuthRoutes(content string) (string, error) {
+	drop := func(st ast.Stmt) bool {
+		if assign, ok := st.(*ast.AssignStmt); ok {
+			for _, lhs := range assign.Lhs {
+				if id, ok := lhs.(*ast.Ident); ok && id.Name == "auth" {
+					return true
+				}
 			}
-			out = append(out, line)
 		}
-		content = strings.Join(out, "\n")
+		if expr, ok := st.(*ast.ExprStmt); ok {
+			return stmtCallsIdent(expr, "auth")
+		}
+		return false
 	}
-	return content
+	content, err := removeStmtsFromFunc(content, "registerRoutes", drop)
+	if err != nil {
+		return "", err
+	}
+	if content, err = pruneUnusedAssigns(content, "registerRoutes"); err != nil {
+		return "", err
+	}
+	// The dashboard keeps its route once the auth redirect target is gone.
+	content = strings.Replace(content,
+		`middleware.RequireAuthFunc("/login", dashboard.ServeHTTP)`,
+		`dashboard.ServeHTTP`,
+		1,
+	)
+	content = dropUnusedImport(content, "middleware")
+	return dropUnusedImport(content, "http"), nil
 }
 
 func destroyMigration(dir, name string, dryRun bool) error {

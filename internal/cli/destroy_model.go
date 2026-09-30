@@ -200,7 +200,7 @@ func unpatchStoreTestForModel(dir string, data scaffoldData, methodNames map[str
 	if err != nil {
 		return err
 	}
-	content = dropModelsImport(content)
+	content = dropUnusedImport(content, "models")
 	return updateScaffoldFile(path, []byte(content), "internal/store/store_test.go", dryRun)
 }
 
@@ -278,6 +278,6 @@ func unpatchSeedsForModel(dir string, data scaffoldData, methodNames map[string]
 	if !dropped {
 		return nil
 	}
-	content = dropModelsImport(content)
+	content = dropUnusedImport(content, "models")
 	return updateScaffoldFile(path, []byte(content), "internal/db/seeds.go", dryRun)
 }
