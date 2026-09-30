@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Removed
+
+- `pkg/cais/barcode` (Open Food Facts client) and `pkg/cais/money` (`FormatBRL`). The default view and leftover HTMX renderer no longer register `formatMoney`; an app that still needs currency formatting adds a local template func (#265).
+
 ### Fixed
 
 - `g resource --public` with a bool field no longer registers an anonymous `POST /{plural}/{id}/toggle`. The public list renders the bool read-only; admin edit still owns the write (#261).

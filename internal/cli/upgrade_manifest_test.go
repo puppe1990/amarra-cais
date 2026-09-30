@@ -24,9 +24,17 @@ func TestMigrationsBetween_emptyWhenUpToDate(t *testing.T) {
 }
 
 func TestMigrationsBetween_unknownFromReturnsAll(t *testing.T) {
-	got := migrationsBetween(semverCore{}, parseSemverCore("0.10.0"))
-	if len(got) != len(frameworkMigrations) {
-		t.Fatalf("unknown from should return every step <= to, got %d want %d", len(got), len(frameworkMigrations))
+	to := parseSemverCore("0.10.0")
+	got := migrationsBetween(semverCore{}, to)
+	want := 0
+	for _, s := range frameworkMigrations {
+		v := parseSemverCore(s.Version)
+		if v.OK && compareSemverCore(v, to) <= 0 {
+			want++
+		}
+	}
+	if len(got) != want {
+		t.Fatalf("unknown from should return every step <= to, got %d want %d", len(got), want)
 	}
 }
 
