@@ -9,11 +9,11 @@ sidebar:
 
 ## Scaffold, generate and undo
 
-| Command                                                            | Description                                                                                                                                |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `amarra-cais new <app> [dir] [--minimal\|--blank] [--module path]` | Scaffold an app (default dir `./<app>`). `--minimal` is home only, `--blank` has no starter content, `--module` overrides the module path. |
-| `amarra-cais g [--dry-run] <generator> [name]`                     | Run a generator. See [Generators](/amarra-cais/docs/reference/generators/).                                                                |
-| `amarra-cais destroy [--dry-run] <kind> <name>`                    | Undo a generator.                                                                                                                          |
+| Command                                                                       | Description                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `amarra-cais new <app> [dir] [--minimal\|--blank] [--module path] [--no-git]` | Scaffold an app (default dir `./<app>`). `--minimal` is home only, `--blank` has no starter content, `--module` overrides the module path. The app becomes a git repo and gets the pre-commit hooks when `pre-commit` is on your PATH; inside an existing work tree the repo is left alone, and `--no-git` opts out. |
+| `amarra-cais g [--dry-run] <generator> [name]`                                | Run a generator. See [Generators](/amarra-cais/docs/reference/generators/).                                                                                                                                                                                                                                          |
+| `amarra-cais destroy [--dry-run] <kind> <name>`                               | Undo a generator.                                                                                                                                                                                                                                                                                                    |
 
 ### `amarra-cais g` subcommands
 

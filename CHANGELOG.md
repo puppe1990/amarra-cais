@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ### Changed
 
+- `amarra-cais new` initializes a git repo and installs the shipped pre-commit hooks when `pre-commit` is on PATH; an app created inside an existing work tree is left to the outer repo, and `--no-git` opts out.
 - CI: `Test` runs as a `pkg` / `internal` matrix (`-race` everywhere on main, `pkg` only on PRs), docs-only PRs skip the Go jobs, and Prettier + JS tests + the committed-bundle check move to an always-on `Frontend` workflow.
 
 ## [0.12.2] - 2026-09-29

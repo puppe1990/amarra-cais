@@ -22,7 +22,7 @@ amarra-cais new myapp --blank     # bare skeleton
 amarra-cais new myapp --module github.com/acme/myapp
 ```
 
-O gerador também escreve `AGENTS.md`, um workflow de CI do GitHub Actions, config de pre-commit, setup de golangci-lint e Prettier, para que o app comece com as mesmas proteções do framework.
+O gerador também escreve `AGENTS.md`, um workflow de CI do GitHub Actions, config de pre-commit, setup de golangci-lint e Prettier, para que o app comece com as mesmas proteções do framework. Ele inicializa um repositório git para o app e instala os hooks de pre-commit quando `pre-commit` está no seu PATH (`--no-git` desliga).
 
 ## Faça login
 

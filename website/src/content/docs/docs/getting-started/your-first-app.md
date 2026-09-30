@@ -22,7 +22,7 @@ amarra-cais new myapp --blank     # bare skeleton
 amarra-cais new myapp --module github.com/acme/myapp
 ```
 
-The generator also writes `AGENTS.md`, a GitHub Actions CI workflow, pre-commit config, golangci-lint and Prettier setup, so the app starts with the same guardrails as the framework.
+The generator also writes `AGENTS.md`, a GitHub Actions CI workflow, pre-commit config, golangci-lint and Prettier setup, so the app starts with the same guardrails as the framework. It initializes a git repo for the app and installs the pre-commit hooks whenever `pre-commit` is on your PATH (`--no-git` opts out).
 
 ## Log in
 

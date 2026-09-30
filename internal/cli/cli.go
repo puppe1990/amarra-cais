@@ -141,7 +141,7 @@ Examples:
   amarra-cais css && amarra-cais server`)
 }
 
-const newUsage = "usage: amarra-cais new <app> [dir] [--minimal] [--blank] [--module <path>]"
+const newUsage = "usage: amarra-cais new <app> [dir] [--minimal] [--blank] [--module <path>] [--no-git]"
 
 func (c *CLI) cmdNew(args []string) error {
 	if newArgsWantHelp(args) {
@@ -182,6 +182,10 @@ func (c *CLI) cmdNew(args []string) error {
 		printLinkMessage(c.Out, replace)
 	}
 
+	if err := initAppRepo(c.Out, abs, opts.noGit); err != nil {
+		return err
+	}
+
 	_, _ = fmt.Fprintf(c.Out, "Created app %q at %s\n\nNext steps:\n  cd %s\n  amarra-cais install\n  amarra-cais dev\n", opts.name, abs, abs)
 	return nil
 }
@@ -192,6 +196,7 @@ type newOpts struct {
 	minimal bool
 	blank   bool
 	module  string
+	noGit   bool
 }
 
 func parseNewArgs(args []string) (newOpts, error) {
@@ -203,6 +208,8 @@ func parseNewArgs(args []string) (newOpts, error) {
 			opts.minimal = true
 		case "--blank":
 			opts.blank = true
+		case "--no-git":
+			opts.noGit = true
 		case "--module":
 			if i+1 >= len(args) {
 				return opts, fmt.Errorf("--module requires a value")
