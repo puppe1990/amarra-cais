@@ -402,6 +402,8 @@ if errs.Any() {
 
 Pass `errs` as `.Errors` in page data when re-rendering forms.
 
+The default renderer does not register `formatMoney` (#265). An app that needs currency formatting adds a local template func.
+
 **Form helpers** (`pkg/cais/forms`, registered on the view renderer):
 
 ```html

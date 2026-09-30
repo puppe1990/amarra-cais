@@ -10,6 +10,7 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.13.1", Title: "formatMoney and pkg/cais/barcode removed", Action: "if templates call formatMoney, register a local helper; copy Open Food Facts lookup into the app if it imported pkg/cais/barcode"},
 	{Version: "0.10.0", Title: "netutil.HealthPayload gained an env argument", Action: "call netutil.HealthPayload(status, port, cfg.Env)"},
 	{Version: "0.10.0", Title: "jobs dashboard needs Store.DB()", Action: "add DB() *sql.DB to the Store interface in internal/store/store.go"},
 	{Version: "0.10.0", Title: "HTMX assets deprecated", Action: "migrate hx-* templates to Amarra Views + Drive"},
