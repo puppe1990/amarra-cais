@@ -11,7 +11,7 @@ import (
 func TestPrint_IncludesRailsStyleLines(t *testing.T) {
 	var buf bytes.Buffer
 	Print(&buf, Options{
-		AppName: "PulseFit",
+		AppName: "DemoApp",
 		Config: cais.Config{
 			Port:   ":8080",
 			DBPath: "./data/app.db",
@@ -22,7 +22,7 @@ func TestPrint_IncludesRailsStyleLines(t *testing.T) {
 
 	out := buf.String()
 	for _, want := range []string{
-		"=> Booting PulseFit (Cais v0.3.1)",
+		"=> Booting DemoApp (Cais v0.3.1)",
 		"=> Environment: development",
 		"=> Database:    sqlite3 (./data/app.db)",
 		"=> Listening on http://127.0.0.1:8080",
@@ -38,7 +38,7 @@ func TestPrint_IncludesRailsStyleLines(t *testing.T) {
 func TestPrint_ShowsPortShiftLine(t *testing.T) {
 	var buf bytes.Buffer
 	Print(&buf, Options{
-		AppName: "PulseFit",
+		AppName: "DemoApp",
 		Config: cais.Config{
 			Port:   ":8081",
 			DBPath: "./data/app.db",

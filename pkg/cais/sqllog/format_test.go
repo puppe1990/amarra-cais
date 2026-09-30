@@ -23,8 +23,8 @@ func TestOperationLabel(t *testing.T) {
 }
 
 func TestFormatArgs(t *testing.T) {
-	got := formatArgs([]any{"demo@pulsefit.local", int64(1)})
-	if got != `["demo@pulsefit.local", 1]` {
+	got := formatArgs([]any{"demo@example.com", int64(1)})
+	if got != `["demo@example.com", 1]` {
 		t.Fatalf("formatArgs = %q", got)
 	}
 }

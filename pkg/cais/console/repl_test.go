@@ -32,14 +32,19 @@ func TestRepl_EvaluatesBindingExpression(t *testing.T) {
 
 func TestRepl_HelpCommand(t *testing.T) {
 	var buf bytes.Buffer
-	r := New(Options{AppName: "PulseFit", Out: &buf})
+	r := New(Options{AppName: "DemoApp", Out: &buf})
 	if err := r.HandleLine("help"); err != nil {
 		t.Fatal(err)
 	}
+	out := buf.String()
 	for _, want := range []string{"cfg", "help", "sql", "reload", "history"} {
-		if !strings.Contains(buf.String(), want) {
-			t.Fatalf("help missing %q, got:\n%s", want, buf.String())
+		if !strings.Contains(out, want) {
+			t.Fatalf("help missing %q, got:\n%s", want, out)
 		}
+	}
+	// #266: the REPL example must match the scaffold demo user.
+	if !strings.Contains(out, `store.FindUserByEmail("demo@example.com")`) {
+		t.Errorf("help should show demo@example.com, got:\n%s", out)
 	}
 }
 

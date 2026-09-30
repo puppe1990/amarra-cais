@@ -82,13 +82,13 @@ func TestConfig_DefaultEnv(t *testing.T) {
 }
 
 func TestConfig_AppURL(t *testing.T) {
-	t.Setenv("APP_URL", "https://pulsefit.gestaobem.com")
+	t.Setenv("APP_URL", "https://app.example.com")
 	t.Setenv("ADMIN_TOKEN", "")
 
 	cfg := Load()
 
-	if cfg.AppURL != "https://pulsefit.gestaobem.com" {
-		t.Errorf("AppURL = %q, want https://pulsefit.gestaobem.com", cfg.AppURL)
+	if cfg.AppURL != "https://app.example.com" {
+		t.Errorf("AppURL = %q, want https://app.example.com", cfg.AppURL)
 	}
 }
 

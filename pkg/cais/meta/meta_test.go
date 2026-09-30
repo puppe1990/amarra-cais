@@ -10,9 +10,9 @@ func TestAbsoluteURL(t *testing.T) {
 		base, path, want string
 	}{
 		{"", "/static/og.png", "/static/og.png"},
-		{"https://pulsefit.gestaobem.com", "/static/og.png", "https://pulsefit.gestaobem.com/static/og.png"},
-		{"https://pulsefit.gestaobem.com/", "static/og.png", "https://pulsefit.gestaobem.com/static/og.png"},
-		{"https://pulsefit.gestaobem.com", "", "https://pulsefit.gestaobem.com/"},
+		{"https://app.example.com", "/static/og.png", "https://app.example.com/static/og.png"},
+		{"https://app.example.com/", "static/og.png", "https://app.example.com/static/og.png"},
+		{"https://app.example.com", "", "https://app.example.com/"},
 	}
 	for _, tc := range tests {
 		if got := AbsoluteURL(tc.base, tc.path); got != tc.want {
@@ -22,8 +22,8 @@ func TestAbsoluteURL(t *testing.T) {
 }
 
 func TestDefaultPreview(t *testing.T) {
-	p := DefaultPreview("PulseFit")
-	if p.Title != "PulseFit" {
+	p := DefaultPreview("Harbor")
+	if p.Title != "Harbor" {
 		t.Errorf("Title = %q", p.Title)
 	}
 	if p.Image != DefaultImagePath {
@@ -36,24 +36,24 @@ func TestDefaultPreview(t *testing.T) {
 
 func TestPreviewHTML(t *testing.T) {
 	html := PreviewHTML(Preview{
-		Title:       "PulseFit",
-		Description: "Log workouts with rhythm.",
-		SiteName:    "PulseFit",
-		SiteURL:     "https://pulsefit.gestaobem.com",
+		Title:       "Harbor",
+		Description: "A small Go app.",
+		SiteName:    "Harbor",
+		SiteURL:     "https://app.example.com",
 		Path:        "/login",
 		Image:       DefaultImagePath,
 	})
 
 	for _, want := range []string{
 		`property="og:type" content="website"`,
-		`property="og:title" content="PulseFit"`,
-		`property="og:description" content="Log workouts with rhythm."`,
-		`property="og:image" content="https://pulsefit.gestaobem.com/static/og.png"`,
-		`property="og:url" content="https://pulsefit.gestaobem.com/login"`,
+		`property="og:title" content="Harbor"`,
+		`property="og:description" content="A small Go app."`,
+		`property="og:image" content="https://app.example.com/static/og.png"`,
+		`property="og:url" content="https://app.example.com/login"`,
 		`name="twitter:card" content="summary_large_image"`,
-		`name="twitter:image" content="https://pulsefit.gestaobem.com/static/og.png"`,
-		`rel="canonical" href="https://pulsefit.gestaobem.com/login"`,
-		`property="og:image:alt" content="PulseFit"`,
+		`name="twitter:image" content="https://app.example.com/static/og.png"`,
+		`rel="canonical" href="https://app.example.com/login"`,
+		`property="og:image:alt" content="Harbor"`,
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("PreviewHTML missing %q in:\n%s", want, html)
@@ -63,10 +63,10 @@ func TestPreviewHTML(t *testing.T) {
 
 func TestPreviewHTML_imageDimensionsAndAlt(t *testing.T) {
 	html := PreviewHTML(Preview{
-		Title:       "PulseFit",
-		Description: "Log workouts.",
-		SiteName:    "PulseFit",
-		SiteURL:     "https://pulsefit.gestaobem.com",
+		Title:       "Harbor",
+		Description: "A small Go app.",
+		SiteName:    "Harbor",
+		SiteURL:     "https://app.example.com",
 		Path:        "/",
 		Image:       DefaultImagePath,
 		ImageWidth:  1200,
@@ -77,7 +77,7 @@ func TestPreviewHTML_imageDimensionsAndAlt(t *testing.T) {
 		`property="og:image:width" content="1200"`,
 		`property="og:image:height" content="630"`,
 		`property="og:image:alt" content="Harbor at dusk"`,
-		`rel="canonical" href="https://pulsefit.gestaobem.com/"`,
+		`rel="canonical" href="https://app.example.com/"`,
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("PreviewHTML missing %q in:\n%s", want, html)
