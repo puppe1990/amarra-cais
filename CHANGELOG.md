@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.13.0] - 2026-09-30
+
 ### Added
 
 - Scaffold ships a light/dark toggle in the sidebar (`amarra-hook="theme"`, copy in `layout.theme_light`/`layout.theme_dark`) and moves the palette to CSS variables — `input.css` declares `--amarra-ink`/`-foam`/`-copper`/`-tide` (`:root` dark, `html.light` light) and `tailwind.config.js` reads them as `rgb(var(--amarra-*) / <alpha-value>)`, so the class flip re-themes every kit class; the `theme-color` meta defaults to the dark surface (#258).
