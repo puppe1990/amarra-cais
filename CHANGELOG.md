@@ -12,6 +12,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ### Changed
 
+- Splash kit+hooks card points at Views and kit / amarra.js and `g component --list` instead of a stale subset (#272).
 - Superpowers roadmap Remaining no longer lists shipped work (docs site, esbuild, admin show, PUT/DELETE, CSP nonce); the design spec is no longer Draft (#270).
 - `g resource` admin update is `PUT` and destroy is `DELETE` on `/admin/{plural}/{id}`. Edit forms send `_method=put`; delete links use `linkTo` with `method` delete. Create and bulk-delete stay `POST`. Existing apps keep POST until regenerated (#269).
 - Getting-started and the splash “One SQLite file” card name the single-writer / Live single-replica ceiling (WAL, `busy_timeout`, `MaxOpenConns(1)`, server + `jobs work` on one file) and point at the Jobs and SQLite explanation (#267).
