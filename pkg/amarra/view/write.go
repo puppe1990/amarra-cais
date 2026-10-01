@@ -104,17 +104,21 @@ func writeTemplateName(r *http.Request, p Page) string {
 }
 
 // attachScriptNonce stamps CSPNonce onto map[string]any page data so the
-// layout FOUC snippet can use nonce="{{ .CSPNonce }}" (#263). A reused map
-// from a previous request is overwritten so the attribute matches this
-// response's CSP. Struct or map[string]string data is left alone.
+// layout FOUC snippet can use nonce="{{ .CSPNonce }}" (#263). The caller map
+// is copied so concurrent Writes that reuse it do not race or leak nonces
+// (#287). Struct or map[string]string data is left alone.
 func attachScriptNonce(data any, nonce string) any {
 	if nonce == "" {
 		return data
 	}
 	switch m := data.(type) {
 	case map[string]any:
-		m["CSPNonce"] = nonce
-		return m
+		out := make(map[string]any, len(m)+1)
+		for k, v := range m {
+			out[k] = v
+		}
+		out["CSPNonce"] = nonce
+		return out
 	case nil:
 		return map[string]any{"CSPNonce": nonce}
 	default:
