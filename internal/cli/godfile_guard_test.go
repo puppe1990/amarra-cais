@@ -41,3 +41,27 @@ func TestGoSources_stayUnderLineCap(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// #288: files already near the 500-line cap split before they become god files.
+func TestGoSources_nearCapModulesStayUnderSoftCap(t *testing.T) {
+	const softCap = 400
+	files := []string{
+		"../../pkg/cais/pwa/pwa.go",
+		"cli.go",
+		"resource.go",
+		"tpl_scaffold_css.go",
+		"destroy_unpatch.go",
+		"resource_gen_admin.go",
+	}
+	for _, path := range files {
+		body, err := os.ReadFile(path)
+		if err != nil {
+			t.Errorf("%s: %v", path, err)
+			continue
+		}
+		lines := bytes.Count(body, []byte("\n")) + 1
+		if lines > softCap {
+			t.Errorf("%s has %d lines (soft cap %d) — split by responsibility (#288)", path, lines, softCap)
+		}
+	}
+}
