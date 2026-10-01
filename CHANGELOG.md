@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.13.2] - 2026-10-01
+
 ### Changed
 
 - Getting-started, Views and Drive, and the README point at the full kit/hooks tables (`g component --list`) instead of a stale subset.
