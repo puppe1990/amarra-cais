@@ -475,7 +475,7 @@ In `ENV=development`:
 
 Boot banner via `boot.Print` in `cmd/server/main.go`. Port auto-pick via `cais.ResolvePort` when preferred port is busy.
 
-Set `APP_URL` for absolute OG image URLs. **`APP_URL` is required when `ENV=production`** — `cfg.Validate()` fails on boot if missing.
+Set `APP_URL` for absolute OG image URLs. **`APP_URL` is required when `ENV=production`** — `cfg.Validate()` fails on boot if missing. Explicit invalid values (`MAX_BODY_BYTES`, `PORT`, `APP_URL` shape, `TRUSTED_PROXIES`, CSP extras with a line break) also fail Validate; a missing variable still uses the default (#286).
 
 Set `TRUSTED_PROXIES` (comma-separated IPs) when behind a reverse proxy so `middleware.ClientIP` trusts `X-Forwarded-For` for rate limiting and logging.
 
@@ -708,7 +708,7 @@ Agents implement the categories listed — do not invent extra ops policy.
 - [x] **Timeouts** — HTTP server Read/Write/Idle; SSE uses `WriteTimeout: 0` + stream package
 - [x] **SQLite busy** — `sqlite.Configure` WAL + `busy_timeout`; short writes during SSE
 - [x] **CSRF** — double-submit cookie on state-changing methods
-- [x] **Production gate** — `cfg.Validate()` requires `ADMIN_TOKEN` + `APP_URL`
+- [x] **Production gate** — `cfg.Validate()` requires `ADMIN_TOKEN` + `APP_URL` in production and rejects invalid explicit env values (#286)
 - [ ] **Retries with backoff** — only if adding outbound HTTP clients (mail, webhooks); not for request handlers
 - [ ] **Circuit breaker** — not required unless proxying flaky upstreams
 

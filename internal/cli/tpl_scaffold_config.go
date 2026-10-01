@@ -66,6 +66,7 @@ TRUSTED_PROXIES=
 
 # Total request-body cap before any parse (bytes; default 33554432 = 32 MiB).
 # Raise for legitimate large uploads; oversized POSTs get 413. (#221)
+# Invalid values fail cfg.Validate() at boot (#286).
 # MAX_BODY_BYTES=33554432
 
 # CSP extras (optional; space-separated hosts appended to defaults)
