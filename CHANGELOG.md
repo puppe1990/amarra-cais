@@ -9,6 +9,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 ### Changed
 
 - Getting-started, Views and Drive, and the README point at the full kit/hooks tables (`g component --list`) instead of a stale subset.
+- Split PWA write/brand, CLI help/`new`, resource test generation, destroy unpatch, admin handler gen, and the Tailwind template out of modules that were near the 500-line cap (#288).
 
 ### Fixed
 
