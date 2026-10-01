@@ -13,6 +13,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 ### Fixed
 
 - `view.Write` copies `map[string]any` page data before injecting `CSPNonce`, so a reused caller map is not mutated across requests (#287).
+- `cfg.Validate()` fails when an explicit env value is invalid (`MAX_BODY_BYTES` not a positive integer, `PORT` not a listen address, `APP_URL` not an absolute http(s) URL, `TRUSTED_PROXIES` not an IP/CIDR, CSP extras with a line break). Unset variables keep their defaults (#286).
 
 ## [0.13.1] - 2026-09-30
 

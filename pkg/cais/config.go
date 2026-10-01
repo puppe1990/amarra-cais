@@ -2,6 +2,8 @@ package cais
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -31,6 +33,9 @@ type Config struct {
 	// oversized uploads are rejected before net/http spills them to temp files
 	// (#221). Zero falls back to DefaultMaxBodyBytes; raise via MAX_BODY_BYTES.
 	MaxBodyBytes int64
+	// envFaults records explicit env values Load could not apply (#286).
+	// Validate surfaces them; a missing variable is not a fault.
+	envFaults []string
 }
 
 // DefaultMaxBodyBytes is the safe total request-body cap: ParseMultipartForm's
@@ -59,6 +64,9 @@ func Load() Config {
 
 	if v := os.Getenv("PORT"); v != "" {
 		cfg.Port = v
+		if _, _, err := parseListenPort(strings.TrimSpace(v)); err != nil {
+			cfg.noteInvalidEnv("PORT", v, "not a listen address; use :8080 or 127.0.0.1:8080")
+		}
 	}
 	if v := os.Getenv("DB_PATH"); v != "" {
 		cfg.DBPath = v
@@ -68,6 +76,9 @@ func Load() Config {
 	}
 	if v := os.Getenv("APP_URL"); v != "" {
 		cfg.AppURL = v
+		if !validAbsoluteHTTPURL(v) {
+			cfg.noteInvalidEnv("APP_URL", v, "not an absolute http(s) URL; example: https://app.example.com")
+		}
 	}
 	if v := os.Getenv("ADMIN_TOKEN"); v != "" {
 		cfg.AdminToken = v
@@ -86,9 +97,14 @@ func Load() Config {
 	}
 	if v := os.Getenv("TRUSTED_PROXIES"); v != "" {
 		for _, ip := range strings.Split(v, ",") {
-			if ip = strings.TrimSpace(ip); ip != "" {
-				cfg.TrustedProxies = append(cfg.TrustedProxies, ip)
+			if ip = strings.TrimSpace(ip); ip == "" {
+				continue
 			}
+			if !validProxyEntry(ip) {
+				cfg.noteInvalidEnv("TRUSTED_PROXIES", ip, "not an IP or CIDR; use values like 127.0.0.1 or 10.0.0.0/8")
+				continue
+			}
+			cfg.TrustedProxies = append(cfg.TrustedProxies, ip)
 		}
 	}
 	if v := os.Getenv("PERMISSIONS_POLICY"); v != "" {
@@ -98,31 +114,18 @@ func Load() Config {
 		// PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=().
 		cfg.PermissionsPolicy = "camera=(), microphone=(), geolocation=()"
 	}
-	if v := os.Getenv("CSP_STYLE_SRC"); v != "" {
-		cfg.CSPStyleSrc = v
-	}
-	if v := os.Getenv("CSP_CONNECT_SRC"); v != "" {
-		cfg.CSPConnectSrc = v
-	}
+	cfg.setCSPFromEnv("CSP_STYLE_SRC", &cfg.CSPStyleSrc)
+	cfg.setCSPFromEnv("CSP_CONNECT_SRC", &cfg.CSPConnectSrc)
 	if v := os.Getenv("CSP_MEDIA_SRC"); v != "" {
 		cfg.CSPMediaSrc = v
+		cfg.rejectHeaderBreak("CSP_MEDIA_SRC", v)
 	} else if cfg.Env == "development" {
 		cfg.CSPMediaSrc = "blob:"
 	}
-	if v := os.Getenv("CSP_IMG_SRC"); v != "" {
-		cfg.CSPImgSrc = v
-	}
-	if v := os.Getenv("CSP_FONT_SRC"); v != "" {
-		cfg.CSPFontSrc = v
-	}
-	if v := os.Getenv("CSP_SCRIPT_SRC"); v != "" {
-		cfg.CSPScriptSrc = v
-	}
-	if v := os.Getenv("MAX_BODY_BYTES"); v != "" {
-		if n, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64); err == nil && n > 0 {
-			cfg.MaxBodyBytes = n
-		}
-	}
+	cfg.setCSPFromEnv("CSP_IMG_SRC", &cfg.CSPImgSrc)
+	cfg.setCSPFromEnv("CSP_FONT_SRC", &cfg.CSPFontSrc)
+	cfg.setCSPFromEnv("CSP_SCRIPT_SRC", &cfg.CSPScriptSrc)
+	cfg.setMaxBodyBytesFromEnv(os.Getenv("MAX_BODY_BYTES"))
 
 	return cfg
 }
@@ -148,8 +151,12 @@ func (c Config) LogJSON() bool {
 	}
 }
 
-// Validate checks required settings for the active environment.
+// Validate checks required settings for the active environment and explicit
+// env values Load could not apply (#286).
 func (c Config) Validate() error {
+	if err := c.envFaultsError(); err != nil {
+		return err
+	}
 	if c.Env == "production" && c.AdminToken == "" {
 		return fmt.Errorf("ADMIN_TOKEN is required when ENV=production")
 	}
@@ -157,4 +164,65 @@ func (c Config) Validate() error {
 		return fmt.Errorf("APP_URL is required when ENV=production")
 	}
 	return nil
+}
+
+func (c *Config) setMaxBodyBytesFromEnv(raw string) {
+	v := strings.TrimSpace(raw)
+	if v == "" {
+		return
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
+	if err != nil || n <= 0 {
+		c.noteInvalidEnv("MAX_BODY_BYTES", raw, "not a positive integer; set a byte count such as 33554432, or unset MAX_BODY_BYTES to use the 32 MiB default")
+		return
+	}
+	c.MaxBodyBytes = n
+}
+
+func (c *Config) setCSPFromEnv(name string, dest *string) {
+	v := os.Getenv(name)
+	if v == "" {
+		return
+	}
+	*dest = v
+	c.rejectHeaderBreak(name, v)
+}
+
+func (c *Config) rejectHeaderBreak(name, raw string) {
+	if strings.ContainsAny(raw, "\r\n") {
+		c.noteInvalidEnv(name, raw, "contains a line break; CSP extras must be a single-line value")
+	}
+}
+
+func (c *Config) noteInvalidEnv(name, value, reason string) {
+	c.envFaults = append(c.envFaults, fmt.Sprintf("%s=%q is invalid: %s", name, value, reason))
+}
+
+func (c Config) envFaultsError() error {
+	if len(c.envFaults) == 0 {
+		return nil
+	}
+	if len(c.envFaults) == 1 {
+		return fmt.Errorf("%s", c.envFaults[0])
+	}
+	return fmt.Errorf("%s", strings.Join(c.envFaults, "; "))
+}
+
+func validAbsoluteHTTPURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	return u.Host != ""
+}
+
+func validProxyEntry(s string) bool {
+	if strings.Contains(s, "/") {
+		_, _, err := net.ParseCIDR(s)
+		return err == nil
+	}
+	return net.ParseIP(s) != nil
 }

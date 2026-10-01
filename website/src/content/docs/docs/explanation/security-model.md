@@ -38,7 +38,7 @@ The limiter resolves the client address with `middleware.ClientIP(r, cfg)`. Behi
 
 ## Production gates
 
-`cfg.Validate()` fails the boot when `ENV=production` and required values are missing. In particular, `ADMIN_TOKEN` must be set for bearer-protected admin APIs, and `APP_URL` is required (it is also used for absolute Open Graph URLs). Missing configuration stops the process rather than degrading silently.
+`cfg.Validate()` fails the boot when `ENV=production` and required values are missing. In particular, `ADMIN_TOKEN` must be set for bearer-protected admin APIs, and `APP_URL` is required (it is also used for absolute Open Graph URLs). Explicit env values that cannot be applied (`MAX_BODY_BYTES`, `PORT`, `APP_URL` shape, `TRUSTED_PROXIES`, CSP extras) also fail Validate. Missing configuration stops the process.
 
 :::caution
 The in-memory rate limiter and the double-submit CSRF check both assume a single app process. If you run more than one replica, move rate limiting to a shared store and revisit how the CSRF token is validated.
