@@ -606,13 +606,16 @@ The `amarra-cais` CLI lives in `internal/cli/`. Scaffold templates are split by 
 
 | Path                                                            | Responsibility                                                       |
 | --------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `internal/cli/cli.go`                                           | Command routing (`new`, `g`, `destroy`, `db`, …)                     |
+| `internal/cli/cli.go`                                           | Command routing (`g`, `destroy`, `db`, …)                            |
+| `internal/cli/cli_help.go` / `cli_new.go`                       | Help text and `amarra-cais new` parsing (#288)                       |
 | `internal/cli/tpl_scaffold_handlers_*.go`                       | HTML handler templates (home/contact/auth; not `*_test.go`)          |
 | `internal/cli/doctor.go` / `doctor_env.go` / `doctor_mobile.go` | `amarra-cais doctor` checks (core / env / mobile)                    |
 | `internal/cli/scaffold.go`                                      | `amarra-cais new` orchestration and `writeTemplate`                  |
 | `internal/cli/resource.go`                                      | `amarra-cais g resource` orchestration (writes files, calls patches) |
+| `internal/cli/resource_gen_tests.go`                            | Generated admin/public handler tests for `g resource` (#288)         |
 | `internal/cli/resource_patch.go`                                | Patches store, routes, layout nav, seeds, main for resources         |
 | `internal/cli/resource_gen_*.go`                                | Resource code generation (store, admin, public, HTML, fields)        |
+| `internal/cli/destroy_unpatch*.go`                              | Destroy AST unpatch: routes, store, layout (#288)                    |
 | `internal/cli/tpl_scaffold_*.go`                                | Embedded `const tpl*` for `amarra-cais new` scaffolding              |
 | `internal/cli/tpl_scaffold_main.go`                             | `cmd/server/main.go` (full + blank)                                  |
 | `internal/cli/tpl_scaffold_app_core.go`                         | `internal/app/app.go` (full + blank)                                 |
