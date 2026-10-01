@@ -10,6 +10,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 - Getting-started, Views and Drive, and the README point at the full kit/hooks tables (`g component --list`) instead of a stale subset.
 
+### Fixed
+
+- `view.Write` copies `map[string]any` page data before injecting `CSPNonce`, so a reused caller map is not mutated across requests (#287).
+
 ## [0.13.1] - 2026-09-30
 
 ### Added
