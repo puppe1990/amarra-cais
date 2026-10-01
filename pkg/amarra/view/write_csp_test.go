@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 
@@ -44,6 +45,69 @@ func TestWrite_injectsCSPNonceIntoMapData(t *testing.T) {
 	}
 	if !strings.Contains(body, `localStorage.getItem("amarra-theme")`) {
 		t.Fatalf("theme snippet missing in %q", body)
+	}
+}
+
+func TestWrite_leavesCallerMapUnchanged(t *testing.T) {
+	rec, err := Load(themeFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := map[string]any{"Title": "Hi", "CSPNonce": "caller"}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = req.WithContext(cais.WithScriptNonce(req.Context(), "from-request"))
+	Write(rr, req, rec, Page{
+		Layout: "app",
+		Name:   "home",
+		Data:   data,
+	}, cais.Config{})
+	body := rr.Body.String()
+	if !strings.Contains(body, `nonce="from-request"`) {
+		t.Fatalf("response nonce missing: %q", body)
+	}
+	if data["CSPNonce"] != "caller" {
+		t.Fatalf("caller map CSPNonce mutated: got %v", data["CSPNonce"])
+	}
+	if data["Title"] != "Hi" {
+		t.Fatalf("caller map Title mutated: got %v", data["Title"])
+	}
+}
+
+func TestWrite_concurrentReuseOfMap(t *testing.T) {
+	rec, err := Load(themeFS(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := map[string]any{"Title": "Hi"}
+	nonces := []string{"nonce-a", "nonce-b"}
+	var wg sync.WaitGroup
+	errCh := make(chan string, len(nonces))
+	for _, nonce := range nonces {
+		wg.Add(1)
+		go func(nonce string) {
+			defer wg.Done()
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req = req.WithContext(cais.WithScriptNonce(req.Context(), nonce))
+			Write(rr, req, rec, Page{
+				Layout: "app",
+				Name:   "home",
+				Data:   data,
+			}, cais.Config{})
+			body := rr.Body.String()
+			if !strings.Contains(body, `nonce="`+nonce+`"`) {
+				errCh <- "want nonce " + nonce + " in " + body
+			}
+		}(nonce)
+	}
+	wg.Wait()
+	close(errCh)
+	for msg := range errCh {
+		t.Error(msg)
+	}
+	if _, ok := data["CSPNonce"]; ok {
+		t.Fatalf("caller map gained CSPNonce: %v", data["CSPNonce"])
 	}
 }
 
