@@ -115,6 +115,47 @@ func TestConfig_Validate_rejectsInvalidEnv(t *testing.T) {
 	}
 }
 
+func TestConfig_Load_barePORTBecomesListenAddr(t *testing.T) {
+	t.Setenv("PORT", "4096")
+	t.Setenv("ENV", "")
+	cfg := Load()
+	if cfg.Port != ":4096" {
+		t.Errorf("Port = %q, want :4096", cfg.Port)
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() after PORT=4096: %v", err)
+	}
+}
+
+func TestConfig_Validate_requiresPORTInProduction(t *testing.T) {
+	t.Setenv("PORT", "")
+	t.Setenv("ENV", "production")
+	t.Setenv("ADMIN_TOKEN", "secret")
+	t.Setenv("APP_URL", "https://example.com")
+	cfg := Load()
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("expected Validate() error without PORT in production")
+	}
+	if !strings.Contains(err.Error(), "PORT") {
+		t.Errorf("error %q does not cite PORT", err.Error())
+	}
+}
+
+func TestConfig_Validate_productionBarePORT(t *testing.T) {
+	t.Setenv("PORT", "4096")
+	t.Setenv("ENV", "production")
+	t.Setenv("ADMIN_TOKEN", "secret")
+	t.Setenv("APP_URL", "https://example.com")
+	cfg := Load()
+	if cfg.Port != ":4096" {
+		t.Errorf("Port = %q, want :4096", cfg.Port)
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() with PORT=4096 in production: %v", err)
+	}
+}
+
 func TestConfig_Validate_emptyTrustedProxiesTokensAreUnset(t *testing.T) {
 	t.Setenv("TRUSTED_PROXIES", "  ,  ")
 	cfg := Load()
