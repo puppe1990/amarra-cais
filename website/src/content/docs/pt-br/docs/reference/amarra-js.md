@@ -51,6 +51,8 @@ Defina `amarra-hook="<name>"` em um container para ativar um comportamento embut
 | `sidebar`   | botão `amarra-hook="sidebar"` com `data-amarra-sidebar-target="#amarra-nav"`                                                                                                        | Toggle da rail off-canvas. Define `data-amarra-sidebar-open` no painel, sincroniza `aria-expanded` e fecha com Esc ou clique fora.                                                                                                                                                                       |
 | `theme`     | controle com `amarra-hook="theme"`                                                                                                                                                  | Alterna `html.light`, persiste `localStorage["amarra-theme"]` e atualiza o meta `theme-color` opcional.                                                                                                                                                                                                  |
 
+O CI compara esta tabela com `register(...)` em `pkg/amarra/js/hook.mjs`. Inclua uma linha ao registrar um builtin; remova a linha ao apagar um.
+
 ### Exemplos de hook
 
 ```html

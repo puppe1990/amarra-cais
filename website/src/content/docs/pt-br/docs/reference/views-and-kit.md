@@ -93,6 +93,8 @@ O kit fica em `web/templates/components/`. Sobrescreva um componente escrevendo 
 | `drawer`        | Painel lateral (`<dialog>` + hook `dialog`)                                                         | `id`, `title` opcional. Opener e drawer no mesmo container `amarra-hook="dialog"`. Submit de filtros com `frame` morph a tabela; o drawer fica aberto até fechar. O generator de resource não muda. |
 | `tooltip`       | Dica curta em hover e foco de teclado                                                               | `text`. O slot é o trigger. Não use tooltip para copy obrigatória de form — isso vai no `error` do campo / hint visível.                                                                            |
 
+O CI compara esta tabela com os stems em `pkg/amarra/view/components/` (`amarra-cais g component --list`). Inclua uma linha ao shippar um componente; remova a linha ao apagar um.
+
 Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSRF para você, então não adicione outro dentro do slot. Para uploads, use `<.input type="file" accept="image/*" />` dentro de `<.form enctype="multipart/form-data">` e nunca defina `value` em um input de arquivo.
 
 Os campos do kit usam `:user-invalid` para não pintar vermelho no primeiro paint. Um 422 continua definindo `.Error` / `aria-invalid` no Go; os dois sinais convivem.

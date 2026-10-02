@@ -100,7 +100,7 @@ Layout: `web/templates/layouts/app.html` (`#amarra-main`) + `web/templates/pages
 
 `amarra-cais g handler` / `amarra-cais g page` generate **HTML** pages in `web/templates/pages/`.
 
-`amarra-cais g resource` generates HTML admin CRUD (`view.Write` + kit `<.form>`). `amarra-cais g stream chat` uses Amarra Stream SSE (`data-amarra-stream`). `amarra-cais g component <kit-name>` seeds the shipped markup of that kit component (so an app restyles the real contract instead of recreating it) and falls back to a generic `{{ .Inner }}` slot for other names; the override file keeps the kit stem (`locale-toggle.html`). `amarra-cais g component --list` prints the overridable components (#63).
+`amarra-cais g resource` generates HTML admin CRUD (`view.Write` + kit `<.form>`). `amarra-cais g stream chat` uses Amarra Stream SSE (`data-amarra-stream`). `amarra-cais g component <kit-name>` seeds the shipped markup of that kit component (so an app restyles the real contract instead of recreating it) and falls back to a generic `{{ .Inner }}` slot for other names; the override file keeps the kit stem (`locale-toggle.html`). `amarra-cais g component --list` prints the overridable components (#63). CI (`TestDocs_viewsAndKitTablesMatchShippedKit`, `TestDocs_amarraJsHookTablesMatchRegister`) fails when the website kit/hook tables drift from those stems and `register()` names (#295).
 
 Handlers do **not** check `HX-Request`. They call `view.Write`.
 
