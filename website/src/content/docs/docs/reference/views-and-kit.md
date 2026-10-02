@@ -93,6 +93,8 @@ The kit lives in `web/templates/components/`. Override a component by writing a 
 | `drawer`        | Side panel (`<dialog>` + `dialog` hook)                                                                  | `id`, optional `title`. Put the opener and the drawer in the same `amarra-hook="dialog"` container. Filter submit with `frame` morphs the table; the drawer stays open unless closed. Resource generator layout is unchanged. |
 | `tooltip`       | Short hint on hover and keyboard focus                                                                   | `text`. Slot is the trigger. Do not use a tooltip for required form copy — put that on the field `error` / a visible hint.                                                                                                    |
 
+CI compares this table to the stems in `pkg/amarra/view/components/` (`amarra-cais g component --list`). Add a row when you ship a component; drop a row when you delete one.
+
 Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field for you, so do not add another inside the slot. For uploads, use `<.input type="file" accept="image/*" />` inside `<.form enctype="multipart/form-data">` and never set `value` on a file input.
 
 Kit fields use `:user-invalid` so the browser does not paint red on first paint. A 422 still sets `.Error` / `aria-invalid` from Go; the two signals coexist.

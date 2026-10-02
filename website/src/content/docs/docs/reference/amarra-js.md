@@ -51,6 +51,8 @@ Set `amarra-hook="<name>"` on a container to turn on a built-in behavior.
 | `sidebar`   | button `amarra-hook="sidebar"` with `data-amarra-sidebar-target="#amarra-nav"`                                                                                              | Off-canvas rail toggle. Sets `data-amarra-sidebar-open` on the panel, keeps `aria-expanded` in sync, and closes on Esc or an outside click.                                                                                                                                                 |
 | `theme`     | control with `amarra-hook="theme"`                                                                                                                                          | Toggle `html.light`, persist `localStorage["amarra-theme"]`, and update the optional `theme-color` meta.                                                                                                                                                                                    |
 
+CI compares this table to `register(...)` in `pkg/amarra/js/hook.mjs`. Add a row when you register a builtin; drop a row when you remove one.
+
 ### Hook examples
 
 ```html

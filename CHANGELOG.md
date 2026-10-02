@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Added
+
+- CI pins the docs-site kit and hook tables to `pkg/amarra/view/components/` stems and `register()` names in `hook.mjs`; drift names the file, the extra or missing item, and the fix (#295).
+
 ### Fixed
 
 - README kit `<.form>` example no longer duplicates `csrfField`; the kit already injects `csrf_token` from `$.CSRFToken` (#293).
