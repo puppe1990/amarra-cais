@@ -114,7 +114,8 @@ func (c *Catalog) OGLocale() string {
 	}
 }
 
-// Funcs returns template helpers: t, htmlLang, ogLocale, localeBase.
+// Funcs returns template helpers: t, htmlLang, ogLocale, localeBase,
+// localeTags, localeLabel.
 func (c *Catalog) Funcs() template.FuncMap {
 	return template.FuncMap{
 		"t": func(key string, args ...any) string {
@@ -127,7 +128,44 @@ func (c *Catalog) Funcs() template.FuncMap {
 			s, _ := tag.(string)
 			return NormalizeLocale(s)
 		},
+		// localeTags lists kit toggle buttons. A comma string or []string
+		// from locales= / page .Locales; empty falls back to en|pt (#300).
+		"localeTags":  localeTagsFrom,
+		"localeLabel": localeLabelFrom,
 	}
+}
+
+func localeTagsFrom(v any) []string {
+	var raw []string
+	switch t := v.(type) {
+	case []string:
+		raw = t
+	case string:
+		raw = strings.Split(t, ",")
+	}
+	out := make([]string, 0, len(raw))
+	seen := map[string]bool{}
+	for _, part := range raw {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		tag := NormalizeLocale(part)
+		if seen[tag] {
+			continue
+		}
+		seen[tag] = true
+		out = append(out, tag)
+	}
+	if len(out) == 0 {
+		return []string{"en", "pt"}
+	}
+	return out
+}
+
+func localeLabelFrom(v any) string {
+	s, _ := v.(string)
+	return strings.ToUpper(NormalizeLocale(s))
 }
 
 // MergeFuncs combines i18n funcs with additional template funcs.
