@@ -95,7 +95,7 @@ O kit fica em `web/templates/components/`. Sobrescreva um componente escrevendo 
 
 O CI compara esta tabela com os stems em `pkg/amarra/view/components/` (`amarra-cais g component --list`). Inclua uma linha ao shippar um componente; remova a linha ao apagar um.
 
-Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSRF para você, então não adicione outro dentro do slot. Para uploads, use `<.input type="file" accept="image/*" />` dentro de `<.form enctype="multipart/form-data">` e nunca defina `value` em um input de arquivo.
+Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSRF para você, então não adicione outro dentro do slot. Para uploads, use `<.input type="file" accept="image/*" />` dentro de `<.form enctype="multipart/form-data">` e nunca defina `value` em um input de arquivo. Attrs opcionais do tag (`class`, `click`, `enctype`, `accept`, …) viram `$vars` vazias quando omitidas, então um tag do kit dentro de `{{ range }}` não dá 500 na struct da row. Campos de page data continuam no `.` (`<.flash />` lê `.Flash`; `<.pagination>` lê `.HasPrev` / `.Page`).
 
 Os campos do kit usam `:user-invalid` para não pintar vermelho no primeiro paint. Um 422 continua definindo `.Error` / `aria-invalid` no Go; os dois sinais convivem.
 

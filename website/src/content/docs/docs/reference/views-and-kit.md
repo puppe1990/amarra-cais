@@ -95,7 +95,7 @@ The kit lives in `web/templates/components/`. Override a component by writing a 
 
 CI compares this table to the stems in `pkg/amarra/view/components/` (`amarra-cais g component --list`). Add a row when you ship a component; drop a row when you delete one.
 
-Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field for you, so do not add another inside the slot. For uploads, use `<.input type="file" accept="image/*" />` inside `<.form enctype="multipart/form-data">` and never set `value` on a file input.
+Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field for you, so do not add another inside the slot. For uploads, use `<.input type="file" accept="image/*" />` inside `<.form enctype="multipart/form-data">` and never set `value` on a file input. Optional tag attrs (`class`, `click`, `enctype`, `accept`, …) become empty `$vars` when omitted, so a kit tag inside `{{ range }}` does not 500 on a row struct. Page-data fields stay on `.` (`<.flash />` reads `.Flash`; `<.pagination>` reads `.HasPrev` / `.Page`).
 
 Kit fields use `:user-invalid` so the browser does not paint red on first paint. A 422 still sets `.Error` / `aria-invalid` from Go; the two signals coexist.
 

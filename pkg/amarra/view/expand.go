@@ -56,15 +56,50 @@ func expandCall(call componentCall, components map[string]string) (string, error
 	return b.String(), nil
 }
 
+// optionalKitTagAttrs are isolated as empty $vars when omitted from the tag.
+// html/template looks up leftover .Field on `.`, which inside {{ range }} is
+// the row and 500s on a struct without that field (#43 form enctype, #302 button).
+// Page-data fields stay on `.` (flash .Flash, pagination .HasPrev / .Page).
+var optionalKitTagAttrs = map[string][]string{
+	"form":          {"enctype", "method"},
+	"button":        {"type", "class", "click"},
+	"nav":           {"class"},
+	"input":         {"type", "value", "accept", "error"},
+	"password":      {"value", "autocomplete", "required", "error"},
+	"select":        {"error"},
+	"textarea":      {"error"},
+	"checkbox":      {"value", "checked", "error"},
+	"switch":        {"value", "checked", "error"},
+	"stat":          {"href", "delta", "hint"},
+	"empty":         {"href", "action"},
+	"filters":       {"frame", "submit", "clear"},
+	"drawer":        {"id", "title"},
+	"modal":         {"id"},
+	"collapse":      {"open", "name"},
+	"tab":           {"name", "open"},
+	"locale-toggle": {"action"},
+	"tooltip":       {"text"},
+}
+
 func defaultComponentAttrs(name string, attrs []componentAttr) []componentAttr {
-	if name != "form" || hasAttrName(attrs, "enctype") {
+	needed := optionalKitTagAttrs[name]
+	if len(needed) == 0 {
 		return attrs
 	}
-	// Optional enctype must be a $var. Bare {{ if .Enctype }} inside
-	// {{ range .Items }} looks up Enctype on the row struct and 500s (#43).
-	out := make([]componentAttr, len(attrs), len(attrs)+1)
-	copy(out, attrs)
-	return append(out, componentAttr{Name: "enctype", Value: ""})
+	out := attrs
+	copied := false
+	for _, field := range needed {
+		if hasAttrName(out, field) {
+			continue
+		}
+		if !copied {
+			out = make([]componentAttr, len(attrs), len(attrs)+len(needed))
+			copy(out, attrs)
+			copied = true
+		}
+		out = append(out, componentAttr{Name: field, Value: ""})
+	}
+	return out
 }
 
 func hasAttrName(attrs []componentAttr, name string) bool {
