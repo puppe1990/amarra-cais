@@ -80,6 +80,49 @@ func TestKit_formInsideRangeDoesNotReadEnctypeFromRow(t *testing.T) {
 	}
 }
 
+func TestKit_formPassesThroughSkipAndClass(t *testing.T) {
+	// #301: extra HTML attrs on <.form> must reach the <form> so Drive
+	// can honor data-amarra-skip (hasAttribute) and callers can set class.
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html": &fstest.MapFile{Data: []byte(
+			`{{ define "content" }}<.form action="/cart" method="post" data-amarra-skip class="m-0"><.button type="submit">Go</.button></.form>{{ end }}`,
+		)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"CSRFToken": "tok"},
+	}, cais.Config{})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rr.Code, rr.Body.String())
+	}
+	body := rr.Body.String()
+	formAt := strings.Index(body, "<form")
+	if formAt < 0 {
+		t.Fatalf("missing form: %s", body)
+	}
+	endRel := strings.Index(body[formAt:], ">")
+	if endRel < 0 {
+		t.Fatalf("unclosed form tag: %s", body)
+	}
+	tag := body[formAt : formAt+endRel+1]
+	for _, want := range []string{
+		`action="/cart"`,
+		`method="post"`,
+		`data-amarra-skip`,
+		`class="m-0"`,
+	} {
+		if !strings.Contains(tag, want) {
+			t.Errorf("form tag missing %q: %s", want, tag)
+		}
+	}
+}
+
 func TestKit_buttonInsideRangeDoesNotReadClickFromRow(t *testing.T) {
 	// #302: omitted Click/Class must be $vars. A row struct without those
 	// fields 500s when the shipped button still looks up .Click on `.`.
