@@ -1,6 +1,7 @@
 {
   "private": true,
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "esbuild": "^0.28.0",
     "prettier": "^3.5.3"
   },
@@ -8,6 +9,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "js:build": "node scripts/js-build.mjs",
-    "js:test": "node --test 'pkg/cais/js/**/*.test.mjs' 'pkg/amarra/js/**/*.test.mjs'"
+    "js:test": "node --test 'pkg/cais/js/**/*.test.mjs' 'pkg/amarra/js/**/*.test.mjs'",
+    "e2e": "bash scripts/e2e-scaffold.sh"
   }
 }
