@@ -30,6 +30,25 @@ func TestExpandAll_staticButton(t *testing.T) {
 	}
 }
 
+func TestExpandAll_passthroughUnusedAttrs(t *testing.T) {
+	components := map[string]string{
+		"form": `<form action="{{ .Action }}" method="{{ .Method }}">{{ .Inner }}</form>`,
+	}
+	got, err := ExpandAll(`<.form action="/cart" method="post" data-amarra-skip class="m-0">Go</.form>`, components)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		`data-amarra-skip="{{ $attr_data_amarra_skip }}"`,
+		`class="{{ $class }}"`,
+		`action="{{ $action }}"`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in %q", want, got)
+		}
+	}
+}
+
 func TestExpandAll_selfClosing(t *testing.T) {
 	components := map[string]string{
 		"flash": `<div class="flash">{{ .Inner }}</div>`,

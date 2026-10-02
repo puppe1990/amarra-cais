@@ -14,6 +14,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 - `PORT=4096` (bare 12-factor / PaaS number) is a listen address `:4096`. `:8080` and `127.0.0.1:8080` keep working; junk still fails Validate (#303).
 - Kit optional tag attrs (`class`, `click`, `enctype`, …) are empty `$vars` when omitted, so `<.button type="submit">` inside `{{ range }}` does not 500 on `.Click` / `.Class`. Page-data fields (`<.flash />` `.Flash`, pagination `.HasPrev`) stay on `.` (#302).
+- Kit `<.form>` writes extra HTML attrs onto the `<form>` (`data-amarra-skip`, `class`, `id`, `target`, `novalidate`), so Drive opt-out and styling reach the real tag (#301).
 
 ## [0.13.3] - 2026-10-02
 
