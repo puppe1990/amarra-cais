@@ -46,6 +46,7 @@ var Templates embed.FS
 
 const tplEnvExample = `# Server
 PORT=:8080
+# PaaS may inject PORT=8080 (number only); Load canonicalizes to :8080 (#303).
 ENV=development
 APP_URL=http://localhost:8080
 LOCALE=en

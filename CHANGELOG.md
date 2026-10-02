@@ -6,6 +6,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Changed
+
+- `cfg.Validate()` requires `PORT` when `ENV=production`, so a missing variable does not bind `:8080` on a shared host. Development still defaults to `:8080` (#303).
+
+### Fixed
+
+- `PORT=4096` (bare 12-factor / PaaS number) is a listen address `:4096`. `:8080` and `127.0.0.1:8080` keep working; junk still fails Validate (#303).
+
 ## [0.13.3] - 2026-10-02
 
 ### Added
