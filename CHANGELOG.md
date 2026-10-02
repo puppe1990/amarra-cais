@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Fixed
+
+- README kit `<.form>` example no longer duplicates `csrfField`; the kit already injects `csrf_token` from `$.CSRFToken` (#293).
+
 ## [0.13.2] - 2026-10-01
 
 ### Changed
