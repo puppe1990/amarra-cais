@@ -255,7 +255,7 @@ Shipped kit (override in `web/templates/components/`): `form`, `input`, `passwor
 
 `{{ linkTo "/x" "Label" }}` emits a plain `<a>` — Drive intercepts it by default. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
 
-**Kit attributes interpolate** like plain markup: `<.stat label="Potência" value="{{ .Power }} kWp" />` renders `5 kWp`, and a value may mix text with several actions (a bare `{{ .X }}` keeps the raw expression, so non-string data still works in the component's `if`/`range`). A control action (`{{ if }}`/`{{ range }}`) in an attribute value fails at boot instead of printing `{{ … }}` to the user (#72).
+**Kit attributes interpolate** like plain markup: `<.stat label="Potência" value="{{ .Power }} kWp" />` renders `5 kWp`, and a value may mix text with several actions (a bare `{{ .X }}` keeps the raw expression, so non-string data still works in the component's `if`/`range`). A control action (`{{ if }}`/`{{ range }}`) in an attribute value fails at boot instead of printing `{{ … }}` to the user (#72). Optional tag attrs (`class`, `click`, `enctype`, `accept`, …) are empty `$vars` when omitted so a kit tag inside `{{ range }}` does not 500 on the row (#43, #302); `<.flash />` and pagination still read page data.
 
 **Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only, so Live is **single-replica**: two app replicas do not share sockets (cross-replica fan-out needs an external bus). Slow-client drops are counted by `hub.Dropped()` and logged (first drop, then every 100). `sock.Patch`, `sock.Stream`, and `sock.Push` ride on the morph message.
 
