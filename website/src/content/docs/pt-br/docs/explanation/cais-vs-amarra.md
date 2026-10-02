@@ -22,7 +22,7 @@ Este não é um fork de dois modos. O `amarra-cais doctor` falha quando encontra
 
 Mover um app Cais com Inertia para o Amarra não é um `go get`. A camada de dados permanece; a camada de UI é reescrita.
 
-1. Fixe o framework (`go get github.com/puppe1990/amarra-cais@v0.13.2`) e remova o gonertia. Apague `vite.config.js`, `svelte.config.js`, `web/src/` e `web/static/build/`.
+1. Fixe o framework (`go get github.com/puppe1990/amarra-cais@v0.13.3`) e remova o gonertia. Apague `vite.config.js`, `svelte.config.js`, `web/src/` e `web/static/build/`.
 2. Carregue as views uma vez no boot com `view.Load`. Handlers recebem um `*view.Renderer` e chamam `view.Write`; eles não checam mais `HX-Request` nem chamam helpers de render do Inertia.
 3. Substitua as páginas: `web/src/pages/*.svelte` vira `web/templates/pages/*.html`, `AppLayout.svelte` vira `web/templates/layouts/app.html`, e o mount `#app` vira `#amarra-main` mais um script. Formulários Svelte viram `<.form>` / `<.input>` / `<.button>` do kit.
 4. Reescreva os testes para verificar HTML (`testutil.AssertHTMLContains`) em vez de JSON do Inertia. Descarte `setupTestInertia` e `X-Inertia: true`.

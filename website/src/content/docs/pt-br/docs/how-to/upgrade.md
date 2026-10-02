@@ -9,7 +9,7 @@ sidebar:
 
 ```bash
 amarra-cais upgrade            # bump to the latest version
-amarra-cais upgrade v0.13.2    # pin a specific version
+amarra-cais upgrade v0.13.3    # pin a specific version
 amarra-cais upgrade --dry-run  # preview the changes without writing
 ```
 
@@ -35,8 +35,8 @@ amarra-cais pwa --bump
 Mantenha a CLI e o `go.mod` do app em sincronia. O quick start instala uma CLI fixada:
 
 ```bash
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.13.2
-amarra-cais version   # expect 0.13.2
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.13.3
+amarra-cais version   # expect 0.13.3
 ```
 
 Gerar código com uma release enquanto depende de outra é a fonte usual de erros confusos de "unknown component" ou "missing method". `amarra-cais version` imprime a versão do framework a partir da qual a CLI foi compilada, para que você possa conferir os dois lados.

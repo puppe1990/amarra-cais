@@ -10,6 +10,8 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.13.3", Title: "Service worker claims /", Action: "in the layout, register(\"/static/js/sw.js\", { scope: \"/\" }); without it the worker stays scoped to /static/js/ and offline.html never intercepts navigations. amarra-cais pwa refreshes amarra.js (Live named-target outerHTML)"},
+	{Version: "0.13.3", Title: "g stream chat List/Show maps", Action: "regenerate g stream chat, or pass amarraData maps from List/Show so the layout can read .CSPNonce"},
 	{Version: "0.13.2", Title: "Validate rejects invalid explicit env", Action: "fix MAX_BODY_BYTES / PORT / APP_URL / TRUSTED_PROXIES / CSP extras if boot now fails; unset variables still keep their defaults"},
 	{Version: "0.13.1", Title: "TokenAuth removed", Action: "replace middleware.TokenAuth with AdminAuth(cfg); the old helper called cais.Load() per request"},
 	{Version: "0.13.1", Title: "CSP script-src drops unsafe-inline", Action: "add nonce=\"{{ .CSPNonce }}\" to every inline script in layouts (view.Write injects CSPNonce on map[string]any data); or set CSP_SCRIPT_SRC='unsafe-inline' to restore the old policy"},
