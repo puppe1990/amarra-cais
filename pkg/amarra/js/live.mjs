@@ -51,7 +51,9 @@ export function applyLiveMessage(msg, root, morphFn = morph, extras = {}) {
   if (html !== "") {
     if (msg.target) {
       const el = root.querySelector?.(`#${cssEscape(msg.target)}`) || root;
-      morphFn(el, html);
+      // Named targets send the element itself (g live counter: <span id="count">).
+      // innerHTML morph inserts that node into itself and Idiomorph throws (#294).
+      morphFn(el, html, undefined, { morphStyle: "outerHTML" });
     } else {
       morphFn(root, html);
     }

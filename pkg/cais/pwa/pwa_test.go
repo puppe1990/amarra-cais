@@ -220,6 +220,9 @@ func TestRegisterScriptForEnv_productionRegistersSW(t *testing.T) {
 	if !strings.Contains(script, "register(") {
 		t.Errorf("prod script should register SW: %s", script)
 	}
+	if !strings.Contains(script, `register("/static/js/sw.js", { scope: "/" })`) {
+		t.Errorf("prod SW must claim / so HTML navigations hit the worker (#294): %s", script)
+	}
 }
 
 func TestHeadHTML(t *testing.T) {

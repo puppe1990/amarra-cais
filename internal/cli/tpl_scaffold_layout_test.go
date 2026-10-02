@@ -40,6 +40,19 @@ func TestLayoutTemplates_useSharedHead(t *testing.T) {
 	}
 }
 
+func TestLayoutTemplates_registersSWAtRootScope(t *testing.T) {
+	want := `navigator.serviceWorker.register("/static/js/sw.js", { scope: "/" })`
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		if !strings.Contains(tpl, want) {
+			t.Errorf("%s layout SW register missing root scope (#294)", name)
+		}
+	}
+}
+
 func TestLayoutTemplates_hasDriveShell(t *testing.T) {
 	for name, tpl := range map[string]string{
 		"full":    tplLayout,

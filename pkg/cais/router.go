@@ -74,7 +74,7 @@ func (r *Router) Static(prefix, dir string) {
 // StaticForEnv serves files from disk. In development, sets no-store so JS/CSS edits apply without rebuild.
 func (r *Router) StaticForEnv(prefix, dir string, cfg Config) {
 	fs := http.FileServer(http.Dir(dir))
-	handler := http.StripPrefix(prefix, fs)
+	handler := allowRootServiceWorker(http.StripPrefix(prefix, fs))
 	if cfg.Env == "development" {
 		handler = noCacheStatic(handler)
 	}
@@ -84,6 +84,17 @@ func (r *Router) StaticForEnv(prefix, dir string, cfg Config) {
 func noCacheStatic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Default SW scope is the script directory. HTML lives at /, so sw.js must
+// advertise a wider max scope or register({scope:"/"}) is rejected (#294).
+func allowRootServiceWorker(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/sw.js") {
+			w.Header().Set("Service-Worker-Allowed", "/")
+		}
 		next.ServeHTTP(w, r)
 	})
 }

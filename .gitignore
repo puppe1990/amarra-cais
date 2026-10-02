@@ -10,3 +10,7 @@ tmp/
 .grok/
 .superpowers/
 .playwright-cli/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

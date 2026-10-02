@@ -1,4 +1,4 @@
-.PHONY: build test test-v lint format format-check pre-commit-install ci install-cli js-build js-test js-bundle-check docs docs-build clean
+.PHONY: build test test-v lint format format-check pre-commit-install ci install-cli js-build js-test js-bundle-check e2e docs docs-build clean
 
 BIN := bin/amarra-cais
 
@@ -25,6 +25,9 @@ js-build:
 
 js-test:
 	npm run js:test
+
+e2e:
+	npm run e2e
 
 # Committed bundles (amarra.js, cais-chat-logic.mjs) must match pkg/*/js sources.
 js-bundle-check:

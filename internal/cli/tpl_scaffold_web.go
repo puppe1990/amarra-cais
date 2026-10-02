@@ -105,7 +105,7 @@ const tplLayoutBaseClose = `
     {{"{{"}} else {{"}}"}}
     <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/static/js/sw.js");
+        navigator.serviceWorker.register("/static/js/sw.js", { scope: "/" });
       }
     </script>
     {{"{{"}} end {{"}}"}}
