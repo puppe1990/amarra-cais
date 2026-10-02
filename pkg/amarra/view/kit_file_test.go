@@ -79,3 +79,34 @@ func TestKit_formInsideRangeDoesNotReadEnctypeFromRow(t *testing.T) {
 		t.Errorf("form missing: %s", rr.Body.String())
 	}
 }
+
+func TestKit_buttonInsideRangeDoesNotReadClickFromRow(t *testing.T) {
+	// #302: omitted Click/Class must be $vars. A row struct without those
+	// fields 500s when the shipped button still looks up .Click on `.`.
+	type row struct{ ID int64 }
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html": &fstest.MapFile{Data: []byte(
+			`{{ define "content" }}{{ range .Items }}<.button type="submit">Go</.button>{{ end }}{{ end }}`,
+		)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"Items": []row{{ID: 1}}},
+	}, cais.Config{})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rr.Code, rr.Body.String())
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "Go") {
+		t.Errorf("button missing: %s", body)
+	}
+	if strings.Contains(body, "amarra-click") {
+		t.Errorf("omitted click leaked: %s", body)
+	}
+}
