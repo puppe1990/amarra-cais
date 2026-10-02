@@ -10,6 +10,8 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.14.0", Title: "PORT required in production", Action: "set PORT=:8080 or PORT=8080 (bare 12-factor numbers work); missing PORT no longer binds :8080 on a shared host"},
+	{Version: "0.14.0", Title: "locale-toggle extra locales", Action: "pass locales=\"en,pt,es\" or page .Locales to emit extra language buttons; forms use data-amarra-skip so the cookie applies on a full navigation"},
 	{Version: "0.13.3", Title: "Service worker claims /", Action: "in the layout, register(\"/static/js/sw.js\", { scope: \"/\" }); without it the worker stays scoped to /static/js/ and offline.html never intercepts navigations. amarra-cais pwa refreshes amarra.js (Live named-target outerHTML)"},
 	{Version: "0.13.3", Title: "g stream chat List/Show maps", Action: "regenerate g stream chat, or pass amarraData maps from List/Show so the layout can read .CSPNonce"},
 	{Version: "0.13.2", Title: "Validate rejects invalid explicit env", Action: "fix MAX_BODY_BYTES / PORT / APP_URL / TRUSTED_PROXIES / CSP extras if boot now fails; unset variables still keep their defaults"},
