@@ -69,7 +69,7 @@ func TestDoctor_ProductionSkipsWhenDevelopment(t *testing.T) {
 	}
 }
 
-func TestDoctor_ProductionOKWhenConfigured(t *testing.T) {
+func TestDoctor_ProductionWarnsMissingPORT(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	dir := scaffoldDoctorApp(t)
 
@@ -78,10 +78,24 @@ func TestDoctor_ProductionOKWhenConfigured(t *testing.T) {
 	}
 
 	out := runDoctorOutput(t, dir)
-	if strings.Contains(out, "[warn] ADMIN_TOKEN") || strings.Contains(out, "[warn] APP_URL") {
+	if !strings.Contains(out, "[warn] PORT") {
+		t.Errorf("expected PORT warning, got:\n%s", out)
+	}
+}
+
+func TestDoctor_ProductionOKWhenConfigured(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	dir := scaffoldDoctorApp(t)
+
+	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte("ENV=production\nPORT=:8080\nADMIN_TOKEN=secret\nAPP_URL=https://example.com\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out := runDoctorOutput(t, dir)
+	if strings.Contains(out, "[warn] ADMIN_TOKEN") || strings.Contains(out, "[warn] APP_URL") || strings.Contains(out, "[warn] PORT") {
 		t.Errorf("unexpected production warnings when configured, got:\n%s", out)
 	}
-	if !strings.Contains(out, "[ok] ADMIN_TOKEN") || !strings.Contains(out, "[ok] APP_URL") {
+	if !strings.Contains(out, "[ok] ADMIN_TOKEN") || !strings.Contains(out, "[ok] APP_URL") || !strings.Contains(out, "[ok] PORT") {
 		t.Errorf("expected production checks to pass, got:\n%s", out)
 	}
 }
