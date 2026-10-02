@@ -51,7 +51,7 @@ func expandCall(call componentCall, components map[string]string) (string, error
 		}
 		b.WriteString(assign)
 	}
-	b.WriteString(rewriteComponentBody(body, attrs, call.Inner))
+	b.WriteString(applyPassthroughAttrs(rewriteComponentBody(body, attrs, call.Inner), body, call.Attrs))
 	b.WriteString("{{ end }}")
 	return b.String(), nil
 }
