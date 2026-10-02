@@ -9,10 +9,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 ### Added
 
 - CI pins the docs-site kit and hook tables to `pkg/amarra/view/components/` stems and `register()` names in `hook.mjs`; drift names the file, the extra or missing item, and the fix (#295).
+- Playwright suite against a freshly generated scaffold covers Drive history, 422 focus, login shell swap, native dialog, Live after morph, Stream reconnect, and production service-worker cache (`make e2e`, artifacts on failure) (#294).
 
 ### Fixed
 
 - README kit `<.form>` example no longer duplicates `csrfField`; the kit already injects `csrf_token` from `$.CSRFToken` (#293).
+- `g stream chat` patches `"time"` into `internal/store/store.go` so `time.Parse` in the conversation methods compiles.
+- `g stream chat` List/Show pass `amarraData` maps so the layout can read `.CSPNonce` and `.CSRFToken`.
+- Live morph of a named target uses `outerHTML`, so `g live counter` can replace `#count` without Idiomorph inserting the span into itself.
+- Service worker registers with `scope: "/"` and `sw.js` sends `Service-Worker-Allowed: /`, so HTML navigations (offline.html) are in scope (#294).
 
 ## [0.13.2] - 2026-10-01
 

@@ -261,10 +261,11 @@ Shipped kit (override in `web/templates/components/`): `form`, `input`, `passwor
 
 **Stream HTTP:** `stream.WriteHTTP(w, stream.Op{Kind: "append", Target: "list", HTML: row})` with `Content-Type: text/vnd.amarra-stream` applies ops instead of morphing `#amarra-main`.
 
-**Frontend TDD** — framework JS only:
+**Frontend TDD** — framework JS unit tests plus a small Playwright suite against a generated scaffold (#294):
 
 ```bash
 npm run js:test   # pkg/cais/js/**/*.test.mjs + pkg/amarra/js/**/*.test.mjs
+make e2e          # scripts/e2e-scaffold.sh: amarra-cais new + Drive/login/dialog/live/stream/SW
 ```
 
 ## New page (scaffolded app)
@@ -661,6 +662,7 @@ go test ./internal/cli/... -count=1
 make test-v         # TDD: verbose Go tests
 make test           # Go validation with -race (agent default for backend)
 make js-test        # pkg/cais/js + pkg/amarra/js unit tests
+make e2e            # Playwright against a generated scaffold (#294)
 make lint           # golangci-lint
 make format         # prettier --write
 make ci             # test + js-test + lint + format-check (full gate)
