@@ -62,17 +62,23 @@ func Load() Config {
 		Locale: "en",
 	}
 
-	if v := os.Getenv("PORT"); v != "" {
-		cfg.Port = v
-		if _, _, err := parseListenPort(strings.TrimSpace(v)); err != nil {
-			cfg.noteInvalidEnv("PORT", v, "not a listen address; use :8080 or 127.0.0.1:8080")
+	if v := os.Getenv("ENV"); v != "" {
+		cfg.Env = v
+	}
+	if v := strings.TrimSpace(os.Getenv("PORT")); v != "" {
+		host, base, err := parseListenPort(v)
+		if err != nil {
+			cfg.Port = v
+			cfg.noteInvalidEnv("PORT", v, "not a listen address; use :8080, 8080, or 127.0.0.1:8080")
+		} else {
+			cfg.Port = formatListenAddr(host, base)
 		}
+	} else if cfg.Env == "production" {
+		// Shared hosts already bind :8080. Fail Validate instead of colliding (#303).
+		cfg.Port = ""
 	}
 	if v := os.Getenv("DB_PATH"); v != "" {
 		cfg.DBPath = v
-	}
-	if v := os.Getenv("ENV"); v != "" {
-		cfg.Env = v
 	}
 	if v := os.Getenv("APP_URL"); v != "" {
 		cfg.AppURL = v
@@ -156,6 +162,9 @@ func (c Config) LogJSON() bool {
 func (c Config) Validate() error {
 	if err := c.envFaultsError(); err != nil {
 		return err
+	}
+	if c.Env == "production" && strings.TrimSpace(c.Port) == "" {
+		return fmt.Errorf("PORT is required when ENV=production; set PORT=:8080 or PORT=8080")
 	}
 	if c.Env == "production" && c.AdminToken == "" {
 		return fmt.Errorf("ADMIN_TOKEN is required when ENV=production")
