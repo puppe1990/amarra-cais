@@ -55,6 +55,14 @@ func portStrictEnabled() bool {
 }
 
 func parseListenPort(port string) (host string, base int, err error) {
+	port = strings.TrimSpace(port)
+	// 12-factor / PaaS inject PORT=4096. Go listen addresses are :4096 (#303).
+	if n, convErr := strconv.Atoi(port); convErr == nil {
+		if n < 1 || n > 65535 {
+			return "", 0, fmt.Errorf("invalid port %q", port)
+		}
+		return "", n, nil
+	}
 	if strings.HasPrefix(port, ":") {
 		base, err = strconv.Atoi(port[1:])
 		if err != nil {

@@ -9,18 +9,18 @@ Configuration is read once at boot by `cais.Load()`, which also applies a local 
 
 ## Environment variables
 
-| Variable          | Purpose                                                                                                                | Default                    |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| `ENV`             | Environment: `development` or `production`. Drives `CookieSecure()`, HSTS and dev tooling.                             | `development`              |
-| `PORT`            | Listen address. `cais.ResolvePort` shifts to the next free port in development.                                        | `:8080`                    |
-| `APP_URL`         | Absolute base URL for OG/Twitter image URLs. Required in production.                                                   | —                          |
-| `ADMIN_TOKEN`     | Bearer token for `middleware.AdminAuth`. Required in production.                                                       | —                          |
-| `TRUSTED_PROXIES` | Comma-separated proxy IPs/CIDRs; `X-Forwarded-For` is trusted only from these.                                         | —                          |
-| `MAX_BODY_BYTES`  | Total request-body cap before multipart parsing (`ParseMultipartForm`), in bytes. Must be a positive integer when set. | `33554432` (32 MiB)        |
-| `LOCALE`          | UI language for `pkg/cais/i18n` (`en` or `pt`).                                                                        | `en`                       |
-| `STATIC_DIR`      | Static files directory when the process `WorkingDirectory` is not the app root.                                        | `web/static`               |
-| `TEMPLATES_DIR`   | Templates directory, same override rule.                                                                               | `web/templates`            |
-| `LOG_FORMAT`      | Request/SQL log format: `json` or `text`.                                                                              | JSON in dev and production |
+| Variable          | Purpose                                                                                                                  | Default                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| `ENV`             | Environment: `development` or `production`. Drives `CookieSecure()`, HSTS and dev tooling.                               | `development`              |
+| `PORT`            | Listen address (`:8080`, `8080`, or `127.0.0.1:8080`). Required in production. `cais.ResolvePort` shifts in development. | `:8080` (development)      |
+| `APP_URL`         | Absolute base URL for OG/Twitter image URLs. Required in production.                                                     | —                          |
+| `ADMIN_TOKEN`     | Bearer token for `middleware.AdminAuth`. Required in production.                                                         | —                          |
+| `TRUSTED_PROXIES` | Comma-separated proxy IPs/CIDRs; `X-Forwarded-For` is trusted only from these.                                           | —                          |
+| `MAX_BODY_BYTES`  | Total request-body cap before multipart parsing (`ParseMultipartForm`), in bytes. Must be a positive integer when set.   | `33554432` (32 MiB)        |
+| `LOCALE`          | UI language for `pkg/cais/i18n` (`en` or `pt`).                                                                          | `en`                       |
+| `STATIC_DIR`      | Static files directory when the process `WorkingDirectory` is not the app root.                                          | `web/static`               |
+| `TEMPLATES_DIR`   | Templates directory, same override rule.                                                                                 | `web/templates`            |
+| `LOG_FORMAT`      | Request/SQL log format: `json` or `text`.                                                                                | JSON in dev and production |
 
 :::note
 Additional overrides exist for the security headers: `DB_PATH`, `PERMISSIONS_POLICY`, and `CSP_STYLE_SRC` / `CSP_CONNECT_SRC` / `CSP_MEDIA_SRC` / `CSP_IMG_SRC` / `CSP_FONT_SRC` / `CSP_SCRIPT_SRC` (a hosted webfont needs both `CSP_FONT_SRC` and `CSP_STYLE_SRC`). Defaults deny the camera (`camera=()`) and keep `img-src` at `'self' data:`. `script-src` is `'self'` plus a per-request nonce; set `CSP_SCRIPT_SRC='unsafe-inline'` to restore unsigned inline scripts. A scanner or catalog app opts in with `PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()` and `CSP_IMG_SRC=https://images.example.com`.
@@ -53,11 +53,12 @@ LOCALE=pt
 
 - `ADMIN_TOKEN` — `AdminAuth` rejects every request in production when the token is empty.
 - `APP_URL` — required so OG/Twitter image URLs are absolute. When set in any env, it must be an absolute `http` or `https` URL.
+- `PORT` — required so the process does not bind `:8080` on a shared host. A bare number such as `4096` is treated as `:4096`.
 
 It also fails when an explicit env value cannot be applied:
 
 - `MAX_BODY_BYTES` — must be a positive integer (unset keeps 32 MiB).
-- `PORT` — must be a listen address such as `:8080` or `127.0.0.1:8080`.
+- `PORT` — must be a TCP port `1–65535`, `:8080`, or `127.0.0.1:8080`.
 - `TRUSTED_PROXIES` — each non-empty token must be an IP or CIDR. Blank tokens are ignored.
 - `CSP_*` extras — a line break in the value is rejected (header injection).
 

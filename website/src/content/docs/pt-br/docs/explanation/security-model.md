@@ -38,7 +38,7 @@ O limiter resolve o endereço do cliente com `middleware.ClientIP(r, cfg)`. Atr�
 
 ## Production gates
 
-`cfg.Validate()` falha o boot quando `ENV=production` e valores obrigatórios estão faltando. Em particular, `ADMIN_TOKEN` precisa estar definido para as APIs de admin protegidas por bearer, e `APP_URL` é obrigatório (ele também é usado para URLs absolutas de Open Graph). Valores explícitos de env que não podem ser aplicados (`MAX_BODY_BYTES`, `PORT`, forma de `APP_URL`, `TRUSTED_PROXIES`, extras CSP) também falham o Validate. Configuração faltando para o processo.
+`cfg.Validate()` falha o boot quando `ENV=production` e valores obrigatórios estão faltando. Em particular, `ADMIN_TOKEN` precisa estar definido para as APIs de admin protegidas por bearer, `APP_URL` é obrigatório (ele também é usado para URLs absolutas de Open Graph), e `PORT` é obrigatório para o processo não escutar `:8080` num host compartilhado (`PORT=4096` vira `:4096`). Valores explícitos de env que não podem ser aplicados (`MAX_BODY_BYTES`, forma de `PORT`, forma de `APP_URL`, `TRUSTED_PROXIES`, extras CSP) também falham o Validate. Configuração faltando para o processo.
 
 :::caution
 O rate limiter em memória e a checagem de CSRF por double-submit assumem ambos um único processo do app. Se você rodar mais de uma réplica, mova o rate limiting para um store compartilhado e reveja como o token de CSRF é validado.

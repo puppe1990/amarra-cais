@@ -117,6 +117,42 @@ func TestPortBusy_falseWhenFree(t *testing.T) {
 	}
 }
 
+func TestParseListenPort_bareTCPPort(t *testing.T) {
+	host, base, err := parseListenPort("4096")
+	if err != nil {
+		t.Fatalf("parseListenPort(4096): %v", err)
+	}
+	if host != "" || base != 4096 {
+		t.Fatalf("parseListenPort(4096) = %q, %d; want \"\", 4096", host, base)
+	}
+}
+
+func TestParseListenPort_colonAndHostPort(t *testing.T) {
+	host, base, err := parseListenPort(":8080")
+	if err != nil {
+		t.Fatalf(":8080: %v", err)
+	}
+	if host != "" || base != 8080 {
+		t.Fatalf(":8080 = %q, %d; want \"\", 8080", host, base)
+	}
+
+	host, base, err = parseListenPort("127.0.0.1:8080")
+	if err != nil {
+		t.Fatalf("127.0.0.1:8080: %v", err)
+	}
+	if host != "127.0.0.1" || base != 8080 {
+		t.Fatalf("127.0.0.1:8080 = %q, %d; want 127.0.0.1, 8080", host, base)
+	}
+}
+
+func TestParseListenPort_rejectsOutOfRangeAndJunk(t *testing.T) {
+	for _, raw := range []string{"0", "65536", "not-a-port", ""} {
+		if _, _, err := parseListenPort(raw); err == nil {
+			t.Errorf("parseListenPort(%q) succeeded, want error", raw)
+		}
+	}
+}
+
 func TestResolvePort_UnchangedWhenFree(t *testing.T) {
 	resolved, shifted, err := ResolvePort(":0", "development")
 	if err != nil {

@@ -9,18 +9,18 @@ A configuração é lida uma vez no boot por `cais.Load()`, que também aplica u
 
 ## Variáveis de ambiente
 
-| Variável          | Finalidade                                                                                                                                  | Padrão                 |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `ENV`             | Ambiente: `development` ou `production`. Controla `CookieSecure()`, HSTS e as ferramentas de dev.                                           | `development`          |
-| `PORT`            | Endereço de escuta. `cais.ResolvePort` passa para a próxima porta livre em desenvolvimento.                                                 | `:8080`                |
-| `APP_URL`         | URL base absoluta para as URLs de imagem de OG/Twitter. Obrigatória em produção.                                                            | —                      |
-| `ADMIN_TOKEN`     | Bearer token para `middleware.AdminAuth`. Obrigatório em produção.                                                                          | —                      |
-| `TRUSTED_PROXIES` | IPs/CIDRs de proxy separados por vírgula; `X-Forwarded-For` só é confiável vindo destes.                                                    | —                      |
-| `MAX_BODY_BYTES`  | Teto total do corpo da request antes do parse multipart (`ParseMultipartForm`), em bytes. Quando definida, precisa ser um inteiro positivo. | `33554432` (32 MiB)    |
-| `LOCALE`          | Idioma da UI para `pkg/cais/i18n` (`en` ou `pt`).                                                                                           | `en`                   |
-| `STATIC_DIR`      | Diretório de arquivos estáticos quando o `WorkingDirectory` do processo não é a raiz do app.                                                | `web/static`           |
-| `TEMPLATES_DIR`   | Diretório de templates, com a mesma regra de override.                                                                                      | `web/templates`        |
-| `LOG_FORMAT`      | Formato do log de requisições/SQL: `json` ou `text`.                                                                                        | JSON em dev e produção |
+| Variável          | Finalidade                                                                                                                                  | Padrão                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `ENV`             | Ambiente: `development` ou `production`. Controla `CookieSecure()`, HSTS e as ferramentas de dev.                                           | `development`             |
+| `PORT`            | Endereço de escuta (`:8080`, `8080` ou `127.0.0.1:8080`). Obrigatório em produção. `cais.ResolvePort` troca de porta em desenvolvimento.    | `:8080` (desenvolvimento) |
+| `APP_URL`         | URL base absoluta para as URLs de imagem de OG/Twitter. Obrigatória em produção.                                                            | —                         |
+| `ADMIN_TOKEN`     | Bearer token para `middleware.AdminAuth`. Obrigatório em produção.                                                                          | —                         |
+| `TRUSTED_PROXIES` | IPs/CIDRs de proxy separados por vírgula; `X-Forwarded-For` só é confiável vindo destes.                                                    | —                         |
+| `MAX_BODY_BYTES`  | Teto total do corpo da request antes do parse multipart (`ParseMultipartForm`), em bytes. Quando definida, precisa ser um inteiro positivo. | `33554432` (32 MiB)       |
+| `LOCALE`          | Idioma da UI para `pkg/cais/i18n` (`en` ou `pt`).                                                                                           | `en`                      |
+| `STATIC_DIR`      | Diretório de arquivos estáticos quando o `WorkingDirectory` do processo não é a raiz do app.                                                | `web/static`              |
+| `TEMPLATES_DIR`   | Diretório de templates, com a mesma regra de override.                                                                                      | `web/templates`           |
+| `LOG_FORMAT`      | Formato do log de requisições/SQL: `json` ou `text`.                                                                                        | JSON em dev e produção    |
 
 :::note
 Existem overrides adicionais para os security headers: `DB_PATH`, `PERMISSIONS_POLICY` e `CSP_STYLE_SRC` / `CSP_CONNECT_SRC` / `CSP_MEDIA_SRC` / `CSP_IMG_SRC` / `CSP_FONT_SRC` / `CSP_SCRIPT_SRC` (uma webfont hospedada precisa tanto de `CSP_FONT_SRC` quanto de `CSP_STYLE_SRC`). O default nega a câmera (`camera=()`) e mantém `img-src` em `'self' data:`. `script-src` é `'self'` mais um nonce por requisição; `CSP_SCRIPT_SRC='unsafe-inline'` restaura inline sem nonce. Um app com scanner ou catálogo libera com `PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()` e `CSP_IMG_SRC=https://images.example.com`.
@@ -53,11 +53,12 @@ LOCALE=pt
 
 - `ADMIN_TOKEN` — o `AdminAuth` rejeita toda requisição em produção quando o token está vazio.
 - `APP_URL` — obrigatória para que as URLs de imagem de OG/Twitter sejam absolutas. Quando definida em qualquer env, precisa ser uma URL absoluta `http` ou `https`.
+- `PORT` — obrigatório para o processo não escutar `:8080` num host compartilhado. Um número nu como `4096` vira `:4096`.
 
 Também falha quando um valor explícito de env não pode ser aplicado:
 
 - `MAX_BODY_BYTES` — precisa ser um inteiro positivo (ausente mantém 32 MiB).
-- `PORT` — precisa ser um endereço de escuta como `:8080` ou `127.0.0.1:8080`.
+- `PORT` — precisa ser uma porta TCP `1–65535`, `:8080` ou `127.0.0.1:8080`.
 - `TRUSTED_PROXIES` — cada token não vazio precisa ser IP ou CIDR. Tokens em branco são ignorados.
 - extras `CSP_*` — uma quebra de linha no valor é rejeitada (injeção de header).
 
