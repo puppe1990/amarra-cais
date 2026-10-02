@@ -96,6 +96,37 @@ func TestCatalog_Funcs_htmlLangAndOgLocale(t *testing.T) {
 	}
 }
 
+func TestCatalog_Funcs_localeTags(t *testing.T) {
+	c := NewCatalog("en")
+	fn, ok := c.Funcs()["localeTags"].(func(any) []string)
+	if !ok {
+		t.Fatal("localeTags func missing")
+	}
+	if got := fn(nil); len(got) != 2 || got[0] != "en" || got[1] != "pt" {
+		t.Errorf("localeTags(nil) = %v, want [en pt]", got)
+	}
+	if got := fn("en,es,zh"); len(got) != 3 || got[2] != "zh" {
+		t.Errorf("localeTags(en,es,zh) = %v", got)
+	}
+	if got := fn([]string{"pt-BR", "en"}); len(got) != 2 || got[0] != "pt" || got[1] != "en" {
+		t.Errorf("localeTags([]string) = %v", got)
+	}
+}
+
+func TestCatalog_Funcs_localeLabel(t *testing.T) {
+	c := NewCatalog("en")
+	fn, ok := c.Funcs()["localeLabel"].(func(any) string)
+	if !ok {
+		t.Fatal("localeLabel func missing")
+	}
+	if got := fn("es"); got != "ES" {
+		t.Errorf("localeLabel(es) = %q", got)
+	}
+	if got := fn("pt-BR"); got != "PT" {
+		t.Errorf("localeLabel(pt-BR) = %q", got)
+	}
+}
+
 func TestCatalog_Funcs_localeBase(t *testing.T) {
 	c := NewCatalog("en")
 	fn, ok := c.Funcs()["localeBase"].(func(any) string)

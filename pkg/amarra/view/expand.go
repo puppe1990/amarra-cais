@@ -77,7 +77,7 @@ var optionalKitTagAttrs = map[string][]string{
 	"modal":         {"id"},
 	"collapse":      {"open", "name"},
 	"tab":           {"name", "open"},
-	"locale-toggle": {"action"},
+	"locale-toggle": {"action", "current"},
 	"tooltip":       {"text"},
 }
 
