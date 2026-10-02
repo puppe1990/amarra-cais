@@ -152,6 +152,25 @@ test("applyLiveMessage morphs target id", () => {
   assert.deepEqual(calls, [[target, "<b>1</b>"]]);
 });
 
+// g live counter Rendered.HTML is the #count element; innerHTML morph throws in Idiomorph (#294).
+test("applyLiveMessage morphs a named target as outerHTML", () => {
+  const calls = [];
+  const target = { id: "count" };
+  const root = {
+    querySelector(sel) {
+      return sel === "#count" ? target : null;
+    },
+  };
+  applyLiveMessage(
+    { type: "morph", html: '<span id="count">1</span>', target: "count" },
+    root,
+    (el, html, _fn, opts) => {
+      calls.push([el, html, opts]);
+    }
+  );
+  assert.deepEqual(calls, [[target, '<span id="count">1</span>', { morphStyle: "outerHTML" }]]);
+});
+
 // #113: a live page reached through Drive navigation never joined — start only
 // scanned [amarra-live] at boot. A morph must connect new roots and drop the
 // sockets of replaced ones.
