@@ -773,12 +773,17 @@
   });
 
   // pkg/amarra/js/morph.mjs
-  function morph(el, html, morphFn) {
+  function morph(el, html, morphFn, opts = {}) {
     if (!el) return;
     if (typeof morphFn === "function") return morphFn(el, html);
+    const style = opts.morphStyle || "innerHTML";
     const lib = globalThis.Idiomorph;
     if (lib && typeof lib.morph === "function") {
-      return lib.morph(el, html, { morphStyle: "innerHTML" });
+      return lib.morph(el, html, { morphStyle: style });
+    }
+    if (style === "outerHTML" && "outerHTML" in el) {
+      el.outerHTML = html ?? "";
+      return;
     }
     if ("innerHTML" in el) el.innerHTML = html ?? "";
   }
@@ -2300,7 +2305,7 @@ ${lines.join("\n")}
     if (html !== "") {
       if (msg.target) {
         const el = root.querySelector?.(`#${cssEscape(msg.target)}`) || root;
-        morphFn(el, html);
+        morphFn(el, html, void 0, { morphStyle: "outerHTML" });
       } else {
         morphFn(root, html);
       }

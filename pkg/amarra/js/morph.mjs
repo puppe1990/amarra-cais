@@ -3,12 +3,17 @@
  * When Idiomorph is absent (node tests / missing vendor), children are replaced
  * via innerHTML so morph(el, html) still has a defined contract.
  */
-export function morph(el, html, morphFn) {
+export function morph(el, html, morphFn, opts = {}) {
   if (!el) return;
   if (typeof morphFn === "function") return morphFn(el, html);
+  const style = opts.morphStyle || "innerHTML";
   const lib = globalThis.Idiomorph;
   if (lib && typeof lib.morph === "function") {
-    return lib.morph(el, html, { morphStyle: "innerHTML" });
+    return lib.morph(el, html, { morphStyle: style });
+  }
+  if (style === "outerHTML" && "outerHTML" in el) {
+    el.outerHTML = html ?? "";
+    return;
   }
   if ("innerHTML" in el) el.innerHTML = html ?? "";
 }
