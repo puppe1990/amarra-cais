@@ -6,6 +6,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+### Fixed
+
+- Kit `<.password>` overlays the eye toggle inside the field (`cais-password-wrap` / `cais-password-toggle`), matching `fieldPassword` (#309).
+
 ## [0.14.0] - 2026-10-02
 
 ### Added

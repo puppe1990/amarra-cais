@@ -164,7 +164,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-password-toggle {
-    @apply absolute right-0 top-0 flex h-full items-center px-3 text-slate-400 hover:text-slate-600;
+    @apply absolute right-0 top-0 flex h-full items-center px-3 text-foam/70 hover:text-foam;
     border: none;
     background: transparent;
     cursor: pointer;
@@ -176,7 +176,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .relative > [data-cais-password-toggle] {
-    @apply absolute right-0 top-0 flex h-full items-center px-3 text-slate-400 hover:text-slate-600;
+    @apply absolute right-0 top-0 flex h-full items-center px-3 text-foam/70 hover:text-foam;
     border: none;
     background: transparent;
     cursor: pointer;
