@@ -45,7 +45,7 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 		checkQualityTooling(dir),
 	)
 	if isProduction(dir) {
-		checks = append(checks, checkAdminToken(dir), checkAppURL(dir))
+		checks = append(checks, checkPort(dir), checkAdminToken(dir), checkAppURL(dir))
 		if hasAuthHandler(dir) {
 			checks = append(checks, checkSMTP(dir))
 		}

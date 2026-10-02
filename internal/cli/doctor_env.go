@@ -23,26 +23,26 @@ func resolveEnvVar(dir, key string) string {
 }
 
 func checkAdminToken(dir string) doctorCheck {
-	if resolveEnvVar(dir, "ADMIN_TOKEN") != "" {
-		return doctorCheck{Name: "ADMIN_TOKEN", OK: true}
-	}
-	return doctorCheck{
-		Name:     "ADMIN_TOKEN",
-		Optional: true,
-		Detail:   "required when ENV=production",
-		FixHint:  "set ADMIN_TOKEN in .env",
-	}
+	return checkRequiredProductionEnv(dir, "ADMIN_TOKEN")
 }
 
 func checkAppURL(dir string) doctorCheck {
-	if resolveEnvVar(dir, "APP_URL") != "" {
-		return doctorCheck{Name: "APP_URL", OK: true}
+	return checkRequiredProductionEnv(dir, "APP_URL")
+}
+
+func checkPort(dir string) doctorCheck {
+	return checkRequiredProductionEnv(dir, "PORT")
+}
+
+func checkRequiredProductionEnv(dir, key string) doctorCheck {
+	if resolveEnvVar(dir, key) != "" {
+		return doctorCheck{Name: key, OK: true}
 	}
 	return doctorCheck{
-		Name:     "APP_URL",
+		Name:     key,
 		Optional: true,
 		Detail:   "required when ENV=production",
-		FixHint:  "set APP_URL in .env",
+		FixHint:  "set " + key + " in .env",
 	}
 }
 
