@@ -40,11 +40,15 @@ func TestScaffoldStreamChat_CreatesFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(storeBody), "ListConversations") {
+	store := string(storeBody)
+	if !strings.Contains(store, "ListConversations") {
 		t.Error("store.go missing ListConversations")
 	}
-	if !strings.Contains(string(storeBody), "InsertMessage") {
+	if !strings.Contains(store, "InsertMessage") {
 		t.Error("store.go missing InsertMessage")
+	}
+	if !strings.Contains(store, `"time"`) {
+		t.Error(`store.go missing "time" import; stream methods call time.Parse`)
 	}
 
 	routesBody, err := os.ReadFile(filepath.Join(appDir, "internal/app/routes.go"))
@@ -73,10 +77,14 @@ func TestScaffoldStreamChat_CreatesFiles(t *testing.T) {
 		`stream.WriteOp`,
 		`chat.MessageBubble`,
 		`view.Write`,
+		`amarraData(`,
 	} {
 		if !strings.Contains(handler, want) {
 			t.Errorf("chat.go missing %q", want)
 		}
+	}
+	if strings.Contains(handler, "conversationsPageData{") || strings.Contains(handler, "chatPageData{") {
+		t.Error("chat List/Show Page.Data must be a map via amarraData; structs skip CSPNonce (#287)")
 	}
 	if strings.Contains(handler, "deps.Renderer") || strings.Contains(handler, "*cais.Renderer") {
 		t.Error("chat handler should use view.Renderer, not cais.Renderer")
