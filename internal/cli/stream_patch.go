@@ -46,6 +46,16 @@ func patchStoreForStreamChat(dir string, data scaffoldData, dryRun bool) error {
 		)
 	}
 
+	// streamChatStoreMethods uses time.Parse; neither full nor minimal store imports time.
+	if !strings.Contains(content, `"time"`) {
+		content = strings.Replace(content,
+			`"path/filepath"`,
+			`"path/filepath"
+	"time"`,
+			1,
+		)
+	}
+
 	return updateScaffoldFile(path, []byte(content), "internal/store/store.go", dryRun)
 }
 
