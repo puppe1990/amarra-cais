@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 ## Unreleased
 
+## [0.13.3] - 2026-10-02
+
 ### Added
 
 - CI pins the docs-site kit and hook tables to `pkg/amarra/view/components/` stems and `register()` names in `hook.mjs`; drift names the file, the extra or missing item, and the fix (#295).
