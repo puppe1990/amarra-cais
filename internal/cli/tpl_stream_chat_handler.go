@@ -33,19 +33,6 @@ func NewChatHandler(views *view.Renderer, s store.Store, site meta.Site, catalog
 	return &ChatHandler{views: views, store: s, site: site, catalog: catalog, cfg: cfg}
 }
 
-type conversationsPageData struct {
-	meta.Site
-	Conversations []models.Conversation
-}
-
-type chatPageData struct {
-	meta.Site
-	Conversation models.Conversation
-	Messages     []models.Message
-	StreamURL    string
-	MessagesURL  string
-}
-
 func messageRole(role string) chat.Role {
 	if role == "user" {
 		return chat.RoleUser
@@ -81,10 +68,9 @@ func (h *ChatHandler) List(w http.ResponseWriter, r *http.Request) {
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "conversations",
-		Data: conversationsPageData{
-			Site:          meta.ForRequest(h.site, r),
-			Conversations: convs,
-		},
+		Data: amarraData(r, h.site, map[string]any{
+			"Conversations": convs,
+		}),
 	}, h.cfg)
 }
 
@@ -112,13 +98,12 @@ func (h *ChatHandler) Show(w http.ResponseWriter, r *http.Request, id int64) {
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "chat",
-		Data: chatPageData{
-			Site:         meta.ForRequest(h.site, r),
-			Conversation: conv,
-			Messages:     msgs,
-			StreamURL:    fmt.Sprintf("/chat/%d/stream", id),
-			MessagesURL:  fmt.Sprintf("/chat/%d/messages", id),
-		},
+		Data: amarraData(r, h.site, map[string]any{
+			"Conversation": conv,
+			"Messages":     msgs,
+			"StreamURL":    fmt.Sprintf("/chat/%d/stream", id),
+			"MessagesURL":  fmt.Sprintf("/chat/%d/messages", id),
+		}),
 	}, h.cfg)
 }
 
