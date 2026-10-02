@@ -74,7 +74,7 @@ func RegisterScriptForEnv(env string) string {
 	}
 	return `<script>
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/static/js/sw.js");
+        navigator.serviceWorker.register("/static/js/sw.js", { scope: "/" });
       }
     </script>`
 }
