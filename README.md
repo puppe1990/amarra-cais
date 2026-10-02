@@ -130,7 +130,6 @@ Pages live in `web/templates/pages/*.html` and define a `content` block. Kit tag
 {{ define "content" }}
 <h1>{{ .Title }}</h1>
 <.form action="/contact" method="post">
-  {{ csrfField .CSRFToken }}
   <.input name="email" type="email" label="Email" value="{{ .Email }}" error="{{ fieldError .Errors "email" }}" />
   <.button type="submit">Send</.button>
 </.form>
