@@ -5,6 +5,25 @@ import (
 	"testing"
 )
 
+func TestTplInputCSS_passwordToggleOverlaysInput(t *testing.T) {
+	for _, want := range []string{
+		".cais-password-wrap {",
+		"@apply relative",
+		"padding-right: 2.5rem",
+		".cais-password-toggle {",
+		"@apply absolute right-0 top-0",
+		"border: none",
+		"text-foam/70",
+	} {
+		if !strings.Contains(tplInputCSS, want) {
+			t.Errorf("input.css missing password overlay %q", want)
+		}
+	}
+	if strings.Contains(tplInputCSS, "text-slate-400 hover:text-slate-600") {
+		t.Error("password toggle still uses slate instead of foam")
+	}
+}
+
 func TestTplInputCSS_documentsBaseSelectSupports(t *testing.T) {
 	for _, want := range []string{
 		"@supports (appearance: base-select)",

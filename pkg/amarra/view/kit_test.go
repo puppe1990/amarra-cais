@@ -163,9 +163,18 @@ func TestKit_passwordRendersInputAndEyeToggle(t *testing.T) {
 		`aria-pressed="false"`,
 		`aria-label="Show password"`,
 		`too short`,
+		`cais-password-wrap`,
+		`cais-password-toggle`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("password kit missing %q in %s", want, body)
+		}
+	}
+	// Overlay inside the field (same contract as fieldPassword / input.css).
+	// flex + border-l-0 drew the eye as a sibling cell next to the input.
+	for _, leak := range []string{"flex items-stretch", "border-l-0"} {
+		if strings.Contains(body, leak) {
+			t.Errorf("password kit still uses sibling-cell layout %q in %s", leak, body)
 		}
 	}
 }
