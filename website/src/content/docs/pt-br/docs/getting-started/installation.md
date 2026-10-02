@@ -15,8 +15,8 @@ sidebar:
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.14.0
-amarra-cais version   # expect 0.14.0
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.14.1
+amarra-cais version   # expect 0.14.1
 ```
 
 O `amarra-cais` é instalado ao lado do `cais` — ele nunca sobrescreve o binário existente. O Cais v0.11.x continua sendo o produto Inertia + Svelte; veja [Cais vs Amarra](/amarra-cais/pt-br/docs/explanation/cais-vs-amarra/).
