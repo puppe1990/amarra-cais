@@ -12,7 +12,7 @@ func buildResourceAdminTest(data scaffoldData) string {
 	formBody := buildAdminTestFormBody(data.Fields)
 	setup, refsLiteral, refVars := adminTestRefSetup(data)
 	readerExpr := "strings.NewReader(fmt.Sprintf(" + strconv.Quote(formBody) + ", " + refVars + "))"
-	return fmt.Sprintf(`package handlers
+	base := fmt.Sprintf(`package handlers
 
 import (
 	"fmt"
@@ -88,6 +88,42 @@ func TestAdmin%sHandler_Delete(t *testing.T) {
 		data.PluralPascal, data.PluralPascal, data.Plural, data.Plural,
 		data.PluralPascal, setup, data.PluralPascal, data.Plural, readerExpr,
 		data.PluralPascal, setup, data.Pascal, data.Pascal, first.Pascal, urlFieldTestExtra(data), refsLiteral,
+		data.PluralPascal, data.Plural,
+	)
+	return base + "\n" + buildResourceAdminFormTests(data)
+}
+
+func buildResourceAdminFormTests(data scaffoldData) string {
+	literal, setup := buildInsertTestLiteral(data.Fields, data.AppDir)
+	return fmt.Sprintf(`func TestAdmin%sHandler_New(t *testing.T) {
+	s := setupTestStore(t)
+	h := NewAdmin%sHandler(setupTestViews(t), s, testSite(), cais.Config{})
+	rr := httptest.NewRecorder()
+	h.New(rr, httptest.NewRequest(http.MethodGet, "/admin/%s/new", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %%d, want %%d: %%s", rr.Code, http.StatusOK, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "name=\"%s\"") {
+		t.Fatalf("new form is missing the %s field: %%s", rr.Body.String())
+	}
+}
+
+func TestAdmin%sHandler_Edit(t *testing.T) {
+	s := setupTestStore(t)
+%s	id, err := s.Insert%s(models.%s{%s})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := NewAdmin%sHandler(setupTestViews(t), s, testSite(), cais.Config{})
+	rr := httptest.NewRecorder()
+	h.Edit(rr, testutil.NewRequest(http.MethodGet, "/admin/%s/1/edit", testutil.PathValue("id", "1")), id)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %%d, want %%d: %%s", rr.Code, http.StatusOK, rr.Body.String())
+	}
+}
+`,
+		data.PluralPascal, data.PluralPascal, data.Plural, data.Fields[0].Name, data.Fields[0].Name,
+		data.PluralPascal, setup, data.Pascal, data.Pascal, literal,
 		data.PluralPascal, data.Plural,
 	)
 }

@@ -24,8 +24,8 @@ func buildResourceAdminHandler(data scaffoldData) string {
 	if hasRefs {
 		formsImport = "\t\"" + frameworkModule + "/pkg/cais/forms\"\n"
 	}
-	newRender := adminFormRender(data, "models."+data.Pascal+"{}", "true", "nil")
-	editRender := adminFormRender(data, "item", "false", "nil")
+	newRender := adminFormRender(data, "models."+data.Pascal+"{}", "true", "validate.FieldErrors{}")
+	editRender := adminFormRender(data, "item", "false", "validate.FieldErrors{}")
 	createErrRender := adminFormRender(data, "item", "true", "errs")
 	updateErrRender := adminFormRender(data, "item", "false", "errs")
 	colsVar := buildAdminIndexColsVar(data)
