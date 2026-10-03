@@ -123,3 +123,35 @@ func TestGenerateResourceSmoke_referencesPublicPaginateCompiles(t *testing.T) {
 		t.Fatalf("go build ./cmd/server failed: %v\n%s", err, out)
 	}
 }
+
+func TestGeneratedResourceAdminNewEditForms(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	caisDir := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
+	t.Setenv("CAIS_REPLACE", caisDir)
+	appDir := filepath.Join(t.TempDir(), "formsmoke")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "formsmoke",
+		ModulePath: "github.com/puppe1990/formsmoke",
+	}, false, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldResource(appDir, "item", resourceOpts{Fields: "title:string"}); err != nil {
+		t.Fatal(err)
+	}
+
+	tidy := exec.Command("go", "mod", "tidy")
+	tidy.Dir = appDir
+	if out, err := tidy.CombinedOutput(); err != nil {
+		t.Fatalf("go mod tidy: %v\n%s", err, out)
+	}
+	tests := exec.Command("go", "test", "./internal/handlers", "-run", "^TestAdminItemsHandler_(New|Edit)$", "-count=1")
+	tests.Dir = appDir
+	tests.Env = append(os.Environ(), "CGO_ENABLED=0")
+	if out, err := tests.CombinedOutput(); err != nil {
+		t.Fatalf("generated New/Edit tests failed: %v\n%s", err, out)
+	}
+}
