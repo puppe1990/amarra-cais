@@ -4,6 +4,12 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] - 2026-10-06
+
+### Added
+
+- `amarra-hook="tour"` builtin: data-attribute spotlight/coachmark walkthrough. Container + `[data-amarra-tour-start]` + N x `[data-amarra-tour-step]` (copy via `data-amarra-tour-title` / `-text`); steps run in DOM order, invisible ones are skipped, and the hook injects the overlay + balloon (Anterior / Próximo → Concluir / pular / `n / total`), repositions on scroll/resize (rAF), drives with `→`/`Enter`, `←`, `Esc`, and returns focus to the start button (#322)
+
 ## [0.15.0] - 2026-10-06
 
 ### Added
