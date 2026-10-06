@@ -40,6 +40,7 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 		checkAir(),
 		checkCSS(dir),
 		checkPalette(dir),
+		checkInlineScripts(dir),
 		checkBrandAssets(dir),
 		checkDeployLayout(dir),
 		checkQualityTooling(dir),
