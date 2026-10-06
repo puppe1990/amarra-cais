@@ -11,7 +11,7 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 )
 
-const tplComponent = `<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+const tplComponent = `<div class="rounded-xl border border-foam/10 bg-ink/70 p-4 shadow-sm">
   {{"{{"}} .Inner {{"}}"}}
 </div>
 `

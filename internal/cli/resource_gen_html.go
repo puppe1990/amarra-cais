@@ -32,7 +32,7 @@ func buildAdminFormHTML(data scaffoldData) string {
 	return fmt.Sprintf(`{{ define "title" }}{{ if .IsNew }}New %s{{ else }}Edit %s{{ end }}{{ end }} {{ define "content" }}
 <div class="max-w-md mx-auto">
   {{ linkTo "/admin/%s" "← Back" }}
-  <h1 class="text-3xl font-bold text-slate-900 mb-6">{{ if .IsNew }}New %s{{ else }}Edit %s{{ end }}</h1>
+  <h1 class="text-3xl font-bold text-foam mb-6">{{ if .IsNew }}New %s{{ else }}Edit %s{{ end }}</h1>
   {{ $action := "/admin/%s" }}{{ if not .IsNew }}{{ $action = printf "/admin/%s/%%d" .Item.ID }}{{ end }}
   <.form action="{{ $action }}" method="post">
     {{ if not .IsNew }}<input type="hidden" name="_method" value="put" />{{ end }}
@@ -165,10 +165,10 @@ func buildAdminIndexHTML(data scaffoldData) string {
 	return fmt.Sprintf(`{{ define "title" }}Admin — %s{{ end }} {{ define "content" }}
 <div class="max-w-3xl mx-auto">
   <div class="flex items-center justify-between mb-8">
-    <h1 class="text-3xl font-bold text-slate-900">%s</h1>
+    <h1 class="text-3xl font-bold text-foam">%s</h1>
     {{ linkTo "/admin/%s/new" "+ New" }}
   </div>
-  <amarra-frame id="admin-%s" class="block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+  <amarra-frame id="admin-%s" class="block bg-ink/70 rounded-2xl border border-foam/10 shadow-sm overflow-hidden">
 %s
   </amarra-frame>
 </div>
@@ -181,23 +181,23 @@ func buildAdminShowHTML(data scaffoldData) string {
 	for _, f := range data.Fields {
 		if f.GoType == "bool" {
 			fmt.Fprintf(&fields, `    <div>
-      <dt class="text-sm font-medium text-slate-500">%s</dt>
-      <dd class="mt-1 text-slate-900">{{ if .Item.%s }}Yes{{ else }}No{{ end }}</dd>
+      <dt class="text-sm font-medium text-foam/60">%s</dt>
+      <dd class="mt-1 text-foam">{{ if .Item.%s }}Yes{{ else }}No{{ end }}</dd>
     </div>
 `, f.Pascal, f.Pascal)
 			continue
 		}
 		fmt.Fprintf(&fields, `    <div>
-      <dt class="text-sm font-medium text-slate-500">%s</dt>
-      <dd class="mt-1 text-slate-900">{{ .Item.%s }}</dd>
+      <dt class="text-sm font-medium text-foam/60">%s</dt>
+      <dd class="mt-1 text-foam">{{ .Item.%s }}</dd>
     </div>
 `, f.Pascal, f.Pascal)
 	}
 	return fmt.Sprintf(`{{ define "title" }}%s{{ end }} {{ define "content" }}
 <div class="max-w-md mx-auto">
   {{ linkTo "/admin/%s" "← Back" }}
-  <h1 class="text-3xl font-bold text-slate-900 mb-6">%s</h1>
-  <dl class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+  <h1 class="text-3xl font-bold text-foam mb-6">%s</h1>
+  <dl class="bg-ink/70 rounded-2xl border border-foam/10 p-6 shadow-sm space-y-4">
 %s  </dl>
   <div class="mt-6 flex items-center gap-3">
     <a href="/admin/%s/{{ .Item.ID }}/edit" class="inline-flex items-center px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] border border-copper/50 text-copper hover:bg-copper hover:text-ink transition-colors">Edit</a>
@@ -211,7 +211,7 @@ func buildAdminShowHTML(data scaffoldData) string {
 
 func publicBoolBadge(f FieldDef) string {
 	// #261: public list is read-only; mutating the bool belongs on the admin form.
-	return fmt.Sprintf(`<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-green-50 text-green-700{{ else }}bg-slate-100 text-slate-600{{ end }}">{{ if .%s }}%s{{ else }}No{{ end }}</span>`, f.Pascal, f.Pascal, f.Pascal)
+	return fmt.Sprintf(`<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-emerald-500/15 text-emerald-300{{ else }}bg-foam/10 text-foam/60{{ end }}">{{ if .%s }}%s{{ else }}No{{ end }}</span>`, f.Pascal, f.Pascal, f.Pascal)
 }
 
 func buildPublicListItemHTML(data scaffoldData) string {
@@ -228,7 +228,7 @@ func buildPublicListItemHTML(data scaffoldData) string {
 	if linkField != nil {
 		fmt.Fprintf(&b, `<a href="{{ .%s }}" target="_blank" rel="noopener" class="text-lg font-semibold text-copper hover:text-foam">{{ .%s }}</a>`, linkField.Pascal, display.Pascal)
 	} else {
-		fmt.Fprintf(&b, `<p class="text-lg font-semibold text-slate-800">{{ .%s }}</p>`, display.Pascal)
+		fmt.Fprintf(&b, `<p class="text-lg font-semibold text-foam">{{ .%s }}</p>`, display.Pascal)
 	}
 
 	var meta []string
@@ -240,7 +240,7 @@ func buildPublicListItemHTML(data scaffoldData) string {
 		case "bool":
 			meta = append(meta, publicBoolBadge(f))
 		case "int64", "*int64", "float64", "*float64":
-			meta = append(meta, fmt.Sprintf(`<span class="text-sm text-slate-500">%s: {{ .%s }}</span>`, f.Pascal, f.Pascal))
+			meta = append(meta, fmt.Sprintf(`<span class="text-sm text-foam/60">%s: {{ .%s }}</span>`, f.Pascal, f.Pascal))
 		}
 	}
 	if len(meta) > 0 {
@@ -253,7 +253,7 @@ func buildPublicListItemHTML(data scaffoldData) string {
 		if f.Pascal == display.Pascal || f.Widget != "textarea" {
 			continue
 		}
-		fmt.Fprintf(&b, `{{ if .%s }}<p class="mt-2 text-sm text-slate-600 line-clamp-2">{{ .%s }}</p>{{ end }}`, f.Pascal, f.Pascal)
+		fmt.Fprintf(&b, `{{ if .%s }}<p class="mt-2 text-sm text-foam/60 line-clamp-2">{{ .%s }}</p>{{ end }}`, f.Pascal, f.Pascal)
 	}
 
 	return b.String()
@@ -274,7 +274,7 @@ func buildPublicListPanel(data scaffoldData) string {
   {{ if .Items }}
   <ul id="%[1]s-list" class="space-y-3 mt-4">
     {{ range .Items }}
-    <li class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">%[2]s</li>
+    <li class="bg-ink/70 rounded-2xl border border-foam/10 p-5 shadow-sm">%[2]s</li>
     {{ end }}
   </ul>
   {{ else }}
@@ -302,8 +302,8 @@ func buildPublicListHTML(data scaffoldData) string {
 		if data.Paginate {
 			totalVar = "Sum"
 		}
-		totalBlock = fmt.Sprintf(`  <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-6 flex items-center justify-between">
-    <span class="text-sm font-medium text-slate-500">Total %s</span>
+		totalBlock = fmt.Sprintf(`  <div class="bg-ink/70 rounded-2xl border border-foam/10 p-4 shadow-sm mb-6 flex items-center justify-between">
+    <span class="text-sm font-medium text-foam/60">Total %s</span>
     <span class="text-2xl font-bold text-copper">{{ .%s }}</span>
   </div>
 `, intField.Pascal, totalVar)
@@ -318,7 +318,7 @@ func buildPublicListHTML(data scaffoldData) string {
 	}
 	return fmt.Sprintf(`{{ define "title" }}%s{{ end }} {{ define "content" }}
 <div class="max-w-2xl mx-auto">
-  <h1 class="text-3xl font-bold text-slate-900 mb-6">%s</h1>
+  <h1 class="text-3xl font-bold text-foam mb-6">%s</h1>
 %s%s
 </div>
 {{ end }}
