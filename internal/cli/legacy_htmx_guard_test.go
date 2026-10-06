@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -34,21 +33,6 @@ func TestScaffoldTemplates_neverEmitHTMX(t *testing.T) {
 					t.Errorf("%s:%d emits legacy HTMX (%q): %s", name, i+1, needle, line)
 				}
 			}
-		}
-	}
-}
-
-func TestHTMXLegacy_isMarkedDeprecated(t *testing.T) {
-	for _, rel := range []string{
-		"../../pkg/cais/htmx.go",
-		"../../pkg/cais/htmxattrs/htmxattrs.go",
-	} {
-		body, err := os.ReadFile(filepath.Clean(rel))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !strings.Contains(string(body), "Deprecated:") {
-			t.Errorf("%s should carry a Deprecated: note with the removal plan", rel)
 		}
 	}
 }

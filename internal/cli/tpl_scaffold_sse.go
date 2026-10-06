@@ -10,7 +10,7 @@ const tplPartialChatSSE = `{{"{{"}}- define "chat_sse" -{{"}}"}}
 >
   <div id="chat-history" class="flex flex-col gap-3 min-h-[12rem]">
     {{"{{"}}- range .Messages {{"}}"}}
-    <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
+    <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-ink/70 border border-foam/10 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
       <p class="text-sm whitespace-pre-wrap">{{"{{"}} .Content {{"}}"}}</p>
     </div>
     {{"{{"}}- end {{"}}"}}
@@ -19,7 +19,7 @@ const tplPartialChatSSE = `{{"{{"}}- define "chat_sse" -{{"}}"}}
 </div>
 <div
   id="chat-thinking"
-  class="hidden rounded-xl px-4 py-2 max-w-[85%] bg-slate-100 border border-slate-200 self-start text-sm text-slate-500"
+  class="hidden rounded-xl px-4 py-2 max-w-[85%] bg-foam/10 border border-foam/10 self-start text-sm text-foam/60"
   role="status"
   aria-live="polite"
 >
@@ -34,7 +34,7 @@ const tplPartialChatSSEAgent = `{{"{{"}}- define "chat_sse_agent" -{{"}}"}}
     <div class="flex flex-col gap-3 min-h-full justify-end">
       <div id="chat-history" class="flex flex-col gap-3">
         {{"{{"}}- range .Messages {{"}}"}}
-        <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-white border border-slate-200 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
+        <div class="rounded-xl px-4 py-2 max-w-[85%] {{"{{"}}if eq .Role "assistant"{{"}}"}}bg-ink/70 border border-foam/10 self-start{{"{{"}}else{{"}}"}}bg-copper text-ink self-end{{"{{"}}end{{"}}"}}">
           <p class="text-sm whitespace-pre-wrap">{{"{{"}} .Content {{"}}"}}</p>
         </div>
         {{"{{"}}- end {{"}}"}}
@@ -43,7 +43,7 @@ const tplPartialChatSSEAgent = `{{"{{"}}- define "chat_sse_agent" -{{"}}"}}
       <div id="chat-live" class="flex flex-col gap-3"></div>
       <div
         id="chat-thinking"
-        class="hidden cais-thinking flex items-center gap-2.5 max-w-[85%] rounded-2xl rounded-bl-sm bg-slate-100 border border-slate-200 px-4 py-3 text-sm text-slate-600 shadow-xs self-start"
+        class="hidden cais-thinking flex items-center gap-2.5 max-w-[85%] rounded-2xl rounded-bl-sm bg-foam/10 border border-foam/10 px-4 py-3 text-sm text-foam/60 shadow-xs self-start"
         role="status"
         aria-live="polite"
         aria-hidden="true"

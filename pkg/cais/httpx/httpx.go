@@ -60,13 +60,6 @@ func RenderPageOrPartial(w http.ResponseWriter, r *http.Request, renderer *cais.
 	if opts.Status != 0 {
 		w.WriteHeader(opts.Status)
 	}
-	//nolint:staticcheck // legacy HTMX rendering path, removed with the runtime at v1.0 (#99)
-	if cais.IsHTMX(r) {
-		if err := RenderPartial(w, renderer, opts.Partial, opts.Data); err != nil {
-			writeRenderError(w, err, cfg)
-		}
-		return
-	}
 	RenderOrError(w, renderer, opts.Layout, opts.Page, opts.Data, cfg)
 }
 
@@ -79,10 +72,7 @@ type PageConfig struct {
 	Status  int
 }
 
-// WritePage is the preferred way to render full pages or HTMX partials.
-// It is a thin, opinionated wrapper around RenderPageOrPartial.
-//
-// Use this instead of manual cais.IsHTMX + Render* calls in handlers.
+// WritePage is the preferred way to render full pages.
 func WritePage(w http.ResponseWriter, r *http.Request, renderer *cais.Renderer, cfg PageConfig, c cais.Config) {
 	RenderPageOrPartial(w, r, renderer, RenderOptions(cfg), c)
 }

@@ -20,6 +20,10 @@ export function makeBulk() {
         all.checked = selected === rows.length;
         if (bar) {
           bar.hidden = selected === 0;
+          // #314: `.flex` beats `[hidden]` in Tailwind's CSS, so drive the
+          // visibility through classes and keep the property in sync.
+          bar.classList?.toggle("hidden", selected === 0);
+          bar.classList?.toggle("flex", selected !== 0);
           if (count) count.textContent = String(selected);
         }
       };

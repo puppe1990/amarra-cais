@@ -37,4 +37,4 @@ jobs:
       - name: Verify committed JS bundles match sources
         run: |
           npm run js:build
-          git diff --exit-code pkg/cais/pwa/assets/amarra.js pkg/cais/pwa/assets/cais-chat-logic.mjs
+          git diff --exit-code pkg/cais/pwa/assets/amarra.js

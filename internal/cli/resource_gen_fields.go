@@ -254,6 +254,15 @@ func needsStrconv(fields []FieldDef) bool {
 	return false
 }
 
+func hasFieldNamed(fields []FieldDef, name string) bool {
+	for _, f := range fields {
+		if f.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func hasBoolField(fields []FieldDef) bool {
 	for _, f := range fields {
 		if f.GoType == "bool" {

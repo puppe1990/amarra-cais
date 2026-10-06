@@ -39,11 +39,11 @@ func FieldInput(f FieldData) template.HTML {
 	var b strings.Builder
 	switch f.Type {
 	case "textarea":
-		b.WriteString(`<div><label class="block text-sm font-medium text-slate-700 mb-1" for="`)
+		b.WriteString(`<div><label class="block text-sm font-medium text-foam/70 mb-1" for="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><textarea class="w-full border border-slate-300 rounded-lg px-3 py-2 min-h-[80px] focus:ring-2 focus:ring-copper outline-none" id="`)
+		b.WriteString(`</label><textarea class="w-full border border-copper/40 bg-ink text-foam rounded-lg px-3 py-2 min-h-[80px] focus:ring-2 focus:ring-copper outline-none" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
@@ -51,11 +51,11 @@ func FieldInput(f FieldData) template.HTML {
 		b.WriteString(template.HTMLEscapeString(f.Value))
 		b.WriteString(`</textarea>`)
 	case "float":
-		b.WriteString(`<div><label class="block text-sm font-medium text-slate-700 mb-1" for="`)
+		b.WriteString(`<div><label class="block text-sm font-medium text-foam/70 mb-1" for="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><input class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-copper outline-none" type="number" step="any" id="`)
+		b.WriteString(`</label><input class="w-full border border-copper/40 bg-ink text-foam rounded-lg px-3 py-2 focus:ring-2 focus:ring-copper outline-none" type="number" step="any" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))

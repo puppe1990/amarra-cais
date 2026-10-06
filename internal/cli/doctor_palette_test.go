@@ -117,3 +117,24 @@ func TestCheckPalette_ignoresTypographyScaleKeys(t *testing.T) {
 		t.Fatalf("fontSize/fontFamily/boxShadow keys are not palette colours, got %+v", c)
 	}
 }
+
+// #318: composed colour tokens (on-surface, border-subtle, compliance-atencao)
+// were cut at the first hyphen, so the check reported tokens that exist.
+func TestMissingPaletteTokens_acceptsComposedColorKeys(t *testing.T) {
+	markup := `<p class="text-on-surface border-border-subtle bg-compliance-atencao">x</p>`
+	theme := tailwindThemeKeys{colors: map[string]bool{
+		"on-surface": true, "border-subtle": true, "compliance-atencao": true,
+	}}
+	if missing := missingPaletteTokens(markup, theme); len(missing) != 0 {
+		t.Fatalf("composed tokens in theme must not warn, got %v", missing)
+	}
+}
+
+func TestMissingPaletteTokens_stillReportsUnknownComposedToken(t *testing.T) {
+	markup := `<p class="text-on-surface">x</p>`
+	theme := tailwindThemeKeys{colors: map[string]bool{}}
+	missing := missingPaletteTokens(markup, theme)
+	if len(missing) == 0 {
+		t.Fatal("unknown composed token must still warn")
+	}
+}

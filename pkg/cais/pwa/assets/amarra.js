@@ -1,3 +1,4 @@
+/* amarra-cais v0.14.1 */
 (() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
@@ -890,6 +891,8 @@
           all.checked = selected === rows.length;
           if (bar) {
             bar.hidden = selected === 0;
+            bar.classList?.toggle("hidden", selected === 0);
+            bar.classList?.toggle("flex", selected !== 0);
             if (count) count.textContent = String(selected);
           }
         };

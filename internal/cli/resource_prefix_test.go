@@ -87,8 +87,8 @@ func TestScaffoldResource_pluralPrefixCollisionPatchesRoutesAndSeeds(t *testing.
 		t.Error("seeds.go missing the tag seed call")
 	}
 	main := readFileString(t, filepath.Join(appDir, "cmd/server/main.go"))
-	if !strings.Contains(main, "s.SeedDemoTags()") {
-		t.Error("main.go missing the tag seed call")
+	if strings.Contains(main, "s.SeedDemoTags()") {
+		t.Error("main.go must not seed demo data on boot (#316)")
 	}
 }
 

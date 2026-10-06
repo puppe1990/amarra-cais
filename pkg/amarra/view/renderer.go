@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/forms"
-	"github.com/puppe1990/amarra-cais/pkg/cais/htmxattrs" //nolint:staticcheck // legacy attr aliases for HTMX apps, removed at v1.0 (#99)
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 )
@@ -210,9 +209,6 @@ func parseNamedSet(root *template.Template, kind string, srcs []namedTemplateSrc
 func templateFuncs(catalog *i18n.Catalog) template.FuncMap {
 	extra := meta.TemplateFuncs()
 	for k, v := range forms.Funcs() {
-		extra[k] = v
-	}
-	for k, v := range htmxattrs.Funcs() {
 		extra[k] = v
 	}
 	for k, v := range helperFuncs() {

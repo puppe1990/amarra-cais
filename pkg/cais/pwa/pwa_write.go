@@ -39,12 +39,6 @@ func WriteStatic(appDir string, cfg Config) error {
 
 	for _, pair := range []struct{ src, dst string }{
 		{"assets/amarra.js", "js/amarra.js"},
-		{"assets/htmx.min.js", "js/htmx.min.js"},
-		{"assets/idiomorph-ext.min.js", "js/idiomorph-ext.min.js"},
-		{"assets/sse-ext.min.js", "js/sse-ext.min.js"},
-		{"assets/cais-core.js", "js/cais-core.js"},
-		{"assets/cais-chat.js", "js/cais-chat.js"},
-		{"assets/cais-chat-logic.mjs", "js/cais-chat-logic.mjs"},
 	} {
 		if err := copyAsset(pair.src, filepath.Join(staticDir, pair.dst)); err != nil {
 			return err

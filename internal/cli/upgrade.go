@@ -109,13 +109,15 @@ func printMigrationChecklist(w io.Writer, from, to semverCore, fromRaw string) {
 	steps := migrationsBetween(from, to)
 	if len(steps) == 0 {
 		_, _ = fmt.Fprintln(w, "  no known breaking changes in this range — see CHANGELOG.md")
-		return
+	} else {
+		if !from.OK {
+			_, _ = fmt.Fprintf(w, "  could not detect the current version (%s); showing every step up to the target:\n", fromRaw)
+		}
+		_, _ = fmt.Fprintln(w, "  migration checklist:")
+		for _, s := range steps {
+			_, _ = fmt.Fprintf(w, "  - [%s] %s: %s\n", s.Version, s.Title, s.Action)
+		}
 	}
-	if !from.OK {
-		_, _ = fmt.Fprintf(w, "  could not detect the current version (%s); showing every step up to the target:\n", fromRaw)
-	}
-	_, _ = fmt.Fprintln(w, "  migration checklist:")
-	for _, s := range steps {
-		_, _ = fmt.Fprintf(w, "  - [%s] %s: %s\n", s.Version, s.Title, s.Action)
-	}
+	// #320: the vendored bundle drifts silently — always remind owners.
+	_, _ = fmt.Fprintln(w, "  - refresh vendored assets: amarra-cais pwa (keeps web/static/js/amarra.js in sync with go.mod)")
 }

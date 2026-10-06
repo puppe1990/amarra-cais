@@ -22,6 +22,13 @@ function checkbox(checked = false) {
 function bar() {
   return {
     hidden: true,
+    classList: {
+      _set: new Set(["hidden"]),
+      toggle(cls, force) {
+        if (force === undefined) force = !this._set.has(cls);
+        force ? this._set.add(cls) : this._set.delete(cls);
+      },
+    },
     count: { textContent: "" },
     querySelector(sel) {
       return sel === "[data-amarra-bulk-count]" ? this.count : null;
@@ -98,6 +105,8 @@ test("bulk hook shows the bar with the selected count when count > 0", () => {
   rows[1].change();
   assert.equal(barEl.hidden, true);
   assert.equal(barEl.count.textContent, "0");
+  assert.ok(barEl.classList._set.has("hidden"));
+  assert.ok(!barEl.classList._set.has("flex"));
 });
 
 test("bulk hook works without a bar and unbinds on disconnect", () => {

@@ -29,10 +29,10 @@ js-test:
 e2e:
 	npm run e2e
 
-# Committed bundles (amarra.js, cais-chat-logic.mjs) must match pkg/*/js sources.
+# Committed bundle (amarra.js) must match pkg/amarra/js sources.
 js-bundle-check:
 	npm run js:build
-	git diff --exit-code pkg/cais/pwa/assets/amarra.js pkg/cais/pwa/assets/cais-chat-logic.mjs
+	git diff --exit-code pkg/cais/pwa/assets/amarra.js
 
 pre-commit-install:
 	pre-commit install

@@ -7,6 +7,7 @@
  * updated assets. Full extraction of cais-core/chat happens over time.
  */
 import { build } from "esbuild";
+import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 
@@ -15,28 +16,27 @@ const root = resolve(__dirname, "..");
 
 const outDir = resolve(root, "pkg/cais/pwa/assets");
 
-async function main() {
-  // Build a tiny chat logic sidecar that can be imported/tested.
-  // In follow-ups the full cais-chat.js will be produced from entries here.
-  await build({
-    entryPoints: [resolve(root, "pkg/cais/js/logic/chat.mjs")],
-    bundle: true,
-    format: "esm",
-    outfile: resolve(outDir, "cais-chat-logic.mjs"),
-    minify: false,
-    sourcemap: false,
-  });
+// #320: stamp the bundle with the framework version so doctor can detect a
+// stale vendored amarra.js against the app's go.mod.
+function frameworkVersion() {
+  const changelog = readFileSync(resolve(root, "CHANGELOG.md"), "utf8");
+  const m = changelog.match(/^## \[(\d+\.\d+\.\d+)\]/m);
+  return m ? m[1] : "0.0.0";
+}
+const banner = { js: `/* amarra-cais v${frameworkVersion()} */` };
 
+async function main() {
   await build({
     entryPoints: [resolve(root, "pkg/amarra/js/entry.mjs")],
     bundle: true,
     format: "iife",
     outfile: resolve(outDir, "amarra.js"),
+    banner,
     minify: false,
     sourcemap: false,
   });
 
-  console.log("js-build: produced cais-chat-logic.mjs and amarra.js");
+  console.log("js-build: produced amarra.js");
 }
 
 main().catch((err) => {
