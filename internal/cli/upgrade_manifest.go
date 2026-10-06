@@ -10,7 +10,7 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
-	{Version: "1.0.0", Title: "HTMX removed", Action: "migrate leftover hx-* apps to Views + Drive; Cais v0.11 remains the Inertia product. amarra.js is the only shipped JS bundle"},
+	{Version: "0.15.0", Title: "HTMX removed", Action: "migrate leftover hx-* apps to Views + Drive; Cais v0.11 remains the Inertia product. amarra.js is the only shipped JS bundle"},
 	{Version: "0.14.1", Title: "password kit overlay", Action: "rebuild CSS (amarra-cais css) so cais-password-wrap / cais-password-toggle overlay the eye inside <.password>; copy the wrap CSS if the app overrode input.css"},
 	{Version: "0.14.0", Title: "PORT required in production", Action: "set PORT=:8080 or PORT=8080 (bare 12-factor numbers work); missing PORT no longer binds :8080 on a shared host"},
 	{Version: "0.14.0", Title: "locale-toggle extra locales", Action: "pass locales=\"en,pt,es\" or page .Locales to emit extra language buttons; forms use data-amarra-skip so the cookie applies on a full navigation"},

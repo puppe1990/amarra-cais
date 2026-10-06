@@ -4,7 +4,20 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [0.15.0] - 2026-10-06
+
+### Added
+
+- doctor: new check warns on inline `<script>` without nonce, inline handlers (`onclick`, ...), and `serviceWorker.register` without `{ scope: "/" }` (#319)
+- doctor: compare the vendored `amarra.js` version marker with the app `go.mod` and point at `amarra-cais pwa` when stale; `upgrade` always prints the refresh step (#320)
+- `g resource`/`g sitemap`: public Show by slug (`/{plural}/{slug}`) and public list filters drafts (#313)
+
+### Fixed
+
+- doctor palette: composed colour tokens (`on-surface`, `border-subtle`, `compliance-atencao`) no longer false-positive (#318)
+- `g resource` no longer seeds demo data on boot; seeds stay behind `amarra-cais db seed` (#316)
+- bulk-select bar in generated admin pages starts hidden (`[hidden]` vs `.flex`) (#314)
+- generated forms and admin/public pages no longer leak the light theme (`slate-*`/`bg-white`) into the dark scaffold (#315)
 
 ### Removed
 

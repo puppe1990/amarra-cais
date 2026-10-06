@@ -8,8 +8,8 @@ import (
 )
 
 func TestDefaultScaffoldCaisVersion_is0141(t *testing.T) {
-	if defaultScaffoldCaisVersion != "0.14.1" {
-		t.Errorf("defaultScaffoldCaisVersion = %q, want 0.14.1 so amarra-cais new pins the tagged release", defaultScaffoldCaisVersion)
+	if defaultScaffoldCaisVersion != "0.15.0" {
+		t.Errorf("defaultScaffoldCaisVersion = %q, want 0.15.0 so amarra-cais new pins the tagged release", defaultScaffoldCaisVersion)
 	}
 }
 
@@ -19,8 +19,8 @@ func TestREADME_goInstallPinsV0141(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(body)
-	if !strings.Contains(text, "amarra-cais@v0.14.1") {
-		t.Error("README go install should pin @v0.14.1")
+	if !strings.Contains(text, "amarra-cais@v0.15.0") {
+		t.Error("README go install should pin @v0.15.0")
 	}
 	if strings.Contains(text, "amarra-cais@v0.14.0") {
 		t.Error("README still pins @v0.14.0")
@@ -34,10 +34,10 @@ func TestScaffoldVersion_dropsVCSBuildMetadata(t *testing.T) {
 	for _, tc := range []struct {
 		in, want string
 	}{
-		{"v0.14.1", "0.14.1"},
-		{"0.14.1", "0.14.1"},
-		{"v0.14.1+dirty", "0.14.1"},
-		{"0.14.1+incompatible", "0.14.1"},
+		{"v0.15.0", "0.15.0"},
+		{"0.15.0", "0.15.0"},
+		{"v0.15.0+dirty", "0.15.0"},
+		{"0.15.0+incompatible", "0.15.0"},
 		{"", defaultScaffoldCaisVersion},
 		{"dev", defaultScaffoldCaisVersion},
 	} {
