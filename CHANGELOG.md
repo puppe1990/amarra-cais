@@ -10,7 +10,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 
 - Legacy HTMX runtime: `pkg/cais/htmx.go`, `pkg/cais/htmxattrs`, `csrf.HTMXScript`, legacy assets (`htmx.min.js`, `cais*.js`, `sse-ext`, `idiomorph-ext`), the HTMX branch of `httpx.RenderPageOrPartial`, and the `cais-chat-logic.mjs` bundle (#268). `js-bundle-check` now pins `amarra.js` only. Leftover HTMX apps should migrate to Views + Drive (Cais v0.11 remains the Inertia product).
 
-
 ## [0.14.1] - 2026-10-02
 
 ### Fixed
