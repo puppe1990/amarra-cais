@@ -52,6 +52,8 @@ func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.
 	return &%sHandler{views: views, store: s, site: site, cfg: cfg}
 }
 
+%s
+
 %s`,
 		extraStd,
 		paginationImport,
@@ -59,7 +61,51 @@ func New%sHandler(views *view.Renderer, s store.Store, site meta.Site, cfg cais.
 		data.PluralPascal,
 		data.PluralPascal, data.PluralPascal, data.PluralPascal,
 		listMethod,
+		buildPublicShowMethod(data),
 	)
+}
+
+// buildPublicPublishedFilter keeps drafts out of the public list (#313).
+func buildPublicPublishedFilter(data scaffoldData) string {
+	if !hasFieldNamed(data.Fields, "published") {
+		return ""
+	}
+	return `
+	published := items[:0]
+	for _, item := range items {
+		if item.Published {
+			published = append(published, item)
+		}
+	}
+	items = published
+`
+}
+
+// buildPublicShowMethod renders a single item by its slug (#313). Drafts 404.
+func buildPublicShowMethod(data scaffoldData) string {
+	if !hasFieldNamed(data.Fields, "slug") {
+		return ""
+	}
+	publishedCheck := ""
+	if hasFieldNamed(data.Fields, "published") {
+		publishedCheck = `	if !item.Published {
+		http.NotFound(w, r)
+		return
+	}
+`
+	}
+	return fmt.Sprintf(`func (h *%sHandler) Show(w http.ResponseWriter, r *http.Request, slug string) {
+	item, err := h.store.Find%sBySlug(slug)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+%s	view.Write(w, r, h.views, view.Page{
+		Layout: "app",
+		Name:   "%s",
+		Data:   amarraData(r, h.site, map[string]any{"Item": item}),
+	}, h.cfg)
+}`, data.PluralPascal, data.Pascal, publishedCheck, data.Snake)
 }
 
 func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
@@ -67,6 +113,8 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 	if listSum != "" {
 		sumEntry = fmt.Sprintf("\n\t\t%q: %s,", sumField, sumField)
 	}
+	listFilter := buildPublicPublishedFilter(data)
+
 	if data.Paginate {
 		return fmt.Sprintf(`func (h *%sHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -81,7 +129,7 @@ func buildPublicListMethod(data scaffoldData, sumField, listSum string) string {
 	if err != nil {
 		httpx.ServerError(w, err, h.cfg)
 		return
-	}%s
+	}%s%s
 	pg := pagination.New(page, perPage, total)
 	listData := amarraData(r, h.site, map[string]any{
 		"Items":    items,
@@ -116,7 +164,7 @@ func (h *%sHandler) indexBase(path string, params ...string) string {
 	}
 	return path
 }
-`, data.PluralPascal, data.PluralPascal, listSum, data.PluralPascal, data.Plural, sumEntry, data.Plural, data.PluralPascal)
+`, data.PluralPascal, data.PluralPascal, listSum, listFilter, data.PluralPascal, data.Plural, sumEntry, data.Plural, data.PluralPascal)
 	}
 	return fmt.Sprintf(`func (h *%sHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -124,7 +172,7 @@ func (h *%sHandler) indexBase(path string, params ...string) string {
 	if err != nil {
 		httpx.ServerError(w, err, h.cfg)
 		return
-	}%s
+	}%s%s
 	view.Write(w, r, h.views, view.Page{
 		Layout: "app",
 		Name:   "%s",
@@ -150,5 +198,5 @@ func (h *%sHandler) indexBase(path string, params ...string) string {
 	}
 	return path
 }
-`, data.PluralPascal, data.PluralPascal, listSum, data.Plural, data.PluralPascal, data.Plural, sumEntry, data.PluralPascal)
+`, data.PluralPascal, data.PluralPascal, listSum, listFilter, data.Plural, data.PluralPascal, data.Plural, sumEntry, data.PluralPascal)
 }

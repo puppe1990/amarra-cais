@@ -52,6 +52,9 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 	if data.Seed {
 		ifaceInsert += fmt.Sprintf("\n\tSeedDemo%s() error", data.PluralPascal)
 	}
+	if hasFieldNamed(data.Fields, "slug") {
+		ifaceInsert += fmt.Sprintf("\n\tFind%sBySlug(slug string) (models.%s, error)", data.Pascal, data.Pascal)
+	}
 	for _, f := range uniqueReferenceFields(data.Fields) {
 		method := fmt.Sprintf("\n\tList%sOptions() ([]models.SelectOption, error)", f.RefPascal)
 		if !strings.Contains(content, "List"+f.RefPascal+"Options()") {
@@ -65,6 +68,7 @@ func patchStoreForResource(dir string, data scaffoldData, dryRun bool, force boo
 		return fmt.Errorf("could not patch store implementation: missing %q", "func (s *SQLiteStore) Close()")
 	}
 	implInsert := buildResourceStoreMethods(data)
+	implInsert += buildResourceSlugLookup(data)
 	implInsert += buildReferenceStoreMethods(data.Fields, prePatch, dir)
 	if data.Paginate {
 		implInsert += buildResourcePaginatedStoreMethod(data)
@@ -208,6 +212,9 @@ func patchRoutesForResource(dir string, data scaffoldData, dryRun bool, force bo
 		// #261: public list is read-only. A bool field used to register
 		// POST /{plural}/{id}/toggle next to the GET with no RequireAuth.
 		fmt.Fprintf(&insert, "\tr.Get(\"/%s\", %s.List)\n", data.Plural, pubVar)
+		if hasFieldNamed(data.Fields, "slug") {
+			fmt.Fprintf(&insert, "\tr.Get(\"/%s/{slug}\", cais.StringParam(\"slug\", %s.Show))\n", data.Plural, pubVar)
+		}
 	}
 	fmt.Fprintf(&insert, "\t%s := handlers.NewAdmin%sHandler(deps.Views, deps.Store, deps.Site, cfg)\n", adminVar, data.PluralPascal)
 	if data.AdminAuth == "bearer" {
@@ -371,4 +378,3 @@ func patchMainForSeed(dir string, data scaffoldData, dryRun bool) error {
 	// voltava após o dono apagar tudo. Seed continua em seeds.go via `db seed`.
 	return patchLayoutNav(dir, data, dryRun)
 }
-

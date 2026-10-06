@@ -260,6 +260,9 @@ func resourceFilesHTML(data scaffoldData, migrationPath string) map[string]strin
 	}
 	if data.Public {
 		files[filepath.Join("internal/handlers", data.Plural+".go")] = buildResourcePublicHandler(data)
+		if hasFieldNamed(data.Fields, "slug") {
+			files[filepath.Join("web/templates/pages", data.Snake+".html")] = buildPublicShowHTML(data)
+		}
 		files[filepath.Join("internal/handlers", data.Plural+"_test.go")] = buildResourcePublicTest(data)
 		files[filepath.Join("web/templates/pages", data.Plural+".html")] = buildPublicListHTML(data)
 		if data.Paginate {

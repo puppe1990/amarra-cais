@@ -221,6 +221,28 @@ func sortableCols(fields []FieldDef) string {
 	return strings.Join(out, "")
 }
 
+func buildResourceSlugLookup(data scaffoldData) string {
+	if !hasFieldNamed(data.Fields, "slug") {
+		return ""
+	}
+	sel := selectColumns(data.Fields)
+	return fmt.Sprintf(`
+func (s *SQLiteStore) Find%sBySlug(slug string) (models.%s, error) {
+	var c models.%s
+%s
+	err := s.db.QueryRow(
+		"SELECT id, %s, created_at FROM %s WHERE slug = ?",
+		slug,
+	).Scan(%s)
+	if err != nil {
+		return models.%s{}, fmt.Errorf("find %s: %%w", err)
+	}
+%s
+	return c, nil
+}
+`, data.Pascal, data.Pascal, data.Pascal, scanDeclare(data.Fields), sel, data.Plural, scanVars(data.Fields), data.Pascal, data.Snake, scanAssign(data.Fields))
+}
+
 func buildResourcePaginatedStoreMethod(data scaffoldData) string {
 	sel := selectColumns(data.Fields)
 	searchCol := sqlIdent(adminIndexDisplayField(data.Fields).Name)

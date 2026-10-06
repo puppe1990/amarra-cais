@@ -209,6 +209,34 @@ func buildAdminShowHTML(data scaffoldData) string {
 		adminDeleteModal(data.Plural, data.Title, fmt.Sprintf(`{{ linkTo (printf "/admin/%s/%%d" .Item.ID) "Delete" (dict "method" "delete") }}`, data.Plural)))
 }
 
+func buildPublicShowHTML(data scaffoldData) string {
+	var fields strings.Builder
+	for _, f := range data.Fields {
+		if f.Widget == "textarea" {
+			fmt.Fprintf(&fields, `    <div>
+      <dt class="text-sm font-medium text-foam/60">%s</dt>
+      <dd class="mt-1 text-foam whitespace-pre-wrap">{{ .Item.%s }}</dd>
+    </div>
+`, f.Pascal, f.Pascal)
+			continue
+		}
+		fmt.Fprintf(&fields, `    <div>
+      <dt class="text-sm font-medium text-foam/60">%s</dt>
+      <dd class="mt-1 text-foam">{{ .Item.%s }}</dd>
+    </div>
+`, f.Pascal, f.Pascal)
+	}
+	return fmt.Sprintf(`{{ define "title" }}%s{{ end }} {{ define "content" }}
+<div class="max-w-2xl mx-auto">
+  {{ linkTo "/%s" "← Back" }}
+  <h1 class="text-3xl font-bold text-foam mb-6">{{ .Item.%s }}</h1>
+  <dl class="border border-foam/10 bg-ink/70 p-6 space-y-4">
+%s  </dl>
+</div>
+{{ end }}
+`, data.Title, data.Plural, displayFieldForList(data.Fields).Pascal, fields.String())
+}
+
 func publicBoolBadge(f FieldDef) string {
 	// #261: public list is read-only; mutating the bool belongs on the admin form.
 	return fmt.Sprintf(`<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ if .%s }}bg-emerald-500/15 text-emerald-300{{ else }}bg-foam/10 text-foam/60{{ end }}">{{ if .%s }}%s{{ else }}No{{ end }}</span>`, f.Pascal, f.Pascal, f.Pascal)
