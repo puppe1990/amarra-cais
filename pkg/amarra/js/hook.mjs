@@ -8,6 +8,7 @@ import { password } from "./hook_password.mjs";
 import { reveal } from "./hook_reveal.mjs";
 import { sidebar } from "./hook_sidebar.mjs";
 import { theme } from "./hook_theme.mjs";
+import { tour } from "./hook_tour.mjs";
 
 export { register, scan, dispatchLivePush, reset };
 
@@ -20,6 +21,7 @@ register("password", password);
 register("reveal", reveal);
 register("sidebar", sidebar);
 register("theme", theme);
+register("tour", tour);
 
 const ON_CLASSES = ["bg-green-50", "text-green-700"];
 const OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
@@ -133,6 +135,7 @@ export function start(opts = {}) {
   register("reveal", reveal);
   register("sidebar", sidebar);
   register("theme", theme);
+  register("tour", tour);
   scan(doc);
 
   let optimistic = null;
