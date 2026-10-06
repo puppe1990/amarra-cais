@@ -145,18 +145,23 @@ func missingPaletteTokens(markup string, theme tailwindThemeKeys) []string {
 			if len(m) < 2 || m[1] == "" {
 				continue
 			}
-			utility := strings.SplitN(m[1], "/", 2)[0]
-			if strings.HasPrefix(utility, "[") || theme.skipsScale(utility) {
-				continue
-			}
-			token := utility
-			if i := strings.IndexByte(token, '-'); i >= 0 {
-				token = token[:i]
-			}
-			if skipPaletteToken(token) || theme.colors[token] {
-				continue
-			}
-			seen[token] = struct{}{}
+		utility := strings.SplitN(m[1], "/", 2)[0]
+		if strings.HasPrefix(utility, "[") || theme.skipsScale(utility) {
+			continue
+		}
+		// #318: composed tokens (on-surface, border-subtle) — match the longest
+		// hyphen prefix present in the theme instead of cutting at the first '-'.
+		if paletteTokenDefined(utility, theme) {
+			continue
+		}
+		token := utility
+		if i := strings.IndexByte(token, '-'); i >= 0 {
+			token = token[:i]
+		}
+		if skipPaletteToken(token) {
+			continue
+		}
+		seen[token] = struct{}{}
 		}
 	}
 	out := make([]string, 0, len(seen))
@@ -165,6 +170,20 @@ func missingPaletteTokens(markup string, theme tailwindThemeKeys) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+func paletteTokenDefined(utility string, theme tailwindThemeKeys) bool {
+	for candidate := utility; candidate != ""; {
+		if theme.colors[candidate] || theme.skipsScale(candidate) || skipPaletteToken(candidate) {
+			return true
+		}
+		i := strings.LastIndexByte(candidate, '-')
+		if i < 0 {
+			return false
+		}
+		candidate = candidate[:i]
+	}
+	return false
 }
 
 func skipPaletteToken(token string) bool {
