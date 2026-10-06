@@ -112,7 +112,7 @@ func buildAdminIndexPanel(data scaffoldData) string {
     {{ if .Items }}
     <div amarra-hook="bulk">
       <.form action="/admin/%[1]s/bulk-delete" method="post">
-        <div class="flex items-center gap-3 mb-3" data-amarra-bulk-bar hidden>
+        <div class="hidden items-center gap-3 mb-3" data-amarra-bulk-bar hidden>
           <span class="text-sm text-foam/70"><span data-amarra-bulk-count>0</span> selected</span>
           <div amarra-hook="dialog">
             <button type="button" data-amarra-dialog-open class="text-sm text-copper">Delete selected</button>
