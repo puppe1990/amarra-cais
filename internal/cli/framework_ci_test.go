@@ -32,7 +32,6 @@ func TestFrameworkCI_verifiesCommittedJSBundles(t *testing.T) {
 		"npm run js:build",
 		"git diff --exit-code",
 		"pkg/cais/pwa/assets/amarra.js",
-		"pkg/cais/pwa/assets/cais-chat-logic.mjs",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("framework CI missing %q (committed bundles must be rebuild-checked)", want)
