@@ -46,64 +46,6 @@ func TestServiceWorker_networkFirstForSPABuild(t *testing.T) {
 	}
 }
 
-func TestCaisJS_hasSSEReconnect(t *testing.T) {
-	data, err := assets.ReadFile("assets/cais-core.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	content := string(data)
-	for _, want := range []string{"htmx:sseClose", "data-cais-sse-persist", "reconnectChatSSE"} {
-		if !strings.Contains(content, want) {
-			t.Errorf("cais-core.js missing %q", want)
-		}
-	}
-}
-
-func TestCaisJS_hasSelectSearch(t *testing.T) {
-	data, err := assets.ReadFile("assets/cais-core.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	content := string(data)
-	for _, want := range []string{
-		"data-cais-select-search",
-		"initSelectSearch",
-		"cais-select-search",
-	} {
-		if !strings.Contains(content, want) {
-			t.Errorf("cais-core.js missing select search helper %q", want)
-		}
-	}
-}
-
-func TestCaisJS_hasChatAgentModule(t *testing.T) {
-	data, err := assets.ReadFile("assets/cais-chat.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	content := string(data)
-	for _, want := range []string{
-		"data-cais-chat",
-		"finalizeChatStream",
-		"formatMessageTimes",
-		"cais-msg-time",
-		"data-cais-live",
-		"chatStickToBottom",
-		"chat-scroll-down",
-		"window.caisFinalizeChatStream",
-		"bindChatEnterSubmit",
-		"dedupOptimisticUserBubble",
-		"pruneEmptyChatNodes",
-		"bindChatAutoScrollResize",
-		"ResizeObserver",
-		"caisRemoveOptimisticUserBubble",
-	} {
-		if !strings.Contains(content, want) {
-			t.Errorf("cais-chat.js missing chat agent helper %q", want)
-		}
-	}
-}
-
 func TestInstallForAmarra_writesAmarraJS(t *testing.T) {
 	dir := t.TempDir()
 	if err := InstallForAmarra(dir, "Demo"); err != nil {
@@ -188,12 +130,6 @@ func TestWriteStatic(t *testing.T) {
 	for _, path := range []string{
 		"web/static/js/sw.js",
 		"web/static/js/amarra.js",
-		"web/static/js/htmx.min.js",
-		"web/static/js/idiomorph-ext.min.js",
-		"web/static/js/sse-ext.min.js",
-		"web/static/js/cais-core.js",
-		"web/static/js/cais-chat.js",
-		"web/static/js/cais-chat-logic.mjs",
 		"web/static/offline.html",
 		"web/static/icons/icon.png",
 		"web/static/img/go-on-cais.jpg",

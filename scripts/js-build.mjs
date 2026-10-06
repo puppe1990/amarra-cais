@@ -26,18 +26,6 @@ function frameworkVersion() {
 const banner = { js: `/* amarra-cais v${frameworkVersion()} */` };
 
 async function main() {
-  // Build a tiny chat logic sidecar that can be imported/tested.
-  // In follow-ups the full cais-chat.js will be produced from entries here.
-  await build({
-    entryPoints: [resolve(root, "pkg/cais/js/logic/chat.mjs")],
-    bundle: true,
-    format: "esm",
-    outfile: resolve(outDir, "cais-chat-logic.mjs"),
-    banner,
-    minify: false,
-    sourcemap: false,
-  });
-
   await build({
     entryPoints: [resolve(root, "pkg/amarra/js/entry.mjs")],
     bundle: true,
@@ -48,7 +36,7 @@ async function main() {
     sourcemap: false,
   });
 
-  console.log("js-build: produced cais-chat-logic.mjs and amarra.js");
+  console.log("js-build: produced amarra.js");
 }
 
 main().catch((err) => {

@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/forms"
-	"github.com/puppe1990/amarra-cais/pkg/cais/htmxattrs" //nolint:staticcheck // legacy renderer, removed at v1.0 (#99)
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 )
@@ -115,9 +114,6 @@ func parsePage(fsys fs.FS, layoutPaths []string, pagePath string, partialPaths [
 func templateFuncs(catalog *i18n.Catalog) template.FuncMap {
 	extra := meta.TemplateFuncs()
 	for k, v := range forms.Funcs() {
-		extra[k] = v
-	}
-	for k, v := range htmxattrs.Funcs() {
 		extra[k] = v
 	}
 	return i18n.MergeFuncs(catalog, extra)

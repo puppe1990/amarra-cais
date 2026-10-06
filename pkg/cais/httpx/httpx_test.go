@@ -83,47 +83,7 @@ func TestRenderPartial_rendersFragment(t *testing.T) {
 	}
 }
 
-func TestRenderPageOrPartial_htmxUsesPartial(t *testing.T) {
-	renderer := testRenderer(t)
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/contact", nil)
-	req.Header.Set("HX-Request", "true")
-
-	RenderPageOrPartial(rr, req, renderer, RenderOptions{
-		Layout:  "base",
-		Page:    "home",
-		Partial: "greeting",
-		Data:    map[string]string{"Name": "Ada"},
-	}, cais.Config{Env: "development"})
-
-	if !strings.Contains(rr.Body.String(), "Ada") {
-		t.Errorf("body = %q, want partial content", rr.Body.String())
-	}
-}
-
-func TestRenderPageOrPartial_sanitizesPartialErrorInProduction(t *testing.T) {
-	cfg := cais.Config{Env: "production"}
-	renderer := testRenderer(t)
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/contact", nil)
-	req.Header.Set("HX-Request", "true")
-
-	RenderPageOrPartial(rr, req, renderer, RenderOptions{
-		Layout:  "base",
-		Page:    "home",
-		Partial: "nonexistent_partial",
-		Data:    nil,
-	}, cfg)
-
-	if strings.Contains(rr.Body.String(), "not found") {
-		t.Error("should not leak error details in production")
-	}
-	if rr.Code != http.StatusInternalServerError {
-		t.Errorf("status = %d, want 500", rr.Code)
-	}
-}
-
-func TestRenderPageOrPartial_fullPageWhenNotHTMX(t *testing.T) {
+func TestRenderPageOrPartial_rendersFullPage(t *testing.T) {
 	renderer := testRenderer(t)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/contact", nil)

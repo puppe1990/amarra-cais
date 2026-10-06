@@ -113,20 +113,3 @@ func TokenFromRequest(r *http.Request) string {
 func FieldHTML(token string) string {
 	return fmt.Sprintf(`<input type="hidden" name="%s" value="%s" />`, FormField, template.HTMLEscapeString(token))
 }
-
-// MetaHTML returns a meta tag for HTMX requests.
-func MetaHTML(token string) string {
-	return fmt.Sprintf(`<meta name="%s" content="%s" />`, MetaTag, template.HTMLEscapeString(token))
-}
-
-// HTMXScript configures HTMX to send the CSRF header on every request.
-func HTMXScript() string {
-	return `<script>
-      document.body.addEventListener("htmx:configRequest", function (evt) {
-        var el = document.querySelector('meta[name="` + MetaTag + `"]');
-        if (el && el.content) {
-          evt.detail.headers["` + HeaderName + `"] = el.content;
-        }
-      });
-    </script>`
-}
