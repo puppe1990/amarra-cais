@@ -1,3 +1,5 @@
+/* amarra-cais v0.14.1 */
+
 // pkg/cais/js/logic/chat.mjs
 function shouldApplyChatPoll(pollURL, chatEnabled) {
   if (!pollURL || typeof pollURL !== "string" || pollURL.trim() === "") {
