@@ -367,28 +367,8 @@ func patchSeedsForResource(dir string, data scaffoldData, dryRun bool) error {
 }
 
 func patchMainForSeed(dir string, data scaffoldData, dryRun bool) error {
-	path := filepath.Join(dir, "cmd/server/main.go")
-	body, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	content := string(body)
-	if strings.Contains(content, "s.SeedDemo"+data.PluralPascal+"()") {
-		return patchLayoutNav(dir, data, dryRun)
-	}
-	marker := "\n\tstaticDir, err := cais.ResolveWebDir(\"static\", cfg.StaticDir)"
-	seed := fmt.Sprintf(`
-	if err := s.SeedDemo%s(); err != nil {
-		_ = s.Close()
-		return nil, fmt.Errorf("seed: %%w", err)
-	}
-`, data.PluralPascal)
-	if !strings.Contains(content, marker) {
-		return fmt.Errorf("could not patch main.go for seed")
-	}
-	content = strings.Replace(content, marker, seed+marker, 1)
-	if err := updateScaffoldFile(path, []byte(content), "cmd/server/main.go", dryRun); err != nil {
-		return err
-	}
+	// #316: seed de demo não vai mais no boot — dado fake entrava em produção e
+	// voltava após o dono apagar tudo. Seed continua em seeds.go via `db seed`.
 	return patchLayoutNav(dir, data, dryRun)
 }
+
