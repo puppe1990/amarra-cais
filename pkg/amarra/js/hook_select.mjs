@@ -2,20 +2,21 @@ const STATE = "_amarraSelectSearch";
 const SR_CLASS = "cais-select-search-native";
 let listSeq = 0;
 
-// #325: search-by-default for selects. Progressive enhancement keeps the real
+// #327: search-by-default for selects. Progressive enhancement keeps the real
 // <select> as the source of truth (form submit, name/value/required, iOS) and
-// layers a trigger + filtered listbox on top. Coarse pointers keep the native
-// picker so phones do not lose the OS sheet. Opt out with
+// layers a trigger + filtered listbox on top. A MutationObserver rebuilds the
+// rows when a dependent select swaps its <option>s after mount. Coarse pointers
+// keep the native picker so phones do not lose the OS sheet. Opt out with
 // data-amarra-select-search="false".
 export function makeSelectSearch(deps = {}) {
   const isCoarse = deps.isCoarse ?? defaultIsCoarse;
   return {
     connect(el) {
-      mount(el, isCoarse);
+      mount(el, isCoarse, deps);
     },
     updated(el) {
       unmount(el);
-      mount(el, isCoarse);
+      mount(el, isCoarse, deps);
     },
     disconnect(el) {
       unmount(el);
@@ -33,10 +34,11 @@ function defaultIsCoarse(el) {
   return !!coarse && (win?.navigator?.maxTouchPoints ?? 0) > 0;
 }
 
-function mount(selectEl, isCoarse) {
+function mount(selectEl, isCoarse, deps) {
   if (!isEnhanceable(selectEl, isCoarse)) return;
   const doc = selectEl.ownerDocument;
   const state = buildUI(selectEl, doc);
+  state.Observer = deps?.MutationObserver ?? null;
   bindEvents(selectEl, state);
   selectEl.classList.add(SR_CLASS);
   selectEl[STATE] = state;
@@ -88,7 +90,18 @@ function buildUI(selectEl, doc) {
   input.setAttribute("placeholder", searchPlaceholder(selectEl, doc));
   input.classList.add("cais-select-search-input");
 
-  const rows = Array.from(selectEl.options ?? []).map((option, index) => {
+  const rows = buildRows(selectEl, doc, list);
+
+  panel.appendChild(input);
+  panel.appendChild(list);
+  wrapper.appendChild(trigger);
+  wrapper.appendChild(panel);
+  selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+  return { doc, wrapper, trigger, panel, input, list, rows, label };
+}
+
+function buildRows(selectEl, doc, list) {
+  return Array.from(selectEl.options ?? []).map((option, index) => {
     const row = doc.createElement("li");
     row.setAttribute("role", "option");
     row.setAttribute("data-value", option.value ?? "");
@@ -99,17 +112,10 @@ function buildUI(selectEl, doc) {
     list.appendChild(row);
     return row;
   });
-
-  panel.appendChild(input);
-  panel.appendChild(list);
-  wrapper.appendChild(trigger);
-  wrapper.appendChild(panel);
-  selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
-  return { doc, wrapper, trigger, panel, input, list, rows, label };
 }
 
 function bindEvents(selectEl, state) {
-  const { trigger, input, panel, wrapper, rows } = state;
+  const { trigger, input, panel, wrapper } = state;
   const doc = state.doc;
 
   state.onTriggerClick = (ev) => {
@@ -131,14 +137,8 @@ function bindEvents(selectEl, state) {
     if (wrapper.contains?.(ev?.target)) return;
     close(state);
   };
-  state.rowClicks = rows.map((row) => {
-    const fn = (ev) => {
-      ev?.preventDefault?.();
-      choose(selectEl, state, row);
-    };
-    row.addEventListener("click", fn);
-    return fn;
-  });
+  bindRows(selectEl, state);
+  observeOptions(selectEl, state);
 
   trigger.addEventListener("click", state.onTriggerClick);
   trigger.addEventListener("keydown", state.onTriggerKey);
@@ -146,6 +146,39 @@ function bindEvents(selectEl, state) {
   input.addEventListener("keydown", state.onInputKey);
   selectEl.addEventListener("change", state.onChange);
   doc.addEventListener("click", state.onDocClick, true);
+}
+
+function bindRows(selectEl, state) {
+  state.rowClicks = state.rows.map((row) => {
+    const fn = (ev) => {
+      ev?.preventDefault?.();
+      choose(selectEl, state, row);
+    };
+    row.addEventListener("click", fn);
+    return fn;
+  });
+}
+
+function unbindRows(state) {
+  state.rows.forEach((row, index) => row.removeEventListener?.("click", state.rowClicks?.[index]));
+}
+
+// #327: dependent selects (estado → cidade) fill options after mount. Rebuild
+// the rows so the search list matches the live <option>s and the label cannot
+// drift from the list.
+function rebuildRows(selectEl, state) {
+  unbindRows(state);
+  for (const row of state.rows) row.parentNode?.removeChild?.(row);
+  state.rows = buildRows(selectEl, state.doc, state.list);
+  bindRows(selectEl, state);
+  syncLabel(selectEl, state);
+}
+
+function observeOptions(selectEl, state) {
+  const Observer = state.Observer ?? selectEl.ownerDocument?.defaultView?.MutationObserver;
+  if (!Observer) return;
+  state.observer = new Observer(() => rebuildRows(selectEl, state));
+  state.observer.observe?.(selectEl, { childList: true });
 }
 
 function open(selectEl, state) {
@@ -237,14 +270,15 @@ function inputKey(selectEl, state, ev) {
 function unmount(selectEl) {
   const state = selectEl?.[STATE];
   if (!state) return;
-  const { wrapper, trigger, input, rows } = state;
+  const { wrapper, trigger, input } = state;
   trigger.removeEventListener?.("click", state.onTriggerClick);
   trigger.removeEventListener?.("keydown", state.onTriggerKey);
   input.removeEventListener?.("input", state.onInput);
   input.removeEventListener?.("keydown", state.onInputKey);
   selectEl.removeEventListener?.("change", state.onChange);
   state.doc?.removeEventListener?.("click", state.onDocClick, true);
-  rows.forEach((row, index) => row.removeEventListener?.("click", state.rowClicks[index]));
+  state.observer?.disconnect?.();
+  unbindRows(state);
   wrapper.parentNode?.removeChild?.(wrapper);
   selectEl.classList.remove(SR_CLASS);
   delete selectEl[STATE];

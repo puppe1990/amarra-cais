@@ -1266,11 +1266,11 @@
     const isCoarse = deps.isCoarse ?? defaultIsCoarse;
     return {
       connect(el) {
-        mount(el, isCoarse);
+        mount(el, isCoarse, deps);
       },
       updated(el) {
         unmount(el);
-        mount(el, isCoarse);
+        mount(el, isCoarse, deps);
       },
       disconnect(el) {
         unmount(el);
@@ -1283,10 +1283,11 @@
     const coarse = win?.matchMedia?.("(pointer: coarse)")?.matches;
     return !!coarse && (win?.navigator?.maxTouchPoints ?? 0) > 0;
   }
-  function mount(selectEl, isCoarse) {
+  function mount(selectEl, isCoarse, deps) {
     if (!isEnhanceable(selectEl, isCoarse)) return;
     const doc = selectEl.ownerDocument;
     const state = buildUI(selectEl, doc);
+    state.Observer = deps?.MutationObserver ?? null;
     bindEvents(selectEl, state);
     selectEl.classList.add(SR_CLASS);
     selectEl[STATE4] = state;
@@ -1330,7 +1331,16 @@
     input.setAttribute("aria-label", searchPlaceholder(selectEl, doc));
     input.setAttribute("placeholder", searchPlaceholder(selectEl, doc));
     input.classList.add("cais-select-search-input");
-    const rows = Array.from(selectEl.options ?? []).map((option, index) => {
+    const rows = buildRows(selectEl, doc, list);
+    panel.appendChild(input);
+    panel.appendChild(list);
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(panel);
+    selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+    return { doc, wrapper, trigger, panel, input, list, rows, label };
+  }
+  function buildRows(selectEl, doc, list) {
+    return Array.from(selectEl.options ?? []).map((option, index) => {
       const row = doc.createElement("li");
       row.setAttribute("role", "option");
       row.setAttribute("data-value", option.value ?? "");
@@ -1341,15 +1351,9 @@
       list.appendChild(row);
       return row;
     });
-    panel.appendChild(input);
-    panel.appendChild(list);
-    wrapper.appendChild(trigger);
-    wrapper.appendChild(panel);
-    selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
-    return { doc, wrapper, trigger, panel, input, list, rows, label };
   }
   function bindEvents(selectEl, state) {
-    const { trigger, input, panel, wrapper, rows } = state;
+    const { trigger, input, panel, wrapper } = state;
     const doc = state.doc;
     state.onTriggerClick = (ev) => {
       ev?.preventDefault?.();
@@ -1370,7 +1374,17 @@
       if (wrapper.contains?.(ev?.target)) return;
       close(state);
     };
-    state.rowClicks = rows.map((row) => {
+    bindRows(selectEl, state);
+    observeOptions(selectEl, state);
+    trigger.addEventListener("click", state.onTriggerClick);
+    trigger.addEventListener("keydown", state.onTriggerKey);
+    input.addEventListener("input", state.onInput);
+    input.addEventListener("keydown", state.onInputKey);
+    selectEl.addEventListener("change", state.onChange);
+    doc.addEventListener("click", state.onDocClick, true);
+  }
+  function bindRows(selectEl, state) {
+    state.rowClicks = state.rows.map((row) => {
       const fn = (ev) => {
         ev?.preventDefault?.();
         choose(selectEl, state, row);
@@ -1378,12 +1392,22 @@
       row.addEventListener("click", fn);
       return fn;
     });
-    trigger.addEventListener("click", state.onTriggerClick);
-    trigger.addEventListener("keydown", state.onTriggerKey);
-    input.addEventListener("input", state.onInput);
-    input.addEventListener("keydown", state.onInputKey);
-    selectEl.addEventListener("change", state.onChange);
-    doc.addEventListener("click", state.onDocClick, true);
+  }
+  function unbindRows(state) {
+    state.rows.forEach((row, index) => row.removeEventListener?.("click", state.rowClicks?.[index]));
+  }
+  function rebuildRows(selectEl, state) {
+    unbindRows(state);
+    for (const row of state.rows) row.parentNode?.removeChild?.(row);
+    state.rows = buildRows(selectEl, state.doc, state.list);
+    bindRows(selectEl, state);
+    syncLabel(selectEl, state);
+  }
+  function observeOptions(selectEl, state) {
+    const Observer = state.Observer ?? selectEl.ownerDocument?.defaultView?.MutationObserver;
+    if (!Observer) return;
+    state.observer = new Observer(() => rebuildRows(selectEl, state));
+    state.observer.observe?.(selectEl, { childList: true });
   }
   function open(selectEl, state) {
     state.panel.hidden = false;
@@ -1465,14 +1489,15 @@
   function unmount(selectEl) {
     const state = selectEl?.[STATE4];
     if (!state) return;
-    const { wrapper, trigger, input, rows } = state;
+    const { wrapper, trigger, input } = state;
     trigger.removeEventListener?.("click", state.onTriggerClick);
     trigger.removeEventListener?.("keydown", state.onTriggerKey);
     input.removeEventListener?.("input", state.onInput);
     input.removeEventListener?.("keydown", state.onInputKey);
     selectEl.removeEventListener?.("change", state.onChange);
     state.doc?.removeEventListener?.("click", state.onDocClick, true);
-    rows.forEach((row, index) => row.removeEventListener?.("click", state.rowClicks[index]));
+    state.observer?.disconnect?.();
+    unbindRows(state);
     wrapper.parentNode?.removeChild?.(wrapper);
     selectEl.classList.remove(SR_CLASS);
     delete selectEl[STATE4];
