@@ -4,6 +4,12 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.17.0] - 2026-10-06
+
+### Changed
+
+- Scaffolded `layouts/app.html`: after login the desktop header is dropped and the fixed sidebar becomes the only chrome — brand, routes (`<!-- cais:nav -->`), sign out (now i18n via `t "auth.logout"`) and `<.locale-toggle>` + theme toggle. Mobile keeps a slim header with brand + hamburger. Anonymous pages keep the previous header + rail (#324).
+
 ## [0.16.0] - 2026-10-06
 
 ### Added
