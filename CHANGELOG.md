@@ -4,6 +4,12 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.18.0] - 2026-10-07
+
+### Added
+
+- Searchable selects by default: `hook_select` clips the native `<select>` (value/`required`/iOS kept) and injects a trigger + filtered listbox that writes the choice back and fires `change`. Bare `<select>` is auto-enhanced via `registerAuto`, the kit `<.select>` / `fieldSelect` emit `amarra-hook="select"`, coarse pointers keep the OS picker, and `data-amarra-select-search="false"` opts out (#326).
+
 ## [0.17.0] - 2026-10-06
 
 ### Changed

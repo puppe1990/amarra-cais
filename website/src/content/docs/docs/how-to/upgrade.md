@@ -9,7 +9,7 @@ sidebar:
 
 ```bash
 amarra-cais upgrade            # bump to the latest version
-amarra-cais upgrade v0.17.0    # pin a specific version
+amarra-cais upgrade v0.18.0    # pin a specific version
 amarra-cais upgrade --dry-run  # preview the changes without writing
 ```
 
@@ -35,8 +35,8 @@ amarra-cais pwa --bump
 Keep the CLI and the app's `go.mod` in step. The quick start installs a pinned CLI:
 
 ```bash
-go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.17.0
-amarra-cais version   # expect 0.17.0
+go install github.com/puppe1990/amarra-cais/cmd/amarra-cais@v0.18.0
+amarra-cais version   # expect 0.18.0
 ```
 
 Generating code with one release while depending on another is the usual source of confusing "unknown component" or "missing method" errors. `amarra-cais version` prints the framework version the CLI was built from, so you can check both sides.
