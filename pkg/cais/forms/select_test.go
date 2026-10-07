@@ -38,7 +38,7 @@ func TestFieldSelect_searchableByDefault(t *testing.T) {
 			{Value: "1", Label: "Books"},
 		},
 	}))
-	if !strings.Contains(got, `data-cais-select-search="true"`) {
+	if !strings.Contains(got, `amarra-hook="select"`) {
 		t.Errorf("missing searchable marker: %s", got)
 	}
 }

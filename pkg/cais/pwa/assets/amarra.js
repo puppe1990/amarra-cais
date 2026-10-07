@@ -825,9 +825,13 @@
   // pkg/amarra/js/hook_registry.mjs
   var defs = /* @__PURE__ */ new Map();
   var mounted = /* @__PURE__ */ new Map();
+  var auto = /* @__PURE__ */ new Map();
   function register(name, def) {
     if (!name || !def) return;
     defs.set(name, def);
+  }
+  function registerAuto(tag, name) {
+    if (tag && name) auto.set(String(tag).toUpperCase(), name);
   }
   function reset() {
     defs.clear();
@@ -838,7 +842,7 @@
     const found = collect(root);
     const seen = new Set(found);
     for (const el of found) {
-      const name = el.getAttribute?.("amarra-hook") || "";
+      const name = hookName(el);
       const def = defs.get(name);
       const cur = mounted.get(el);
       if (cur && cur.name === name) {
@@ -859,6 +863,11 @@
       mounted.delete(el);
     }
   }
+  function hookName(el) {
+    const explicit = el.getAttribute?.("amarra-hook") || "";
+    if (explicit) return explicit;
+    return auto.get(el.tagName?.toUpperCase?.()) ?? "";
+  }
   function dispatchLivePush(event, payload) {
     for (const [el, cur] of mounted) {
       cur.def.handleEvent?.(event, payload, el);
@@ -866,10 +875,14 @@
   }
   function collect(root) {
     const out = [];
-    if (root.hasAttribute?.("amarra-hook")) out.push(root);
-    const list = root.querySelectorAll?.("[amarra-hook]");
-    if (list) {
-      for (const el of list) out.push(el);
+    const push = (el) => {
+      if (el && !out.includes(el)) out.push(el);
+    };
+    if (root.hasAttribute?.("amarra-hook") || auto.has(root.tagName?.toUpperCase?.())) push(root);
+    for (const sel of ["[amarra-hook]", ...auto.keys()]) {
+      const list = root.querySelectorAll?.(sel);
+      if (!list) continue;
+      for (const el of list) push(el);
     }
     return out;
   }
@@ -1034,27 +1047,27 @@
         const menu = el.querySelector("[data-amarra-dropdown-menu]");
         if (!btn || !menu) return;
         const doc = el.ownerDocument ?? globalThis.document;
-        const close = () => {
+        const close2 = () => {
           menu.hidden = true;
           btn.setAttribute?.("aria-expanded", "false");
         };
         const toggle = (ev) => {
           ev?.preventDefault?.();
-          const open = menu.hidden;
-          menu.hidden = !open;
-          btn.setAttribute?.("aria-expanded", String(open));
+          const open2 = menu.hidden;
+          menu.hidden = !open2;
+          btn.setAttribute?.("aria-expanded", String(open2));
         };
         const onDocClick = (ev) => {
           if (el.contains?.(ev?.target)) return;
-          close();
+          close2();
         };
         const onKey2 = (ev) => {
-          if (ev?.key === "Escape") close();
+          if (ev?.key === "Escape") close2();
         };
         btn[BTN] = toggle;
         btn.addEventListener?.("click", toggle);
-        menu[MENU] = close;
-        menu.addEventListener?.("click", close);
+        menu[MENU] = close2;
+        menu.addEventListener?.("click", close2);
         doc?.addEventListener?.("click", onDocClick);
         doc?.addEventListener?.("keydown", onKey2);
         el[STATE3] = { btn, menu, doc, onDocClick, onKey: onKey2 };
@@ -1245,9 +1258,238 @@
   }
   var reveal = makeReveal();
 
+  // pkg/amarra/js/hook_select.mjs
+  var STATE4 = "_amarraSelectSearch";
+  var SR_CLASS = "cais-select-search-native";
+  var listSeq = 0;
+  function makeSelectSearch(deps = {}) {
+    const isCoarse = deps.isCoarse ?? defaultIsCoarse;
+    return {
+      connect(el) {
+        mount(el, isCoarse);
+      },
+      updated(el) {
+        unmount(el);
+        mount(el, isCoarse);
+      },
+      disconnect(el) {
+        unmount(el);
+      }
+    };
+  }
+  var select = makeSelectSearch();
+  function defaultIsCoarse(el) {
+    const win = el?.ownerDocument?.defaultView;
+    const coarse = win?.matchMedia?.("(pointer: coarse)")?.matches;
+    return !!coarse && (win?.navigator?.maxTouchPoints ?? 0) > 0;
+  }
+  function mount(selectEl, isCoarse) {
+    if (!isEnhanceable(selectEl, isCoarse)) return;
+    const doc = selectEl.ownerDocument;
+    const state = buildUI(selectEl, doc);
+    bindEvents(selectEl, state);
+    selectEl.classList.add(SR_CLASS);
+    selectEl[STATE4] = state;
+    syncLabel(selectEl, state);
+  }
+  function isEnhanceable(selectEl, isCoarse) {
+    if (!selectEl || selectEl.tagName !== "SELECT" || selectEl.multiple) return false;
+    if (selectEl[STATE4]) return false;
+    if (!selectEl.parentNode || !selectEl.ownerDocument) return false;
+    if (selectEl.getAttribute?.("data-amarra-select-search") === "false") return false;
+    return !isCoarse(selectEl);
+  }
+  function buildUI(selectEl, doc) {
+    const wrapper = doc.createElement("div");
+    wrapper.classList.add("cais-select-search");
+    const trigger = doc.createElement("button");
+    trigger.setAttribute("type", "button");
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.classList.add("cais-select-search-trigger");
+    const label = doc.createElement("span");
+    label.classList.add("cais-select-search-label");
+    const chevron = doc.createElement("span");
+    chevron.classList.add("cais-select-search-chevron");
+    chevron.setAttribute("aria-hidden", "true");
+    chevron.textContent = "\u25BE";
+    trigger.appendChild(label);
+    trigger.appendChild(chevron);
+    const panel = doc.createElement("div");
+    panel.classList.add("cais-select-search-panel");
+    panel.hidden = true;
+    const listId = `amarra-select-list-${++listSeq}`;
+    const list = doc.createElement("ul");
+    list.setAttribute("role", "listbox");
+    list.setAttribute("id", listId);
+    list.classList.add("cais-select-search-list");
+    trigger.setAttribute("aria-controls", listId);
+    const input = doc.createElement("input");
+    input.setAttribute("type", "text");
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("aria-label", searchPlaceholder(selectEl, doc));
+    input.setAttribute("placeholder", searchPlaceholder(selectEl, doc));
+    input.classList.add("cais-select-search-input");
+    const rows = Array.from(selectEl.options ?? []).map((option, index) => {
+      const row = doc.createElement("li");
+      row.setAttribute("role", "option");
+      row.setAttribute("data-value", option.value ?? "");
+      row.setAttribute("data-index", String(index));
+      row.classList.add("cais-select-search-option");
+      if (option.disabled) row.setAttribute("aria-disabled", "true");
+      row.textContent = option.textContent ?? "";
+      list.appendChild(row);
+      return row;
+    });
+    panel.appendChild(input);
+    panel.appendChild(list);
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(panel);
+    selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+    return { doc, wrapper, trigger, panel, input, list, rows, label };
+  }
+  function bindEvents(selectEl, state) {
+    const { trigger, input, panel, wrapper, rows } = state;
+    const doc = state.doc;
+    state.onTriggerClick = (ev) => {
+      ev?.preventDefault?.();
+      if (panel.hidden) open(selectEl, state);
+      else close(state);
+    };
+    state.onTriggerKey = (ev) => {
+      if (ev?.key === "ArrowDown" || ev?.key === "Enter" || ev?.key === " ") {
+        ev?.preventDefault?.();
+        open(selectEl, state);
+      }
+    };
+    state.onInput = () => filter(selectEl, state);
+    state.onInputKey = (ev) => inputKey(selectEl, state, ev);
+    state.onChange = () => syncLabel(selectEl, state);
+    state.onDocClick = (ev) => {
+      if (panel.hidden) return;
+      if (wrapper.contains?.(ev?.target)) return;
+      close(state);
+    };
+    state.rowClicks = rows.map((row) => {
+      const fn = (ev) => {
+        ev?.preventDefault?.();
+        choose(selectEl, state, row);
+      };
+      row.addEventListener("click", fn);
+      return fn;
+    });
+    trigger.addEventListener("click", state.onTriggerClick);
+    trigger.addEventListener("keydown", state.onTriggerKey);
+    input.addEventListener("input", state.onInput);
+    input.addEventListener("keydown", state.onInputKey);
+    selectEl.addEventListener("change", state.onChange);
+    doc.addEventListener("click", state.onDocClick, true);
+  }
+  function open(selectEl, state) {
+    state.panel.hidden = false;
+    state.trigger.setAttribute("aria-expanded", "true");
+    state.input.value = "";
+    filter(selectEl, state);
+    state.input.focus?.();
+  }
+  function close(state) {
+    state.panel.hidden = true;
+    state.trigger.setAttribute("aria-expanded", "false");
+  }
+  function choose(selectEl, state, row) {
+    selectEl.value = row.getAttribute("data-value") ?? "";
+    dispatchChange(selectEl);
+    syncLabel(selectEl, state);
+    close(state);
+    state.trigger.focus?.();
+  }
+  function dispatchChange(selectEl) {
+    if (typeof selectEl.dispatchEvent === "function" && typeof Event === "function") {
+      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+      return;
+    }
+    selectEl.fire?.("change", { type: "change" });
+  }
+  function syncLabel(selectEl, state) {
+    const options = Array.from(selectEl.options ?? []);
+    const selected = options.find((o) => (o.value ?? "") === (selectEl.value ?? "")) ?? options[0];
+    state.label.textContent = selected?.textContent ?? "";
+    state.rows.forEach((row, index) => {
+      const on = (options[index]?.value ?? "") === (selectEl.value ?? "");
+      row.setAttribute("aria-selected", on ? "true" : "false");
+      row.classList.toggle("is-selected", on);
+    });
+  }
+  function filter(selectEl, state) {
+    const query = normalize(state.input.value);
+    let firstVisible = null;
+    state.rows.forEach((row) => {
+      const hidden = query !== "" && !normalize(row.textContent).includes(query);
+      row.classList.toggle("is-hidden", hidden);
+      if (!hidden && firstVisible === null) firstVisible = row;
+    });
+    highlight(state, firstVisible);
+  }
+  function highlight(state, row) {
+    state.rows.forEach((r) => r.classList.toggle("is-highlighted", r === row));
+    state.highlighted = row ?? null;
+    row?.scrollIntoView?.({ block: "nearest" });
+  }
+  function moveHighlight(state, delta) {
+    const visible = state.rows.filter((r) => !r.classList.contains("is-hidden"));
+    if (!visible.length) return;
+    let current = visible.indexOf(state.highlighted);
+    if (current < 0) current = delta > 0 ? -1 : visible.length;
+    const next = Math.max(0, Math.min(visible.length - 1, current + delta));
+    highlight(state, visible[next]);
+  }
+  function inputKey(selectEl, state, ev) {
+    const key = ev?.key;
+    if (key === "ArrowDown") {
+      ev?.preventDefault?.();
+      moveHighlight(state, 1);
+    } else if (key === "ArrowUp") {
+      ev?.preventDefault?.();
+      moveHighlight(state, -1);
+    } else if (key === "Enter") {
+      ev?.preventDefault?.();
+      if (state.highlighted) choose(selectEl, state, state.highlighted);
+    } else if (key === "Escape") {
+      ev?.preventDefault?.();
+      close(state);
+      state.trigger.focus?.();
+    } else if (key === "Tab") {
+      close(state);
+    }
+  }
+  function unmount(selectEl) {
+    const state = selectEl?.[STATE4];
+    if (!state) return;
+    const { wrapper, trigger, input, rows } = state;
+    trigger.removeEventListener?.("click", state.onTriggerClick);
+    trigger.removeEventListener?.("keydown", state.onTriggerKey);
+    input.removeEventListener?.("input", state.onInput);
+    input.removeEventListener?.("keydown", state.onInputKey);
+    selectEl.removeEventListener?.("change", state.onChange);
+    state.doc?.removeEventListener?.("click", state.onDocClick, true);
+    rows.forEach((row, index) => row.removeEventListener?.("click", state.rowClicks[index]));
+    wrapper.parentNode?.removeChild?.(wrapper);
+    selectEl.classList.remove(SR_CLASS);
+    delete selectEl[STATE4];
+  }
+  function searchPlaceholder(selectEl, doc) {
+    const attr = selectEl.getAttribute?.("data-amarra-select-search-placeholder");
+    if (attr) return attr;
+    const lang = doc?.documentElement?.lang ?? "";
+    return String(lang).toLowerCase().startsWith("pt") ? "Buscar\u2026" : "Search\u2026";
+  }
+  function normalize(text) {
+    return String(text ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  }
+
   // pkg/amarra/js/hook_sidebar.mjs
   var OPEN_ATTR = "data-amarra-sidebar-open";
-  var STATE4 = "_amarraSidebar";
+  var STATE5 = "_amarraSidebar";
   function makeSidebar(deps = {}) {
     const isDesktop = deps.isDesktop ?? (() => false);
     return {
@@ -1283,16 +1525,16 @@
         doc?.addEventListener?.("keydown", onKey2);
         doc?.addEventListener?.("click", onDocClick, true);
         apply(false);
-        el[STATE4] = state;
+        el[STATE5] = state;
       },
       disconnect(el) {
-        const state = el?.[STATE4];
+        const state = el?.[STATE5];
         if (!state) return;
         el.removeEventListener?.("click", state.onToggle);
         const doc = el.ownerDocument ?? deps.document ?? null;
         doc?.removeEventListener?.("keydown", state.onKey);
         doc?.removeEventListener?.("click", state.onDocClick, true);
-        delete el[STATE4];
+        delete el[STATE5];
       }
     };
   }
@@ -1370,7 +1612,7 @@
   }
 
   // pkg/amarra/js/hook_tour.mjs
-  var STATE5 = "_amarraTourState";
+  var STATE6 = "_amarraTourState";
   var START = "_amarraTourStart";
   var PAD = 6;
   var SHADOW = "0 0 0 9999px rgba(0, 0, 0, 0.72)";
@@ -1397,14 +1639,14 @@
           btn[START] = fn;
           btn.addEventListener?.("click", fn);
         }
-        el[STATE5] = state;
+        el[STATE6] = state;
       },
       updated(el) {
         api.disconnect(el);
         api.connect(el);
       },
       disconnect(el) {
-        const state = el?.[STATE5];
+        const state = el?.[STATE6];
         if (!state) return;
         for (const btn of state.starts ?? []) {
           const fn = btn?.[START];
@@ -1413,7 +1655,7 @@
           delete btn[START];
         }
         end(state);
-        delete el[STATE5];
+        delete el[STATE6];
       }
     };
     return api;
@@ -1428,7 +1670,7 @@
       raf,
       steps,
       index: 0,
-      ui: buildUI(state.doc),
+      ui: buildUI2(state.doc),
       opener,
       queued: false
     };
@@ -1544,7 +1786,7 @@
       text: node.getAttribute?.("data-amarra-tour-text") ?? ""
     };
   }
-  function buildUI(doc) {
+  function buildUI2(doc) {
     const block = doc.createElement("div");
     block.setAttribute("data-amarra-tour-block", "");
     block.setAttribute("aria-hidden", "true");
@@ -1652,9 +1894,11 @@
   register("nav", nav);
   register("password", password);
   register("reveal", reveal);
+  register("select", select);
   register("sidebar", sidebar);
   register("theme", theme);
   register("tour", tour);
+  registerAuto("select", "select");
   var ON_CLASSES = ["bg-green-50", "text-green-700"];
   var OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
   var TOAST_MS = 2e3;
@@ -1753,9 +1997,11 @@
     register("nav", nav);
     register("password", password);
     register("reveal", reveal);
+    register("select", select);
     register("sidebar", sidebar);
     register("theme", theme);
     register("tour", tour);
+    registerAuto("select", "select");
     scan(doc);
     let optimistic = null;
     doc.addEventListener("amarra:toast", (ev) => {
@@ -2050,9 +2296,9 @@ ${lines.join("\n")}
     return extractTagAttr(html, "body", name);
   }
   function extractTagAttr(html, tag, name) {
-    const open = String(html ?? "").match(new RegExp(`<${tag}\\b[^>]*>`, "i"))?.[0] ?? "";
+    const open2 = String(html ?? "").match(new RegExp(`<${tag}\\b[^>]*>`, "i"))?.[0] ?? "";
     const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const m = open.match(new RegExp(`\\s${escaped}\\s*=\\s*["']([^"']*)["']`, "i"));
+    const m = open2.match(new RegExp(`\\s${escaped}\\s*=\\s*["']([^"']*)["']`, "i"));
     return m ? m[1] : null;
   }
   function applyHead(doc, html) {
@@ -2205,10 +2451,10 @@ ${lines.join("\n")}
   }
   function extractMainHTML(html) {
     const str = String(html ?? "");
-    const open = extractMainOpen(str);
-    if (!open) return null;
-    const start5 = open.index + open[0].length;
-    return sliceMatchingClose(str, start5, open[1]);
+    const open2 = extractMainOpen(str);
+    if (!open2) return null;
+    const start5 = open2.index + open2[0].length;
+    return sliceMatchingClose(str, start5, open2[1]);
   }
   function extractMainTagName(html) {
     return extractMainOpen(String(html ?? ""))?.[1]?.toUpperCase() ?? null;

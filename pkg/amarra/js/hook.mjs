@@ -1,4 +1,4 @@
-import { register, scan, dispatchLivePush, reset } from "./hook_registry.mjs";
+import { register, scan, dispatchLivePush, reset, registerAuto } from "./hook_registry.mjs";
 import { bulk } from "./hook_bulk.mjs";
 import { clipboard } from "./hook_clipboard.mjs";
 import { dialog } from "./hook_dialog.mjs";
@@ -6,6 +6,7 @@ import { dropdown } from "./hook_dropdown.mjs";
 import { nav } from "./hook_nav.mjs";
 import { password } from "./hook_password.mjs";
 import { reveal } from "./hook_reveal.mjs";
+import { select } from "./hook_select.mjs";
 import { sidebar } from "./hook_sidebar.mjs";
 import { theme } from "./hook_theme.mjs";
 import { tour } from "./hook_tour.mjs";
@@ -19,9 +20,13 @@ register("dropdown", dropdown);
 register("nav", nav);
 register("password", password);
 register("reveal", reveal);
+register("select", select);
 register("sidebar", sidebar);
 register("theme", theme);
 register("tour", tour);
+// Selects are enhanced by default; opt out per element with
+// data-amarra-select-search="false" (see hook_select.mjs).
+registerAuto("select", "select");
 
 const ON_CLASSES = ["bg-green-50", "text-green-700"];
 const OFF_CLASSES = ["bg-slate-100", "text-slate-600"];
@@ -133,9 +138,11 @@ export function start(opts = {}) {
   register("nav", nav);
   register("password", password);
   register("reveal", reveal);
+  register("select", select);
   register("sidebar", sidebar);
   register("theme", theme);
   register("tour", tour);
+  registerAuto("select", "select");
   scan(doc);
 
   let optimistic = null;

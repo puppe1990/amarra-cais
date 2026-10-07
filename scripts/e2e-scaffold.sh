@@ -51,6 +51,8 @@ go mod tidy
 
 "$TMP/amarra-cais" g handler dialog
 cp "$ROOT/e2e/fixtures/dialog.html" web/templates/pages/dialog.html
+"$TMP/amarra-cais" g handler picker
+cp "$ROOT/e2e/fixtures/picker.html" web/templates/pages/picker.html
 "$TMP/amarra-cais" g live counter
 "$TMP/amarra-cais" g stream chat
 go mod tidy
