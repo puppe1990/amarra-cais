@@ -43,7 +43,7 @@ func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
 				`nonce="{{ .CSPNonce }}"`,
 				"Fullbleed",
 				"page-owned chrome",
-				"IIFE",
+				"amarra:morphed",
 				"event delegation",
 				tc.name, // AppName rendered into title
 			} {
