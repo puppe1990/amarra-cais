@@ -9,9 +9,14 @@ export async function signIn(page) {
   await expect(page.locator("body")).toHaveAttribute("data-amarra-shell", "app");
 }
 
-// Contact lives only on the home page; the header brand is on every layout.
+// The brand lives in the fixed sidebar after login and in the header on the
+// anonymous shell. Contact lives only on the home page, so this drives a morph
+// away from the current page and back to /.
 export async function morphHome(page) {
-  await page.locator('header a[href="/"]').click();
+  const shell = await page.locator("body").getAttribute("data-amarra-shell");
+  const brand =
+    shell === "app" ? page.locator('#amarra-nav a[href="/"]') : page.locator('header a[href="/"]');
+  await brand.click();
   await expect(page).toHaveURL(/\/$/);
 }
 
