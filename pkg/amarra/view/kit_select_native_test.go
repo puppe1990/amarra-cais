@@ -27,6 +27,7 @@ func TestKit_selectStaysNativeAndMarksUserInvalid(t *testing.T) {
 	for _, want := range []string{
 		"<select",
 		`name="role"`,
+		`amarra-hook="select"`,
 		"user-invalid:",
 		`aria-invalid="true"`,
 		"pick one",

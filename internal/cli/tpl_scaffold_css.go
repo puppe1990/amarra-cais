@@ -187,9 +187,11 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search {
-    position: relative;
+    @apply relative block w-full;
   }
 
+  /* Native control stays in the DOM (form value, required, iOS) but is clipped
+     while the JS trigger takes over. */
   .cais-select-search-native {
     position: absolute;
     width: 1px;
@@ -203,51 +205,19 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-trigger {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid rgb(203 213 225);
-    background: rgb(255 255 255);
-    padding: 0.5rem 0.75rem;
-    text-align: left;
-    outline: none;
-  }
-
-  .cais-select-search-trigger:focus {
-    box-shadow: 0 0 0 2px rgb(201 137 58);
+    @apply flex w-full items-center justify-between gap-2 border border-copper/40 bg-ink px-3 py-2 text-left text-foam outline-none focus:ring-2 focus:ring-copper;
   }
 
   .cais-select-search-trigger:disabled {
-    cursor: not-allowed;
-    background: rgb(248 250 252);
-    opacity: 0.6;
+    @apply cursor-not-allowed opacity-60;
   }
 
   .cais-select-search-panel {
-    position: absolute;
-    z-index: 20;
-    margin-top: 0.25rem;
-    width: 100%;
-    overflow: hidden;
-    border-radius: 0.5rem;
-    border: 1px solid rgb(226 232 240);
-    background: rgb(255 255 255);
-    box-shadow:
-      0 10px 15px -3px rgb(0 0 0 / 0.1),
-      0 4px 6px -4px rgb(0 0 0 / 0.1);
+    @apply absolute z-20 mt-1 w-full overflow-hidden border border-copper/40 bg-ink shadow-lg;
   }
 
   .cais-select-search-input {
-    width: 100%;
-    border: 0;
-    border-bottom: 1px solid rgb(226 232 240);
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    outline: none;
+    @apply w-full border-0 border-b border-foam/10 bg-ink px-3 py-2 text-sm text-foam outline-none;
   }
 
   .cais-select-search-list {
@@ -259,24 +229,16 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-option {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    cursor: pointer;
+    @apply cursor-pointer px-3 py-2 text-sm text-foam;
   }
 
-  .cais-select-search-option:hover {
-    background: rgba(201, 137, 58, 0.12);
+  .cais-select-search-option:hover,
+  .cais-select-search-option.is-highlighted {
+    @apply bg-copper/10;
   }
 
   .cais-select-search-option.is-selected {
-    background: rgba(201, 137, 58, 0.18);
-    font-weight: 500;
-    color: rgb(201 137 58);
-  }
-
-  .cais-select-search-option.is-highlighted {
-    background: rgb(241 245 249);
+    @apply font-medium text-copper;
   }
 
   .cais-select-search-option.is-hidden {
@@ -284,10 +246,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-chevron {
-    width: 1rem;
-    height: 1rem;
-    flex-shrink: 0;
-    color: rgb(148 163 184);
+    @apply h-4 w-4 flex-shrink-0 text-copper/70;
   }
 
   .cais-chat-shell {
