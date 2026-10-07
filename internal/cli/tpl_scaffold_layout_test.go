@@ -194,6 +194,39 @@ func TestLayoutTemplates_gateAuthChromeOnLoggedIn(t *testing.T) {
 	}
 }
 
+// After login the app shell drops the desktop header: the fixed sidebar is the
+// only chrome and carries the brand, routes, signout and the locale toggle.
+// Anonymous pages keep the header (login link) and the rail.
+func TestLayoutTemplates_appShellSidebarOwnsChrome(t *testing.T) {
+	aside := navAside(t, "full", tplLayout)
+	for _, token := range []string{
+		`{{"{{"}} if .Site.LoggedIn {{"}}"}}`,
+		`hidden lg:flex`,
+		`href="/"`,
+		`lg:top-0`,
+		`amarra-hook="nav"`,
+		`href="/dashboard"`,
+		`<.form action="/logout"`,
+		`{{"{{"}} t "auth.logout" {{"}}"}}`,
+		`<.locale-toggle`,
+	} {
+		if !strings.Contains(aside, token) {
+			t.Errorf("app-shell sidebar missing %q", token)
+		}
+	}
+	if strings.Contains(aside, "auth.login_title") {
+		t.Error("app-shell sidebar must not carry the anonymous login link")
+	}
+	// The desktop header is suppressed: only a mobile (lg:hidden) header stays,
+	// and the full header (with the login link) is gated to the anonymous shell.
+	if !strings.Contains(tplLayout, `lg:hidden`) {
+		t.Error("signed-in shell should keep only a mobile header")
+	}
+	if !strings.Contains(tplLayout, `if not .Site.LoggedIn`) {
+		t.Error("the desktop header must stay gated to the anonymous shell")
+	}
+}
+
 func TestViewData_setsLoggedInFromSession(t *testing.T) {
 	if !strings.Contains(tplViewData, "session.UserID(r)") || !strings.Contains(tplViewData, "s.LoggedIn") {
 		t.Error("amarraData should populate Site.LoggedIn from the session (#208)")
