@@ -4,6 +4,13 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.18.1] - 2026-10-07
+
+### Fixed
+
+- `hook_select`: a dependent `<select>` that fills its `<option>`s after mount now rebuilds the search list and resyncs the label via a `MutationObserver` on the select's `childList` (#327)
+- Scaffold AGENTS corrected: inline page scripts run on a full load only and do **not** re-run on a Drive morph — put behavior that must survive Drive navigation in a static layout script reinitialized on `amarra:morphed` (#325)
+
 ## [0.18.0] - 2026-10-07
 
 ### Added

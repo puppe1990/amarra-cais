@@ -22,7 +22,7 @@ This is not a dual-mode fork. `amarra-cais doctor` fails when it finds a `vite.c
 
 Moving a Cais Inertia app to Amarra is not a `go get`. The data layer stays; the UI layer is rewritten.
 
-1. Pin the framework (`go get github.com/puppe1990/amarra-cais@v0.18.0`) and remove gonertia. Delete `vite.config.js`, `svelte.config.js`, `web/src/`, and `web/static/build/`.
+1. Pin the framework (`go get github.com/puppe1990/amarra-cais@v0.18.1`) and remove gonertia. Delete `vite.config.js`, `svelte.config.js`, `web/src/`, and `web/static/build/`.
 2. Load views once at boot with `view.Load`. Handlers take a `*view.Renderer` and call `view.Write`; they no longer check `HX-Request` or call Inertia render helpers.
 3. Replace pages: `web/src/pages/*.svelte` becomes `web/templates/pages/*.html`, `AppLayout.svelte` becomes `web/templates/layouts/app.html`, and the `#app` mount becomes `#amarra-main` plus one script. Svelte forms become kit `<.form>` / `<.input>` / `<.button>`.
 4. Rewrite tests to assert HTML (`testutil.AssertHTMLContains`) instead of Inertia JSON. Drop `setupTestInertia` and `X-Inertia: true`.
