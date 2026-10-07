@@ -240,3 +240,42 @@ test("select hook disconnect removes the injected UI and restores the select", (
   assert.equal(select.nextSibling, null);
   assert.equal(select.classList.contains("cais-select-search-native"), false);
 });
+
+// #327: a dependent select (estado → cidade) fills its options after the hook
+// mounted; the listbox must rebuild instead of freezing on the first snapshot.
+test("select hook rebuilds rows when the native options change", () => {
+  const { select } = fakeSelect();
+  let observer = null;
+  class MO {
+    constructor(cb) {
+      this.cb = cb;
+      observer = this;
+    }
+    observe() {}
+    disconnect() {
+      this.disconnected = true;
+    }
+    trigger() {
+      this.cb();
+    }
+  }
+  const hook = makeSelectSearch({ isCoarse: () => false, MutationObserver: MO });
+  hook.connect(select);
+  assert.ok(observer, "an observer watches the select");
+
+  select.options = [option("", "Selecione..."), option("sp", "São Paulo"), option("rj", "Rio")];
+  observer.trigger();
+
+  const rows = options(select);
+  assert.equal(rows.length, 3, "rows follow the new options");
+  assert.equal(rows[1].textContent, "São Paulo");
+
+  trigger(select).click();
+  input(select).value = "rio";
+  input(select).fire("input");
+  assert.equal(rows[2].classList.contains("is-hidden"), false);
+  assert.equal(rows[1].classList.contains("is-hidden"), true);
+
+  hook.disconnect(select);
+  assert.equal(observer.disconnected, true, "observer is disconnected on unmount");
+});
