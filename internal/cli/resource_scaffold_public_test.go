@@ -66,6 +66,9 @@ func TestScaffoldResource_PublicInsertsNavAfterMarker(t *testing.T) {
 	if linkIdx == -1 {
 		t.Fatal("layouts/app.html missing public products nav link")
 	}
+	if !strings.Contains(body, `href="/admin/products"`) {
+		t.Error("public resource should also link its admin CRUD")
+	}
 	if linkIdx < markerIdx {
 		t.Error("nav link should appear after <!-- cais:nav --> marker")
 	}
@@ -74,6 +77,30 @@ func TestScaffoldResource_PublicInsertsNavAfterMarker(t *testing.T) {
 	}
 	if strings.Contains(body, `data-amarra-drive`) {
 		t.Error("public resource nav link should not emit the no-op data-amarra-drive attr (#31)")
+	}
+}
+
+// Non-public resources get no public list, but the admin CRUD must still be
+// reachable from the sidebar (the signed-in shell has no other entry point).
+func TestScaffoldResource_AdminNavLinkWithoutPublic(t *testing.T) {
+	t.Setenv("CAIS_SKIP_TIDY", "1")
+	appDir := filepath.Join(t.TempDir(), "notes")
+	if err := scaffoldNewApp(appDir, scaffoldData{
+		AppName:    "notes",
+		ModulePath: "github.com/puppe1990/notes",
+	}, true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := scaffoldResource(appDir, "note", resourceOpts{Fields: "title:string"}); err != nil {
+		t.Fatal(err)
+	}
+
+	nav := mustReadFile(t, filepath.Join(appDir, "web/templates/layouts/app.html"))
+	if !strings.Contains(nav, `href="/admin/notes"`) {
+		t.Error("non-public resource should link its admin CRUD in the sidebar")
+	}
+	if strings.Contains(nav, `href="/notes"`) {
+		t.Error("non-public resource must not link a public list")
 	}
 }
 
