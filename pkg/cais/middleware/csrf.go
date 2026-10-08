@@ -18,7 +18,7 @@ func CSRF(cfg cais.Config) func(http.Handler) http.Handler {
 
 func csrfHandler(cfg cais.Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if skipCSRF(r.URL.Path) {
+		if skipCSRF(r) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -70,6 +70,37 @@ func isSafeMethod(method string) bool {
 	}
 }
 
-func skipCSRF(path string) bool {
-	return path == "/health" || strings.HasPrefix(path, "/static/")
+// skipCSRF reports whether a request bypasses the double-submit check: health
+// and static probes, the /api/ machine-client convention, and requests carrying
+// an Authorization: Bearer header (#331) — a machine client has no CSRF cookie
+// or form field, so the 403 used to run before the handler authenticated it.
+//
+// A classic HTML form post keeps its CSRF protection even when a stray Bearer
+// header is present: cross-site forms cannot attach Authorization, so a Bearer
+// on form content there is browser/extension noise, not a machine client.
+func skipCSRF(r *http.Request) bool {
+	path := r.URL.Path
+	if path == "/health" ||
+		strings.HasPrefix(path, "/static/") ||
+		strings.HasPrefix(path, "/api/") {
+		return true
+	}
+	return hasBearerAuthorization(r) && !isFormContentType(r)
+}
+
+func hasBearerAuthorization(r *http.Request) bool {
+	return strings.HasPrefix(strings.ToLower(r.Header.Get("Authorization")), "bearer ")
+}
+
+func isFormContentType(r *http.Request) bool {
+	ct := r.Header.Get("Content-Type")
+	if i := strings.IndexByte(ct, ';'); i >= 0 {
+		ct = ct[:i]
+	}
+	switch strings.ToLower(strings.TrimSpace(ct)) {
+	case "application/x-www-form-urlencoded", "multipart/form-data", "text/plain":
+		return true
+	default:
+		return false
+	}
 }

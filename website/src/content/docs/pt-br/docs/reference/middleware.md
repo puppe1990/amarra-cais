@@ -9,19 +9,19 @@ O middleware fica em `pkg/cais/middleware`. Adicione-o com `r.Use(mw)` em um `ca
 
 ## Referência
 
-| Middleware                                | Finalidade                                                                                                                      |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `middleware.Recover`                      | Captura panics, registra a stack e retorna `500`.                                                                               |
-| `middleware.SecurityHeaders(cfg)`         | Define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` e a CSP; adiciona HSTS em produção. |
-| `middleware.CSRF(cfg)`                    | Cookie double-submit (`cais_csrf`); valida `POST`/`PUT`/`PATCH`/`DELETE` e ignora `/health` e `/static/`.                       |
-| `middleware.LoadSession(store)`           | Lê o cookie de sessão e anexa o ID do usuário ao contexto da requisição.                                                        |
-| `middleware.Flash(cfg)`                   | Consome o cookie flash de uso único no contexto da requisição.                                                                  |
-| `middleware.RequireAuth(loginURL)`        | Redirecionamento `303` para `loginURL` quando não autenticado.                                                                  |
-| `middleware.RequireAuthFunc(loginURL, h)` | Envolve um único handler com `RequireAuth`.                                                                                     |
-| `middleware.AdminAuth(cfg)`               | Bearer token de `ADMIN_TOKEN`; no-op em desenvolvimento quando não definido, rejeita tudo em produção quando não definido.      |
-| `middleware.LoggerTo(cfg, w)`             | Logs de requisição (JSON quando `cfg.LogJSON()`).                                                                               |
-| `middleware.NewRateLimiter(limit, cfg)`   | Token bucket por IP, `limit` requisições por minuto.                                                                            |
-| `middleware.ClientIP(r, cfg)`             | Resolve o IP do cliente, confiando em `X-Forwarded-For` apenas de `TRUSTED_PROXIES`.                                            |
+| Middleware                                | Finalidade                                                                                                                                                                                                     |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `middleware.Recover`                      | Captura panics, registra a stack e retorna `500`.                                                                                                                                                              |
+| `middleware.SecurityHeaders(cfg)`         | Define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` e a CSP; adiciona HSTS em produção.                                                                                |
+| `middleware.CSRF(cfg)`                    | Cookie double-submit (`cais_csrf`); valida `POST`/`PUT`/`PATCH`/`DELETE` e ignora `/health`, `/static/` e `/api/`. Requisição com `Authorization: Bearer` também ignora; form HTML clássico mantém a checagem. |
+| `middleware.LoadSession(store)`           | Lê o cookie de sessão e anexa o ID do usuário ao contexto da requisição.                                                                                                                                       |
+| `middleware.Flash(cfg)`                   | Consome o cookie flash de uso único no contexto da requisição.                                                                                                                                                 |
+| `middleware.RequireAuth(loginURL)`        | Redirecionamento `303` para `loginURL` quando não autenticado.                                                                                                                                                 |
+| `middleware.RequireAuthFunc(loginURL, h)` | Envolve um único handler com `RequireAuth`.                                                                                                                                                                    |
+| `middleware.AdminAuth(cfg)`               | Bearer token de `ADMIN_TOKEN`; no-op em desenvolvimento quando não definido, rejeita tudo em produção quando não definido.                                                                                     |
+| `middleware.LoggerTo(cfg, w)`             | Logs de requisição (JSON quando `cfg.LogJSON()`).                                                                                                                                                              |
+| `middleware.NewRateLimiter(limit, cfg)`   | Token bucket por IP, `limit` requisições por minuto.                                                                                                                                                           |
+| `middleware.ClientIP(r, cfg)`             | Resolve o IP do cliente, confiando em `X-Forwarded-For` apenas de `TRUSTED_PROXIES`.                                                                                                                           |
 
 ## Ordem de uso
 
