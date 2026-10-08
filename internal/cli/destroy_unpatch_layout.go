@@ -69,7 +69,10 @@ func unpatchLayoutNavForResource(dir string, data scaffoldData, dryRun bool) err
 		}
 		return fmt.Errorf("read layout: %w", err)
 	}
-	link := publicNavLink(data, inertia)
+	link := adminNavLink(data)
+	if data.Public {
+		link += publicNavLink(data, inertia)
+	}
 	content := strings.Replace(string(body), link, "", 1)
 	rel := strings.TrimPrefix(path, dir+string(os.PathSeparator))
 	return updateScaffoldFile(path, []byte(content), rel, dryRun)

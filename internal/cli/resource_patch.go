@@ -294,27 +294,34 @@ func layoutNavFile(dir string) (path string, inertia bool) {
 	return filepath.Join(dir, "web/templates/layouts/base.html"), false
 }
 
-func publicNavLink(data scaffoldData, inertia bool) string {
-	_ = inertia
-	return fmt.Sprintf(`          <a href="/%s" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s</a>
+func adminNavLink(data scaffoldData) string {
+	return fmt.Sprintf(`          <a href="/admin/%s" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s</a>
 `, data.Plural, toTitle(data.Plural))
 }
 
+func publicNavLink(data scaffoldData, inertia bool) string {
+	_ = inertia
+	return fmt.Sprintf(`          <a href="/%s" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s (public)</a>
+`, data.Plural, toTitle(data.Plural))
+}
+
+// patchLayoutNav adds the sidebar links for a resource: the admin CRUD always
+// (the signed-in shell has no other entry point) plus the public list when
+// --public. Idempotent on the admin href.
 func patchLayoutNav(dir string, data scaffoldData, dryRun bool) error {
-	if !data.Public {
-		return nil
-	}
 	path, inertia := layoutNavFile(dir)
 	body, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 	content := string(body)
-	linkHref := `href="/` + data.Plural + `"`
-	if strings.Contains(content, linkHref) {
+	if strings.Contains(content, `href="/admin/`+data.Plural+`"`) {
 		return nil
 	}
-	link := publicNavLink(data, inertia)
+	link := adminNavLink(data)
+	if data.Public {
+		link += publicNavLink(data, inertia)
+	}
 	switch {
 	case strings.Contains(content, layoutNavMarker):
 		content = strings.Replace(content, layoutNavMarker, layoutNavMarker+"\n"+link, 1)
@@ -327,7 +334,7 @@ func patchLayoutNav(dir string, data scaffoldData, dryRun bool) error {
 	default:
 		return fmt.Errorf("%s: missing %s marker and </nav> element", path, layoutNavMarker)
 	}
-	if !inertia {
+	if data.Public && !inertia {
 		content = patchLayoutLogoHref(dir, content, data)
 	}
 	if dryRun {
