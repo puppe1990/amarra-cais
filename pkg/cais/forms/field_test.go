@@ -15,6 +15,22 @@ func TestMakeField_setsErrorFromMap(t *testing.T) {
 	}
 }
 
+// #329: optional model fields are pointers; the New page passes a nil *string
+// and makeField used to dereference it, 500-ing the admin form.
+func TestMakeField_coercesOptionalPointers(t *testing.T) {
+	var nilNotes *string
+	if f := MakeField("notes", "Notes", nilNotes, "textarea", false, nil); f.Value != "" {
+		t.Errorf("nil *string should render empty, got %q", f.Value)
+	}
+	notes := "hi"
+	if f := MakeField("notes", "Notes", &notes, "textarea", false, nil); f.Value != "hi" {
+		t.Errorf("*string should deref, got %q", f.Value)
+	}
+	if f := MakeField("n", "N", nil, "text", false, nil); f.Value != "" {
+		t.Errorf("nil should render empty, got %q", f.Value)
+	}
+}
+
 func TestFieldInput_rendersTextInputAndError(t *testing.T) {
 	html := string(FieldInput(MakeField("name", "Name", "Ada", "text", true, map[string]string{"name": "required"})))
 	if !strings.Contains(html, `name="name"`) {

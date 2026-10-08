@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"fmt"
 	"html/template"
 	"strings"
 )
@@ -15,18 +16,36 @@ type FieldData struct {
 	Error    string
 }
 
-// MakeField builds FieldData with validation error from a map.
-func MakeField(name, label, value, htmlType string, required bool, errors map[string]string) FieldData {
+// MakeField builds FieldData with validation error from a map. value is `any`
+// so an optional model field (e.g. a nil *string on the New page) does not
+// panic the template: it coerces to "" instead of dereferencing nil.
+func MakeField(name, label string, value any, htmlType string, required bool, errors map[string]string) FieldData {
 	if htmlType == "" {
 		htmlType = "text"
 	}
 	return FieldData{
 		Name:     name,
 		Label:    label,
-		Value:    value,
+		Value:    stringValue(value),
 		Type:     htmlType,
 		Required: required,
 		Error:    FieldError(errors, name),
+	}
+}
+
+func stringValue(value any) string {
+	switch v := value.(type) {
+	case nil:
+		return ""
+	case string:
+		return v
+	case *string:
+		if v == nil {
+			return ""
+		}
+		return *v
+	default:
+		return fmt.Sprint(v)
 	}
 }
 
