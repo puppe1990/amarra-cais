@@ -4,6 +4,14 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.19.1] - 2026-10-08
+
+### Fixed
+
+- `middleware.CSRF`: a machine client (`Authorization: Bearer`, JSON) no longer dies in `403 invalid csrf token` before the handler — `/api/` requests and any Bearer header skip the double-submit check, while classic HTML form posts keep it even with a stray Bearer (#331)
+- `amarra.hook.scan(subtree)` no longer disconnects hooks outside the scanned root: a dependent select calling `scan(city)` used to tear down the other selects, the theme toggle and dialog controls on the page; the prune now drops only nodes that left the DOM or vanished from inside the root (#329)
+- Drive no longer swallows file downloads: a non-HTML response (PDF/DXF/SVG, `Content-Disposition: attachment`) hands the navigation back to the browser instead of ending as an ignored morph with the click already prevented (#332)
+
 ## [0.19.0] - 2026-10-08
 
 ### Changed
