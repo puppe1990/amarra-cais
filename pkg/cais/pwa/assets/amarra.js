@@ -859,6 +859,8 @@
     }
     for (const [el, cur] of [...mounted]) {
       if (seen.has(el)) continue;
+      const orphan = el.isConnected === false || typeof root.contains === "function" && root.contains(el);
+      if (!orphan) continue;
       cur.def.disconnect?.(el);
       mounted.delete(el);
     }
@@ -2563,6 +2565,11 @@ ${lines.join("\n")}
     }
     if (url && location) location.href = url;
   }
+  function isHtmlResponse(headers) {
+    const type = String(headers?.get?.("content-type") ?? "").split(";")[0].trim().toLowerCase();
+    if (/attachment/i.test(String(headers?.get?.("content-disposition") ?? ""))) return false;
+    return type === "" || type === "text/html" || type === "application/xhtml+xml";
+  }
   function applyLayoutMarker(doc, html) {
     const layout = extractHTMLAttr(html, "data-amarra-layout");
     if (layout != null && doc?.documentElement?.dataset) {
@@ -2595,8 +2602,14 @@ ${lines.join("\n")}
       const location = opts.location ?? win?.location ?? null;
       const history = opts.history ?? win?.history ?? null;
       if (opts.push !== false) captureScroll(history, win?.scrollY ?? 0);
-      const html = res.status === 401 || res.status === 403 ? "" : await res.text();
-      if (isStreamResponse(res.headers)) {
+      const authFailure = res.status === 401 || res.status === 403;
+      const stream = isStreamResponse(res.headers);
+      if (!authFailure && !stream && !isHtmlResponse(res.headers)) {
+        assignLocation(location, res.url || url);
+        return { action: "assign" };
+      }
+      const html = authFailure ? "" : await res.text();
+      if (stream) {
         for (const op of parseSSE(html)) applyOp(op, doc, opts);
         return { action: "stream" };
       }

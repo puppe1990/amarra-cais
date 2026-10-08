@@ -164,6 +164,18 @@ function assignLocation(location, url) {
   if (url && location) location.href = url;
 }
 
+// #332: pages are HTML; files (PDF/DXF/SVG downloads, attachment exports) are
+// not. An empty type stays HTML — minimal responses and test doubles may not
+// carry headers, and those are still drive-navigable pages.
+function isHtmlResponse(headers) {
+  const type = String(headers?.get?.("content-type") ?? "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (/attachment/i.test(String(headers?.get?.("content-disposition") ?? ""))) return false;
+  return type === "" || type === "text/html" || type === "application/xhtml+xml";
+}
+
 function applyLayoutMarker(doc, html) {
   const layout = extractHTMLAttr(html, "data-amarra-layout");
   if (layout != null && doc?.documentElement?.dataset) {
@@ -198,8 +210,17 @@ export async function visit(url, opts = {}) {
     const location = opts.location ?? win?.location ?? null;
     const history = opts.history ?? win?.history ?? null;
     if (opts.push !== false) captureScroll(history, win?.scrollY ?? 0);
-    const html = res.status === 401 || res.status === 403 ? "" : await res.text();
-    if (isStreamResponse(res.headers)) {
+    const authFailure = res.status === 401 || res.status === 403;
+    const stream = isStreamResponse(res.headers);
+    if (!authFailure && !stream && !isHtmlResponse(res.headers)) {
+      // #332: a PDF/DXF/SVG/attachment response has no #amarra-main to morph.
+      // Drive used to read it as text, end as "ignore" after preventDefault,
+      // and the file never downloaded — hand the navigation to the browser.
+      assignLocation(location, res.url || url);
+      return { action: "assign" };
+    }
+    const html = authFailure ? "" : await res.text();
+    if (stream) {
       for (const op of parseSSE(html)) applyOp(op, doc, opts);
       return { action: "stream" };
     }

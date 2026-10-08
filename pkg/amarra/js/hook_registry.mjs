@@ -40,6 +40,12 @@ export function scan(root) {
   }
   for (const [el, cur] of [...mounted]) {
     if (seen.has(el)) continue;
+    // #329: prune only orphans of THIS scan. A hook mounted outside a subtree
+    // scan (another select, the theme toggle, …) is still live — only a node
+    // that left the DOM or vanished from inside the scanned root is dropped.
+    const orphan =
+      el.isConnected === false || (typeof root.contains === "function" && root.contains(el));
+    if (!orphan) continue;
     cur.def.disconnect?.(el);
     mounted.delete(el);
   }
