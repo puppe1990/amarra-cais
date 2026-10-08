@@ -4,6 +4,17 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.19.0] - 2026-10-08
+
+### Changed
+
+- Scaffolded `layouts/app.html`: the sidebar is rendered only in the signed-in shell. Anonymous pages keep a header carrying the brand, `<.locale-toggle>`, the theme toggle and the login link; `#amarra-main` drops `lg:ml-60` when logged out, and sign out, locale and theme are pinned to the sidebar bottom (`mt-auto`). The theme control is a single shared const so the two shells cannot drift (#258).
+- `g resource` always links the admin CRUD (`/admin/<plural>`) in the sidebar — the signed-in shell has no other entry point — and a `--public` resource labels its public list `(public)` next to it; `destroy` removes both.
+
+### Fixed
+
+- `forms.MakeField` takes `any` and coerces optional pointer fields: a nil `*string` on the New/Edit pages renders empty instead of failing the template conversion (500) on generated admin forms (follow-up to #312).
+
 ## [0.18.1] - 2026-10-07
 
 ### Fixed
