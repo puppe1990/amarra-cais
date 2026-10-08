@@ -18,6 +18,10 @@ const tplLayoutMenuButton = `<button type="button" id="amarra-sidebar-toggle" cl
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7h16M4 12h16M4 17h16" /></svg>
           </button>`
 
+// Shared by the anonymous header and the signed-in sidebar so the theme
+// control never drifts between shells (#258).
+const tplLayoutThemeToggle = `<button type="button" class="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f6f1e7" data-amarra-theme-color-off="#081014" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}"><span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span></button>`
+
 const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
 <!doctype html>
 <html lang="{{"{{"}} htmlLang {{"}}"}}" data-amarra-layout="app">
@@ -61,43 +65,47 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
       </header>
       {{"{{"}} end {{"}}"}}
       {{"{{"}} if not .Site.LoggedIn {{"}}"}}
+      <!-- auth shell: no sidebar; language, theme and login live in the header -->
       <header class="bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-          ` + tplLayoutMenuButton + `
           ` + tplLayoutBrand + `
-          <a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+          <div class="flex items-center gap-4">
+            <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
+            ` + tplLayoutThemeToggle + `
+            <a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+          </div>
         </div>
       </header>
       {{"{{"}} end {{"}}"}}
-      <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full invisible transition-transform data-[amarra-sidebar-open]:translate-x-0 data-[amarra-sidebar-open]:visible lg:translate-x-0 lg:visible{{"{{"}} if .Site.LoggedIn {{"}}"}} lg:top-0{{"{{"}} end {{"}}"}}">
+      {{"{{"}} if .Site.LoggedIn {{"}}"}}
+      <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full invisible transition-transform data-[amarra-sidebar-open]:translate-x-0 data-[amarra-sidebar-open]:visible lg:translate-x-0 lg:visible lg:top-0">
         <div class="h-full flex flex-col gap-1 p-3 overflow-y-auto no-scrollbar">
-          {{"{{"}} if .Site.LoggedIn {{"}}"}}
           <div class="hidden lg:flex pb-3 mb-1 border-b border-foam/10">` + tplLayoutBrand + `</div>
-          {{"{{"}} end {{"}}"}}
           <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
           <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
             `
 
-const tplLayoutNavFull = `{{"{{"}} if .Site.LoggedIn {{"}}"}}<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
-            {{"{{"}} end {{"}}"}}
-            <!-- cais:nav -->
-            {{"{{"}} if .Site.LoggedIn {{"}}"}}<.form action="/logout" method="post">
-              <.button type="submit">{{"{{"}} t "auth.logout" {{"}}"}}</.button>
-            </.form>
-            {{"{{"}} end {{"}}"}}
-            <div class="mt-1 flex items-center justify-between gap-2">
-              <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
-              <button type="button" class="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f6f1e7" data-amarra-theme-color-off="#081014" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}"><span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span></button>
-            </div>`
+const tplLayoutNavFull = `<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+            <!-- cais:nav -->`
 
 const tplLayoutNavEmpty = tplLayoutNavFull
 
 const tplLayoutBaseClose = `
           </div>
+          <div class="mt-auto flex flex-col gap-3 border-t border-foam/10 pt-3">
+            <.form action="/logout" method="post">
+              <button type="submit" class="w-full text-left px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 text-foam/50 hover:text-foam">{{"{{"}} template "icon_logout_nav" . {{"}}"}}{{"{{"}} t "auth.logout" {{"}}"}}</button>
+            </.form>
+            <div class="flex items-center justify-between gap-2">
+              <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
+              ` + tplLayoutThemeToggle + `
+            </div>
+          </div>
         </div>
       </aside>
+      {{"{{"}} end {{"}}"}}
       <div id="amarra-toast-host" aria-live="polite"></div>
-      <main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60">
+      <main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5{{"{{"}} if .Site.LoggedIn {{"}}"}} lg:ml-60{{"{{"}} end {{"}}"}}">
         <.flash />
         {{"{{"}} template "content" . {{"}}"}}
       </main>

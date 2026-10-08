@@ -200,10 +200,10 @@ func TestLayoutTemplates_gateAuthChromeOnLoggedIn(t *testing.T) {
 func TestLayoutTemplates_appShellSidebarOwnsChrome(t *testing.T) {
 	aside := navAside(t, "full", tplLayout)
 	for _, token := range []string{
-		`{{"{{"}} if .Site.LoggedIn {{"}}"}}`,
 		`hidden lg:flex`,
 		`href="/"`,
 		`lg:top-0`,
+		`mt-auto`,
 		`amarra-hook="nav"`,
 		`href="/dashboard"`,
 		`<.form action="/logout"`,
@@ -217,13 +217,31 @@ func TestLayoutTemplates_appShellSidebarOwnsChrome(t *testing.T) {
 	if strings.Contains(aside, "auth.login_title") {
 		t.Error("app-shell sidebar must not carry the anonymous login link")
 	}
-	// The desktop header is suppressed: only a mobile (lg:hidden) header stays,
-	// and the full header (with the login link) is gated to the anonymous shell.
+	// The whole sidebar (brand, routes, signout, locale) only exists signed in;
+	// the desktop header is suppressed, leaving a mobile (lg:hidden) header, and
+	// the anonymous header carries the login link instead.
+	if !strings.Contains(tplLayout, `if .Site.LoggedIn`) {
+		t.Error("the sidebar must be gated to the signed-in shell")
+	}
 	if !strings.Contains(tplLayout, `lg:hidden`) {
 		t.Error("signed-in shell should keep only a mobile header")
 	}
 	if !strings.Contains(tplLayout, `if not .Site.LoggedIn`) {
-		t.Error("the desktop header must stay gated to the anonymous shell")
+		t.Error("the anonymous header must stay gated to the logged-out shell")
+	}
+	start := strings.Index(tplLayout, "if not .Site.LoggedIn")
+	end := strings.Index(tplLayout[start:], "</header>")
+	if start < 0 || end < 0 {
+		t.Fatal("anonymous header block not found")
+	}
+	header := tplLayout[start : start+end]
+	for _, token := range []string{`href="/login"`, `<.locale-toggle`, `amarra-hook="theme"`} {
+		if !strings.Contains(header, token) {
+			t.Errorf("anonymous header missing %q", token)
+		}
+	}
+	if strings.Contains(header, "amarra-sidebar-toggle") {
+		t.Error("anonymous header must not carry a sidebar toggle (no sidebar pre-login)")
 	}
 }
 
@@ -386,8 +404,11 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 		if strings.Contains(tpl, ">Home<") {
 			t.Errorf("%s layout sidebar should not contain a Home item", name)
 		}
-		if !strings.Contains(tpl, `id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5 lg:ml-60"`) {
-			t.Errorf("%s layout should tie lg:ml-60 to #amarra-main", name)
+		if !strings.Contains(tpl, `id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5`) {
+			t.Errorf("%s layout missing #amarra-main shell classes", name)
+		}
+		if !strings.Contains(tpl, `{{"{{"}} if .Site.LoggedIn {{"}}"}} lg:ml-60`) {
+			t.Errorf("%s layout should tie lg:ml-60 to the signed-in shell", name)
 		}
 		if !strings.Contains(tpl, "<aside") {
 			t.Errorf("%s layout missing <aside sidebar", name)
