@@ -349,6 +349,89 @@ test("visit sends drive headers and follows redirects", async () => {
   assert.deepEqual(pushed, ["http://a/y"]);
 });
 
+// #332: #amarra-main lives in pages, not in files. A PDF/DXF/SVG response was
+// read as text, failed extractMainHTML and ended as "ignore" — with the click
+// already preventDefault'ed, the file never downloaded.
+test("visit hands a non-HTML response back to the browser", async () => {
+  const assigned = [];
+  const main = { innerHTML: "old" };
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (msg) => warnings.push(String(msg));
+  let textReads = 0;
+  try {
+    const result = await visit("http://a/projetos/1/pdf/memorial", {
+      fetchFn: async () => ({
+        status: 200,
+        url: "http://a/projetos/1/pdf/memorial",
+        headers: { get: (n) => (n === "content-type" ? "application/pdf" : null) },
+        text: async () => {
+          textReads += 1;
+          return "%PDF-1.4 binary";
+        },
+      }),
+      document: { querySelector: (sel) => (sel === "#amarra-main" ? main : null) },
+      location: { href: "http://a/projetos/1", assign: (url) => assigned.push(url) },
+      morphFn() {
+        throw new Error("a file response must not morph");
+      },
+      history: { pushState() {}, replaceState() {} },
+    });
+    assert.equal(result.action, "assign");
+  } finally {
+    console.warn = originalWarn;
+  }
+  assert.deepEqual(assigned, ["http://a/projetos/1/pdf/memorial"]);
+  assert.equal(main.innerHTML, "old");
+  assert.equal(textReads, 0);
+  assert.deepEqual(warnings, []);
+});
+
+test("visit assigns when the response is an attachment even if typed as HTML", async () => {
+  const assigned = [];
+  await visit("http://a/projetos/1/export", {
+    fetchFn: async () => ({
+      status: 200,
+      url: "http://a/projetos/1/export",
+      headers: {
+        get: (n) =>
+          n === "content-type"
+            ? "text/html"
+            : n === "content-disposition"
+              ? 'attachment; filename="dossie.html"'
+              : null,
+      },
+      text: async () => `<main id="amarra-main"><p>nope</p></main>`,
+    }),
+    document: { querySelector: () => null },
+    location: { href: "http://a/projetos/1", assign: (url) => assigned.push(url) },
+    morphFn() {
+      throw new Error("an attachment must not morph");
+    },
+    history: { pushState() {}, replaceState() {} },
+  });
+  assert.deepEqual(assigned, ["http://a/projetos/1/export"]);
+});
+
+test("visit still morphs a text/html response with #amarra-main", async () => {
+  const main = { innerHTML: "old" };
+  const result = await visit("http://a/x", {
+    fetchFn: async () => ({
+      status: 200,
+      url: "http://a/x",
+      headers: { get: (n) => (n === "content-type" ? "text/html; charset=utf-8" : null) },
+      text: async () => `<main id="amarra-main"><p>new</p></main>`,
+    }),
+    document: { querySelector: (sel) => (sel === "#amarra-main" ? main : null) },
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: { pushState() {}, replaceState() {} },
+  });
+  assert.equal(result.action, "morph");
+  assert.equal(main.innerHTML.trim(), "<p>new</p>");
+});
+
 test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });
