@@ -230,3 +230,60 @@ func TestCSRF_skipsHealthAndStatic(t *testing.T) {
 		t.Fatal("handler not called for /health")
 	}
 }
+
+// #331: a machine client has no CSRF cookie/field, so an authenticated POST to
+// /api/ must reach the handler (401/201), not die in 403 before auth runs.
+func TestCSRF_skipsAPIPrefixWithoutToken(t *testing.T) {
+	called := false
+	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/projetos", strings.NewReader(`{"uc":"3004512"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if !called {
+		t.Fatalf("handler not called for /api/ request; status = %d", rr.Code)
+	}
+}
+
+// #331: the Bearer criterion is the minimum for APIs outside the /api/ prefix.
+// A cross-site form cannot attach Authorization, so this does not weaken the
+// cookie/form protection.
+func TestCSRF_skipsBearerAuthorization(t *testing.T) {
+	called := false
+	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/projetos", strings.NewReader(`{"uc":"1"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "bearer hs_test") // lowercase on purpose
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if !called {
+		t.Fatalf("handler not called for Bearer request; status = %d", rr.Code)
+	}
+}
+
+// #331: a classic HTML form keeps its CSRF protection even when a stray Bearer
+// header is present — form posts are browser traffic, and a cross-site form
+// cannot attach Authorization; that header there is noise, not a machine client.
+func TestCSRF_formPostWithStrayBearer_stillRejects(t *testing.T) {
+	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("handler should not be called")
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("email=a%40b.c"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Bearer stray")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("status = %d, want 403", rr.Code)
+	}
+}
