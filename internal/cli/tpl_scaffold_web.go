@@ -19,8 +19,16 @@ const tplLayoutMenuButton = `<button type="button" id="amarra-sidebar-toggle" cl
           </button>`
 
 // Shared by the anonymous header and the signed-in sidebar so the theme
-// control never drifts between shells (#258).
-const tplLayoutThemeToggle = `<button type="button" class="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f7f1e6" data-amarra-theme-color-off="#081318" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}"><span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span></button>`
+// control never drifts between shells (#258). The tile shows the theme the
+// button turns on — sun while the app is dark, moon while it is light; the swap
+// is CSS-only on html.light, so the hook keeps owning just the label slot.
+const tplLayoutThemeToggle = `<button type="button" class="group inline-flex items-center gap-2 px-1.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f7f1e6" data-amarra-theme-color-off="#081318" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}">
+            <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center border border-copper/40 transition-colors group-hover:border-copper" aria-hidden="true">
+              <span class="[html.light_&]:hidden">{{"{{"}} template "icon_sun" . {{"}}"}}</span>
+              <span class="hidden [html.light_&]:block">{{"{{"}} template "icon_moon" . {{"}}"}}</span>
+            </span>
+            <span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span>
+          </button>`
 
 const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
 <!doctype html>

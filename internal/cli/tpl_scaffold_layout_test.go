@@ -160,6 +160,27 @@ func TestLayoutTemplates_contactFormUsesKitForm(t *testing.T) {
 	}
 }
 
+// The default toggle shows the icon of the theme it switches to — sun while the
+// app is dark, moon while it is light — next to the label. The swap is CSS-only
+// (`html.light`), so the hook keeps owning just the label slot (#258).
+func TestLayoutTemplates_themeToggleSwapsIcon(t *testing.T) {
+	for _, name := range []string{"icon_sun", "icon_moon"} {
+		if !strings.Contains(tplPartialIcons, `define "`+name+`"`) {
+			t.Errorf("layout sprite missing %q", name)
+		}
+	}
+	for _, token := range []string{
+		`{{"{{"}} template "icon_sun" . {{"}}"}}`,
+		`{{"{{"}} template "icon_moon" . {{"}}"}}`,
+		`[html.light_&]:hidden`,
+		`[html.light_&]:block`,
+	} {
+		if !strings.Contains(tplLayoutThemeToggle, token) {
+			t.Errorf("theme toggle missing %q", token)
+		}
+	}
+}
+
 // #208: signed-in chrome (login link, dashboard link, logout) is gated on
 // Site.LoggedIn, and the cais:nav marker stays outside the gate so public
 // resource links still render for anonymous visitors.
