@@ -51,60 +51,55 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		data.CaisVersion = scaffoldModuleVersion()
 	}
 	files := map[string]string{
-		"go.mod":                                     tplGoMod,
-		"cmd/server/main.go":                         tplMain,
-		"cmd/console/main.go":                        tplConsole,
-		"internal/app/app.go":                        tplApp,
-		"internal/app/routes.go":                     tplRoutes,
-		"internal/handlers/home.go":                  tplHomeHandler,
-		"internal/handlers/home_test.go":             tplHomeTest,
-		"internal/handlers/contact.go":               tplContactHandler,
-		"internal/handlers/contact_test.go":          tplContactTest,
-		"internal/handlers/dashboard.go":             tplDashboardHandler,
-		"internal/handlers/dashboard_test.go":        tplDashboardTest,
-		"internal/handlers/viewdata.go":              tplViewData,
-		"internal/handlers/locale.go":                tplLocaleHandler,
-		"internal/handlers/locale_test.go":           tplLocaleTest,
-		"internal/handlers/helpers_test.go":          tplHelpersTest,
-		"internal/models/contact.go":                 tplContactModel,
-		"internal/store/store.go":                    tplStore,
-		"internal/store/password_reset.go":           tplStorePasswordReset,
-		"internal/store/password_reset_test.go":      tplStorePasswordResetTest,
-		"internal/store/store_test.go":               tplStoreTest,
-		"internal/store/migrations.go":               tplMigrations,
-		"internal/store/migrations/001_contacts.sql": tplMigration001,
-		"internal/store/migrations/002_auth.sql":     tplMigration002Auth,
-		"internal/models/user.go":                    tplUserModel,
-		"internal/handlers/auth.go":                  tplAuthHandler,
-		"internal/handlers/auth_test.go":             tplAuthTest,
-		"internal/handlers/auth_signup_test.go":      tplAuthSignupTest,
-		"internal/handlers/auth_reset_test.go":       tplAuthResetTest,
-		"web/embed.go":                               tplWebEmbed,
-		"web/templates/layouts/app.html":             tplLayout,
-		"web/templates/pages/home.html":              tplPageHome,
-		"web/templates/pages/contact.html":           tplPageContact,
-		"web/templates/pages/dashboard.html":         tplPageDashboard,
-		"web/templates/pages/login.html":             tplPageLogin,
-		"web/templates/pages/signup.html":            tplPageSignup,
-		"web/templates/pages/forgot_password.html":   tplPageForgotPassword,
-		"web/templates/pages/reset_password.html":    tplPageResetPassword,
-		"web/templates/components/.gitkeep":          "",
-		"web/static/css/styles.css":                  tplEmptyCSS,
-		"input.css":                                  tplInputCSS,
-		"tailwind.config.js":                         tplTailwind,
-		"package.json":                               tplPackageJSON,
-		"Makefile":                                   tplMakefile,
-		".gitignore":                                 tplGitignore,
-		".air.toml":                                  tplAir,
-		".env":                                       tplEnv,
-		".env.example":                               tplEnvExample,
-		"README.md":                                  tplREADME,
-		"AGENTS.md":                                  tplAgentsMD,
-		"internal/i18n/i18n.go":                      tplI18nCatalog,
-		"internal/i18n/en.go":                        tplI18nEn,
-		"internal/i18n/pt.go":                        tplI18nPt,
-		"internal/i18n/i18n_test.go":                 tplI18nTest,
-		"internal/db/seeds.go":                       tplSeeds,
+		"go.mod":                                   tplGoMod,
+		"cmd/server/main.go":                       tplMain,
+		"cmd/console/main.go":                      tplConsole,
+		"internal/app/app.go":                      tplApp,
+		"internal/app/routes.go":                   tplRoutes,
+		"internal/handlers/home.go":                tplHomeHandler,
+		"internal/handlers/home_test.go":           tplHomeTest,
+		"internal/handlers/dashboard.go":           tplDashboardHandler,
+		"internal/handlers/dashboard_test.go":      tplDashboardTest,
+		"internal/handlers/viewdata.go":            tplViewData,
+		"internal/handlers/locale.go":              tplLocaleHandler,
+		"internal/handlers/locale_test.go":         tplLocaleTest,
+		"internal/handlers/helpers_test.go":        tplHelpersTest,
+		"internal/store/store.go":                  tplStore,
+		"internal/store/password_reset.go":         tplStorePasswordReset,
+		"internal/store/password_reset_test.go":    tplStorePasswordResetTest,
+		"internal/store/store_test.go":             tplStoreTest,
+		"internal/store/migrations.go":             tplMigrations,
+		"internal/store/migrations/001_auth.sql":   tplMigrationAuth,
+		"internal/models/user.go":                  tplUserModel,
+		"internal/handlers/auth.go":                tplAuthHandler,
+		"internal/handlers/auth_test.go":           tplAuthTest,
+		"internal/handlers/auth_signup_test.go":    tplAuthSignupTest,
+		"internal/handlers/auth_reset_test.go":     tplAuthResetTest,
+		"web/embed.go":                             tplWebEmbed,
+		"web/templates/layouts/app.html":           tplLayout,
+		"web/templates/pages/home.html":            tplPageHome,
+		"web/templates/pages/dashboard.html":       tplPageDashboard,
+		"web/templates/pages/login.html":           tplPageLogin,
+		"web/templates/pages/signup.html":          tplPageSignup,
+		"web/templates/pages/forgot_password.html": tplPageForgotPassword,
+		"web/templates/pages/reset_password.html":  tplPageResetPassword,
+		"web/templates/components/.gitkeep":        "",
+		"web/static/css/styles.css":                tplEmptyCSS,
+		"input.css":                                tplInputCSS,
+		"tailwind.config.js":                       tplTailwind,
+		"package.json":                             tplPackageJSON,
+		"Makefile":                                 tplMakefile,
+		".gitignore":                               tplGitignore,
+		".air.toml":                                tplAir,
+		".env":                                     tplEnv,
+		".env.example":                             tplEnvExample,
+		"README.md":                                tplREADME,
+		"AGENTS.md":                                tplAgentsMD,
+		"internal/i18n/i18n.go":                    tplI18nCatalog,
+		"internal/i18n/en.go":                      tplI18nEn,
+		"internal/i18n/pt.go":                      tplI18nPt,
+		"internal/i18n/i18n_test.go":               tplI18nTest,
+		"internal/db/seeds.go":                     tplSeeds,
 	}
 	for path, content := range qualityToolingFiles() {
 		files[path] = content
@@ -150,8 +145,6 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 			files[path] = content
 		}
 	} else if minimal {
-		delete(files, "internal/handlers/contact.go")
-		delete(files, "internal/handlers/contact_test.go")
 		delete(files, "internal/handlers/dashboard.go")
 		delete(files, "internal/handlers/dashboard_test.go")
 		delete(files, "internal/handlers/auth.go")
@@ -160,11 +153,8 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		delete(files, "internal/handlers/auth_reset_test.go")
 		delete(files, "internal/handlers/locale.go")
 		delete(files, "internal/handlers/locale_test.go")
-		delete(files, "internal/models/contact.go")
 		delete(files, "internal/models/user.go")
-		delete(files, "internal/store/migrations/001_contacts.sql")
-		delete(files, "internal/store/migrations/002_auth.sql")
-		delete(files, "web/templates/pages/contact.html")
+		delete(files, "internal/store/migrations/001_auth.sql")
 		delete(files, "web/templates/pages/dashboard.html")
 		delete(files, "web/templates/pages/login.html")
 		delete(files, "web/templates/pages/signup.html")

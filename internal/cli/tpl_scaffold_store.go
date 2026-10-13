@@ -1,17 +1,5 @@
 package cli
 
-const tplContactModel = `package models
-
-import "time"
-
-type Contact struct {
-	ID        int64
-	Name      string
-	Email     string
-	CreatedAt time.Time
-}
-`
-
 const tplStore = `package store
 
 import (
@@ -34,9 +22,6 @@ import (
 var ErrEmailTaken = errors.New("email already registered")
 
 type Store interface {
-	InsertContact(contact models.Contact) (int64, error)
-	FindContact(id int64) (models.Contact, error)
-	CountContacts() (int64, error)
 	FindUserByEmail(email string) (models.User, error)
 	CreateUser(email, passwordHash string) (int64, error)
 	CreatePasswordResetToken(userID int64) (string, error)
@@ -102,38 +87,6 @@ func seedAuthData(db *sql.DB, env string) error {
 	return err
 }
 
-func (s *SQLiteStore) InsertContact(contact models.Contact) (int64, error) {
-	result, err := s.db.Exec(
-		"INSERT INTO contacts (name, email) VALUES (?, ?)",
-		contact.Name, contact.Email,
-	)
-	if err != nil {
-		return 0, fmt.Errorf("insert contact: %w", err)
-	}
-	return result.LastInsertId()
-}
-
-func (s *SQLiteStore) FindContact(id int64) (models.Contact, error) {
-	var c models.Contact
-	err := s.db.QueryRow(
-		"SELECT id, name, email, created_at FROM contacts WHERE id = ?",
-		id,
-	).Scan(&c.ID, &c.Name, &c.Email, &c.CreatedAt)
-	if err != nil {
-		return models.Contact{}, fmt.Errorf("find contact: %w", err)
-	}
-	return c, nil
-}
-
-func (s *SQLiteStore) CountContacts() (int64, error) {
-	var count int64
-	err := s.db.QueryRow("SELECT COUNT(*) FROM contacts").Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("count contacts: %w", err)
-	}
-	return count, nil
-}
-
 func (s *SQLiteStore) FindUserByEmail(email string) (models.User, error) {
 	var u models.User
 	err := s.db.QueryRow(
@@ -180,9 +133,8 @@ func (s *SQLiteStore) Close() error {
 const tplStoreTest = `package store
 
 import (
+	"errors"
 	"testing"
-
-	"{{.ModulePath}}/internal/models"
 )
 
 func newTestStore(t *testing.T) *SQLiteStore {
@@ -198,73 +150,32 @@ func newTestStore(t *testing.T) *SQLiteStore {
 func TestStore_Migrations(t *testing.T) {
 	s := newTestStore(t)
 
-	var name string
-	err := s.db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='contacts'").Scan(&name)
-	if err != nil {
-		t.Fatalf("contacts table not found: %v", err)
+	for _, table := range []string{"users", "sessions"} {
+		var name string
+		err := s.db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", table).Scan(&name)
+		if err != nil {
+			t.Fatalf("%s table not found: %v", table, err)
+		}
 	}
 }
 
-func TestStore_InsertContact(t *testing.T) {
+func TestStore_CreateUser_ThenFind(t *testing.T) {
 	s := newTestStore(t)
 
-	contact := models.Contact{Name: "Alice", Email: "alice@example.com"}
-	id, err := s.InsertContact(contact)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if id == 0 {
-		t.Error("id = 0, want non-zero")
-	}
-}
-
-func TestStore_FindContact(t *testing.T) {
-	s := newTestStore(t)
-
-	contact := models.Contact{Name: "Bob", Email: "bob@example.com"}
-	id, err := s.InsertContact(contact)
-	if err != nil {
+	if _, err := s.CreateUser("alice@example.com", "hash"); err != nil {
 		t.Fatal(err)
 	}
 
-	found, err := s.FindContact(id)
+	found, err := s.FindUserByEmail("alice@example.com")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if found.Name != "Bob" {
-		t.Errorf("Name = %q, want %q", found.Name, "Bob")
-	}
-	if found.Email != "bob@example.com" {
-		t.Errorf("Email = %q, want %q", found.Email, "bob@example.com")
-	}
-}
-
-func TestStore_CountContacts(t *testing.T) {
-	s := newTestStore(t)
-
-	count, err := s.CountContacts()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 0 {
-		t.Errorf("count = %d, want 0", count)
+	if found.Email != "alice@example.com" {
+		t.Errorf("Email = %q, want alice@example.com", found.Email)
 	}
 
-	_, err = s.InsertContact(models.Contact{Name: "Alice", Email: "alice@example.com"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = s.InsertContact(models.Contact{Name: "Bob", Email: "bob@example.com"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	count, err = s.CountContacts()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 2 {
-		t.Errorf("count = %d, want 2", count)
+	if _, err := s.CreateUser("alice@example.com", "hash"); !errors.Is(err, ErrEmailTaken) {
+		t.Errorf("duplicate CreateUser err = %v, want ErrEmailTaken", err)
 	}
 }
 `
@@ -294,14 +205,6 @@ const tplMigrationInit = `-- 001_init.sql — first migration. Add the app table
 
 -- down
 -- Nothing to undo yet.
-`
-
-const tplMigration001 = `CREATE TABLE IF NOT EXISTS contacts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
 `
 
 const tplStoreMinimal = `package store

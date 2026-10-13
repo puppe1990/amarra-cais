@@ -29,9 +29,9 @@ Para ligar tudo na mão, siga os mesmos quatro passos:
 ```go
 view.Write(w, r, h.views, view.Page{
   Layout: "app",
-  Name:   "contact",
+  Name:   "dashboard",
   Data: map[string]any{
-    "Title":     h.catalog.T("contact.title"),
+    "Title":     h.catalog.T("dashboard.title"),
     "Site":      meta.ForRequest(h.site, r),
     "CSRFToken": csrf.TokenFromRequest(r),
     "Flash":     flashMsg,
@@ -56,8 +56,8 @@ Uma página também pode definir `{{ define "frame:<id>" }}` para requisições 
 Construa os dados da página com os mesmos helpers que o scaffold usa. `amarraData` agrupa os valores no escopo da requisição (site, flash e qualquer coisa que você passar), e `meta.ForRequest(h.site, r)` produz a prévia de Open Graph / Twitter.
 
 ```go
-writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
-  "Title":  h.catalog.T("contact.title"),
+writeView(w, r, h.views, h.cfg, "app", "dashboard", amarraData(r, h.site, map[string]any{
+  "Title":  h.catalog.T("dashboard.title"),
   "Errors": errs,
   "Name":   name,
   "Email":  email,

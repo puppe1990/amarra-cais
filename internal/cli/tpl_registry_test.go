@@ -24,30 +24,24 @@ func TestScaffoldTemplates_allRequiredPresent(t *testing.T) {
 		TplRoutesBlank            string
 		TplHomeHandler            string
 		TplHomeTest               string
-		TplContactHandler         string
-		TplContactTest            string
 		TplDashboardHandler       string
 		TplDashboardTest          string
 		TplHelpersTest            string
 		TplGenericHandler         string
 		TplGenericHandlerTest     string
-		TplContactModel           string
 		TplStore                  string
 		TplStoreMinimal           string
 		TplStoreTest              string
 		TplStoreTestMinimal       string
 		TplMigrations             string
-		TplMigration001           string
+		TplMigrationInit          string
 		TplLayout                 string
 		TplLayoutWelcome          string
 		TplLayoutMinimal          string
 		TplLayoutBlank            string
 		TplCaisLogo               string
 		TplPageHome               string
-		TplPageContact            string
 		TplPageDashboard          string
-		TplPartialErrors          string
-		TplPartialSuccess         string
 		TplPartialChatSSE         string
 		TplPartialChatSSEAgent    string
 		TplGenericPage            string
@@ -71,7 +65,7 @@ func TestScaffoldTemplates_allRequiredPresent(t *testing.T) {
 		TplSeeds                  string
 		TplSeedsMinimal           string
 		TplUserModel              string
-		TplMigration002Auth       string
+		TplMigrationAuth          string
 		TplAuthHandler            string
 		TplStorePasswordReset     string
 		TplStorePasswordResetTest string
@@ -96,30 +90,24 @@ func TestScaffoldTemplates_allRequiredPresent(t *testing.T) {
 		TplRoutesBlank:            tplRoutesBlank,
 		TplHomeHandler:            tplHomeHandler,
 		TplHomeTest:               tplHomeTest,
-		TplContactHandler:         tplContactHandler,
-		TplContactTest:            tplContactTest,
 		TplDashboardHandler:       tplDashboardHandler,
 		TplDashboardTest:          tplDashboardTest,
 		TplHelpersTest:            tplHelpersTest,
 		TplGenericHandler:         tplGenericHandler,
 		TplGenericHandlerTest:     tplGenericHandlerTest,
-		TplContactModel:           tplContactModel,
 		TplStore:                  tplStore,
 		TplStoreMinimal:           tplStoreMinimal,
 		TplStoreTest:              tplStoreTest,
 		TplStoreTestMinimal:       tplStoreTestMinimal,
 		TplMigrations:             tplMigrations,
-		TplMigration001:           tplMigration001,
+		TplMigrationInit:          tplMigrationInit,
 		TplLayout:                 tplLayout,
 		TplLayoutWelcome:          tplLayoutWelcome,
 		TplLayoutMinimal:          tplLayoutMinimal,
 		TplLayoutBlank:            tplLayoutBlank,
 		TplCaisLogo:               tplCaisLogo,
 		TplPageHome:               tplPageHome,
-		TplPageContact:            tplPageContact,
 		TplPageDashboard:          tplPageDashboard,
-		TplPartialErrors:          tplPartialErrors,
-		TplPartialSuccess:         tplPartialSuccess,
 		TplPartialChatSSE:         tplPartialChatSSE,
 		TplPartialChatSSEAgent:    tplPartialChatSSEAgent,
 		TplGenericPage:            tplGenericPage,
@@ -143,7 +131,7 @@ func TestScaffoldTemplates_allRequiredPresent(t *testing.T) {
 		TplSeeds:                  tplSeeds,
 		TplSeedsMinimal:           tplSeedsMinimal,
 		TplUserModel:              tplUserModel,
-		TplMigration002Auth:       tplMigration002Auth,
+		TplMigrationAuth:          tplMigrationAuth,
 		TplAuthHandler:            tplAuthHandler,
 		TplStorePasswordReset:     tplStorePasswordReset,
 		TplStorePasswordResetTest: tplStorePasswordResetTest,

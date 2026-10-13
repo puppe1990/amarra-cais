@@ -21,6 +21,9 @@ func unpatchStoreTestForResource(dir string, data scaffoldData, dryRun bool) err
 	if err != nil {
 		return err
 	}
+	// The generated test is what imported models into the scaffold's test file;
+	// leaving the import behind breaks `go test` on an app with no model left.
+	content = cleanupStoreImports(content)
 	return updateScaffoldFile(path, []byte(content), "internal/store/store_test.go", dryRun)
 }
 

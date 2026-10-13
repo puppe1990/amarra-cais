@@ -25,7 +25,7 @@ func scaffoldAuth(dir string, data scaffoldData, dryRun bool) error {
 		"internal/handlers/auth_test.go":           tplAuthTest,
 		"internal/store/password_reset.go":         tplStorePasswordReset,
 		"internal/store/password_reset_test.go":    tplStorePasswordResetTest,
-		migrationPath:                              tplMigration002Auth,
+		migrationPath:                              tplMigrationAuth,
 		"web/templates/pages/login.html":           tplPageLogin,
 		"web/templates/pages/signup.html":          tplPageSignup,
 		"web/templates/pages/forgot_password.html": tplPageForgotPassword,

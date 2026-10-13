@@ -10,8 +10,8 @@ export async function signIn(page) {
 }
 
 // The brand lives in the fixed sidebar after login and in the header on the
-// anonymous shell. Contact lives only on the home page, so this drives a morph
-// away from the current page and back to /.
+// anonymous shell. The home page is only reachable from the brand link, so this
+// drives a morph away from the current page and back to /.
 export async function morphHome(page) {
   const shell = await page.locator("body").getAttribute("data-amarra-shell");
   const brand =

@@ -1,13 +1,15 @@
 import { test, expect } from "@playwright/test";
 
-test("Drive morphs contact without a full reload and restores history", async ({ page }) => {
+test("Drive morphs an anonymous page without a full reload and restores history", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.evaluate(() => {
     window.__amarraDoc = true;
   });
-  await page.getByRole("link", { name: "Contact" }).click();
-  await expect(page).toHaveURL(/\/contact$/);
-  await expect(page.locator("#name")).toBeVisible();
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.locator("#password")).toBeVisible();
   expect(await page.evaluate(() => window.__amarraDoc)).toBe(true);
 
   await page.goBack();
@@ -15,9 +17,14 @@ test("Drive morphs contact without a full reload and restores history", async ({
   expect(await page.evaluate(() => window.__amarraDoc)).toBe(true);
 });
 
-test("422 contact submit focuses the first aria-invalid field", async ({ page }) => {
-  await page.goto("/contact");
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.locator("#name")).toHaveAttribute("aria-invalid", "true");
-  await expect(page.locator("#name")).toBeFocused();
+// The password fields are `required`, so native validation would block an empty
+// submit: the passwords are filled and the (optional per HTML5) email is left
+// empty, which is what the server rejects with 422.
+test("422 signup submit focuses the first aria-invalid field", async ({ page }) => {
+  await page.goto("/signup");
+  await page.locator("#password").fill("password123");
+  await page.locator("#password_confirmation").fill("password123");
+  await page.getByRole("button", { name: "Sign up" }).click();
+  await expect(page.locator("#email")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#email")).toBeFocused();
 });
