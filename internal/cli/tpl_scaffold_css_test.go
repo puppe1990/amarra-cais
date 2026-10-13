@@ -67,6 +67,70 @@ func TestTplTailwind_mapsPaletteToCSSVariables(t *testing.T) {
 	}
 }
 
+// Default design = the published docs-site palette (harbor night + cream paper,
+// sea-teal accent). The keys stay ink/foam/copper/tide (kit + doctor contract);
+// only the values are the documentation look.
+func TestTplInputCSS_defaultPaletteMatchesDocsSite(t *testing.T) {
+	dark := cssBlock(t, tplInputCSS, ":root {")
+	light := cssBlock(t, tplInputCSS, "html.light {")
+	for name, pair := range map[string][2]string{
+		"--amarra-ink":    {"8 19 24", "247 241 230"},
+		"--amarra-foam":   {"244 234 216", "16 33 38"},
+		"--amarra-copper": {"31 139 163", "15 107 128"},
+		"--amarra-tide":   {"18 36 40", "228 217 196"},
+	} {
+		if got, ok := cssVar(dark, name); !ok || got != pair[0] {
+			t.Errorf(":root %s = %q, want docs palette %q", name, got, pair[0])
+		}
+		if got, ok := cssVar(light, name); !ok || got != pair[1] {
+			t.Errorf("html.light %s = %q, want docs palette %q", name, got, pair[1])
+		}
+	}
+}
+
+func TestTplInputCSS_shipsCoralAccent(t *testing.T) {
+	for _, selector := range []string{":root {", "html.light {"} {
+		block := cssBlock(t, tplInputCSS, selector)
+		got, ok := cssVar(block, "--amarra-coral")
+		if !ok || got != "224 122 74" {
+			t.Errorf("%s --amarra-coral = %q, want docs coral %q", selector, got, "224 122 74")
+		}
+	}
+}
+
+func TestTplTailwind_shipsCoralAndFraunces(t *testing.T) {
+	for _, want := range []string{
+		`coral: "rgb(var(--amarra-coral) / <alpha-value>)"`,
+		`"Fraunces"`,
+	} {
+		if !strings.Contains(tplTailwind, want) {
+			t.Errorf("tailwind.config.js missing %q", want)
+		}
+	}
+}
+
+// The docs palette is harbor/teal: no leftover copper literals in the scaffold
+// markup or CSS, otherwise the accent reads amber next to the teal classes.
+func TestTplScaffold_hasNoCopperAccentLeftovers(t *testing.T) {
+	for name, blob := range map[string]string{
+		"home":    tplPageHome,
+		"contact": tplPageContact,
+		"dash":    tplPageDashboard,
+		"login":   tplPageLogin,
+		"layout":  tplLayout,
+		"css":     tplInputCSS,
+	} {
+		for _, leftover := range []string{"201,137,58", "201 137 58", "#c9893a", "#081014", "#f6f1e7"} {
+			if strings.Contains(blob, leftover) {
+				t.Errorf("%s still carries the old copper palette value %q", name, leftover)
+			}
+		}
+	}
+	if !strings.Contains(tplLayout, `content="#081318"`) {
+		t.Error("layout theme-color meta must carry the harbor surface #081318")
+	}
+}
+
 func cssBlock(t *testing.T, css, selector string) string {
 	t.Helper()
 	start := strings.Index(css, selector)

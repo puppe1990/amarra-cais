@@ -169,7 +169,7 @@ func writeManifest(path string, cfg Config) error {
   "description": {{printf "%q" .Description}},
   "start_url": {{printf "%q" .StartURL}},
   "display": {{printf "%q" .Display}},
-  "background_color": "#081014",
+  "background_color": "#081318",
   "theme_color": {{printf "%q" .ThemeColor}},
   "orientation": "portrait-primary",
   "icons": [

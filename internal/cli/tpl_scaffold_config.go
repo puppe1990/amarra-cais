@@ -44,6 +44,17 @@ import "embed"
 var Templates embed.FS
 `
 
+const tplEnv = `# Local overrides for the scaffold defaults (see .env.example for the full list).
+# Commit the app's real values here only when they are not secrets.
+
+# The default design uses the docs-site heading font (Fraunces, linked in
+# layouts/app.html). The default CSP is 'self' only, so the stylesheet and the
+# woff2 hosts must be allowed or the browser blocks the font and the headings
+# fall back to the system serif.
+CSP_STYLE_SRC=https://fonts.googleapis.com
+CSP_FONT_SRC=https://fonts.gstatic.com
+`
+
 const tplEnvExample = `# Server
 PORT=:8080
 # PaaS may inject PORT=8080 (number only); Load canonicalizes to :8080 (#303).
