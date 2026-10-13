@@ -71,9 +71,10 @@ func isSafeMethod(method string) bool {
 }
 
 // skipCSRF reports whether a request bypasses the double-submit check: health
-// and static probes, the /api/ machine-client convention, and requests carrying
-// an Authorization: Bearer header (#331) — a machine client has no CSRF cookie
-// or form field, so the 403 used to run before the handler authenticated it.
+// and static probes, crawler files that carry no form, the /api/ machine-client
+// convention, and requests carrying an Authorization: Bearer header (#331) —
+// a machine client has no CSRF cookie or form field, so the 403 used to run
+// before the handler authenticated it.
 //
 // A classic HTML form post keeps its CSRF protection even when a stray Bearer
 // header is present: cross-site forms cannot attach Authorization, so a Bearer
@@ -81,11 +82,28 @@ func isSafeMethod(method string) bool {
 func skipCSRF(r *http.Request) bool {
 	path := r.URL.Path
 	if path == "/health" ||
+		isCrawlerFile(path) ||
 		strings.HasPrefix(path, "/static/") ||
 		strings.HasPrefix(path, "/api/") {
 		return true
 	}
 	return hasBearerAuthorization(r) && !isFormContentType(r)
+}
+
+// isCrawlerFile covers the public documents a crawler fetches: the framework's
+// /health sibling and the sitemap/robots/llms trio `g sitemap` generates. A
+// session cookie on them is noise — Google Search Console reads a sitemap that
+// sets cookies as a non-public resource and refuses to fetch it (#342).
+//
+// Closed set on purpose: an app's own *.xml route (feed, export) may be
+// authenticated, so this must never become an extension match.
+func isCrawlerFile(path string) bool {
+	switch path {
+	case "/sitemap.xml", "/robots.txt", "/llms.txt":
+		return true
+	default:
+		return false
+	}
 }
 
 func hasBearerAuthorization(r *http.Request) bool {

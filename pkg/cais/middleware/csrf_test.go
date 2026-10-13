@@ -231,6 +231,68 @@ func TestCSRF_skipsHealthAndStatic(t *testing.T) {
 	}
 }
 
+// #342: a crawler file has no form, and a `Set-Cookie` on it is noise the
+// crawler reads as "not a public resource" — Google Search Console answers
+// "Não foi possível buscar o sitemap" for a sitemap that sets a session cookie.
+func TestCSRF_crawlerFiles_skipCookieInEveryEnv(t *testing.T) {
+	for _, path := range []string{"/sitemap.xml", "/robots.txt", "/llms.txt"} {
+		for _, cfg := range []cais.Config{{}, {Env: "production"}} {
+			called := false
+			h := CSRF(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				called = true
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			if !called {
+				t.Errorf("%s (env %q): handler not called; status = %d", path, cfg.Env, rr.Code)
+			}
+			if got := rr.Header().Get("Set-Cookie"); got != "" {
+				t.Errorf("%s (env %q): Set-Cookie = %q, want none", path, cfg.Env, got)
+			}
+		}
+	}
+}
+
+// The crawler skip is a closed set: the app's own XML route keeps the
+// double-submit cookie (a generic *.xml skip would exempt authenticated feeds).
+func TestCSRF_otherXMLPath_stillSetsCookie(t *testing.T) {
+	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	req := httptest.NewRequest(http.MethodGet, "/feed.xml", nil)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if got := rr.Header().Get("Set-Cookie"); !strings.Contains(got, csrf.CookieName) {
+		t.Errorf("Set-Cookie = %q, want the %s cookie", got, csrf.CookieName)
+	}
+}
+
+// Regression guards: the page keeps the cookie and the unsafe method keeps the
+// check, so the crawler skip cannot quietly exempt ordinary traffic.
+func TestCSRF_pageAndUnsafeMethodKeepTheirBehavior(t *testing.T) {
+	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+	if got := rr.Header().Get("Set-Cookie"); !strings.Contains(got, csrf.CookieName) {
+		t.Errorf("GET /: Set-Cookie = %q, want the %s cookie", got, csrf.CookieName)
+	}
+
+	h = CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("handler should not be called without a token")
+	}))
+	req := httptest.NewRequest(http.MethodPost, "/lista", strings.NewReader("nome=a"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("POST /lista without token: status = %d, want 403", rr.Code)
+	}
+}
+
 // #331: a machine client has no CSRF cookie/field, so an authenticated POST to
 // /api/ must reach the handler (401/201), not die in 403 before auth runs.
 func TestCSRF_skipsAPIPrefixWithoutToken(t *testing.T) {
