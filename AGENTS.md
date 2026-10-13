@@ -614,35 +614,35 @@ Console bindings: `store`, `cfg`, `db`, plus any custom keys in `Bindings`. Comm
 
 The `amarra-cais` CLI lives in `internal/cli/`. Scaffold templates are split by responsibility so agents can grep a single file instead of loading a 2400-line monolith.
 
-| Path                                                            | Responsibility                                                       |
-| --------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `internal/cli/cli.go`                                           | Command routing (`g`, `destroy`, `db`, …)                            |
-| `internal/cli/cli_help.go` / `cli_new.go`                       | Help text and `amarra-cais new` parsing (#288)                       |
-| `internal/cli/tpl_scaffold_handlers_*.go`                       | HTML handler templates (home/auth; not `*_test.go`)                  |
-| `internal/cli/doctor.go` / `doctor_env.go` / `doctor_mobile.go` | `amarra-cais doctor` checks (core / env / mobile)                    |
-| `internal/cli/scaffold.go`                                      | `amarra-cais new` orchestration and `writeTemplate`                  |
-| `internal/cli/resource.go`                                      | `amarra-cais g resource` orchestration (writes files, calls patches) |
-| `internal/cli/resource_gen_tests.go`                            | Generated admin/public handler tests for `g resource` (#288)         |
-| `internal/cli/resource_patch.go`                                | Patches store, routes, layout nav, seeds, main for resources         |
-| `internal/cli/resource_gen_*.go`                                | Resource code generation (store, admin, public, HTML, fields)        |
-| `internal/cli/destroy_unpatch*.go`                              | Destroy AST unpatch: routes, store, layout (#288)                    |
-| `internal/cli/tpl_scaffold_*.go`                                | Embedded `const tpl*` for `amarra-cais new` scaffolding              |
-| `internal/cli/tpl_scaffold_main.go`                             | `cmd/server/main.go` (full + blank)                                  |
-| `internal/cli/tpl_scaffold_app_core.go`                         | `internal/app/app.go` (full + blank)                                 |
-| `internal/cli/tpl_scaffold_routes.go`                           | `internal/app/routes.go` (full, minimal, blank)                      |
-| `internal/cli/tpl_scaffold_console.go`                          | `cmd/console/main.go`                                                |
-| `internal/cli/tpl_scaffold_auth.go`                             | Auth Go templates (handler, store, model, migration, tests)          |
-| `internal/cli/tpl_scaffold_auth_pages.go`                       | Auth HTML page templates (`login`, `signup`, reset)                  |
-| `internal/cli/tpl_scaffold_handlers_{home,auth,...}.go`         | HTML handler scaffolds (one domain per file)                         |
-| `internal/cli/tpl_scaffold_web.go`                              | Amarra layout (`#amarra-main` + `amarra.js`)                         |
-| `internal/cli/tpl_stream_chat.go`                               | `amarra-cais g stream chat` templates and handlers                   |
-| `internal/cli/stream.go`                                        | `amarra-cais g stream chat` orchestration                            |
-| `internal/cli/scaffold_auth.go`                                 | `amarra-cais g auth` orchestration and store/app/route patches       |
-| `internal/cli/patch.go`                                         | AST-safe patches into generated apps (`routes.go`, `store.go`)       |
-| `internal/cli/patch/`                                           | `go/ast` helpers — regex patches break nested `cais.IntParam`        |
-| `internal/cli/pwa_cmd.go`                                       | `amarra-cais pwa` asset writer                                       |
+| Path                                                            | Responsibility                                                                            |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `internal/cli/cli.go`                                           | Command routing (`g`, `destroy`, `db`, …)                                                 |
+| `internal/cli/cli_help.go` / `cli_new.go`                       | Help text and `amarra-cais new` parsing (#288)                                            |
+| `internal/cli/tpl_scaffold_handlers_*.go`                       | HTML handler templates (home/auth; not `*_test.go`)                                       |
+| `internal/cli/doctor.go` / `doctor_env.go` / `doctor_mobile.go` | `amarra-cais doctor` checks (core / env / mobile)                                         |
+| `internal/cli/scaffold.go`                                      | `amarra-cais new` orchestration and `writeTemplate`                                       |
+| `internal/cli/resource.go`                                      | `amarra-cais g resource` orchestration (writes files, calls patches)                      |
+| `internal/cli/resource_gen_tests.go`                            | Generated admin/public handler tests for `g resource` (#288)                              |
+| `internal/cli/resource_patch.go`                                | Patches store, routes, layout nav, seeds, main for resources                              |
+| `internal/cli/resource_gen_*.go`                                | Resource code generation (store, admin, public, HTML, fields)                             |
+| `internal/cli/destroy_unpatch*.go`                              | Destroy AST unpatch: routes, store, layout (#288)                                         |
+| `internal/cli/tpl_scaffold_*.go`                                | Embedded `const tpl*` for `amarra-cais new` scaffolding                                   |
+| `internal/cli/tpl_scaffold_main.go`                             | `cmd/server/main.go` (full + blank)                                                       |
+| `internal/cli/tpl_scaffold_app_core.go`                         | `internal/app/app.go` (full + blank)                                                      |
+| `internal/cli/tpl_scaffold_routes.go`                           | `internal/app/routes.go` (full, minimal, blank)                                           |
+| `internal/cli/tpl_scaffold_console.go`                          | `cmd/console/main.go`                                                                     |
+| `internal/cli/tpl_scaffold_auth.go`                             | Auth Go templates (handler, store, model, migration, tests)                               |
+| `internal/cli/tpl_scaffold_auth_pages.go`                       | Auth HTML page templates (`login`, `signup`, reset)                                       |
+| `internal/cli/tpl_scaffold_handlers_{home,auth,...}.go`         | HTML handler scaffolds (one domain per file)                                              |
+| `internal/cli/tpl_scaffold_web.go`                              | Amarra layout (`#amarra-main` + `amarra.js`)                                              |
+| `internal/cli/tpl_stream_chat.go`                               | `amarra-cais g stream chat` templates and handlers                                        |
+| `internal/cli/stream.go`                                        | `amarra-cais g stream chat` orchestration                                                 |
+| `internal/cli/scaffold_auth.go`                                 | `amarra-cais g auth` orchestration and store/app/route patches                            |
+| `internal/cli/patch.go`                                         | AST-safe patches into generated apps (`routes.go`, `store.go`)                            |
+| `internal/cli/patch/`                                           | `go/ast` helpers — regex patches break nested `cais.IntParam`                             |
+| `internal/cli/pwa_cmd.go`                                       | `amarra-cais pwa` asset writer                                                            |
 | `internal/cli/commands.go`                                      | `amarra-cais install`, `css`, `dev` (tailwind + air for .go; templates reload in-process) |
-| `internal/cli/destroy.go`                                       | `amarra-cais destroy` — reverses generators                          |
+| `internal/cli/destroy.go`                                       | `amarra-cais destroy` — reverses generators                                               |
 
 **Generator tests** (split by domain — run focused suites while editing generators):
 

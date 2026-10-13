@@ -48,17 +48,17 @@ Adicione `--dry-run` a qualquer um dos comandos para imprimir as mudanças plane
 
 ## Ciclo de vida do app
 
-| Comando                                                   | Descrição                                                          |
-| --------------------------------------------------------- | ------------------------------------------------------------------ |
-| `amarra-cais install`                                     | `npm install` + `go mod tidy` (e um build do Tailwind).            |
-| `amarra-cais css`                                         | Compila o Tailwind CSS → `web/static/css/styles.css`.              |
+| Comando                                                   | Descrição                                                                                                                    |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `amarra-cais install`                                     | `npm install` + `go mod tidy` (e um build do Tailwind).                                                                      |
+| `amarra-cais css`                                         | Compila o Tailwind CSS → `web/static/css/styles.css`.                                                                        |
 | `amarra-cais dev`                                         | Dev server: templates e CSS recarregam in-process (a aba atualiza via `/_dev/reload`), air rebuilda `.go`, Tailwind observa. |
-| `amarra-cais build [--os linux] [--arch amd64] [-o path]` | Compila `bin/server`, opcionalmente com cross-compile para deploy. |
-| `amarra-cais server`                                      | Executa o app (`go run ./cmd/server`).                             |
-| `amarra-cais test`                                        | Executa os testes (`go test ./...`).                               |
-| `amarra-cais console`                                     | REPL no estilo Rails (`store`, `cfg`, `db` + SQL).                 |
-| `amarra-cais routes [--verbose]`                          | Lista as rotas HTTP de `internal/app/routes.go`.                   |
-| `amarra-cais version`                                     | Imprime a versão do framework.                                     |
+| `amarra-cais build [--os linux] [--arch amd64] [-o path]` | Compila `bin/server`, opcionalmente com cross-compile para deploy.                                                           |
+| `amarra-cais server`                                      | Executa o app (`go run ./cmd/server`).                                                                                       |
+| `amarra-cais test`                                        | Executa os testes (`go test ./...`).                                                                                         |
+| `amarra-cais console`                                     | REPL no estilo Rails (`store`, `cfg`, `db` + SQL).                                                                           |
+| `amarra-cais routes [--verbose]`                          | Lista as rotas HTTP de `internal/app/routes.go`.                                                                             |
+| `amarra-cais version`                                     | Imprime a versão do framework.                                                                                               |
 
 ## Banco de dados
 
