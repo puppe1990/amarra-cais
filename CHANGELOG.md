@@ -4,6 +4,18 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.21.0] - 2026-10-13
+
+### Added
+
+- `amarra-cais dev` reloads templates and the built stylesheet **in-process**: saving `web/templates/**/*.html` re-parses the page set (`view.Renderer.ReloadFromDir`, kit `ExpandAll` + every locale catalog) and the open tab refreshes itself over `GET /_dev/reload`, a dev-only, loopback-only SSE route. No rebuild, no process restart, so live WebSockets and in-flight streams survive an HTML edit; a parse error keeps the last good page set serving (#340). Air now restarts only for `.go` (`include_ext = ["go"]`, `web` in `exclude_dir`), which also stops the Tailwind write from rebuilding the process, and `go run ./cmd/server` without air still reloads HTML/CSS. A `boot` id on the stream tells an open tab that an air rebuild finished, reloading it once.
+
+### Fixed
+
+- `amarra-cais new --minimal` / `--blank` are green under `go test ./...` again: the auth store pair (`internal/store/password_reset.go` + `password_reset_test.go`) is deleted with the auth handlers it belongs to, so `s.FindUserByEmail` is not referenced by a store that never had it. `g auth` adds the files back. The slim layouts also drop the dead `/login` header link and the home boarding CTA — neither variant ships auth routes (#336). `scripts/smoke-scaffold.sh` now runs `go test ./...` on fresh minimal and blank apps, the level `go build ./...` could not catch.
+- Drive keeps a `#fragment` through the morph: `visit` carries the requested fragment onto the response URL (fetch never sends one), so `pushState` records `/resumos/x#planos` instead of the bare route, and after a 200 the target is scrolled into view with `getElementById(decodeURIComponent(hash))` — falling back to `scrollTo(0, 0)` when the id is missing. `popstate` keeps the stored `scrollY`, and hash-only clicks on the current route still never fetch (#341).
+- `morph` restores camelCase SVG attributes a parser may have lowercased (`viewbox` → `viewBox`, `preserveAspectRatio`, `gradientTransform`, `refX`/`refY`, marker/pattern/filter attributes) on SVG-namespace elements after the morph, dropping the lowercase twin; without it the live `viewBox` was removed and inline SVG stopped painting (#330).
+
 ## [0.20.0] - 2026-10-13
 
 ### Added
