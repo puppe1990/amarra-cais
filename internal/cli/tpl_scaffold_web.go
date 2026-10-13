@@ -121,9 +121,11 @@ const tplLayoutBaseClose = `
         {{"{{"}} template "content" . {{"}}"}}
       </main>
     </div>
+    {{"{{"}} if not .Site.LoggedIn {{"}}"}}
     <footer class="mt-auto border-t border-foam/10 py-6 text-center font-mono text-[10px] uppercase tracking-[0.22em] text-foam/40">
       <p>© 2026 {{.AppName}} · Built with Amarra</p>
     </footer>
+    {{"{{"}} end {{"}}"}}
     {{"{{"}} if eq .Site.Env "development" {{"}}"}}
     <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">
       if ("serviceWorker" in navigator) {

@@ -181,6 +181,26 @@ func TestLayoutTemplates_themeToggleSwapsIcon(t *testing.T) {
 	}
 }
 
+// The footer is visitor chrome: a signed-in page ends at the sidebar, so the
+// app shell does not carry the marketing strip.
+func TestLayoutTemplates_footerOnlyForAnonymousShell(t *testing.T) {
+	marker := `{{"{{"}} if not .Site.LoggedIn {{"}}"}}`
+	idx := strings.Index(tplLayoutBaseClose, "<footer")
+	if idx == -1 {
+		t.Fatal("layout has no footer")
+	}
+	open := strings.LastIndex(tplLayoutBaseClose[:idx], marker)
+	if open == -1 {
+		t.Fatal("footer must sit inside a `if not .Site.LoggedIn` gate")
+	}
+	if strings.Contains(tplLayoutBaseClose[open+len(marker):idx], `{{"{{"}} end {{"}}"}}`) {
+		t.Error("footer gate closes before the footer — the footer still renders for signed-in pages")
+	}
+	if !strings.Contains(tplLayoutBaseClose[idx:], `{{"{{"}} end {{"}}"}}`) {
+		t.Error("footer gate is never closed")
+	}
+}
+
 // #208: signed-in chrome (login link, dashboard link, logout) is gated on
 // Site.LoggedIn, and the cais:nav marker stays outside the gate so public
 // resource links still render for anonymous visitors.
