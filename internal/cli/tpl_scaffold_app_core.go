@@ -15,6 +15,7 @@ import (
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/devlog"
+	"github.com/puppe1990/amarra-cais/pkg/cais/devreload"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/jobsui"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
@@ -34,6 +35,9 @@ type Deps struct {
 	// Catalogs is the full locale set for LocaleMiddleware and the per-request
 	// view renderer (#211). Catalog stays the boot fallback for handler copy.
 	Catalogs map[string]*i18n.Catalog
+	// DevReload is the development-only SSE hub that tells open tabs a template
+	// or stylesheet changed. Nil in production and in tests (#340).
+	DevReload *devreload.Hub
 }
 
 type App struct {
@@ -85,6 +89,7 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 	registerLiveViews(hub, deps)
 	r.Handle("GET /amarra/live", hub.Handler())
 	devlog.Register(r, cfg.Env, buf)
+	deps.DevReload.Register(r, cfg.Env)
 	if err := jobsui.Register(r, deps.Store.DB()); err != nil {
 		return nil, fmt.Errorf("jobs dashboard: %w", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -20,6 +21,10 @@ type Renderer struct {
 	// byLocale holds one parsed set per additional catalog so the i18n funcs
 	// (t/htmlLang/ogLocale) resolve per request instead of at boot (#211).
 	byLocale map[string]map[string]*template.Template
+	// catalog/catalogs keep the boot catalog set so ReloadFromDir re-parses the
+	// same page sets in development (#340).
+	catalog  *i18n.Catalog
+	catalogs []*i18n.Catalog
 }
 
 type namedTemplateSrc struct {
@@ -69,7 +74,12 @@ func Load(fsys fs.FS, catalog *i18n.Catalog, catalogs ...*i18n.Catalog) (*Render
 		return nil, err
 	}
 
-	rec := &Renderer{pages: pages, byLocale: map[string]map[string]*template.Template{}}
+	rec := &Renderer{
+		pages:    pages,
+		byLocale: map[string]map[string]*template.Template{},
+		catalog:  catalog,
+		catalogs: append([]*i18n.Catalog(nil), catalogs...),
+	}
 	for _, extra := range catalogs {
 		if extra == nil || extra.Locale() == catalog.Locale() {
 			continue
@@ -85,6 +95,22 @@ func Load(fsys fs.FS, catalog *i18n.Catalog, catalogs ...*i18n.Catalog) (*Render
 	}
 
 	return rec, nil
+}
+
+// ReloadFromDir re-parses the whole page set from a directory on disk and swaps
+// it in atomically, keeping the catalogs the renderer booted with. Development
+// hot reload only (`amarra-cais dev`): the embedded filesystem stays the source
+// in production, and a parse error leaves the previous set serving (#340).
+func (r *Renderer) ReloadFromDir(dir string) error {
+	next, err := Load(os.DirFS(dir), r.catalog, r.catalogs...)
+	if err != nil {
+		return err
+	}
+	r.mu.Lock()
+	r.pages = next.pages
+	r.byLocale = next.byLocale
+	r.mu.Unlock()
+	return nil
 }
 
 func loadPageSources(fsys fs.FS, components map[string]string) ([]pageSrc, error) {

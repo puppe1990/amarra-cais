@@ -63,7 +63,7 @@ export PATH="$HOME/go/bin:$PATH"
 | `amarra-cais g [--dry-run] handler\|page\|resource\|model\|migration\|auth\|console\|ci\|job\|stream\|live\|component` | Generators                                                 |
 | `amarra-cais destroy [--dry-run] resource\|handler\|model\|auth\|migration\|component`                                 | Undo generators                                            |
 | `amarra-cais install`                                                                                                  | `npm install` + `go mod tidy` (+ Tailwind build)           |
-| `amarra-cais dev`                                                                                                      | **air + Tailwind watch** (HTML templates reload with air)  |
+| `amarra-cais dev`                                                                                                      | **Tailwind watch + air for `.go`** — template/CSS edits reload in-process |
 | `amarra-cais css` / `amarra-cais build` / `amarra-cais server` / `amarra-cais test`                                    | CSS, binary, run, tests                                    |
 | `amarra-cais console`                                                                                                  | REPL (store, cfg, db + SQL)                                |
 | `amarra-cais routes [--verbose]`                                                                                       | List routes from `internal/app/routes.go`                  |

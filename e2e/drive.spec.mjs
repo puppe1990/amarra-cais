@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { morphHome, signIn } from "./helpers.mjs";
 
 test("Drive morphs an anonymous page without a full reload and restores history", async ({
   page,
@@ -15,6 +16,16 @@ test("Drive morphs an anonymous page without a full reload and restores history"
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
   expect(await page.evaluate(() => window.__amarraDoc)).toBe(true);
+});
+
+// #330: inline SVG has to keep its camelCase attributes through a Drive morph —
+// the illustration is drawn from `viewBox`, and losing it leaves the box empty.
+test("Drive morph keeps camelCase SVG attributes of inline SVG", async ({ page }) => {
+  await signIn(page);
+  await morphHome(page);
+  const sheet = page.locator('#amarra-main svg[viewBox="0 0 200 200"]');
+  await expect(sheet).toHaveCount(1);
+  expect(await sheet.evaluate((el) => el.getAttribute("viewBox"))).toBe("0 0 200 200");
 });
 
 // The password fields are `required`, so native validation would block an empty

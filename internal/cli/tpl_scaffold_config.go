@@ -19,8 +19,12 @@ tmp_dir = "tmp"
   cmd = "go build -o ./tmp/main ./cmd/server"
   entrypoint = ["./tmp/main"]
   delay = 1000
-  exclude_dir = ["tmp", "data", "bin", "node_modules"]
-  include_ext = ["go", "html", "css"]
+  exclude_dir = ["tmp", "data", "bin", "node_modules", "web"]
+  # .go only: templates and the built stylesheet are reloaded in-process by the
+  # server (devreload, #340) and the browser is refreshed over /_dev/reload, so
+  # watching web/ would only add a rebuild+restart per HTML edit (and a second
+  # one for the Tailwind output).
+  include_ext = ["go"]
   stop_on_error = true
   # SIGINT the old tmp/main and wait before SIGKILL, or the zombie keeps
   # :8080 and the sqlite WAL and the next boot shifts ports / locks (#77).

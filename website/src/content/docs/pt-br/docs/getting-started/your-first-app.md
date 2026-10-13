@@ -43,7 +43,7 @@ amarra-cais db migrate       # applies pending migrations
 go test ./...                # handler tests run headless against :memory: SQLite
 ```
 
-Se a porta preferida estiver ocupada, o servidor escolhe uma livre na inicialização. O `amarra-cais dev` roda air + watch do Tailwind, então edições em templates recarregam sem reiniciar.
+Se a porta preferida estiver ocupada, o servidor escolhe uma livre na inicialização. O `amarra-cais dev` observa o Tailwind, recarrega o conjunto de templates **in-process** na edição de um HTML (a aba se atualiza sozinha via `/_dev/reload`) e mantém o air para rebuilds de `.go` — editar página não reinicia o servidor nem derruba o hub WebSocket do live.
 
 ## Próximos passos
 

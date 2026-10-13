@@ -150,6 +150,23 @@ const tplLayoutBaseClose = `
           });
         }
       }
+      // Dev reload (#340): the server re-parses templates in-process and pings
+      // this stream, so an HTML/CSS edit refreshes the tab without an air
+      // rebuild. Loopback only — the route is localhost-only and the phone on
+      // the LAN URL would just collect 403s. The boot id flips when air
+      // restarts the process for a .go edit; a changed id on reconnect means
+      // the new binary is up, so reload once.
+      (function () {
+        if (!("EventSource" in window)) return;
+        if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+        var es = new EventSource("/_dev/reload");
+        es.addEventListener("reload", function () { location.reload(); });
+        es.addEventListener("boot", function (ev) {
+          var seen = sessionStorage.getItem("amarra-dev-boot");
+          sessionStorage.setItem("amarra-dev-boot", ev.data);
+          if (seen && seen !== ev.data) location.reload();
+        });
+      })();
     </script>
     {{"{{"}} else {{"}}"}}
     <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">

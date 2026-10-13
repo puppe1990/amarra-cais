@@ -442,8 +442,17 @@ func TestCLI_NewMainUsesTemplateHotReload(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(air), `"html"`) {
-		t.Error(".air.toml include_ext must include html so air rebuilds (and re-embeds) templates")
+	// #340: templates and the built stylesheet reload in-process (devreload), so
+	// air must watch .go only and leave web/ alone — an HTML edit used to cost a
+	// rebuild + restart per save, plus a second one from the Tailwind output.
+	if !strings.Contains(string(air), `include_ext = ["go"]`) {
+		t.Error(".air.toml include_ext must be go only: templates reload in-process (#340)")
+	}
+	if !strings.Contains(string(air), `"web"`) {
+		t.Error(".air.toml exclude_dir must skip web/ so HTML edits do not rebuild (#340)")
+	}
+	if strings.Contains(string(air), `"html"`) || strings.Contains(string(air), `"css"`) {
+		t.Error(".air.toml must not watch html/css anymore (#340)")
 	}
 	if !strings.Contains(string(air), "send_interrupt") {
 		t.Error(".air.toml must set send_interrupt so air SIGINTs tmp/main before killing it (#77)")

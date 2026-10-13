@@ -43,7 +43,7 @@ amarra-cais db migrate       # applies pending migrations
 go test ./...                # handler tests run headless against :memory: SQLite
 ```
 
-If the preferred port is busy, the server picks a free one at boot. `amarra-cais dev` runs air + Tailwind watch, so template edits reload without a restart.
+If the preferred port is busy, the server picks a free one at boot. `amarra-cais dev` watches Tailwind, reloads the template set **in-process** on an HTML edit (the tab refreshes itself over `/_dev/reload`) and keeps air for `.go` rebuilds — a page edit never restarts the server or drops the live WebSocket hub.
 
 ## Next steps
 

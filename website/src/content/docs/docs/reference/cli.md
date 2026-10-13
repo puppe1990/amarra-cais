@@ -52,7 +52,7 @@ Add `--dry-run` to either command to print planned changes without writing files
 | --------------------------------------------------------- | --------------------------------------------------------- |
 | `amarra-cais install`                                     | `npm install` + `go mod tidy` (plus a Tailwind build).    |
 | `amarra-cais css`                                         | Build Tailwind CSS → `web/static/css/styles.css`.         |
-| `amarra-cais dev`                                         | Hot reload (air + Tailwind watch).                        |
+| `amarra-cais dev`                                         | Dev server: templates and CSS reload in-process (the tab refreshes over `/_dev/reload`), air rebuilds `.go`, Tailwind watches. |
 | `amarra-cais build [--os linux] [--arch amd64] [-o path]` | Build `bin/server`, optionally cross-compiled for deploy. |
 | `amarra-cais server`                                      | Run the app (`go run ./cmd/server`).                      |
 | `amarra-cais test`                                        | Run tests (`go test ./...`).                              |
