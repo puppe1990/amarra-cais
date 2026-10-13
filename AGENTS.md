@@ -283,6 +283,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 
 - `middleware.CSRF(cfg)` on the router (validates POST/PUT/DELETE/PATCH)
 - Double-submit cookie (`cais_csrf`) — token in cookie + form field or `X-CSRF-Token` header; no server-side token store
+- Skip set (`skipCSRF`): `/health`, `/static/`, `/api/` + Bearer, and the crawler files `/sitemap.xml`, `/robots.txt`, `/llms.txt` — these GETs must go out **without `Set-Cookie`**, or Search Console answers "Não foi possível buscar o sitemap" (#342). Closed set: an app's own `.xml` route may be authenticated, so never widen it to an extension match.
 
 **HTML templates** — pass `meta.ForRequest(site, r)` / `amarraData`; layout renders `<meta name="csrf-token">` + `amarra.js` sends `X-CSRF-Token` on Drive requests. Forms: `{{ csrfField .CSRFToken }}` or hidden `csrf_token` input. Kit `<.form>` injects the CSRF field itself from the root data (`$.CSRFToken`) — do not duplicate it inside the slot.
 
