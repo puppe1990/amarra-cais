@@ -42,9 +42,9 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"```go\n" +
 	"view.Write(w, r, h.views, view.Page{\n" +
 	"  Layout: \"app\",\n" +
-	"  Name:   \"contact\",\n" +
+	"  Name:   \"dashboard\",\n" +
 	"  Data: map[string]any{\n" +
-	"    \"Title\":     h.catalog.T(\"contact.title\"),\n" +
+	"    \"Title\":     h.catalog.T(\"dashboard.title\"),\n" +
 	"    \"Site\":      meta.ForRequest(h.site, r),\n" +
 	"    \"CSRFToken\": csrf.TokenFromRequest(r),\n" +
 	"    \"Flash\":     flashMsg,\n" +

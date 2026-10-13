@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -50,14 +51,14 @@ func buildGeneratedApp(t *testing.T, appDir string) {
 
 func TestDestroyHandler_leavesCompilableApp(t *testing.T) {
 	appDir := scaffoldCompileProbe(t, "destroyhandler")
-	if err := destroyHandler(appDir, "contact", false, false); err != nil {
+	if err := destroyHandler(appDir, "dashboard", false, false); err != nil {
 		t.Fatal(err)
 	}
 	routes := readDestroyFixture(t, filepath.Join(appDir, "internal/app/routes.go"))
-	if strings.Contains(routes, "contactLimit") {
-		t.Errorf("orphaned contactLimit survived:\n%s", routes)
+	if strings.Contains(routes, "dashboard.") {
+		t.Errorf("destroy handler left the dashboard route behind:\n%s", routes)
 	}
-	if !strings.Contains(routes, "home.ServeHTTP") || !strings.Contains(routes, "dashboard.ServeHTTP") {
+	if !strings.Contains(routes, "home.ServeHTTP") {
 		t.Errorf("destroy handler dropped unrelated routes:\n%s", routes)
 	}
 	requireParses(t, "routes.go", routes)
@@ -78,7 +79,7 @@ func TestDestroyAuth_leavesCompilableApp(t *testing.T) {
 			t.Errorf("routes.go still has %s:\n%s", gone, routes)
 		}
 	}
-	if !strings.Contains(routes, "/contact") || !strings.Contains(routes, "/dashboard") {
+	if !strings.Contains(routes, "/dashboard") {
 		t.Errorf("destroy auth dropped unrelated routes:\n%s", routes)
 	}
 	requireParses(t, "routes.go", routes)
@@ -96,21 +97,22 @@ func TestDestroyAuth_leavesCompilableApp(t *testing.T) {
 // destroy that removes the last migration left an app that cannot build.
 func TestDestroyMigration_keepsEmbeddableMigration(t *testing.T) {
 	appDir := scaffoldDestroyModelProbe(t, "destmig")
-	for _, name := range []string{"contacts", "auth"} {
-		if err := destroyMigration(appDir, name, false); err != nil {
-			t.Fatal(err)
-		}
+	if err := destroyMigration(appDir, "auth", false); err != nil {
+		t.Fatal(err)
 	}
 	assertMigrationSQLExists(t, appDir)
 }
 
 func TestDestroyAll_leavesCompilableApp(t *testing.T) {
 	appDir := scaffoldCompileProbe(t, "destroynothing")
+	t.Chdir(appDir)
+	if err := (&CLI{Out: io.Discard}).Run([]string{"g", "resource", "bookmark", "--fields", "title:string"}); err != nil {
+		t.Fatal(err)
+	}
 	for _, destroy := range []func() error{
 		func() error { return destroyAuth(appDir, false) },
-		func() error { return destroyHandler(appDir, "contact", false, false) },
 		func() error { return destroyHandler(appDir, "dashboard", false, false) },
-		func() error { return destroyModel(appDir, "contact", false, false) },
+		func() error { return destroyResource(appDir, "bookmark", false, false) },
 	} {
 		if err := destroy(); err != nil {
 			t.Fatal(err)

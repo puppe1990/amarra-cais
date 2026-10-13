@@ -28,7 +28,7 @@ Amarra registers a set of helper functions on the view renderer so page template
 Forms pair the double-submit `cais_csrf` cookie with a token field or the `X-CSRF-Token` header. In templates you emit the hidden field yourself:
 
 ```html
-<form action="/contact" method="post">{{ csrfField .CSRFToken }} ...</form>
+<form action="/login" method="post">{{ csrfField .CSRFToken }} ...</form>
 ```
 
 Kit `<.form>` injects the CSRF field from the root data (`$.CSRFToken`), so do not add `csrfField` inside its slot. The layout renders `<meta name="csrf-token">`, and [amarra.js](/amarra-cais/docs/reference/amarra-js/) sends `X-CSRF-Token` on Drive requests.
@@ -92,4 +92,4 @@ Options: `"method"` (for example `delete`), `"confirm"` (confirmation text), and
 
 `{{ t "key" }}` looks up a string in the locale catalog. The layout also uses `{{ htmlLang }}` and `{{ ogLocale }}`. Missing keys return the key itself, which is visible in development.
 
-The default catalog comes from the `LOCALE` env var (`en` is the default, `pt` is supported), wired as `cais.Config.Locale`; each request can override it with `?lang=` or the `cais_locale` cookie through `i18n.LocaleMiddleware`. Handlers receive the request catalog for validation and flash strings (`catalog.T("contact.title")`), and the same functions reach pages and partials. See [i18n](/amarra-cais/docs/how-to/i18n/) for the locale files.
+The default catalog comes from the `LOCALE` env var (`en` is the default, `pt` is supported), wired as `cais.Config.Locale`; each request can override it with `?lang=` or the `cais_locale` cookie through `i18n.LocaleMiddleware`. Handlers receive the request catalog for validation and flash strings (`catalog.T("dashboard.title")`), and the same functions reach pages and partials. See [i18n](/amarra-cais/docs/how-to/i18n/) for the locale files.

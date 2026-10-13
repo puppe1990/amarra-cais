@@ -29,9 +29,9 @@ To wire it by hand, follow the same four steps:
 ```go
 view.Write(w, r, h.views, view.Page{
   Layout: "app",
-  Name:   "contact",
+  Name:   "dashboard",
   Data: map[string]any{
-    "Title":     h.catalog.T("contact.title"),
+    "Title":     h.catalog.T("dashboard.title"),
     "Site":      meta.ForRequest(h.site, r),
     "CSRFToken": csrf.TokenFromRequest(r),
     "Flash":     flashMsg,
@@ -56,8 +56,8 @@ A page can also define `{{ define "frame:<id>" }}` for frame requests (`Amarra-F
 Build page data with the same helpers the scaffold uses. `amarraData` bundles the request-scoped values (site, flash, and anything you pass), and `meta.ForRequest(h.site, r)` produces the Open Graph / Twitter preview.
 
 ```go
-writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
-  "Title":  h.catalog.T("contact.title"),
+writeView(w, r, h.views, h.cfg, "app", "dashboard", amarraData(r, h.site, map[string]any{
+  "Title":  h.catalog.T("dashboard.title"),
   "Errors": errs,
   "Name":   name,
   "Email":  email,

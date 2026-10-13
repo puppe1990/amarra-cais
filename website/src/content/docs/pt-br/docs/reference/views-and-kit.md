@@ -29,9 +29,9 @@ O Amarra renderiza HTML no servidor. Os handlers chamam `view.Write`, que resolv
 ```go
 view.Write(w, r, h.views, view.Page{
   Layout: "app",
-  Name:   "contact",
+  Name:   "dashboard",
   Data: map[string]any{
-    "Title":     h.catalog.T("contact.title"),
+    "Title":     h.catalog.T("dashboard.title"),
     "Site":      meta.ForRequest(h.site, r),
     "CSRFToken": csrf.TokenFromRequest(r),
     "Flash":     flashMsg,

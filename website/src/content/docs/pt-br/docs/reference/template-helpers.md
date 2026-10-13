@@ -28,7 +28,7 @@ O Amarra registra um conjunto de funções helper no view renderer para que os t
 Os formulários combinam o cookie double-submit `cais_csrf` com um campo de token ou o header `X-CSRF-Token`. Nos templates, você mesmo emite o campo oculto:
 
 ```html
-<form action="/contact" method="post">{{ csrfField .CSRFToken }} ...</form>
+<form action="/login" method="post">{{ csrfField .CSRFToken }} ...</form>
 ```
 
 O `<.form>` do kit injeta o campo CSRF a partir dos dados raiz (`$.CSRFToken`), então não adicione `csrfField` dentro do slot dele. O layout renderiza `<meta name="csrf-token">`, e o [amarra.js](/amarra-cais/pt-br/docs/reference/amarra-js/) envia `X-CSRF-Token` nas requisições Drive.
@@ -92,4 +92,4 @@ Opções: `"method"` (por exemplo, `delete`), `"confirm"` (texto de confirmaçã
 
 `{{ t "key" }}` procura uma string no catálogo de locale. O layout também usa `{{ htmlLang }}` e `{{ ogLocale }}`. Chaves ausentes devolvem a própria chave, o que fica visível em desenvolvimento.
 
-O catálogo padrão vem da env var `LOCALE` (`en` é o padrão, `pt` é suportado), conectado como `cais.Config.Locale`; cada request pode sobrescrevê-lo com `?lang=` ou o cookie `cais_locale` através do `i18n.LocaleMiddleware`. Os handlers recebem o catálogo do request para validação e strings flash (`catalog.T("contact.title")`), e as mesmas funções chegam a páginas e partials. Veja [i18n](/amarra-cais/pt-br/docs/how-to/i18n/) para os arquivos de locale.
+O catálogo padrão vem da env var `LOCALE` (`en` é o padrão, `pt` é suportado), conectado como `cais.Config.Locale`; cada request pode sobrescrevê-lo com `?lang=` ou o cookie `cais_locale` através do `i18n.LocaleMiddleware`. Os handlers recebem o catálogo do request para validação e strings flash (`catalog.T("dashboard.title")`), e as mesmas funções chegam a páginas e partials. Veja [i18n](/amarra-cais/pt-br/docs/how-to/i18n/) para os arquivos de locale.

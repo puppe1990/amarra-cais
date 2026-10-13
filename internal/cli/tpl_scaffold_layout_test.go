@@ -154,12 +154,6 @@ func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 	}
 }
 
-func TestLayoutTemplates_contactFormUsesKitForm(t *testing.T) {
-	if !strings.Contains(tplPageContact, `<.form action="/contact"`) {
-		t.Error("contact form should use <.form> kit tag")
-	}
-}
-
 // The default toggle shows the icon of the theme it switches to — sun while the
 // app is dark, moon while it is light — next to the label. The swap is CSS-only
 // (`html.light`), so the hook keeps owning just the label slot (#258).
@@ -389,7 +383,6 @@ func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 		"signup":    tplPageSignup,
 		"forgot":    tplPageForgotPassword,
 		"reset":     tplPageResetPassword,
-		"contact":   tplPageContact,
 		"dashboard": tplPageDashboard,
 		"home":      tplPageHome,
 		"css":       tplInputCSS,
@@ -401,7 +394,7 @@ func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 			}
 		}
 	}
-	for _, blob := range []string{tplPageLogin, tplPageContact, tplPageDashboard} {
+	for _, blob := range []string{tplPageLogin, tplPageDashboard} {
 		if !strings.Contains(blob, "border-copper") && !strings.Contains(blob, "text-copper") {
 			t.Error("inner pages should use copper tokens on the harbor shell")
 		}

@@ -58,9 +58,9 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		".env.example",
 		"internal/handlers/dashboard.go",
 		"internal/handlers/viewdata.go",
+		"internal/store/migrations/001_auth.sql",
 		"web/templates/layouts/app.html",
 		"web/templates/pages/home.html",
-		"web/templates/pages/contact.html",
 		"web/templates/pages/dashboard.html",
 		"web/templates/pages/login.html",
 		"web/static/js/amarra.js",
@@ -84,6 +84,13 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		"svelte.config.js",
 		"web/src/pages/Home.svelte",
 		"internal/handlers/inertia_test.go",
+		// The default app ships no example table: no Contact handler, model,
+		// migration or page (apps add their own with `g resource`).
+		"internal/handlers/contact.go",
+		"internal/handlers/contact_test.go",
+		"internal/models/contact.go",
+		"internal/store/migrations/001_contacts.sql",
+		"web/templates/pages/contact.html",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
 			t.Errorf("Inertia/HTMX scaffold artifact should not exist: %s", path)
@@ -142,13 +149,6 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	}
 	if strings.Contains(loginBody, "csrfField") {
 		t.Error("login.html must not duplicate csrfField inside <.form> (#37)")
-	}
-	contact, err := os.ReadFile(filepath.Join(appDir, "web/templates/pages/contact.html"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(contact), "csrfField") {
-		t.Error("contact.html must not duplicate csrfField inside <.form> (#37)")
 	}
 	if !strings.Contains(loginBody, `<.password name="password"`) {
 		t.Error("login.html should use the <.password> kit with eye toggle (#29)")
@@ -215,28 +215,6 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 	}
 	if strings.Contains(string(css), "fonts.googleapis.com") {
 		t.Error("input.css should not import Google Fonts (CSP blocked)")
-	}
-}
-
-func TestScaffoldNewApp_ContactHandlerValidatesName(t *testing.T) {
-	t.Setenv("CAIS_SKIP_TIDY", "1")
-	appDir := filepath.Join(t.TempDir(), "contactapp")
-	if err := scaffoldNewApp(appDir, scaffoldData{
-		AppName:    "contactapp",
-		ModulePath: "github.com/puppe1990/contactapp",
-	}, false, false); err != nil {
-		t.Fatal(err)
-	}
-	body, err := os.ReadFile(filepath.Join(appDir, "internal/handlers/contact.go"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := string(body)
-	if !strings.Contains(s, `errs.Add("name"`) {
-		t.Errorf("contact handler missing name validation: %s", s)
-	}
-	if !strings.Contains(s, `contact.name_required`) {
-		t.Errorf("contact handler missing name_required i18n key: %s", s)
 	}
 }
 

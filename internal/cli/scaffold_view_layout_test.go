@@ -53,7 +53,6 @@ func TestScaffoldHandlers_passLayoutExplicitly(t *testing.T) {
 	appDir := scaffoldLayoutApp(t)
 
 	for _, rel := range []string{
-		"internal/handlers/contact.go",
 		"internal/handlers/dashboard.go",
 		"internal/handlers/auth.go",
 	} {

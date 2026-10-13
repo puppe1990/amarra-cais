@@ -55,13 +55,13 @@ func TestPostLocale_setsCookieAndRedirects(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/locale", strings.NewReader("locale=pt"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Host = "example.com"
-	req.Header.Set("Referer", "https://example.com/contact")
+	req.Header.Set("Referer", "https://example.com/dashboard")
 	PostLocale(cais.Config{}).ServeHTTP(rr, req)
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status = %d, want 303", rr.Code)
 	}
-	if got := rr.Header().Get("Location"); got != "/contact" {
-		t.Errorf("Location = %q, want /contact", got)
+	if got := rr.Header().Get("Location"); got != "/dashboard" {
+		t.Errorf("Location = %q, want /dashboard", got)
 	}
 	var cookie *http.Cookie
 	for _, c := range rr.Result().Cookies() {

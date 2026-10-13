@@ -39,12 +39,12 @@ Imperative. Prefer these when trading off effort.
 
 ### Repo red flags (split when you touch them)
 
-| Path                                          | Notes                                                         |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| `internal/cli/tpl_scaffold_handlers_*.go`     | Split done: home/contact/dashboard/auth + tests + testhelpers |
-| `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks             |
-| `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further        |
-| `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates               |
+| Path                                          | Notes                                                  |
+| --------------------------------------------- | ------------------------------------------------------ |
+| `internal/cli/tpl_scaffold_handlers_*.go`     | Split done: home/dashboard/auth + tests + testhelpers  |
+| `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks      |
+| `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further |
+| `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates        |
 
 Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go`), never a mega template dump.
 
@@ -177,9 +177,9 @@ Handlers in generated apps render **HTML** via `pkg/amarra/view`. Boot loads tem
 ```go
 view.Write(w, r, h.views, view.Page{
   Layout: "app",
-  Name:   "contact",
+  Name:   "dashboard",
   Data: map[string]any{
-    "Title":     h.catalog.T("contact.title"),
+    "Title":     h.catalog.T("dashboard.title"),
     "Site":      meta.ForRequest(h.site, r),
     "CSRFToken": csrf.TokenFromRequest(r),
     "Flash":     flashMsg,
@@ -188,8 +188,8 @@ view.Write(w, r, h.views, view.Page{
 
 // Validation — same page, status 422, `.Errors` on inputs
 // writeView names the layout: an app with a second layout passes "landing" here (#66).
-writeView(w, r, h.views, h.cfg, "app", "contact", amarraData(r, h.site, map[string]any{
-  "Title":  h.catalog.T("contact.title"),
+writeView(w, r, h.views, h.cfg, "app", "dashboard", amarraData(r, h.site, map[string]any{
+  "Title":  h.catalog.T("dashboard.title"),
   "Errors": errs,
   "Name":   name,
   "Email":  email,
@@ -323,10 +323,10 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 Wrap sensitive POST routes with per-IP token buckets:
 
 ```go
-loginLimit := middleware.NewRateLimiter(10, cfg)   // 10 req/min
-contactLimit := middleware.NewRateLimiter(20, cfg) // 20 req/min
+loginLimit := middleware.NewRateLimiter(10, cfg) // 10 req/min
+resetLimit := middleware.NewRateLimiter(10, cfg) // 10 req/min
 r.Post("/login", loginLimit.Middleware(http.HandlerFunc(auth.LoginPost)).ServeHTTP)
-r.Post("/contact", contactLimit.Middleware(http.HandlerFunc(contact.Post)).ServeHTTP)
+r.Post("/forgot-password", resetLimit.Middleware(http.HandlerFunc(auth.ForgotPasswordPost)).ServeHTTP)
 ```
 
 Rate limiters use `middleware.ClientIP(r, cfg)` — set `TRUSTED_PROXIES` when behind a reverse proxy.
@@ -431,15 +431,15 @@ Foreign-key selects:
 
 Generate the parent resource first (`amarra-cais g resource category --fields name:string`). Referenced table needs a `name` or `title` column for labels.
 
-## Integration tests (auth + contact)
+## Integration tests (auth flows)
 
 Multi-step flows belong in `internal/app/` (full router + CSRF + session + HTML) when you add them; scaffold ships focused handler tests:
 
-1. `GET /login` or `/contact` — read `csrf` cookie
+1. `GET /login` (or `/signup`) — read `csrf` cookie
 2. `POST` with matching `csrf_token` field + cookie
 3. Follow session/flash cookies on subsequent requests
 
-Success: `303`. Validation: `422` HTML containing the field error. Handler tests use `setupTestViews` + `httptest` (see generated `home_test.go` / `contact_test.go` / `auth_test.go`).
+Success: `303`. Validation: `422` HTML containing the field error. Handler tests use `setupTestViews` + `httptest` (see generated `home_test.go` / `auth_test.go`).
 
 ## New table
 
@@ -525,7 +525,7 @@ Field types: `string`, `text`, `url`, `bool`, `int`, `date`, `references` (or `n
 
 **Dry-run** — `amarra-cais g --dry-run ...` and `amarra-cais destroy --dry-run ...` print planned changes without writing files.
 
-**Destroy** — `amarra-cais destroy resource|handler|model <name>` removes generated files and unpatches `routes.go`, `store.go`, `seeds.go`, and layout nav where applicable. `destroy model` also drops the model's store methods/interface entries, its `RunSeeds` insert and its `store_test.go` tests — and refuses, naming the caller, while another file still uses them (`internal/handlers/dashboard.go still calls CountContacts — run amarra-cais destroy handler dashboard`) (#245). `destroy handler` and `destroy auth` also prune the route statements they own plus the limiter declarations and imports only those routes used, so the app still compiles right after (#248), and a destroy that empties `internal/store/migrations/` writes the scaffold's `001_init.sql` placeholder back — `//go:embed migrations/*.sql` needs at least one match (#254). `destroy auth` also reverts `app.go` session middleware. `destroy migration` removes matching `*_<name>.sql` only (does not roll back `schema_migrations`).
+**Destroy** — `amarra-cais destroy resource|handler|model <name>` removes generated files and unpatches `routes.go`, `store.go`, `seeds.go`, and layout nav where applicable. `destroy model` also drops the model's store methods/interface entries, its sort helper, its `RunSeeds` insert and its `store_test.go` tests — and refuses, naming the caller, while another file still calls them (`internal/handlers/bookmarks.go still calls ListBookmarks — run: amarra-cais destroy handler bookmarks`; an `admin_*` caller gets a `--force` hint instead, since no destroy command owns that file) (#245). `destroy handler` and `destroy auth` also prune the route statements they own plus the limiter declarations and imports only those routes used, so the app still compiles right after (#248), and a destroy that empties `internal/store/migrations/` writes the scaffold's `001_init.sql` placeholder back — `//go:embed migrations/*.sql` needs at least one match (#254). `destroy auth` also reverts `app.go` session middleware. `destroy migration` removes matching `*_<name>.sql` only (does not roll back `schema_migrations`).
 
 **Demo seed** — `amarra-cais g resource` (unless `--no-seed`) generates `SeedDemo*` store methods and wires them into `cmd/server/main.go` at boot.
 
@@ -607,7 +607,7 @@ The `amarra-cais` CLI lives in `internal/cli/`. Scaffold templates are split by 
 | --------------------------------------------------------------- | -------------------------------------------------------------------- |
 | `internal/cli/cli.go`                                           | Command routing (`g`, `destroy`, `db`, …)                            |
 | `internal/cli/cli_help.go` / `cli_new.go`                       | Help text and `amarra-cais new` parsing (#288)                       |
-| `internal/cli/tpl_scaffold_handlers_*.go`                       | HTML handler templates (home/contact/auth; not `*_test.go`)          |
+| `internal/cli/tpl_scaffold_handlers_*.go`                       | HTML handler templates (home/auth; not `*_test.go`)                  |
 | `internal/cli/doctor.go` / `doctor_env.go` / `doctor_mobile.go` | `amarra-cais doctor` checks (core / env / mobile)                    |
 | `internal/cli/scaffold.go`                                      | `amarra-cais new` orchestration and `writeTemplate`                  |
 | `internal/cli/resource.go`                                      | `amarra-cais g resource` orchestration (writes files, calls patches) |
@@ -622,7 +622,7 @@ The `amarra-cais` CLI lives in `internal/cli/`. Scaffold templates are split by 
 | `internal/cli/tpl_scaffold_console.go`                          | `cmd/console/main.go`                                                |
 | `internal/cli/tpl_scaffold_auth.go`                             | Auth Go templates (handler, store, model, migration, tests)          |
 | `internal/cli/tpl_scaffold_auth_pages.go`                       | Auth HTML page templates (`login`, `signup`, reset)                  |
-| `internal/cli/tpl_scaffold_handlers_{home,contact,auth,...}.go` | HTML handler scaffolds (one domain per file)                         |
+| `internal/cli/tpl_scaffold_handlers_{home,auth,...}.go`         | HTML handler scaffolds (one domain per file)                         |
 | `internal/cli/tpl_scaffold_web.go`                              | Amarra layout (`#amarra-main` + `amarra.js`)                         |
 | `internal/cli/tpl_stream_chat.go`                               | `amarra-cais g stream chat` templates and handlers                   |
 | `internal/cli/stream.go`                                        | `amarra-cais g stream chat` orchestration                            |
@@ -707,7 +707,7 @@ See **Clean Code for Agents** above. Project extras:
 
 Agents implement the categories listed — do not invent extra ops policy.
 
-- [x] **Rate limits** — `middleware.NewRateLimiter` on login/contact (and sensitive POSTs)
+- [x] **Rate limits** — `middleware.NewRateLimiter` on login, signup and password reset (and sensitive POSTs)
 - [x] **Timeouts** — HTTP server Read/Write/Idle; SSE uses `WriteTimeout: 0` + stream package
 - [x] **SQLite busy** — `sqlite.Configure` WAL + `busy_timeout`; short writes during SSE
 - [x] **CSRF** — double-submit cookie on state-changing methods

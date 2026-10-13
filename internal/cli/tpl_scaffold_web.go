@@ -187,7 +187,6 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
       <p data-testid="amarra-ready" class="amarra-rise amarra-rise-delay-2 mt-8 max-w-md text-lg leading-relaxed text-foam/65">{{"{{"}} t "home.rails_subtitle" .Site.AppName {{"}}"}}</p>
       <div class="amarra-rise amarra-rise-delay-3 mt-10 flex flex-wrap items-center gap-6">
         <a href="/login" class="inline-flex items-center gap-2 bg-copper px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-foam transition-colors">{{"{{"}} t "home.cta_board" {{"}}"}}</a>
-        <a href="/contact" class="font-mono text-[11px] uppercase tracking-[0.22em] text-foam/55 hover:text-copper transition-colors">{{"{{"}} t "home.contact_link" {{"}}"}}</a>
       </div>
       <div class="amarra-rise amarra-rise-delay-4 mt-14 flex items-center gap-4 text-copper/50">
         <span class="h-px w-16 bg-copper/60"></span>
@@ -213,29 +212,14 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
 {{"{{"}} end {{"}}"}}
 `
 
-const tplPageContact = `{{"{{"}} define "content" {{"}}"}}
-<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
-  <div class="mb-5 pb-4 border-b border-foam/10">
-    <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "contact.heading" {{"}}"}}</h2>
-    <p class="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] text-copper">{{"{{"}} t "contact.title" {{"}}"}}</p>
-  </div>
-  <.form action="/contact" method="post">
-    <.input name="name" label="{{"{{"}} t "contact.name_label" {{"}}"}}" value="{{"{{"}} .Name {{"}}"}}" error="{{"{{"}} fieldError .Errors "name" {{"}}"}}" />
-    <.input name="email" type="email" label="{{"{{"}} t "contact.email_label" {{"}}"}}" value="{{"{{"}} .Email {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
-    <.button type="submit">{{"{{"}} t "contact.submit" {{"}}"}}</.button>
-  </.form>
-</div>
-{{"{{"}} end {{"}}"}}
-`
-
 const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
 <div class="w-full max-w-4xl mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
   <div class="mb-5 pb-4 border-b border-foam/10">
     <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "dashboard.title" {{"}}"}}</h2>
   </div>
   <div class="grid gap-4 sm:grid-cols-2 mb-6">
-    <.stat label="{{"{{"}} t "dashboard.contacts" {{"}}"}}" value="{{"{{"}} .TotalContacts {{"}}"}}" />
     <.stat label="{{"{{"}} t "dashboard.env" {{"}}"}}" value="{{"{{"}} .Env {{"}}"}}" />
+    <.stat label="{{"{{"}} t "dashboard.locale" {{"}}"}}" value="{{"{{"}} .Locale {{"}}"}}" />
   </div>
   <.form action="/logout" method="post">
     <.button type="submit">{{"{{"}} t "auth.logout" {{"}}"}}</.button>

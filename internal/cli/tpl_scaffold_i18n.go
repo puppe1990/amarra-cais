@@ -29,6 +29,8 @@ var enMessages = map[string]string{
 	"auth.welcome":             "Welcome!",
 	"auth.login_title":         "Sign in",
 	"auth.login_submit":        "Sign in",
+	"auth.email_label":         "Email",
+	"auth.email_invalid":       "Enter a valid email.",
 	"auth.password_label":              "Password",
 	"auth.password_confirmation_label": "Confirm password",
 	"auth.logout":                      "Sign out",
@@ -49,21 +51,9 @@ var enMessages = map[string]string{
 	"auth.login_prompt":                "Already have an account?",
 	"auth.email_taken":                 "This email is already registered.",
 
-	"contact.title":          "Contact",
-	"contact.heading":        "Get in touch",
-	"contact.name_label":     "Name",
-	"contact.name_required":  "Name is required.",
-	"contact.email_label":    "Email",
-	"contact.email_required": "Email is required.",
-	"contact.email_invalid":  "Enter a valid email.",
-	"contact.submit":         "Send",
-	"contact.sending":        "Sending…",
-	"contact.success":        "Message sent successfully!",
-
 	"home.title":            "Home",
 	"home.welcome":          "Welcome, %s!",
 	"home.tagline":          "Mini Go app with Amarra, Tailwind, and SQLite.",
-	"home.contact_link":     "Contact",
 	"home.default_name":     "Developer",
 	"home.rails_heading":    "You made landfall.",
 	"home.rails_subtitle":   "%s is tied to the quay.",
@@ -81,8 +71,8 @@ var enMessages = map[string]string{
 	"home.minimal.hint":     "Use ` + "`amarra-cais g resource <name> --public`" + ` to get started.",
 
 	"dashboard.title":    "Dashboard",
-	"dashboard.contacts": "Contacts:",
 	"dashboard.env":      "Environment:",
+	"dashboard.locale":   "Locale:",
 
 	"layout.footer": "Running light on Lightsail",
 	"layout.theme_light": "Light mode",
@@ -97,6 +87,8 @@ var ptMessages = map[string]string{
 	"auth.welcome":             "Bem-vindo!",
 	"auth.login_title":         "Entrar",
 	"auth.login_submit":        "Entrar",
+	"auth.email_label":         "Email",
+	"auth.email_invalid":       "Informe um email válido.",
 	"auth.password_label":              "Senha",
 	"auth.password_confirmation_label": "Confirmar senha",
 	"auth.logout":                      "Sair",
@@ -117,21 +109,9 @@ var ptMessages = map[string]string{
 	"auth.login_prompt":                "Já tem conta?",
 	"auth.email_taken":                 "Este email já está cadastrado.",
 
-	"contact.title":          "Contato",
-	"contact.heading":        "Fale conosco",
-	"contact.name_label":     "Nome",
-	"contact.name_required":  "O campo nome é obrigatório.",
-	"contact.email_label":    "Email",
-	"contact.email_required": "O campo email é obrigatório.",
-	"contact.email_invalid":  "Informe um email válido.",
-	"contact.submit":         "Enviar",
-	"contact.sending":        "Enviando…",
-	"contact.success":        "Mensagem enviada com sucesso!",
-
 	"home.title":            "Página Inicial",
 	"home.welcome":          "Bem-vindo, %s!",
 	"home.tagline":          "Mini app Go com Amarra, Tailwind e SQLite.",
-	"home.contact_link":     "Contato",
 	"home.default_name":     "Desenvolvedor",
 	"home.rails_heading":    "Você atracou.",
 	"home.rails_subtitle":   "%s está amarrado no cais.",
@@ -149,8 +129,8 @@ var ptMessages = map[string]string{
 	"home.minimal.hint":     "Use ` + "`amarra-cais g resource <name> --public`" + ` para começar.",
 
 	"dashboard.title":    "Dashboard",
-	"dashboard.contacts": "Contatos:",
 	"dashboard.env":      "Ambiente:",
+	"dashboard.locale":   "Idioma:",
 
 	"layout.footer": "Rodando leve no Lightsail",
 	"layout.theme_light": "Modo claro",
@@ -158,28 +138,10 @@ var ptMessages = map[string]string{
 }
 `
 
+// tplSeeds has no demo rows: the scaffold ships no example table, so an app
+// starts from an empty database and adds inserts under the cais:seeds marker
+// (`amarra-cais g resource` patches them in). tplSeedsMinimal is the same file.
 const tplSeeds = `package db
-
-import (
-	"{{.ModulePath}}/internal/models"
-	"{{.ModulePath}}/internal/store"
-)
-
-// RunSeeds populates demo data. Safe to run multiple times.
-func RunSeeds(s store.Store) error {
-	// cais:recurring-seeds
-	// cais:seeds
-	if _, err := s.InsertContact(models.Contact{
-		Name:  "Demo",
-		Email: "demo@example.com",
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-`
-
-const tplSeedsMinimal = `package db
 
 import "{{.ModulePath}}/internal/store"
 
@@ -190,6 +152,8 @@ func RunSeeds(s store.Store) error {
 	return nil
 }
 `
+
+const tplSeedsMinimal = tplSeeds
 
 const tplI18nTest = `package i18n
 

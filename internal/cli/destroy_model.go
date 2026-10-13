@@ -16,8 +16,8 @@ import (
 // removal now covers every own reference and refuses to run while another file
 // (a handler, say) still calls a method it would delete.
 
-// resourceStoreMethodNames lists the store/interface methods `amarra-cais g
-// resource` generates for a model.
+// resourceStoreMethodNames lists the store methods (and the sort helper)
+// `amarra-cais g resource` generates for a model.
 func resourceStoreMethodNames(data scaffoldData) map[string]bool {
 	return nameSet(
 		"Insert"+data.Pascal,
@@ -28,12 +28,13 @@ func resourceStoreMethodNames(data scaffoldData) map[string]bool {
 		"List"+data.PluralPascal,
 		"SeedDemo"+data.PluralPascal,
 		"count"+data.PluralPascal,
+		data.PluralPascal+"OrderClause",
 	)
 }
 
-// modelStoreMethodNames adds the names the scaffold's built-in contact model
-// uses — FindContact/CountContacts instead of FindContactByID/countContacts —
-// plus List<Model>Options when the model is a reference target.
+// modelStoreMethodNames adds the hand-written naming style an app may use —
+// FindContact/CountContacts instead of FindContactByID/countContacts — plus
+// List<Model>Options when the model is a reference target.
 func modelStoreMethodNames(data scaffoldData) map[string]bool {
 	names := resourceStoreMethodNames(data)
 	names["Find"+data.Pascal] = true
@@ -253,7 +254,7 @@ func nodeMatchesString(n ast.Node, re *regexp.Regexp) bool {
 
 // unpatchSeedsForModel drops the RunSeeds statements that insert the model's
 // demo row. The block match used by resources misses the scaffold's
-// `if _, err := s.InsertContact(models.Contact{...})` shape (#245).
+// `if _, err := s.InsertBookmark(models.Bookmark{...})` shape (#245).
 func unpatchSeedsForModel(dir string, data scaffoldData, methodNames map[string]bool, dryRun bool) error {
 	path := filepath.Join(dir, "internal/db/seeds.go")
 	body, err := os.ReadFile(path)
