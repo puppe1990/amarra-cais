@@ -53,7 +53,7 @@ export function showProgress(doc) {
     bar.id = "amarra-progress";
     bar.setAttribute("role", "progressbar");
     bar.style.cssText =
-      "position:fixed;top:0;left:0;right:0;height:2px;background:#c9893a;z-index:9999";
+      "position:fixed;top:0;left:0;right:0;height:2px;background:#1f8ba3;z-index:9999";
     doc.body.appendChild(bar);
   }
   bar.hidden = false;
@@ -65,12 +65,12 @@ export function showProgress(doc) {
     veil.setAttribute("aria-label", "Loading");
     veil.style.cssText =
       "position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;" +
-      "background:rgba(10,10,12,.45);backdrop-filter:blur(2px);opacity:0;transition:opacity .18s ease;pointer-events:none";
+      "background:rgba(8,19,24,.45);backdrop-filter:blur(2px);opacity:0;transition:opacity .18s ease;pointer-events:none";
     const spinner = doc.createElement("div");
     spinner.setAttribute("role", "presentation");
     spinner.style.cssText =
-      "width:52px;height:52px;border-radius:50%;border:4px solid rgba(201,137,58,.25);" +
-      "border-top-color:#c9893a;animation:amarra-spin .9s linear infinite";
+      "width:52px;height:52px;border-radius:50%;border:4px solid rgba(31,139,163,.25);" +
+      "border-top-color:#1f8ba3;animation:amarra-spin .9s linear infinite";
     veil.appendChild?.(spinner);
     ensureVeilKeyframes(doc);
     doc.body.appendChild(veil);

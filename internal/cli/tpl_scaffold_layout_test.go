@@ -102,8 +102,8 @@ func TestLayoutTemplates_themeToggleInSidebar(t *testing.T) {
 			`amarra-hook="theme"`,
 			`data-amarra-theme-label`,
 			`aria-pressed="false"`,
-			`data-amarra-theme-color="#f6f1e7"`,
-			`data-amarra-theme-color-off="#081014"`,
+			`data-amarra-theme-color="#f7f1e6"`,
+			`data-amarra-theme-color-off="#081318"`,
 		} {
 			if !strings.Contains(aside, token) {
 				t.Errorf("%s layout sidebar missing %q (#258)", name, token)

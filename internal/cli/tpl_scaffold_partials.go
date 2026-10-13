@@ -21,6 +21,12 @@ const tplPartialIcons = `{{"{{"}}- define "icon_sparkles_md" -{{"}}"}}
 {{"{{"}}- define "icon_logout_nav" -{{"}}"}}
 <svg class="cais-nav-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H3m0 0l4-4m-4 4l4 4M9 21h9a2 2 0 002-2V5a2 2 0 00-2-2H9" /></svg>
 {{"{{"}}- end -{{"}}"}}
+{{"{{"}}- define "icon_sun" -{{"}}"}}
+<svg class="cais-nav-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+{{"{{"}}- end -{{"}}"}}
+{{"{{"}}- define "icon_moon" -{{"}}"}}
+<svg class="cais-nav-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+{{"{{"}}- end -{{"}}"}}
 `
 
 const tplPartialErrors = `{{"{{- "}}define "contact_errors" -{{"}}"}}

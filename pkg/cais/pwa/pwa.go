@@ -8,7 +8,8 @@ import (
 //go:embed assets/*
 var assets embed.FS
 
-const ThemeColor = "#c9893a"
+// ThemeColor is the PWA chrome color of the default design (docs-site sea teal).
+const ThemeColor = "#1f8ba3"
 
 type Config struct {
 	Name        string
@@ -42,7 +43,7 @@ func DefaultConfig(name string) Config {
 // HeadHTML returns meta tags and links to include in layout <head>.
 func HeadHTML() string {
 	return `<link rel="manifest" href="/static/manifest.webmanifest" />
-    <meta name="theme-color" content="#c9893a" />
+    <meta name="theme-color" content="#1f8ba3" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

@@ -31,11 +31,21 @@ module.exports = {
         foam: "rgb(var(--amarra-foam) / <alpha-value>)",
         copper: "rgb(var(--amarra-copper) / <alpha-value>)",
         tide: "rgb(var(--amarra-tide) / <alpha-value>)",
+        coral: "rgb(var(--amarra-coral) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Avenir Next", "Segoe UI", "Helvetica Neue", "system-ui", "sans-serif"],
-        serif: ["Iowan Old Style", "Palatino Linotype", "Palatino", "Georgia", "serif"],
-        display: ["Iowan Old Style", "Palatino Linotype", "Palatino", "Georgia", "serif"],
+        /* Docs-site headings are Fraunces; the stack degrades to the system
+           old-style serifs — the default CSP allows no external font host. */
+        serif: ["Fraunces", "Iowan Old Style", "Palatino Linotype", "Palatino", "Georgia", "serif"],
+        display: [
+          "Fraunces",
+          "Iowan Old Style",
+          "Palatino Linotype",
+          "Palatino",
+          "Georgia",
+          "serif",
+        ],
         mono: ["IBM Plex Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       boxShadow: {

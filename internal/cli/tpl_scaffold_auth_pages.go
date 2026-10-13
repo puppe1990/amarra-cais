@@ -3,7 +3,7 @@ package cli
 
 const tplPageLogin = `{{"{{"}} define "content" {{"}}"}}
 <div class="flex items-center justify-center min-h-[calc(100vh-12rem)] px-4 py-8">
-<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
   <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "auth.login_title" {{"}}"}}</h2>
   <.form action="/login" method="post">
     <.input name="email" type="email" label="Email" value="{{"{{"}} .Email {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
@@ -24,7 +24,7 @@ const tplPageLogin = `{{"{{"}} define "content" {{"}}"}}
 
 const tplPageSignup = `{{"{{"}} define "content" {{"}}"}}
 <div class="flex items-center justify-center min-h-[calc(100vh-12rem)] px-4 py-8">
-<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
   <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "auth.signup_title" {{"}}"}}</h2>
   <.form action="/signup" method="post">
     <.input name="email" type="email" label="{{"{{"}} t "contact.email_label" {{"}}"}}" value="{{"{{"}} .Email {{"}}"}}" error="{{"{{"}} fieldError .Errors "email" {{"}}"}}" />
@@ -42,7 +42,7 @@ const tplPageSignup = `{{"{{"}} define "content" {{"}}"}}
 
 const tplPageForgotPassword = `{{"{{"}} define "content" {{"}}"}}
 <div class="flex items-center justify-center min-h-[calc(100vh-12rem)] px-4 py-8">
-<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
   <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "auth.forgot_password_title" {{"}}"}}</h2>
   <p class="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] text-copper">{{"{{"}} t "auth.forgot_password_help" {{"}}"}}</p>
   <.form action="/forgot-password" method="post">
@@ -58,7 +58,7 @@ const tplPageForgotPassword = `{{"{{"}} define "content" {{"}}"}}
 
 const tplPageResetPassword = `{{"{{"}} define "content" {{"}}"}}
 <div class="flex items-center justify-center min-h-[calc(100vh-12rem)] px-4 py-8">
-<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
   <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "auth.reset_password_title" {{"}}"}}</h2>
   {{"{{"}} if .Errors {{"}}"}}{{"{{"}} fieldError .Errors "token" {{"}}"}}{{"{{"}} end {{"}}"}}
   <.form action="/reset-password" method="post">

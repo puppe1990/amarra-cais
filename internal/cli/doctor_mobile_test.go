@@ -39,6 +39,27 @@ func TestDoctor_MobileOKOnFreshScaffold(t *testing.T) {
 	}
 }
 
+// dropGoogleFontsCSP removes the scaffold's font allowance so the warn path is
+// exercised — a fresh scaffold ships the docs-site font hosts already allowed (#57).
+func dropGoogleFontsCSP(t *testing.T, dir string) {
+	t.Helper()
+	path := filepath.Join(dir, ".env")
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var kept []string
+	for _, line := range strings.Split(string(body), "\n") {
+		if strings.HasPrefix(line, "CSP_STYLE_SRC=") || strings.HasPrefix(line, "CSP_FONT_SRC=") {
+			continue
+		}
+		kept = append(kept, line)
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(kept, "\n")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDoctor_MobileWarnsGoogleFonts(t *testing.T) {
 	unsetCIEnv(t)
 	t.Setenv("CAIS_SKIP_TIDY", "1")
@@ -49,6 +70,7 @@ func TestDoctor_MobileWarnsGoogleFonts(t *testing.T) {
 	}, true, false); err != nil {
 		t.Fatal(err)
 	}
+	dropGoogleFontsCSP(t, dir)
 	cssPath := filepath.Join(dir, "input.css")
 	body, err := os.ReadFile(cssPath)
 	if err != nil {
@@ -96,6 +118,7 @@ func TestDoctor_MobileWarnsGoogleFontsInTemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	linkGoogleFontsInLayout(t, dir)
+	dropGoogleFontsCSP(t, dir)
 	writeBuiltStylesCSS(t, dir)
 
 	var buf bytes.Buffer

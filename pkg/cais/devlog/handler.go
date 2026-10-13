@@ -45,10 +45,10 @@ const pageHTML = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cais Logs</title>
   <style>
-    body { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #081014; color: #f3ead8; }
-    header { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(201,137,58,0.35); display: flex; justify-content: space-between; align-items: center; }
-    h1 { margin: 0; font-size: 0.95rem; color: #f3ead8; font-weight: 600; }
-    .badge { font-size: 0.7rem; color: #c9893a; text-transform: uppercase; letter-spacing: 0.08em; }
+    body { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #081318; color: #f4ead8; }
+    header { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(31,139,163,0.35); display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; font-size: 0.95rem; color: #f4ead8; font-weight: 600; }
+    .badge { font-size: 0.7rem; color: #1f8ba3; text-transform: uppercase; letter-spacing: 0.08em; }
     #logs { margin: 0; padding: 1.25rem; min-height: calc(100vh - 4rem); overflow: auto; white-space: pre-wrap; word-break: break-word; }
   </style>
 </head>

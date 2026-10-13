@@ -6,20 +6,25 @@ const tplInputCSS = `@tailwind base;
 
 @layer base {
   /* Palette as CSS variables so the sidebar toggle flips the theme: :root is
-     the default dark harbor, html.light (amarra-theme hook) the light one. Keep
-     the ink/foam/copper/tide keys — kit classes and the doctor read them (#258). */
+     the default dark harbor, html.light (amarra-theme hook) the light one. Values
+     are the published docs-site look (harbor night + cream paper, sea-teal accent,
+     coral) so a new app lands on the same design as the documentation. Keep the
+     ink/foam/copper/tide keys — the kit classes and amarra-cais doctor read them;
+     copper carries the sea teal now (#258). */
   :root {
-    --amarra-ink: 8 16 20;
-    --amarra-foam: 243 234 216;
-    --amarra-copper: 201 137 58;
-    --amarra-tide: 20 52 60;
+    --amarra-ink: 8 19 24;
+    --amarra-foam: 244 234 216;
+    --amarra-copper: 31 139 163;
+    --amarra-tide: 18 36 40;
+    --amarra-coral: 224 122 74;
   }
 
   html.light {
-    --amarra-ink: 246 241 231;
-    --amarra-foam: 12 24 28;
-    --amarra-copper: 150 96 28;
-    --amarra-tide: 217 228 228;
+    --amarra-ink: 247 241 230;
+    --amarra-foam: 16 33 38;
+    --amarra-copper: 15 107 128;
+    --amarra-tide: 228 217 196;
+    --amarra-coral: 224 122 74;
   }
 
   body {
@@ -278,7 +283,7 @@ const tplInputCSS = `@tailwind base;
     border-radius: 9999px;
     border: 1px solid rgb(226 232 240);
     background: rgb(255 255 255);
-    color: rgb(201 137 58);
+    color: rgb(31 139 163);
     box-shadow:
       0 10px 15px -3px rgb(0 0 0 / 0.1),
       0 4px 6px -4px rgb(0 0 0 / 0.1);

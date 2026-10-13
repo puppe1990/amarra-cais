@@ -116,7 +116,8 @@ test("showProgress shows a veil with a system-color spinner", () => {
     (el) => el.style?.cssText && el.style.cssText.includes("amarra-spin")
   );
   assert.ok(spinner, "spinner created");
-  assert.match(spinner.style.cssText, /#c9893a/);
+  assert.match(spinner.style.cssText, /#1f8ba3/);
+  assert.match(spinner.style.cssText, /rgba\(31,139,163,\.25\)/);
   hideProgress(doc);
   assert.equal(veil.hidden, true);
 });

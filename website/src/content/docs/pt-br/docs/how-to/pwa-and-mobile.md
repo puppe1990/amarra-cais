@@ -36,7 +36,7 @@ amarra-cais doctor --mobile
 O doctor mobile verifica o markup de flash, o CSP de Google Fonts, `amarra.js`, o cache do service worker (network-first `/static/js/amarra.js`), o CSS do formulário de chat, o container de scroll `#chat-messages` e o `lan_urls` do health.
 
 :::caution
-O CSP padrão bloqueia `fonts.googleapis.com`. O `input.css` do scaffold usa fontes do sistema por esse motivo — mantenha assim a menos que você amplie o CSP de propósito.
+O CSP padrão bloqueia `fonts.googleapis.com`. O scaffold linka a fonte de título do site de docs (Fraunces) e já libera os dois hosts no `.env` gerado — apague esse `<link>` e as linhas `CSP_STYLE_SRC` / `CSP_FONT_SRC` para voltar ao padrão estrito com fontes do sistema.
 :::
 
 ## Assets de marca

@@ -10,7 +10,7 @@ const tplLayoutBrand = `<a href="/" class="flex items-center gap-3 group">
             </span>
             <span>
               <span class="block font-serif text-xl leading-none tracking-tight text-foam">{{.AppName}}</span>
-              <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80">Amarra</span>
+              <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80" title="Cais v{{"{{"}} .FrameworkVersionFull {{"}}"}}">Amarra v{{"{{"}} .FrameworkVersion {{"}}"}}</span>
             </span>
           </a>`
 
@@ -19,8 +19,16 @@ const tplLayoutMenuButton = `<button type="button" id="amarra-sidebar-toggle" cl
           </button>`
 
 // Shared by the anonymous header and the signed-in sidebar so the theme
-// control never drifts between shells (#258).
-const tplLayoutThemeToggle = `<button type="button" class="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f6f1e7" data-amarra-theme-color-off="#081014" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}"><span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span></button>`
+// control never drifts between shells (#258). The tile shows the theme the
+// button turns on — sun while the app is dark, moon while it is light; the swap
+// is CSS-only on html.light, so the hook keeps owning just the label slot.
+const tplLayoutThemeToggle = `<button type="button" class="group inline-flex items-center gap-2 px-1.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f7f1e6" data-amarra-theme-color-off="#081318" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}">
+            <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center border border-copper/40 transition-colors group-hover:border-copper" aria-hidden="true">
+              <span class="[html.light_&]:hidden">{{"{{"}} template "icon_sun" . {{"}}"}}</span>
+              <span class="hidden [html.light_&]:block">{{"{{"}} template "icon_moon" . {{"}}"}}</span>
+            </span>
+            <span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span>
+          </button>`
 
 const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
 <!doctype html>
@@ -42,9 +50,12 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
     <meta property="og:image" content="{{"{{"}} absURL .Site.AppURL "/static/og.png" {{"}}"}}" />
     <meta property="og:locale" content="{{"{{"}} ogLocale {{"}}"}}" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,620&display=swap" />
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="manifest" href="/static/manifest.webmanifest" />
-    <meta name="theme-color" content="#081014" />
+    <meta name="theme-color" content="#081318" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -93,13 +104,13 @@ const tplLayoutNavEmpty = tplLayoutNavFull
 const tplLayoutBaseClose = `
           </div>
           <div class="mt-auto flex flex-col gap-3 border-t border-foam/10 pt-3">
-            <.form action="/logout" method="post">
-              <button type="submit" class="w-full text-left px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 text-foam/50 hover:text-foam">{{"{{"}} template "icon_logout_nav" . {{"}}"}}{{"{{"}} t "auth.logout" {{"}}"}}</button>
-            </.form>
             <div class="flex items-center justify-between gap-2">
               <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
               ` + tplLayoutThemeToggle + `
             </div>
+            <.form action="/logout" method="post">
+              <button type="submit" class="w-full text-left px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 text-foam/50 hover:text-foam">{{"{{"}} template "icon_logout_nav" . {{"}}"}}{{"{{"}} t "auth.logout" {{"}}"}}</button>
+            </.form>
           </div>
         </div>
       </aside>
@@ -110,9 +121,11 @@ const tplLayoutBaseClose = `
         {{"{{"}} template "content" . {{"}}"}}
       </main>
     </div>
+    {{"{{"}} if not .Site.LoggedIn {{"}}"}}
     <footer class="mt-auto border-t border-foam/10 py-6 text-center font-mono text-[10px] uppercase tracking-[0.22em] text-foam/40">
       <p>© 2026 {{.AppName}} · Built with Amarra</p>
     </footer>
+    {{"{{"}} end {{"}}"}}
     {{"{{"}} if eq .Site.Env "development" {{"}}"}}
     <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">
       if ("serviceWorker" in navigator) {
@@ -158,8 +171,8 @@ const tplCaisLogo = `{{"{{"}} define "cais_logo" {{"}}"}}
 
 const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
 <section class="amarra-grain relative isolate overflow-hidden min-h-[calc(100vh-12rem)] -mx-4 sm:-mx-6 lg:-mx-8 -my-5 px-6 sm:px-10 lg:px-14 py-16 md:py-24">
-  <div class="pointer-events-none absolute -top-24 left-[12%] h-80 w-80 rounded-full bg-copper/30 blur-3xl amarra-lantern"></div>
-  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_12%_-10%,rgba(201,137,58,0.22),transparent_42%),radial-gradient(ellipse_at_100%_110%,rgba(18,70,78,0.55),transparent_50%)]"></div>
+  <div class="pointer-events-none absolute -top-24 left-[12%] h-80 w-80 rounded-full bg-coral/25 blur-3xl amarra-lantern"></div>
+  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_12%_-10%,rgba(31,139,163,0.22),transparent_42%),radial-gradient(ellipse_at_100%_110%,rgba(11,47,58,0.55),transparent_50%)]"></div>
   <svg class="pointer-events-none absolute right-[-6%] top-4 hidden h-[28rem] w-[28rem] text-copper/15 lg:block" viewBox="0 0 200 200" fill="none" aria-hidden="true">
     <circle cx="100" cy="100" r="78" stroke="currentColor" stroke-width="0.6"></circle>
     <circle cx="100" cy="100" r="52" stroke="currentColor" stroke-width="0.6"></circle>
@@ -182,7 +195,7 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
       </div>
     </div>
     <aside class="lg:col-span-5 amarra-rise amarra-rise-delay-2">
-      <div class="border border-copper/45 bg-ink/70 p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+      <div class="border border-copper/45 bg-ink/70 p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
         <p class="font-mono text-[10px] uppercase tracking-[0.26em] text-copper">{{"{{"}} t "home.manifest_label" {{"}}"}}</p>
         <p class="mt-3 font-serif text-3xl text-foam">{{"{{"}} .Site.AppName {{"}}"}}</p>
         <p class="mt-1 font-mono text-xs text-foam/45">{{"{{"}} t "home.stack" {{"}}"}}</p>
@@ -201,7 +214,7 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
 `
 
 const tplPageContact = `{{"{{"}} define "content" {{"}}"}}
-<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
   <div class="mb-5 pb-4 border-b border-foam/10">
     <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "contact.heading" {{"}}"}}</h2>
     <p class="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] text-copper">{{"{{"}} t "contact.title" {{"}}"}}</p>
@@ -216,7 +229,7 @@ const tplPageContact = `{{"{{"}} define "content" {{"}}"}}
 `
 
 const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
-<div class="w-full max-w-4xl mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(201,137,58,0.22)]">
+<div class="w-full max-w-4xl mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
   <div class="mb-5 pb-4 border-b border-foam/10">
     <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "dashboard.title" {{"}}"}}</h2>
   </div>
