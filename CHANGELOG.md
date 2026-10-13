@@ -4,6 +4,25 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.20.0] - 2026-10-13
+
+### Added
+
+- Scaffolded apps ship the **docs-site design** as their default: harbor night + cream paper with the sea-teal accent, a `--amarra-coral` for the hero lantern, and a Fraunces-first heading stack. `layouts/app.html` links the font and the generated `.env` allows the two hosts (`CSP_STYLE_SRC` / `CSP_FONT_SRC`); delete both to stay strict-CSP and fall back to the system serifs. The `ink`/`foam`/`copper`/`tide` keys stay — the kit classes and `doctor` read them; `copper` now carries the sea teal.
+- Shell chrome matches the design: the theme toggle ships a bordered tile with the sun/moon icon of the theme it turns on (CSS-only swap on `html.light`), the brand shows the **installed Cais version** (semver core in the label, full string in the tooltip), and the Drive progress bar/veil, PWA manifest + offline theme color and the `/logs` viewer move from copper to the sea teal.
+
+### Changed
+
+- `amarra-cais new` ships **home + auth + dashboard** only: the Contact feature is gone (handler, model, migration, page, store methods, demo seed and the dashboard "Contacts" stat). The auth migration becomes `001_auth.sql`, and signup/forgot use the new `auth.email_label` / `auth.email_invalid` keys. A contact form is one command away: `amarra-cais g resource contact --fields name:string,email:url,message:text --public`.
+- The marketing footer renders for **visitors only** — a signed-in page ends at the sidebar — and sign out sits below the locale/theme controls in the rail.
+- `destroy model` and `destroy resource` cover the whole generated surface (see Fixed).
+
+### Fixed
+
+- `g resource` appends the `models` import inside an existing import block: generated store tests failed to build once the scaffold's own `store_test.go` grew an import group.
+- `destroy resource` prunes the `models` import it added to `store_test.go` and the limiter var plus `middleware`/`http` imports orphaned by the routes it removes, so the app still compiles right after.
+- `destroy model` also removes the generated `<Plural>OrderClause` helper, which otherwise survived as dead code.
+
 ## [0.19.1] - 2026-10-08
 
 ### Fixed
