@@ -432,6 +432,124 @@ test("visit still morphs a text/html response with #amarra-main", async () => {
   assert.equal(main.innerHTML.trim(), "<p>new</p>");
 });
 
+// #341: fetch never sends the fragment and `Response.url` comes back without it,
+// so a Drive visit from `/resumos/x#planos` used to pushState the bare route and
+// jump to the top — the native cold load scrolls to the id, the morph must too.
+test("applyDriveResponse scrolls to the fragment target instead of the top", () => {
+  const main = { innerHTML: "old" };
+  const scrolled = [];
+  const toTop = [];
+  const target = {
+    scrollIntoView() {
+      scrolled.push("planos");
+    },
+  };
+  const result = applyDriveResponse({
+    status: 200,
+    html: `<main id="amarra-main"><h2 id="planos">planos</h2></main>`,
+    url: "http://a/resumos/x#planos",
+    main,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    document: {
+      getElementById: (id) => (id === "planos" ? target : null),
+      dispatchEvent() {},
+    },
+    history: { pushState() {} },
+    location: { href: "http://a/" },
+    window: {
+      scrollTo(x, y) {
+        toTop.push([x, y]);
+      },
+    },
+  });
+
+  assert.equal(result.action, "morph");
+  assert.deepEqual(scrolled, ["planos"]);
+  assert.deepEqual(toTop, []);
+});
+
+test("applyDriveResponse falls back to the top when the fragment id is missing", () => {
+  const main = { innerHTML: "old" };
+  const toTop = [];
+  applyDriveResponse({
+    status: 200,
+    html: `<main id="amarra-main"><p>n</p></main>`,
+    url: "http://a/resumos/x#sumiu",
+    main,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    document: { getElementById: () => null, dispatchEvent() {} },
+    history: { pushState() {} },
+    location: { href: "http://a/" },
+    window: {
+      scrollTo(x, y) {
+        toTop.push([x, y]);
+      },
+    },
+  });
+
+  assert.deepEqual(toTop, [[0, 0]]);
+});
+
+test("applyDriveResponse decodes the fragment before looking the id up", () => {
+  const main = { innerHTML: "old" };
+  const ids = [];
+  applyDriveResponse({
+    status: 200,
+    html: `<main id="amarra-main"><h2 id="05-terceiros">t</h2></main>`,
+    url: "http://a/x#05-terceiros",
+    main,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    document: {
+      getElementById(id) {
+        ids.push(id);
+        return null;
+      },
+      dispatchEvent() {},
+    },
+    history: { pushState() {} },
+    location: { href: "http://a/" },
+    window: { scrollTo() {} },
+  });
+
+  assert.deepEqual(ids, ["05-terceiros"]);
+});
+
+test("visit keeps the requested fragment on the pushed URL", async () => {
+  const main = { innerHTML: "old" };
+  const pushed = [];
+  await visit("http://a/resumos/x#planos", {
+    fetchFn: async () => ({
+      status: 200,
+      url: "http://a/resumos/x",
+      headers: { get: () => null },
+      text: async () => `<main id="amarra-main"><h2 id="planos">planos</h2></main>`,
+    }),
+    document: {
+      querySelector: (sel) => (sel === "#amarra-main" ? main : null),
+      getElementById: (id) => (id === "planos" ? { scrollIntoView() {} } : null),
+      dispatchEvent() {},
+    },
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: {
+      pushState(_s, _t, url) {
+        pushed.push(url);
+      },
+      replaceState() {},
+    },
+    location: { href: "http://a/" },
+  });
+
+  assert.deepEqual(pushed, ["http://a/resumos/x#planos"]);
+});
+
 test("start is a no-op without a document", () => {
   assert.equal(start({ document: null }), undefined);
 });

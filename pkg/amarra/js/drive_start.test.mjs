@@ -138,6 +138,46 @@ test("start Drive-fetches same-origin path changes", async () => {
   assert.equal(fetches[0].url, "http://a/x");
 });
 
+// #341: a path change that carries a fragment (index -> section) must keep `#planos`
+// in the URL the visit pushes, not only in the fetch.
+test("start keeps the fragment of a clicked link on the pushed URL", async () => {
+  const doc = fakeDocument();
+  const location = {
+    href: "http://a/",
+    origin: "http://a",
+    pathname: "/",
+    search: "",
+    hash: "",
+  };
+  const pushed = [];
+  const { fetches, fetchFn } = recordingFetch();
+  start({
+    document: doc,
+    location,
+    fetchFn,
+    popstate: false,
+    morphFn() {},
+    history: {
+      pushState(_state, _title, url) {
+        pushed.push(url);
+      },
+    },
+  });
+
+  const a = fakeAnchor({
+    href: "/resumos/x#planos",
+    resolvedHref: "http://a/resumos/x#planos",
+  });
+  const ev = clickEvent(a);
+  fire(doc, ev);
+  assert.equal(ev.defaultPrevented, true);
+  // the fetch starts synchronously, but pushState lands after the response chain
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(fetches.length, 1);
+  assert.equal(fetches[0].url, "http://a/resumos/x#planos");
+  assert.deepEqual(pushed, ["http://a/resumos/x#planos"]);
+});
+
 test("shouldInterceptSubmit rejects skip, blank target, dialog, and cross-origin", () => {
   assert.equal(
     shouldInterceptSubmit({

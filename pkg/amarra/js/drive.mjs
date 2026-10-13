@@ -121,7 +121,7 @@ export function applyDriveResponse({
     if (!location?.href || url !== location.href) {
       history.pushState({ amarra: true, scrollY: 0 }, "", url);
     }
-    win?.scrollTo?.(0, 0);
+    scrollToFragment(doc, win, url);
   }
   if (status === 200 && !push) restoreScroll(win, history?.state);
   if (status === 422) focusFirstInvalid(doc);
@@ -154,6 +154,50 @@ function needsFullVisit({ html, main, document: doc }) {
 
 function markerChanged(current, next) {
   return !!(current && next && current !== next);
+}
+
+// #341: with a fragment the reader asked for a section, and a cold load scrolls
+// there natively — after a morph Drive has to do it instead of jumping to the top.
+// getElementById (not querySelector) because an HTML5 id may start with a digit.
+function scrollToFragment(doc, win, url) {
+  const target = fragmentTarget(doc, url);
+  if (target && typeof target.scrollIntoView === "function") {
+    target.scrollIntoView();
+    return;
+  }
+  win?.scrollTo?.(0, 0);
+}
+
+function fragmentTarget(doc, url) {
+  const id = decodeFragment(hashOf(url));
+  if (!id || typeof doc?.getElementById !== "function") return null;
+  return doc.getElementById(id);
+}
+
+function decodeFragment(hash) {
+  const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (!raw) return "";
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+function hashOf(url) {
+  const str = String(url ?? "");
+  const at = str.indexOf("#");
+  return at === -1 ? "" : str.slice(at);
+}
+
+// fetch strips the fragment from both the request and `Response.url`, so the
+// visited URL loses `#planos` unless the requested fragment is carried over.
+function withRequestHash(responseURL, requestURL) {
+  const hash = hashOf(requestURL);
+  if (!hash) return responseURL;
+  const base = String(responseURL ?? "");
+  const at = base.indexOf("#");
+  return (at === -1 ? base : base.slice(0, at)) + hash;
 }
 
 function assignLocation(location, url) {
@@ -227,7 +271,7 @@ export async function visit(url, opts = {}) {
     return applyDriveResponse({
       status: res.status,
       html,
-      url: res.url || url,
+      url: withRequestHash(res.url || url, url),
       main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
       morphFn: opts.morphFn,
       location,
