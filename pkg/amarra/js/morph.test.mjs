@@ -59,7 +59,7 @@ test("morph restores camelCase SVG attributes after the morph", () => {
     querySelectorAll: () => [svg],
   };
 
-  morph(main, "<svg viewbox=\"0 0 830 720\"></svg>", (el) => {
+  morph(main, '<svg viewbox="0 0 830 720"></svg>', (el) => {
     el.morphed = true;
   });
 
