@@ -17,8 +17,13 @@ test("Drive morphs an anonymous page without a full reload and restores history"
   expect(await page.evaluate(() => window.__amarraDoc)).toBe(true);
 });
 
+// The password fields are `required`, so native validation would block an empty
+// submit: the passwords are filled and the (optional per HTML5) email is left
+// empty, which is what the server rejects with 422.
 test("422 signup submit focuses the first aria-invalid field", async ({ page }) => {
   await page.goto("/signup");
+  await page.locator("#password").fill("password123");
+  await page.locator("#password_confirmation").fill("password123");
   await page.getByRole("button", { name: "Sign up" }).click();
   await expect(page.locator("#email")).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator("#email")).toBeFocused();
