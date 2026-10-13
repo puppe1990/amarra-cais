@@ -31,7 +31,7 @@ Usage:
   amarra-cais g [--dry-run] ci                  Add GitHub Actions CI, pre-commit, lint, Prettier
   amarra-cais install               npm install (if package.json) + go mod tidy
   amarra-cais css                   Build Tailwind CSS
-  amarra-cais dev                   Hot reload (air + tailwind)
+  amarra-cais dev                   Dev server (templates/CSS reload in-process, .go via air, tailwind watch)
   amarra-cais build [--os linux] [--arch amd64] [-o path]
                                Build bin/server (cross-compile for deploy)
   amarra-cais server                Run the app (go run ./cmd/server)

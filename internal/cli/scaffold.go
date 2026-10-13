@@ -122,7 +122,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 			"internal/handlers/home.go":              tplHomeHandler,
 			"internal/handlers/home_test.go":         tplHomeTest,
 			"web/templates/layouts/app.html":         tplLayoutBlank,
-			"web/templates/pages/home.html":          tplPageHome,
+			"web/templates/pages/home.html":          tplPageHomeSlim,
 			"web/templates/components/.gitkeep":      "",
 			"web/static/css/styles.css":              tplEmptyCSS,
 			"input.css":                              tplInputCSS,
@@ -154,6 +154,11 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		delete(files, "internal/handlers/locale.go")
 		delete(files, "internal/handlers/locale_test.go")
 		delete(files, "internal/models/user.go")
+		// #336: the auth store pair outlived the auth handlers it belongs to;
+		// tplStoreMinimal has no FindUserByEmail, so the leftover test failed to
+		// compile and a fresh minimal app was red under `go test ./...`.
+		delete(files, "internal/store/password_reset.go")
+		delete(files, "internal/store/password_reset_test.go")
 		delete(files, "internal/store/migrations/001_auth.sql")
 		delete(files, "web/templates/pages/dashboard.html")
 		delete(files, "web/templates/pages/login.html")
@@ -165,6 +170,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		files["internal/store/store.go"] = tplStoreMinimal
 		files["internal/store/store_test.go"] = tplStoreTestMinimal
 		files["internal/handlers/home_test.go"] = tplHomeTest
+		files["web/templates/pages/home.html"] = tplPageHomeSlim
 		files["internal/store/migrations/001_init.sql"] = tplMigrationInit
 		files["internal/db/seeds.go"] = tplSeedsMinimal
 	}

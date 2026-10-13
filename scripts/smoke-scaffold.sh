@@ -29,3 +29,18 @@ test -f web/static/js/amarra.js
 ! test -f vite.config.js
 
 echo "smoke scaffold: ok"
+
+# #336: `go build` alone missed a minimal scaffold shipping the auth store test
+# (`password_reset_test.go`) without the store methods it calls. Every variant
+# must be green under `go test ./...`, not only buildable.
+for variant in minimal blank; do
+  APP="$TMP/smoke-$variant"
+  "$TMP/amarra-cais" new "smoke$variant" "$APP" "--$variant"
+  (
+    cd "$APP"
+    go mod tidy
+    go test ./... -count=1
+    ! grep -q 'href="/login"' web/templates/layouts/app.html
+  )
+  echo "smoke scaffold ($variant): ok"
+done

@@ -30,7 +30,11 @@ const tplLayoutThemeToggle = `<button type="button" class="group inline-flex ite
             <span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span>
           </button>`
 
-const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
+// tplLayoutAuthLink goes into the anonymous header of the full scaffold only:
+// minimal/blank ship no /login route, so the link would 404 on a fresh app (#336).
+const tplLayoutAuthLink = `<a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>`
+
+const tplLayoutBaseOpenPre = `{{"{{"}} define "app" {{"}}"}}
 <!doctype html>
 <html lang="{{"{{"}} htmlLang {{"}}"}}" data-amarra-layout="app">
   <head>
@@ -83,7 +87,9 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
           <div class="flex items-center gap-4">
             <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
             ` + tplLayoutThemeToggle + `
-            <a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+            `
+
+const tplLayoutBaseOpenPost = `
           </div>
         </div>
       </header>
@@ -95,6 +101,12 @@ const tplLayoutBaseOpen = `{{"{{"}} define "app" {{"}}"}}
           <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
           <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
             `
+
+// tplLayoutBaseOpen keeps the /login link for the full scaffold;
+// tplLayoutBaseOpenSlim drops it for minimal/blank, which ship no auth routes (#336).
+const tplLayoutBaseOpen = tplLayoutBaseOpenPre + tplLayoutAuthLink + tplLayoutBaseOpenPost
+
+const tplLayoutBaseOpenSlim = tplLayoutBaseOpenPre + tplLayoutBaseOpenPost
 
 const tplLayoutNavFull = `<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
             <!-- cais:nav -->`
@@ -138,6 +150,23 @@ const tplLayoutBaseClose = `
           });
         }
       }
+      // Dev reload (#340): the server re-parses templates in-process and pings
+      // this stream, so an HTML/CSS edit refreshes the tab without an air
+      // rebuild. Loopback only — the route is localhost-only and the phone on
+      // the LAN URL would just collect 403s. The boot id flips when air
+      // restarts the process for a .go edit; a changed id on reconnect means
+      // the new binary is up, so reload once.
+      (function () {
+        if (!("EventSource" in window)) return;
+        if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+        var es = new EventSource("/_dev/reload");
+        es.addEventListener("reload", function () { location.reload(); });
+        es.addEventListener("boot", function (ev) {
+          var seen = sessionStorage.getItem("amarra-dev-boot");
+          sessionStorage.setItem("amarra-dev-boot", ev.data);
+          if (seen && seen !== ev.data) location.reload();
+        });
+      })();
     </script>
     {{"{{"}} else {{"}}"}}
     <script nonce="{{"{{"}} .CSPNonce {{"}}"}}">
@@ -152,7 +181,7 @@ const tplLayoutBaseClose = `
 
 const tplLayout = tplLayoutTitleDesc + tplPartialIcons + tplLayoutBaseOpen + tplLayoutNavFull + tplLayoutBaseClose
 
-const tplLayoutMinimal = tplLayoutTitleDesc + tplPartialIcons + tplLayoutBaseOpen + tplLayoutNavEmpty + tplLayoutBaseClose
+const tplLayoutMinimal = tplLayoutTitleDesc + tplPartialIcons + tplLayoutBaseOpenSlim + tplLayoutNavEmpty + tplLayoutBaseClose
 
 const tplLayoutBlank = tplLayoutMinimal
 
@@ -169,7 +198,7 @@ const tplCaisLogo = `{{"{{"}} define "cais_logo" {{"}}"}}
 {{"{{"}} end {{"}}"}}
 `
 
-const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
+const tplPageHomePre = `{{"{{"}} define "content" {{"}}"}}
 <section class="amarra-grain relative isolate overflow-hidden min-h-[calc(100vh-12rem)] -mx-4 sm:-mx-6 lg:-mx-8 -my-5 px-6 sm:px-10 lg:px-14 py-16 md:py-24">
   <div class="pointer-events-none absolute -top-24 left-[12%] h-80 w-80 rounded-full bg-coral/25 blur-3xl amarra-lantern"></div>
   <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_12%_-10%,rgba(31,139,163,0.22),transparent_42%),radial-gradient(ellipse_at_100%_110%,rgba(11,47,58,0.55),transparent_50%)]"></div>
@@ -185,9 +214,15 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
       <p class="amarra-rise font-mono text-[11px] uppercase tracking-[0.32em] text-copper">{{"{{"}} t "home.berth_label" {{"}}"}}</p>
       <h1 class="amarra-rise amarra-rise-delay-1 mt-5 font-serif italic text-[clamp(2.75rem,7vw,6.25rem)] leading-[0.88] text-foam">{{"{{"}} t "home.rails_heading" {{"}}"}}</h1>
       <p data-testid="amarra-ready" class="amarra-rise amarra-rise-delay-2 mt-8 max-w-md text-lg leading-relaxed text-foam/65">{{"{{"}} t "home.rails_subtitle" .Site.AppName {{"}}"}}</p>
-      <div class="amarra-rise amarra-rise-delay-3 mt-10 flex flex-wrap items-center gap-6">
+      `
+
+// The boarding CTA needs a /login route; minimal/blank ship none, so their home
+// page reuses the same landing without it (#336).
+const tplPageHomeCTA = `<div class="amarra-rise amarra-rise-delay-3 mt-10 flex flex-wrap items-center gap-6">
         <a href="/login" class="inline-flex items-center gap-2 bg-copper px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-foam transition-colors">{{"{{"}} t "home.cta_board" {{"}}"}}</a>
-      </div>
+      </div>`
+
+const tplPageHomePost = `
       <div class="amarra-rise amarra-rise-delay-4 mt-14 flex items-center gap-4 text-copper/50">
         <span class="h-px w-16 bg-copper/60"></span>
         <span class="font-mono text-[10px] uppercase tracking-[0.35em]">{{"{{"}} t "home.tide_mark" {{"}}"}}</span>
@@ -211,6 +246,10 @@ const tplPageHome = `{{"{{"}} define "content" {{"}}"}}
 </section>
 {{"{{"}} end {{"}}"}}
 `
+
+const tplPageHome = tplPageHomePre + tplPageHomeCTA + tplPageHomePost
+
+const tplPageHomeSlim = tplPageHomePre + tplPageHomePost
 
 const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
 <div class="w-full max-w-4xl mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">

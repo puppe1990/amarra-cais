@@ -144,7 +144,7 @@ func (c *CLI) cmdDev() error {
 		return runCmd(dir, air, "-c", ".air.toml")
 	}
 
-	_, _ = fmt.Fprintln(c.Out, "=> Starting dev server (go run; install air for hot reload)")
+	_, _ = fmt.Fprintln(c.Out, "=> Starting dev server (go run; templates + CSS reload in-process, install air for .go rebuilds)")
 	return runCmd(dir, "go", "run", "./cmd/server")
 }
 

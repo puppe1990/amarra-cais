@@ -70,6 +70,8 @@ wait_ready "$DEV_PORT"
 
 cd "$ROOT"
 export BASE_URL="http://127.0.0.1:${DEV_PORT}"
+# e2e/dev-reload.spec.mjs edits this app's templates to prove the dev reload (#340).
+export E2E_APP_DIR="$APP"
 export PLAYWRIGHT_HTML_OPEN=never
 npx playwright test --grep-invert @sw
 

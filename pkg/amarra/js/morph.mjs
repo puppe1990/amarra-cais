@@ -1,3 +1,5 @@
+import { restoreSvgAttributeCase } from "./svg_attrs.mjs";
+
 /**
  * Idiomorph wrapper. Tests inject morphFn.
  * When Idiomorph is absent (node tests / missing vendor), children are replaced
@@ -5,6 +7,15 @@
  */
 export function morph(el, html, morphFn, opts = {}) {
   if (!el) return;
+  const parent = el.parentNode ?? null;
+  const result = morphInto(el, html, morphFn, opts);
+  // #330: an outerHTML morph detaches the target, so the replacement lives in the
+  // old parent — normalize whichever subtree now holds the morphed nodes.
+  restoreSvgAttributeCase(el.isConnected === false && parent ? parent : el);
+  return result;
+}
+
+function morphInto(el, html, morphFn, opts) {
   if (typeof morphFn === "function") return morphFn(el, html);
   const style = opts.morphStyle || "innerHTML";
   const lib = globalThis.Idiomorph;

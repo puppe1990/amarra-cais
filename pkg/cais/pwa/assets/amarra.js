@@ -773,9 +773,99 @@
     visit: () => visit
   });
 
+  // pkg/amarra/js/svg_attrs.mjs
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var CAMEL_CASE_SVG_ATTRS = [
+    "attributeName",
+    "attributeType",
+    "baseFrequency",
+    "baseProfile",
+    "calcMode",
+    "clipPathUnits",
+    "diffuseConstant",
+    "edgeMode",
+    "filterUnits",
+    "glyphRef",
+    "gradientTransform",
+    "gradientUnits",
+    "kernelMatrix",
+    "kernelUnitLength",
+    "keyPoints",
+    "keySplines",
+    "keyTimes",
+    "lengthAdjust",
+    "limitingConeAngle",
+    "markerHeight",
+    "markerUnits",
+    "markerWidth",
+    "maskContentUnits",
+    "maskUnits",
+    "numOctaves",
+    "pathLength",
+    "patternContentUnits",
+    "patternTransform",
+    "patternUnits",
+    "pointsAtX",
+    "pointsAtY",
+    "pointsAtZ",
+    "preserveAlpha",
+    "preserveAspectRatio",
+    "primitiveUnits",
+    "refX",
+    "refY",
+    "repeatCount",
+    "repeatDur",
+    "requiredExtensions",
+    "requiredFeatures",
+    "specularConstant",
+    "specularExponent",
+    "spreadMethod",
+    "startOffset",
+    "stdDeviation",
+    "stitchTiles",
+    "surfaceScale",
+    "systemLanguage",
+    "tableValues",
+    "targetX",
+    "targetY",
+    "textLength",
+    "viewBox",
+    "viewTarget",
+    "xChannelSelector",
+    "yChannelSelector",
+    "zoomAndPan"
+  ];
+  var canonicalByLowerCase = new Map(
+    CAMEL_CASE_SVG_ATTRS.map((name) => [name.toLowerCase(), name])
+  );
+  function restoreSvgAttributeCase(root) {
+    if (!root || typeof root.querySelectorAll !== "function") return 0;
+    let restored = 0;
+    for (const element of [root, ...root.querySelectorAll("*")]) {
+      if (!isSvgElement(element)) continue;
+      for (const attribute of [...element.attributes ?? []]) {
+        const canonical = canonicalByLowerCase.get(String(attribute.name).toLowerCase());
+        if (!canonical || attribute.name === canonical) continue;
+        element.setAttribute(canonical, attribute.value);
+        element.removeAttribute(attribute.name);
+        restored += 1;
+      }
+    }
+    return restored;
+  }
+  function isSvgElement(element) {
+    return !!element && element.namespaceURI === SVG_NS && typeof element.setAttribute === "function" && typeof element.removeAttribute === "function";
+  }
+
   // pkg/amarra/js/morph.mjs
   function morph(el, html, morphFn, opts = {}) {
     if (!el) return;
+    const parent = el.parentNode ?? null;
+    const result = morphInto(el, html, morphFn, opts);
+    restoreSvgAttributeCase(el.isConnected === false && parent ? parent : el);
+    return result;
+  }
+  function morphInto(el, html, morphFn, opts) {
     if (typeof morphFn === "function") return morphFn(el, html);
     const style = opts.morphStyle || "innerHTML";
     const lib = globalThis.Idiomorph;
@@ -2532,7 +2622,7 @@ ${lines.join("\n")}
       if (!location?.href || url !== location.href) {
         history.pushState({ amarra: true, scrollY: 0 }, "", url);
       }
-      win?.scrollTo?.(0, 0);
+      scrollToFragment(doc, win, url);
     }
     if (status === 200 && !push) restoreScroll(win, history?.state);
     if (status === 422) focusFirstInvalid(doc);
@@ -2557,6 +2647,40 @@ ${lines.join("\n")}
   }
   function markerChanged(current, next) {
     return !!(current && next && current !== next);
+  }
+  function scrollToFragment(doc, win, url) {
+    const target = fragmentTarget(doc, url);
+    if (target && typeof target.scrollIntoView === "function") {
+      target.scrollIntoView();
+      return;
+    }
+    win?.scrollTo?.(0, 0);
+  }
+  function fragmentTarget(doc, url) {
+    const id = decodeFragment(hashOf(url));
+    if (!id || typeof doc?.getElementById !== "function") return null;
+    return doc.getElementById(id);
+  }
+  function decodeFragment(hash) {
+    const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!raw) return "";
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }
+  function hashOf(url) {
+    const str = String(url ?? "");
+    const at = str.indexOf("#");
+    return at === -1 ? "" : str.slice(at);
+  }
+  function withRequestHash(responseURL, requestURL) {
+    const hash = hashOf(requestURL);
+    if (!hash) return responseURL;
+    const base = String(responseURL ?? "");
+    const at = base.indexOf("#");
+    return (at === -1 ? base : base.slice(0, at)) + hash;
   }
   function assignLocation(location, url) {
     if (url && typeof location?.assign === "function") {
@@ -2616,7 +2740,7 @@ ${lines.join("\n")}
       return applyDriveResponse({
         status: res.status,
         html,
-        url: res.url || url,
+        url: withRequestHash(res.url || url, url),
         main: doc?.querySelector?.("#amarra-main") ?? opts.main ?? null,
         morphFn: opts.morphFn,
         location,
