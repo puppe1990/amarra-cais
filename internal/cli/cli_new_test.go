@@ -32,6 +32,11 @@ func TestCLI_NewMinimalCreatesSlimApp(t *testing.T) {
 		"internal/handlers/contact.go",
 		"internal/handlers/dashboard.go",
 		"internal/store/migrations/001_contacts.sql",
+		// #336: minimal swaps store.go for tplStoreMinimal, which has no
+		// FindUserByEmail/CreateUser — the auth store pair left behind made
+		// `go test ./...` fail to compile while `go build ./...` stayed green.
+		"internal/store/password_reset.go",
+		"internal/store/password_reset_test.go",
 	} {
 		if _, err := os.Stat(filepath.Join(appDir, path)); err == nil {
 			t.Errorf("minimal app should not have %s", path)

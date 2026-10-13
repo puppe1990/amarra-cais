@@ -314,6 +314,25 @@ func TestPageHome_greetingHarborLayout(t *testing.T) {
 	}
 }
 
+// #336: minimal/blank ship no /login route — the auth link and the boarding CTA
+// were dead links on a fresh app.
+func TestScaffoldSlimVariants_dropLoginLinks(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"minimal layout": tplLayoutMinimal,
+		"blank layout":   tplLayoutBlank,
+	} {
+		if strings.Contains(tpl, `href="/login"`) {
+			t.Errorf("%s should not link to /login (no auth route)", name)
+		}
+	}
+	if strings.Contains(tplPageHomeSlim, `href="/login"`) {
+		t.Error("slim home should not link to /login (no auth route)")
+	}
+	if !strings.Contains(tplLayout, `href="/login"`) || !strings.Contains(tplPageHome, `href="/login"`) {
+		t.Error("full scaffold should keep the /login links")
+	}
+}
+
 func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 	blobs := map[string]string{
 		"login":     tplPageLogin,
