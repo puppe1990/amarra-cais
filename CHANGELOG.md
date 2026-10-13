@@ -4,6 +4,12 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.21.1] - 2026-10-13
+
+### Fixed
+
+- `middleware.CSRF` no longer sets `cais_csrf` (or `__Host-cais_csrf`) on the crawler documents: `/sitemap.xml`, `/robots.txt` and `/llms.txt` join `/health`, `/static/` and `/api/` in `skipCSRF`, so they answer without `Set-Cookie`. Google Search Console reads a sitemap that sets a session cookie as a non-public resource and refuses to fetch it ("Não foi possível buscar o sitemap"), even though `g sitemap` already serves it `Cache-Control: public`. The skip is a closed set — an app's own `.xml` route keeps the cookie (#342).
+
 ## [0.21.0] - 2026-10-13
 
 ### Added
