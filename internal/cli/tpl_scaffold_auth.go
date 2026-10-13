@@ -13,7 +13,7 @@ type User struct {
 }
 `
 
-const tplMigration002Auth = `CREATE TABLE IF NOT EXISTS users (
+const tplMigrationAuth = `CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,

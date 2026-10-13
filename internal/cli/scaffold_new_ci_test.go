@@ -117,7 +117,6 @@ func TestScaffoldNewApp_GoImportsLocalPrefixOrder(t *testing.T) {
 		"cmd/console/main.go",
 		"internal/store/store.go",
 		"internal/handlers/auth.go",
-		"internal/handlers/contact.go",
 		"internal/handlers/dashboard.go",
 	}
 	for _, rel := range files {

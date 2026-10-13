@@ -7,7 +7,6 @@ import (
 
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/httpx"
 	"github.com/puppe1990/amarra-cais/pkg/cais/i18n"
 	"github.com/puppe1990/amarra-cais/pkg/cais/meta"
 
@@ -33,17 +32,11 @@ func (h *DashboardHandler) t(r *http.Request, key string, args ...any) string {
 }
 
 func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	count, err := h.store.CountContacts()
-	if err != nil {
-		httpx.ServerError(w, err, h.cfg)
-		return
-	}
-
 	writeView(w, r, h.views, h.cfg, "app", "dashboard", amarraData(r, h.site, map[string]any{
-		"Title":         h.t(r, "dashboard.title"),
-		"ActiveNav":     "dashboard",
-		"TotalContacts": count,
-		"Env":           h.cfg.Env,
+		"Title":     h.t(r, "dashboard.title"),
+		"ActiveNav": "dashboard",
+		"Env":       h.cfg.Env,
+		"Locale":    i18n.CatalogOr(r, h.catalog).Locale(),
 	}), 0)
 }
 `

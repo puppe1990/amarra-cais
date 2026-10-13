@@ -154,12 +154,6 @@ func TestScaffoldPartials_iconsRenderNonEmpty(t *testing.T) {
 	}
 }
 
-func TestLayoutTemplates_contactFormUsesKitForm(t *testing.T) {
-	if !strings.Contains(tplPageContact, `<.form action="/contact"`) {
-		t.Error("contact form should use <.form> kit tag")
-	}
-}
-
 // #208: signed-in chrome (login link, dashboard link, logout) is gated on
 // Site.LoggedIn, and the cais:nav marker stays outside the gate so public
 // resource links still render for anonymous visitors.
@@ -326,7 +320,6 @@ func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 		"signup":    tplPageSignup,
 		"forgot":    tplPageForgotPassword,
 		"reset":     tplPageResetPassword,
-		"contact":   tplPageContact,
 		"dashboard": tplPageDashboard,
 		"home":      tplPageHome,
 		"css":       tplInputCSS,
@@ -338,7 +331,7 @@ func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 			}
 		}
 	}
-	for _, blob := range []string{tplPageLogin, tplPageContact, tplPageDashboard} {
+	for _, blob := range []string{tplPageLogin, tplPageDashboard} {
 		if !strings.Contains(blob, "border-copper") && !strings.Contains(blob, "text-copper") {
 			t.Error("inner pages should use copper tokens on the harbor shell")
 		}

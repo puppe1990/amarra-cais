@@ -18,8 +18,6 @@ func TestScaffoldHandlers_useSanitizedServerError(t *testing.T) {
 	}
 
 	for _, rel := range []string{
-		"internal/handlers/contact.go",
-		"internal/handlers/dashboard.go",
 		"internal/handlers/auth.go",
 	} {
 		body := mustReadFile(t, filepath.Join(appDir, rel))

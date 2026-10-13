@@ -113,12 +113,11 @@ func TestTplTailwind_shipsCoralAndFraunces(t *testing.T) {
 // markup or CSS, otherwise the accent reads amber next to the teal classes.
 func TestTplScaffold_hasNoCopperAccentLeftovers(t *testing.T) {
 	for name, blob := range map[string]string{
-		"home":    tplPageHome,
-		"contact": tplPageContact,
-		"dash":    tplPageDashboard,
-		"login":   tplPageLogin,
-		"layout":  tplLayout,
-		"css":     tplInputCSS,
+		"home":   tplPageHome,
+		"dash":   tplPageDashboard,
+		"login":  tplPageLogin,
+		"layout": tplLayout,
+		"css":    tplInputCSS,
 	} {
 		for _, leftover := range []string{"201,137,58", "201 137 58", "#c9893a", "#081014", "#f6f1e7"} {
 			if strings.Contains(blob, leftover) {

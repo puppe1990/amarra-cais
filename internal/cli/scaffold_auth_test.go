@@ -93,7 +93,7 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 	for _, path := range []string{
 		"internal/handlers/auth.go",
 		"internal/models/user.go",
-		"internal/store/migrations/002_auth.sql",
+		"internal/store/migrations/001_auth.sql",
 		"internal/store/password_reset.go",
 		"web/templates/pages/login.html",
 		"web/templates/pages/signup.html",
@@ -453,7 +453,10 @@ func TestScaffoldNewApp_includesSeeds(t *testing.T) {
 	if !strings.Contains(body, "func RunSeeds") {
 		t.Error("seeds.go missing RunSeeds")
 	}
-	if !strings.Contains(body, "InsertContact") {
-		t.Error("full app seeds.go should seed demo contact")
+	if !strings.Contains(body, "// cais:seeds") {
+		t.Error("seeds.go must keep the cais:seeds marker for `g resource` to patch")
+	}
+	if strings.Contains(body, "Contact") || strings.Contains(body, "/internal/models") {
+		t.Errorf("the default app ships no demo table, so seeds.go must not seed one:\n%s", body)
 	}
 }

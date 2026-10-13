@@ -117,7 +117,7 @@ func (h *AuthHandler) SignUpPost(w http.ResponseWriter, r *http.Request) {
 
 	var errs validate.FieldErrors
 	if err := validate.Email(email); err != nil {
-		errs.Add("email", h.t(r, "contact.email_invalid"))
+		errs.Add("email", h.t(r, "auth.email_invalid"))
 	}
 	if err := validate.MinLength(password, 8); err != nil {
 		errs.Add("password", h.t(r, "auth.password_too_short"))
@@ -178,7 +178,7 @@ func (h *AuthHandler) ForgotPasswordPost(w http.ResponseWriter, r *http.Request)
 	email := strings.TrimSpace(r.FormValue("email"))
 	var errs validate.FieldErrors
 	if err := validate.Email(email); err != nil {
-		errs.Add("email", h.t(r, "contact.email_invalid"))
+		errs.Add("email", h.t(r, "auth.email_invalid"))
 	}
 	if errs.Any() {
 		h.renderAuth(w, r, "forgot_password", map[string]any{

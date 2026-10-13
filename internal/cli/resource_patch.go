@@ -128,21 +128,38 @@ func TestStore_Insert%s(t *testing.T) {
 `, data.Pascal, insertSetup, data.Pascal, data.Pascal, insertArgs)
 
 	if !strings.Contains(content, data.ModulePath+"/internal/models") {
-		content = strings.Replace(content,
-			`import "testing"`,
-			`import (
-	"testing"
-
-	"`+data.ModulePath+`/internal/models"
-)`,
-			1,
-		)
+		content = ensureModelsImport(content, data.ModulePath)
 	}
 	content = strings.TrimRight(content, "\n") + "\n" + insert
 	if dryRun {
 		return nil
 	}
 	return os.WriteFile(path, []byte(content), 0o644)
+}
+
+// ensureModelsImport adds the app's models import to an existing import block.
+// The scaffold store_test no longer ships a model of its own, so a generated
+// resource is what first needs it — the old single-line `import "testing"`
+// rewrite silently did nothing once the test grew a group (#245 follow-up).
+func ensureModelsImport(content, modulePath string) string {
+	imp := `"` + modulePath + "/internal/models" + `"`
+	if strings.Contains(content, imp) {
+		return content
+	}
+	if strings.Contains(content, `import "testing"`) {
+		return strings.Replace(content, `import "testing"`,
+			"import (\n\t\"testing\"\n\n\t"+imp+"\n)", 1)
+	}
+	start := strings.Index(content, "import (")
+	if start == -1 {
+		return content
+	}
+	end := strings.Index(content[start:], "\n)")
+	if end == -1 {
+		return content
+	}
+	at := start + end
+	return content[:at] + "\n\n\t" + imp + content[at:]
 }
 
 // buildInsertTestLiteral returns the Go statements that seed one parent row

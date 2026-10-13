@@ -46,7 +46,19 @@ func unpatchResourceRoutes(content string, data scaffoldData) (string, error) {
 	drop := func(st ast.Stmt) bool {
 		return isGeneratedRouteStmt(st, pubVar, adminVar, pubPaths, adminPaths)
 	}
-	return removeStmtsFromFunc(content, "registerRoutes", drop)
+	content, err := removeStmtsFromFunc(content, "registerRoutes", drop)
+	if err != nil {
+		return "", err
+	}
+	// The generator's admin limiter/token vars and the middleware/http imports
+	// are only used by the routes just removed; leaving them breaks the build on
+	// an app whose remaining routes (a dashboard, say) need neither (#248).
+	if content, err = pruneUnusedAssigns(content, "registerRoutes"); err != nil {
+		return "", err
+	}
+	content = dropUnusedImport(content, "http")
+	content = dropUnusedImport(content, "middleware")
+	return content, nil
 }
 
 func unpatchRoutesForHandler(dir string, data scaffoldData, dryRun bool) error {
