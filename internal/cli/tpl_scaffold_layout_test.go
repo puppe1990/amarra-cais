@@ -181,6 +181,28 @@ func TestLayoutTemplates_themeToggleSwapsIcon(t *testing.T) {
 	}
 }
 
+// The sidebar footer ends with sign out: the locale and theme controls sit
+// above it, so the last thing in the rail is not the destructive action.
+func TestLayoutTemplates_signOutLastInSidebar(t *testing.T) {
+	for name, tpl := range map[string]string{
+		"full":    tplLayout,
+		"minimal": tplLayoutMinimal,
+		"blank":   tplLayoutBlank,
+	} {
+		aside := navAside(t, name, tpl)
+		logout := strings.Index(aside, `action="/logout"`)
+		if logout == -1 {
+			t.Fatalf("%s layout sidebar has no logout form", name)
+		}
+		for _, token := range []string{`<.locale-toggle`, `amarra-hook="theme"`} {
+			at := strings.Index(aside, token)
+			if at == -1 || at > logout {
+				t.Errorf("%s layout: %s must render above sign out (#258)", name, token)
+			}
+		}
+	}
+}
+
 // The footer is visitor chrome: a signed-in page ends at the sidebar, so the
 // app shell does not carry the marketing strip.
 func TestLayoutTemplates_footerOnlyForAnonymousShell(t *testing.T) {

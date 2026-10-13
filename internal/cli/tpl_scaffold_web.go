@@ -104,13 +104,13 @@ const tplLayoutNavEmpty = tplLayoutNavFull
 const tplLayoutBaseClose = `
           </div>
           <div class="mt-auto flex flex-col gap-3 border-t border-foam/10 pt-3">
-            <.form action="/logout" method="post">
-              <button type="submit" class="w-full text-left px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 text-foam/50 hover:text-foam">{{"{{"}} template "icon_logout_nav" . {{"}}"}}{{"{{"}} t "auth.logout" {{"}}"}}</button>
-            </.form>
             <div class="flex items-center justify-between gap-2">
               <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
               ` + tplLayoutThemeToggle + `
             </div>
+            <.form action="/logout" method="post">
+              <button type="submit" class="w-full text-left px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 text-foam/50 hover:text-foam">{{"{{"}} template "icon_logout_nav" . {{"}}"}}{{"{{"}} t "auth.logout" {{"}}"}}</button>
+            </.form>
           </div>
         </div>
       </aside>
