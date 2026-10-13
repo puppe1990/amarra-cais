@@ -33,3 +33,66 @@ test("morph outerHTML fallback replaces the element", () => {
   morph(el, '<span id="count">1</span>', undefined, { morphStyle: "outerHTML" });
   assert.equal(parent.innerHTML, '<span id="count">1</span>');
 });
+
+// #330: a parser that hands Idiomorph a lowercased `viewbox` makes the morph drop
+// the camelCase attribute of the live SVG; the wrapper normalizes it back.
+test("morph restores camelCase SVG attributes after the morph", () => {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const attrs = new Map([["viewbox", "0 0 830 720"]]);
+  const svg = {
+    namespaceURI: SVG_NS,
+    children: [],
+    get attributes() {
+      return [...attrs].map(([name, value]) => ({ name, value }));
+    },
+    getAttribute: (name) => (attrs.has(name) ? attrs.get(name) : null),
+    setAttribute(name, value) {
+      attrs.set(name, String(value));
+    },
+    removeAttribute(name) {
+      attrs.delete(name);
+    },
+    querySelectorAll: () => [],
+  };
+  const main = {
+    children: [svg],
+    querySelectorAll: () => [svg],
+  };
+
+  morph(main, "<svg viewbox=\"0 0 830 720\"></svg>", (el) => {
+    el.morphed = true;
+  });
+
+  assert.equal(main.morphed, true);
+  assert.equal(svg.getAttribute("viewBox"), "0 0 830 720");
+  assert.equal(svg.getAttribute("viewbox"), null);
+});
+
+test("morph normalizes the parent when an outerHTML morph detached the target", () => {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const attrs = new Map([["viewbox", "0 0 10 10"]]);
+  const replaced = {
+    namespaceURI: SVG_NS,
+    children: [],
+    get attributes() {
+      return [...attrs].map(([name, value]) => ({ name, value }));
+    },
+    getAttribute: (name) => (attrs.has(name) ? attrs.get(name) : null),
+    setAttribute(name, value) {
+      attrs.set(name, String(value));
+    },
+    removeAttribute(name) {
+      attrs.delete(name);
+    },
+    querySelectorAll: () => [],
+  };
+  const parent = {
+    children: [replaced],
+    querySelectorAll: () => [replaced],
+  };
+  const el = { isConnected: false, parentNode: parent, innerHTML: "0" };
+
+  morph(el, "<svg></svg>", () => {});
+
+  assert.equal(replaced.getAttribute("viewBox"), "0 0 10 10");
+});
