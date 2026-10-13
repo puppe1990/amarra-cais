@@ -10,7 +10,7 @@ const tplLayoutBrand = `<a href="/" class="flex items-center gap-3 group">
             </span>
             <span>
               <span class="block font-serif text-xl leading-none tracking-tight text-foam">{{.AppName}}</span>
-              <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80">Amarra</span>
+              <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80" title="Cais v{{"{{"}} .FrameworkVersionFull {{"}}"}}">Amarra v{{"{{"}} .FrameworkVersion {{"}}"}}</span>
             </span>
           </a>`
 
