@@ -729,3 +729,67 @@ test("visit drops a superseded response", async () => {
   assert.equal(morphed.length, 1);
   assert.match(morphed[0], /<p>B<\/p>/);
 });
+
+for (const stream of [false, true]) {
+  test(`visit drops superseded delayed ${stream ? "stream" : "HTML"} body`, async () => {
+    const morphed = [];
+    const pushed = [];
+    const replacements = [];
+    const main = {};
+    const target = {
+      remove() {
+        throw new Error("stale stream applied");
+      },
+    };
+    const doc = {
+      querySelector: () => main,
+      getElementById: (id) => (id === "victim" ? target : null),
+      createElement: () => ({ style: {}, setAttribute() {} }),
+      body: { appendChild() {} },
+      documentElement: { dataset: {} },
+      dispatchEvent() {},
+    };
+    let resolveBody;
+    let bodyStarted;
+    const started = new Promise((resolve) => {
+      bodyStarted = resolve;
+    });
+    const opts = {
+      document: doc,
+      morphFn: (_el, html) => morphed.push(html),
+      location: { href: "http://a/" },
+      history: {
+        pushState: (_s, _t, url) => pushed.push(url),
+        replaceState: () => replacements.push("replace"),
+      },
+      fetchFn: async (url) => ({
+        status: 200,
+        url,
+        headers: {
+          get: (name) =>
+            name === "content-type" && stream && url === "/old"
+              ? "text/vnd.amarra-stream"
+              : "text/html",
+        },
+        text: () =>
+          url === "/old"
+            ? new Promise((resolve) => {
+                resolveBody = resolve;
+                bodyStarted();
+              })
+            : Promise.resolve('<main id="amarra-main">NEW</main>'),
+      }),
+    };
+    const old = visit("/old", opts);
+    await started;
+    await visit("/new", opts);
+    const historyCount = replacements.length;
+    resolveBody(
+      stream ? "event: remove\nid: victim\ndata: \n\n" : '<main id="amarra-main">OLD</main>'
+    );
+    assert.equal((await old).action, "superseded");
+    assert.deepEqual(morphed, ["NEW"]);
+    assert.deepEqual(pushed, ["/new"]);
+    assert.equal(replacements.length, historyCount);
+  });
+}

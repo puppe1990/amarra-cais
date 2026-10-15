@@ -264,6 +264,8 @@ export async function visit(url, opts = {}) {
       return { action: "assign" };
     }
     const html = authFailure ? "" : await res.text();
+    // Reading the body can outlive a newer visit even after fetch resolved (#348).
+    if (!isCurrentSequence(doc, seq)) return { action: "superseded" };
     if (stream) {
       for (const op of parseSSE(html)) applyOp(op, doc, opts);
       return { action: "stream" };

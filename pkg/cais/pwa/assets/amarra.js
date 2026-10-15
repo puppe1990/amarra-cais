@@ -2733,6 +2733,7 @@ ${lines.join("\n")}
         return { action: "assign" };
       }
       const html = authFailure ? "" : await res.text();
+      if (!isCurrentSequence(doc, seq)) return { action: "superseded" };
       if (stream) {
         for (const op of parseSSE(html)) applyOp(op, doc, opts);
         return { action: "stream" };
