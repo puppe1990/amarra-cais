@@ -10,6 +10,9 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.22.0", Title: "SignOut and Delete return error", Action: "handle session.Store.Delete and session.SignOut errors in logout and login rotation before redirecting; see docs/security-upgrade.md"},
+	{Version: "0.22.0", Title: "admin CRUD requires is_admin", Action: "generated /admin/* CRUD requires users.is_admin plus middleware.RequireAdmin; public signup no longer promotes admin"},
+	{Version: "0.21.2", Title: "flash override needs amarra-flash id", Action: "apps overriding web/templates/components/flash.html must keep id=\"amarra-flash\""},
 	{Version: "0.15.0", Title: "HTMX removed", Action: "migrate leftover hx-* apps to Views + Drive; Cais v0.11 remains the Inertia product. amarra.js is the only shipped JS bundle"},
 	{Version: "0.14.1", Title: "password kit overlay", Action: "rebuild CSS (amarra-cais css) so cais-password-wrap / cais-password-toggle overlay the eye inside <.password>; copy the wrap CSS if the app overrode input.css"},
 	{Version: "0.14.0", Title: "PORT required in production", Action: "set PORT=:8080 or PORT=8080 (bare 12-factor numbers work); missing PORT no longer binds :8080 on a shared host"},

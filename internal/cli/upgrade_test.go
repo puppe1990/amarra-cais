@@ -61,6 +61,47 @@ func TestPrintMigrationChecklist_unknownFromWarns(t *testing.T) {
 	}
 }
 
+func TestPrintMigrationChecklist_0211to0220(t *testing.T) {
+	var buf bytes.Buffer
+	printMigrationChecklist(&buf, parseSemverCore("0.21.1"), parseSemverCore("0.22.0"), "0.21.1")
+	out := buf.String()
+	if strings.Contains(out, "no known breaking changes") {
+		t.Errorf("0.21.1→0.22.0 must not claim an empty checklist:\n%s", out)
+	}
+	if !strings.Contains(out, "[0.22.0]") {
+		t.Errorf("missing 0.22.0 step:\n%s", out)
+	}
+	if !strings.Contains(out, "SignOut") {
+		t.Errorf("missing SignOut step:\n%s", out)
+	}
+	if !strings.Contains(out, "is_admin") {
+		t.Errorf("missing is_admin step:\n%s", out)
+	}
+	if !strings.Contains(out, "amarra-cais pwa") {
+		t.Errorf("pwa reminder (#320) must remain:\n%s", out)
+	}
+}
+
+func TestCLI_Upgrade_dryRunFrom0211Lists0220(t *testing.T) {
+	dir := upgradeFixture(t, "0.21.1")
+	t.Chdir(dir)
+
+	var buf bytes.Buffer
+	if err := (&CLI{Out: &buf}).cmdUpgrade([]string{"v0.22.0", "--dry-run"}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if strings.Contains(out, "no known breaking changes") {
+		t.Errorf("dry-run 0.21.1→0.22.0 must print the checklist, got:\n%s", out)
+	}
+	if !strings.Contains(out, "SignOut") || !strings.Contains(out, "is_admin") {
+		t.Errorf("dry-run must list SignOut and is_admin, got:\n%s", out)
+	}
+	if !strings.Contains(out, "--dry-run: no files changed") {
+		t.Errorf("expected dry-run notice, got:\n%s", out)
+	}
+}
+
 func upgradeFixture(t *testing.T, requireVersion string) string {
 	t.Helper()
 	dir := t.TempDir()
