@@ -29,7 +29,7 @@ Escreva os parâmetros como `{name}` no pattern e leia-os por meio de um helper,
 r.Get("/blog/{slug}", cais.StringParam("slug", blog.Show))
 r.Post("/chat/{id}/permissions/{permID}/approve", cais.StringParams("id", "permID", chat.ApprovePermission))
 r.Get("/items/{id}/{slug}", cais.IntStringParams("id", "slug", items.Show))
-r.Group(middleware.RequireAuth("/login"), func(g *cais.Router) {
+r.Group(middleware.RequireAdmin("/login", deps.Store.DB()), func(g *cais.Router) {
   g.Put("/admin/items/{id}", cais.IntParam("id", admin.Update))
   g.Delete("/admin/items/{id}", cais.IntParam("id", admin.Delete))
 })
@@ -46,7 +46,7 @@ r.Group(middleware.RequireAuth("/login"), func(g *cais.Router) {
 
 ## Grupos
 
-`r.Group(mw, fn)` cria um router filho que compartilha o namespace de URL e o `ServeMux` do pai, mas adiciona um middleware. Só o middleware muda — os grupos não criam um prefixo de path. O filho copia a cadeia atual do pai e acrescenta a sua própria, então as rotas de um grupo executam os middlewares do pai mais o middleware do grupo. Passe qualquer `Middleware` (`func(http.Handler) http.Handler`), por exemplo `middleware.RequireAuth("/login")` para o admin no navegador ou `middleware.AdminAuth(cfg)` para uma API com bearer token.
+`r.Group(mw, fn)` cria um router filho que compartilha o namespace de URL e o `ServeMux` do pai, mas adiciona um middleware. Só o middleware muda — os grupos não criam um prefixo de path. O filho copia a cadeia atual do pai e acrescenta a sua própria, então as rotas de um grupo executam os middlewares do pai mais o middleware do grupo. Passe qualquer `Middleware` (`func(http.Handler) http.Handler`), por exemplo `middleware.RequireAdmin("/login", deps.Store.DB())` para o admin no navegador ou `middleware.AdminAuth(cfg)` para uma API com bearer token.
 
 ## 404 projetado
 

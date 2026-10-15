@@ -48,10 +48,10 @@ Você também pode chamar `session.Store.PruneExpired()` do seu próprio código
 
 Escolha um de dois modos:
 
-| Modo                        | Middleware                         | Flag do gerador                 |
-| --------------------------- | ---------------------------------- | ------------------------------- |
-| Admin no navegador (padrão) | `middleware.RequireAuth("/login")` | `amarra-cais g resource` padrão |
-| API com token bearer        | `middleware.AdminAuth(cfg)`        | `--admin-auth bearer`           |
+| Modo                        | Middleware                              | Flag do gerador                 |
+| --------------------------- | --------------------------------------- | ------------------------------- |
+| Admin no navegador (padrão) | `middleware.RequireAdmin("/login", db)` | `amarra-cais g resource` padrão |
+| API com token bearer        | `middleware.AdminAuth(cfg)`             | `--admin-auth bearer`           |
 
 `amarra-cais g resource` usa autenticação de sessão por padrão (`--admin-auth session`). Escolha `--admin-auth bearer` para APIs de admin somente com token, que não têm páginas de login.
 
@@ -71,3 +71,5 @@ A ordem do middleware importa: `LoadSession` → `Flash` → `CSRF` → `Securit
 - [Deploy em produção](/amarra-cais/pt-br/docs/how-to/deploy/) — os gates de produção que exigem `ADMIN_TOKEN`.
 - [Modelo de segurança](/amarra-cais/pt-br/docs/explanation/security-model/) — como CSRF, cookies e sessões interagem.
 - [Referência da CLI](/amarra-cais/pt-br/docs/reference/cli/) — `g auth`, `db migrate` e `db prune-sessions`.
+
+Contas públicas começam com `users.is_admin = 0`. Para promover uma conta confiável, execute `UPDATE users SET is_admin = 1 WHERE email = ?` com parâmetro vinculado. O demo de desenvolvimento é administrador. Em apps existentes, adicione `is_admin INTEGER NOT NULL DEFAULT 0 CHECK (is_admin IN (0, 1))` à tabela `users` por migration e substitua `RequireAuth` por `RequireAdmin("/login", deps.Store.DB())` nos grupos `/admin/*`. Falhas no banco negam acesso.
