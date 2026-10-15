@@ -59,11 +59,11 @@ func exerciseJoinPanic(t *testing.T, stage string) {
 	s := httptest.NewServer(h.Handler())
 	defer s.Close()
 	healthy := dialLive(t, s, "counter", "tok")
-	defer healthy.CloseNow()
+	defer func() { _ = healthy.CloseNow() }()
 	writeJSON(t, healthy, inMsg{Type: typeJoin, CSRF: "tok"})
 	_ = readJSON(t, healthy)
 	broken := dialLive(t, s, "broken", "tok")
-	defer broken.CloseNow()
+	defer func() { _ = broken.CloseNow() }()
 	writeJSON(t, broken, inMsg{Type: typeJoin, CSRF: "tok"})
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -79,7 +79,7 @@ func exerciseJoinPanic(t *testing.T, stage string) {
 		t.Fatalf("healthy connection: %+v", got)
 	}
 	fresh := dialLive(t, s, "counter", "tok")
-	defer fresh.CloseNow()
+	defer func() { _ = fresh.CloseNow() }()
 	writeJSON(t, fresh, inMsg{Type: typeJoin, CSRF: "tok"})
 	if got := readJSON(t, fresh); got.Type != typeOK {
 		t.Fatalf("fresh join: %+v", got)
