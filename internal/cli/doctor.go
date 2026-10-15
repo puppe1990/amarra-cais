@@ -43,6 +43,7 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 		checkInlineScripts(dir),
 		checkBundleVersion(dir),
 		checkBrandAssets(dir),
+		checkSelfHostedFonts(dir),
 		checkDeployLayout(dir),
 		checkQualityTooling(dir),
 	)

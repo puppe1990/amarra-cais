@@ -71,12 +71,27 @@ func (r *Router) Static(prefix, dir string) {
 	r.StaticForEnv(prefix, dir, Config{})
 }
 
-// StaticForEnv serves files from disk. In development, sets no-store so JS/CSS edits apply without rebuild.
+const (
+	// Year-long browser cache for fingerprinted-or-SW-bumped assets. URLs are
+	// stable (/static/css/styles.css); skip immutable so a deploy + CACHE_VERSION
+	// bump can still replace them. Set only on 200 so a missing file is not
+	// cached for a year (#355).
+	staticCacheTTL = "public, max-age=31536000"
+	// sw.js must revalidate: a long-lived SW would pin an old CACHE_VERSION.
+	staticSWCacheControl = "public, max-age=0, must-revalidate"
+)
+
+// StaticForEnv serves files from disk. Development is no-store so JS/CSS edits
+// apply without a rebuild. Production sets a long TTL on 200s and
+// must-revalidate on sw.js. Static is registered via handlePattern, not wrap(),
+// so session/flash middleware never runs on CSS and fonts (#355).
 func (r *Router) StaticForEnv(prefix, dir string, cfg Config) {
 	fs := http.FileServer(http.Dir(dir))
 	handler := allowRootServiceWorker(http.StripPrefix(prefix, fs))
 	if cfg.Env == "development" {
 		handler = noCacheStatic(handler)
+	} else {
+		handler = cacheStatic(handler)
 	}
 	r.handlePattern("GET "+prefix+"/", handler)
 }
@@ -86,6 +101,42 @@ func noCacheStatic(next http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "no-store")
 		next.ServeHTTP(w, r)
 	})
+}
+
+func cacheStatic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(&staticCacheWriter{
+			ResponseWriter: w,
+			sw:             strings.HasSuffix(r.URL.Path, "/sw.js"),
+		}, r)
+	})
+}
+
+type staticCacheWriter struct {
+	http.ResponseWriter
+	sw    bool
+	wrote bool
+}
+
+func (w *staticCacheWriter) WriteHeader(code int) {
+	if !w.wrote {
+		w.wrote = true
+		if code == http.StatusOK {
+			cc := staticCacheTTL
+			if w.sw {
+				cc = staticSWCacheControl
+			}
+			w.Header().Set("Cache-Control", cc)
+		}
+	}
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *staticCacheWriter) Write(b []byte) (int, error) {
+	if !w.wrote {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(b)
 }
 
 // Default SW scope is the script directory. HTML lives at /, so sw.js must
