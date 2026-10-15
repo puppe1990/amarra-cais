@@ -310,7 +310,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 - `GET /health` returns `lan_urls` via `netutil.HealthPayload` — use this array, never concatenate `APP_URL` + port manually
 - `amarra-cais pwa --bump` increments `CACHE_VERSION` in `sw.js` after template/HTML changes
 - `amarra-cais dev` auto-bumps `CACHE_VERSION` when `sw.js` exists (fresh assets on phone without a manual bump)
-- `amarra-cais doctor --mobile` checks flash markup, Google Fonts CSP, `amarra.js`, SW cache (network-first `/static/js/amarra.js`), chat form CSS, `#chat-messages` scroll container, and health `lan_urls`
+- `amarra-cais doctor --mobile` checks flash markup, Google Fonts CSP, `amarra.js`, SW cache (network-first `/static/js/amarra.js`), chat form CSS, `#chat-messages` scroll container, and health `lan_urls`. `doctor` (and `--mobile`) also warns when `web/static/fonts/*.{woff2,woff,ttf,otf}` exceeds 200 KiB — subset, do not preload the full variable file (#356).
 - Scaffold ships the docs-site heading font: `layouts/app.html` links Fraunces and the generated `.env` allows `CSP_STYLE_SRC=https://fonts.googleapis.com` + `CSP_FONT_SRC=https://fonts.gstatic.com`. Without those env vars the default CSP blocks the font and headings fall back to the system serifs; drop the `<link>` (and the env lines) if the app must stay strict-CSP/offline-first
 - Brand assets: scaffolds ship a **neutral placeholder** tile (`pkg/cais/pwa/assets/icon.png`, 512×512) plus a generated `icons/icon-512-maskable.png`; the manifest splits `any` (192 + 512) from `maskable`. `amarra-cais doctor` warns while `web/static/icons/*` and `og.png` are still the placeholders (#64).
 

@@ -37,6 +37,9 @@ func TestDoctor_MobileOKOnFreshScaffold(t *testing.T) {
 	if strings.Contains(out, "cais.js") || strings.Contains(out, "htmx.min.js") {
 		t.Errorf("mobile doctor must not require cais.js/htmx, got:\n%s", out)
 	}
+	if !strings.Contains(out, "[ok] self-hosted fonts") {
+		t.Errorf("fresh scaffold must not warn on missing/small fonts, got:\n%s", out)
+	}
 }
 
 // dropGoogleFontsCSP removes the scaffold's font allowance so the warn path is
@@ -187,5 +190,76 @@ func TestDoctor_MobileWarnsWhenOnlyStyleSrcAllowsFonts(t *testing.T) {
 	}
 	if !strings.Contains(out, "CSP_FONT_SRC") {
 		t.Errorf("hint should name the missing directive, got:\n%s", out)
+	}
+}
+
+func TestCheckSelfHostedFonts_warnsWhenWoff2Exceeds200KiB(t *testing.T) {
+	dir := t.TempDir()
+	fonts := filepath.Join(dir, "web", "static", "fonts")
+	if err := os.MkdirAll(fonts, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	name := "material-symbols-outlined.woff2"
+	if err := os.WriteFile(filepath.Join(fonts, name), make([]byte, 201*1024), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	c := checkSelfHostedFonts(dir)
+	if c.OK || !c.Optional {
+		t.Fatalf("huge woff2 must be an optional warning, got %+v", c)
+	}
+	if !strings.Contains(c.Detail, name) {
+		t.Errorf("detail must name the file, got %q", c.Detail)
+	}
+	if !strings.Contains(c.Detail, "201 KiB") && !strings.Contains(c.Detail, "201KiB") {
+		t.Errorf("detail must include size, got %q", c.Detail)
+	}
+	if c.FixHint == "" {
+		t.Error("expected a subset FixHint")
+	}
+}
+
+func TestCheckSelfHostedFonts_okWhenSmallOrMissing(t *testing.T) {
+	dir := t.TempDir()
+	c := checkSelfHostedFonts(dir)
+	if !c.OK {
+		t.Fatalf("missing fonts dir must skip, got %+v", c)
+	}
+
+	fonts := filepath.Join(dir, "web", "static", "fonts")
+	if err := os.MkdirAll(fonts, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(fonts, "inter.woff2"), make([]byte, 100*1024), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c = checkSelfHostedFonts(dir)
+	if !c.OK {
+		t.Fatalf("100 KiB woff2 must pass, got %+v", c)
+	}
+}
+
+func TestDoctor_MobileWarnsHugeSelfHostedWoff2(t *testing.T) {
+	unsetCIEnv(t)
+	dir := t.TempDir()
+	fonts := filepath.Join(dir, "web", "static", "fonts")
+	if err := os.MkdirAll(fonts, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(fonts, "material-symbols-outlined.woff2"), make([]byte, 201*1024), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module app\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	_ = runDoctor(&buf, dir, doctorOptions{Mobile: true})
+	out := buf.String()
+	if !strings.Contains(out, "[warn] self-hosted fonts") {
+		t.Errorf("expected optional warning for huge woff2, got:\n%s", out)
+	}
+	if !strings.Contains(out, "material-symbols-outlined.woff2") {
+		t.Errorf("warning must name the file, got:\n%s", out)
 	}
 }

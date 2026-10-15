@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais/pwa"
@@ -114,6 +115,58 @@ func checkGoogleFonts(dir string) doctorCheck {
 		Detail:   "external fonts in " + files + " blocked by default CSP (style-src 'self')",
 		FixHint:  "allow with " + strings.Join(missing, " ") + " in .env, or use the system font stack in tailwind.config.js",
 	}
+}
+
+// 200 KiB is well above a subset icon/display face (~7–40 KiB) and well below
+// a full Material Symbols variable file (~4 MB) that tanks LCP (#356).
+const selfHostedFontLimit = 200 * 1024
+
+func checkSelfHostedFonts(dir string) doctorCheck {
+	const name = "self-hosted fonts"
+	root := filepath.Join(dir, "web", "static", "fonts")
+	if st, err := os.Stat(root); err != nil || !st.IsDir() {
+		return doctorCheck{Name: name, OK: true, Detail: "skipped (no web/static/fonts)"}
+	}
+	huge := oversizedFontFiles(dir, root)
+	if len(huge) == 0 {
+		return doctorCheck{Name: name, OK: true, Detail: "no file over 200 KiB"}
+	}
+	return doctorCheck{
+		Name:     name,
+		Optional: true,
+		Detail:   strings.Join(huge, ", ") + " exceed 200 KiB",
+		FixHint:  "subset the font (Google Fonts CSS icon_names/text=, or pyftsubset/glyphhanger) and skip preloading the full file on the landing layout",
+	}
+}
+
+func oversizedFontFiles(dir, root string) []string {
+	var huge []string
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !isSelfHostedFontFile(d.Name()) {
+			return err
+		}
+		st, err := d.Info()
+		if err != nil || st.Size() <= selfHostedFontLimit {
+			return nil
+		}
+		rel, relErr := filepath.Rel(dir, path)
+		if relErr != nil {
+			rel = path
+		}
+		kib := strconv.FormatInt(st.Size()/1024, 10)
+		huge = append(huge, filepath.ToSlash(rel)+" ("+kib+" KiB)")
+		return nil
+	})
+	sort.Strings(huge)
+	return huge
+}
+
+func isSelfHostedFontFile(name string) bool {
+	lower := strings.ToLower(name)
+	return strings.HasSuffix(lower, ".woff2") ||
+		strings.HasSuffix(lower, ".woff") ||
+		strings.HasSuffix(lower, ".ttf") ||
+		strings.HasSuffix(lower, ".otf")
 }
 
 func checkPWACacheVersion(dir string) doctorCheck {
