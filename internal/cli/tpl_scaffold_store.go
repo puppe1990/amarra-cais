@@ -83,7 +83,7 @@ func seedAuthData(db *sql.DB, env string) error {
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec("INSERT OR IGNORE INTO users (email, password_hash) VALUES (?, ?)", "demo@example.com", hash)
+	_, err = db.Exec("INSERT OR IGNORE INTO users (email, password_hash, is_admin) VALUES (?, ?, 1)", "demo@example.com", hash)
 	return err
 }
 

@@ -237,7 +237,7 @@ func patchRoutesForResource(dir string, data scaffoldData, dryRun bool, force bo
 	if data.AdminAuth == "bearer" {
 		fmt.Fprintf(&insert, "\tr.Group(middleware.AdminAuth(cfg), func(g *cais.Router) {\n")
 	} else {
-		fmt.Fprintf(&insert, "\tr.Group(middleware.RequireAuth(\"/login\"), func(g *cais.Router) {\n")
+		fmt.Fprintf(&insert, "\tr.Group(middleware.RequireAdmin(\"/login\", deps.Store.DB()), func(g *cais.Router) {\n")
 	}
 	fmt.Fprintf(&insert, "\t\tg.Get(\"/admin/%s\", %s.Index)\n", data.Plural, adminVar)
 	fmt.Fprintf(&insert, "\t\tg.Get(\"/admin/%s/{id}\", cais.IntParam(\"id\", %s.Show))\n", data.Plural, adminVar)

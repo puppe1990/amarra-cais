@@ -96,6 +96,7 @@ import (
 	"testing"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 
 	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
@@ -137,6 +138,32 @@ func TestAuth_SignUpPost_createsUserAndRedirects(t *testing.T) {
 	}
 	if user.ID == 0 {
 		t.Fatal("user id = 0")
+	}
+
+	protected := middleware.LoadSession(s.Sessions())(middleware.RequireAdmin("/login", s.DB())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) })))
+	cookies := rr.Result().Cookies()
+	for _, method := range []string{"GET", "POST", "PUT", "DELETE"} {
+		attempt := httptest.NewRequest(method, "/admin/items", nil)
+		for _, cookie := range cookies {
+			attempt.AddCookie(cookie)
+		}
+		denied := httptest.NewRecorder()
+		protected.ServeHTTP(denied, attempt)
+		if denied.Code != http.StatusForbidden {
+			t.Fatalf("signup user %s: status %d, want 403", method, denied.Code)
+		}
+	}
+	if _, err := s.DB().Exec("UPDATE users SET is_admin = 1 WHERE id = ?", user.ID); err != nil {
+		t.Fatal(err)
+	}
+	attempt := httptest.NewRequest("GET", "/admin/items", nil)
+	for _, cookie := range cookies {
+		attempt.AddCookie(cookie)
+	}
+	allowed := httptest.NewRecorder()
+	protected.ServeHTTP(allowed, attempt)
+	if allowed.Code != http.StatusNoContent {
+		t.Fatalf("admin status = %d", allowed.Code)
 	}
 }
 
