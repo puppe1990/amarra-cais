@@ -18,7 +18,9 @@ func TestMemoryStore_CreateGetDelete(t *testing.T) {
 		t.Fatalf("Get() = (%d, %v), want (42, true)", id, ok)
 	}
 
-	store.Delete(token)
+	if err := store.Delete(token); err != nil {
+		t.Fatal(err)
+	}
 	if _, ok := store.Get(token); ok {
 		t.Error("session should be deleted")
 	}

@@ -138,12 +138,14 @@ r.Post("/webhooks/incoming/{token}", receiver)
 
 ## Admin protection
 
-| Mode                    | Middleware                         | Generator flag                   |
-| ----------------------- | ---------------------------------- | -------------------------------- |
-| Browser admin (default) | `middleware.RequireAuth("/login")` | `amarra-cais g resource` default |
-| Bearer token API        | `middleware.AdminAuth(cfg)`        | `--admin-auth bearer`            |
+| Mode                    | Middleware                              | Generator flag                   |
+| ----------------------- | --------------------------------------- | -------------------------------- |
+| Browser admin (default) | `middleware.RequireAdmin("/login", db)` | `amarra-cais g resource` default |
+| Bearer token API        | `middleware.AdminAuth(cfg)`             | `--admin-auth bearer`            |
 
 Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `AdminAuth` accepts Bearer header only, no query params. No-op in development when unset.
+
+Session admin routes require `users.is_admin = 1` (#350); public signup defaults to 0. See `docs/security-upgrade.md` for existing apps and promotion.
 
 `amarra-cais g resource` defaults to session auth (`--admin-auth session`). Use `--admin-auth bearer` for token-only admin APIs without login pages.
 
@@ -158,7 +160,10 @@ r.Use(middleware.LoadSession(deps.Store.Sessions()))
 r.Use(middleware.Flash(cfg))
 r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
 auth := handlers.NewAuthHandler(views, store, site, store.Sessions(), cfg, catalog)
-session.SignIn(w, sessions, r, userID, session.CookieOptionsFromConfig(cfg))
+if err := session.SignIn(w, sessions, r, userID, session.CookieOptionsFromConfig(cfg)); err != nil {
+    httpx.ServerError(w, err, cfg)
+    return
+}
 flash.Set(w, "notice", "Bem-vindo!", cfg.CookieSecure())
 ```
 

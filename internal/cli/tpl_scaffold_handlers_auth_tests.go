@@ -23,6 +23,47 @@ func newAuthHandler(t *testing.T) (*AuthHandler, store.Store) {
 	return h, s
 }
 
+func TestAuth_RevocationFailureReturnsServerError(t *testing.T) {
+	for _, action := range []string{"login", "logout"} {
+		t.Run(action, func(t *testing.T) {
+			h, s := newAuthHandlerForSignup(t)
+			h.cfg = cais.Config{Env: "production"}
+			user, err := s.FindUserByEmail("demo@example.com")
+			if err != nil {
+				t.Fatal(err)
+			}
+			token, err := s.Sessions().Create(user.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := s.DB().Exec("CREATE TRIGGER refuse_delete BEFORE DELETE ON sessions BEGIN SELECT RAISE(FAIL, 'simulated write failure'); END"); err != nil {
+				t.Fatal(err)
+			}
+			form := url.Values{"email": {"demo@example.com"}, "password": {"password"}}
+			req := httptest.NewRequest("POST", "/"+action, strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req.AddCookie(&http.Cookie{Name: session.DefaultCookieName, Value: token})
+			rr := httptest.NewRecorder()
+			if action == "login" {
+				h.LoginPost(rr, req)
+			} else {
+				h.LogoutPost(rr, req)
+			}
+			if rr.Code != 500 || rr.Header().Get("Location") != "" {
+				t.Fatalf("failed revocation: status %d, location %q", rr.Code, rr.Header().Get("Location"))
+			}
+			if len(rr.Result().Cookies()) != 0 {
+				t.Fatal("failed revocation must leave cookie unchanged")
+			}
+			if strings.Contains(rr.Body.String(), token) || strings.Contains(rr.Body.String(), "simulated") {
+				t.Fatal("production error must be sanitized")
+			}
+			if _, ok := s.Sessions().Get(token); !ok {
+				t.Fatal("trigger must preserve original session")
+			}
+		})
+	}
+}
 func TestAuth_Login_redirectsWhenAuthenticated(t *testing.T) {
 	h, s := newAuthHandler(t)
 
@@ -96,6 +137,7 @@ import (
 	"testing"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
 
 	appi18n "{{.ModulePath}}/internal/i18n"
 	"{{.ModulePath}}/internal/store"
@@ -137,6 +179,32 @@ func TestAuth_SignUpPost_createsUserAndRedirects(t *testing.T) {
 	}
 	if user.ID == 0 {
 		t.Fatal("user id = 0")
+	}
+
+	protected := middleware.LoadSession(s.Sessions())(middleware.RequireAdmin("/login", s.DB())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) })))
+	cookies := rr.Result().Cookies()
+	for _, method := range []string{"GET", "POST", "PUT", "DELETE"} {
+		attempt := httptest.NewRequest(method, "/admin/items", nil)
+		for _, cookie := range cookies {
+			attempt.AddCookie(cookie)
+		}
+		denied := httptest.NewRecorder()
+		protected.ServeHTTP(denied, attempt)
+		if denied.Code != http.StatusForbidden {
+			t.Fatalf("signup user %s: status %d, want 403", method, denied.Code)
+		}
+	}
+	if _, err := s.DB().Exec("UPDATE users SET is_admin = 1 WHERE id = ?", user.ID); err != nil {
+		t.Fatal(err)
+	}
+	attempt := httptest.NewRequest("GET", "/admin/items", nil)
+	for _, cookie := range cookies {
+		attempt.AddCookie(cookie)
+	}
+	allowed := httptest.NewRecorder()
+	protected.ServeHTTP(allowed, attempt)
+	if allowed.Code != http.StatusNoContent {
+		t.Fatalf("admin status = %d", allowed.Code)
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 type Store interface {
 	Create(userID int64) (token string, err error)
 	Get(token string) (userID int64, ok bool)
-	Delete(token string)
+	Delete(token string) error
 }
 
 type MemoryStore struct {
@@ -39,10 +39,11 @@ func (s *MemoryStore) Get(token string) (int64, bool) {
 	return id, ok
 }
 
-func (s *MemoryStore) Delete(token string) {
+func (s *MemoryStore) Delete(token string) error {
 	s.mu.Lock()
 	delete(s.sessions, token)
 	s.mu.Unlock()
+	return nil
 }
 
 func newToken() (string, error) {

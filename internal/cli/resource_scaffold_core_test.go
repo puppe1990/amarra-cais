@@ -86,8 +86,8 @@ func TestScaffoldResource_CreatesCRUD(t *testing.T) {
 	if !strings.Contains(string(routesBody), `cais.IntParam("id", adminProducts.Show)`) {
 		t.Error("routes.go missing admin show route")
 	}
-	if !strings.Contains(string(routesBody), `middleware.RequireAuth("/login")`) {
-		t.Error("routes.go missing middleware.RequireAuth(\"/login\")")
+	if !strings.Contains(string(routesBody), `middleware.RequireAdmin("/login", deps.Store.DB())`) {
+		t.Error("routes.go missing middleware.RequireAdmin(\"/login\")")
 	}
 	if strings.Contains(string(routesBody), "\n\n\n") {
 		t.Error("routes.go has triple newlines (formatting issue)")
@@ -185,7 +185,7 @@ func TestScaffoldResource_DryRunWritesNothing(t *testing.T) {
 	}
 }
 
-func TestScaffoldResource_DefaultAdminAuthUsesRequireAuth(t *testing.T) {
+func TestScaffoldResource_DefaultAdminAuthUsesRequireAdmin(t *testing.T) {
 	t.Setenv("CAIS_SKIP_TIDY", "1")
 	appDir := filepath.Join(t.TempDir(), "items")
 	if err := scaffoldNewApp(appDir, scaffoldData{
@@ -198,8 +198,8 @@ func TestScaffoldResource_DefaultAdminAuthUsesRequireAuth(t *testing.T) {
 	}
 	body, _ := os.ReadFile(filepath.Join(appDir, "internal/app/routes.go"))
 	s := string(body)
-	if !strings.Contains(s, `middleware.RequireAuth("/login")`) {
-		t.Errorf("routes should use RequireAuth for session admin: %s", s)
+	if !strings.Contains(s, `middleware.RequireAdmin("/login", deps.Store.DB())`) {
+		t.Errorf("routes should use RequireAdmin for session admin: %s", s)
 	}
 	if strings.Contains(s, "middleware.AdminAuth(cfg)") {
 		t.Error("default should not use AdminAuth")

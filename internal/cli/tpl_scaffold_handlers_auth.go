@@ -93,7 +93,10 @@ func (h *AuthHandler) LoginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) LogoutPost(w http.ResponseWriter, r *http.Request) {
-	session.SignOut(w, h.sessions, r, session.CookieOptionsFromConfig(h.cfg))
+	if err := session.SignOut(w, h.sessions, r, session.CookieOptionsFromConfig(h.cfg)); err != nil {
+		httpx.ServerError(w, err, h.cfg)
+		return
+	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 

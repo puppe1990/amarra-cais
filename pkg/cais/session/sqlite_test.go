@@ -36,7 +36,9 @@ func TestSQLiteStore_CreateGetDelete(t *testing.T) {
 		t.Fatalf("Get = (%d, %v), want (42, true)", id, ok)
 	}
 
-	store.Delete(token)
+	if err := store.Delete(token); err != nil {
+		t.Fatal(err)
+	}
 	if _, ok := store.Get(token); ok {
 		t.Fatal("session should be deleted")
 	}
@@ -83,5 +85,83 @@ func TestSQLiteStore_PruneExpired_removesOldRows(t *testing.T) {
 	}
 	if _, ok := store.Get(token); ok {
 		t.Fatal("pruned session should not be found")
+	}
+}
+
+func TestEnsureSQLiteSchema_PopulatedLegacySessions(t *testing.T) {
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	db.SetMaxOpenConns(1)
+	for _, query := range []string{
+		"CREATE TABLE sessions (token TEXT PRIMARY KEY, user_id INTEGER, created_at TEXT)",
+		"INSERT INTO sessions VALUES ('recent', 1, datetime('now')), ('old', 2, datetime('now', '-8 days')), ('invalid', 3, 'invalid')",
+	} {
+		if _, err := db.Exec(query); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for range 2 {
+		if err := EnsureSQLiteSchema(db); err != nil {
+			t.Fatalf("legacy migration: %v", err)
+		}
+	}
+	store := NewSQLiteStore(db)
+	if id, ok := store.Get("recent"); !ok || id != 1 {
+		t.Fatalf("recent = (%d, %v)", id, ok)
+	}
+	for _, token := range []string{"old", "invalid"} {
+		if _, ok := store.Get(token); ok {
+			t.Fatalf("%s must be expired", token)
+		}
+	}
+	var count int
+	if err := db.QueryRow("SELECT COUNT(*) FROM sessions WHERE expires_at IS NOT NULL AND expires_at != ''").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 3 {
+		t.Fatalf("backfilled sessions = %d, want 3", count)
+	}
+	if _, err := store.Create(4); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestEnsureSQLiteSchema_LegacyBackfillRollsBack(t *testing.T) {
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	db.SetMaxOpenConns(1)
+	for _, query := range []string{
+		"CREATE TABLE sessions (token TEXT PRIMARY KEY, user_id INTEGER, created_at TEXT)",
+		"INSERT INTO sessions VALUES ('recent', 1, datetime('now'))",
+		"CREATE TRIGGER refuse_backfill BEFORE UPDATE ON sessions BEGIN SELECT RAISE(FAIL, 'backfill unavailable'); END",
+	} {
+		if _, err := db.Exec(query); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := EnsureSQLiteSchema(db); err == nil {
+		t.Fatal("expected backfill failure")
+	}
+	var count int
+	if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'expires_at'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatal("failed backfill must roll back the column")
+	}
+	if _, err := db.Exec("DROP TRIGGER refuse_backfill"); err != nil {
+		t.Fatal(err)
+	}
+	if err := EnsureSQLiteSchema(db); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := NewSQLiteStore(db).Get("recent"); !ok {
+		t.Fatal("retry must preserve recent session")
 	}
 }

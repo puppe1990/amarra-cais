@@ -24,7 +24,10 @@ r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
 After you validate credentials, call `session.SignIn` with the SQLite-backed store and set a flash notice:
 
 ```go
-session.SignIn(w, sessions, r, userID, session.CookieOptionsFromConfig(cfg))
+if err := session.SignIn(w, sessions, r, userID, session.CookieOptionsFromConfig(cfg)); err != nil {
+    httpx.ServerError(w, err, cfg)
+    return
+}
 flash.Set(w, "notice", "Welcome back!", cfg.CookieSecure())
 ```
 
@@ -48,10 +51,10 @@ You can also call `session.Store.PruneExpired()` from your own maintenance code;
 
 Pick one of two modes:
 
-| Mode                    | Middleware                         | Generator flag                   |
-| ----------------------- | ---------------------------------- | -------------------------------- |
-| Browser admin (default) | `middleware.RequireAuth("/login")` | `amarra-cais g resource` default |
-| Bearer token API        | `middleware.AdminAuth(cfg)`        | `--admin-auth bearer`            |
+| Mode                    | Middleware                              | Generator flag                   |
+| ----------------------- | --------------------------------------- | -------------------------------- |
+| Browser admin (default) | `middleware.RequireAdmin("/login", db)` | `amarra-cais g resource` default |
+| Bearer token API        | `middleware.AdminAuth(cfg)`             | `--admin-auth bearer`            |
 
 `amarra-cais g resource` defaults to session auth (`--admin-auth session`). Choose `--admin-auth bearer` for token-only admin APIs that have no login pages.
 
@@ -71,3 +74,7 @@ The middleware order matters: `LoadSession` → `Flash` → `CSRF` → `Security
 - [Production deploy](/amarra-cais/docs/how-to/deploy/) — the production gates that require `ADMIN_TOKEN`.
 - [Security model](/amarra-cais/docs/explanation/security-model/) — how CSRF, cookies, and sessions interact.
 - [CLI reference](/amarra-cais/docs/reference/cli/) — `g auth`, `db migrate`, and `db prune-sessions`.
+
+Public accounts start with `users.is_admin = 0`. Promote a trusted account with `UPDATE users SET is_admin = 1 WHERE email = ?` using a bound parameter. The development demo is an administrator. In existing apps, add `is_admin INTEGER NOT NULL DEFAULT 0 CHECK (is_admin IN (0, 1))` to `users` through a migration and replace `RequireAuth` with `RequireAdmin("/login", deps.Store.DB())` on `/admin/*` groups. Database failures deny access.
+
+`Store.Delete` and `session.SignOut` now return `error`. Custom stores must propagate deletion failures. Check the `SignOut` error before redirecting: call `httpx.ServerError(w, err, cfg)` and return on failure. Login and logout preserve the cookie when revocation fails; the old token remains valid, so the app must report failure and allow a retry. Never log tokens.
