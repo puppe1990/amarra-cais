@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -43,9 +45,104 @@ func TestStaticForEnv_production_allowsCache(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/static/app.js", nil)
 	r.ServeHTTP(rr, req)
 
-	if rr.Header().Get("Cache-Control") == "no-store" {
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d", rr.Code)
+	}
+	cc := rr.Header().Get("Cache-Control")
+	if !strings.Contains(cc, "public") {
+		t.Errorf("Cache-Control = %q, want public", cc)
+	}
+	age := cacheControlMaxAge(cc)
+	if age < 86400 {
+		t.Errorf("Cache-Control = %q, want max-age >= 86400 (got %d)", cc, age)
+	}
+	if strings.Contains(cc, "no-store") {
 		t.Error("production static should not force no-store")
 	}
+}
+
+func TestStaticForEnv_production_swJSMustRevalidate(t *testing.T) {
+	dir := t.TempDir()
+	jsDir := filepath.Join(dir, "js")
+	if err := os.MkdirAll(jsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(jsDir, "sw.js"), []byte("/* sw */"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	r := NewRouter()
+	r.StaticForEnv("/static", dir, Config{Env: "production"})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/static/js/sw.js", nil)
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d", rr.Code)
+	}
+	cc := rr.Header().Get("Cache-Control")
+	if !strings.Contains(cc, "must-revalidate") && !strings.Contains(cc, "max-age=0") {
+		t.Errorf("sw.js Cache-Control = %q, want must-revalidate or max-age=0", cc)
+	}
+	if strings.Contains(cc, "immutable") {
+		t.Errorf("sw.js must not be immutable, got %q", cc)
+	}
+}
+
+func TestStatic_emptyConfigGetsProductionTTL(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "app.js"), []byte("v1"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	r := NewRouter()
+	r.Static("/static", dir)
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/static/app.js", nil)
+	r.ServeHTTP(rr, req)
+
+	cc := rr.Header().Get("Cache-Control")
+	if cc == "no-store" {
+		t.Fatal("Static with empty Config must not force no-store")
+	}
+	if !strings.Contains(cc, "public") || cacheControlMaxAge(cc) < 86400 {
+		t.Errorf("Static empty Config Cache-Control = %q, want production TTL", cc)
+	}
+}
+
+func TestStaticForEnv_production_404NotLongLived(t *testing.T) {
+	dir := t.TempDir()
+	r := NewRouter()
+	r.StaticForEnv("/static", dir, Config{Env: "production"})
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/static/missing.js", nil)
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", rr.Code)
+	}
+	cc := rr.Header().Get("Cache-Control")
+	if cacheControlMaxAge(cc) >= 86400 {
+		t.Errorf("404 must not be cached long, Cache-Control = %q", cc)
+	}
+}
+
+func cacheControlMaxAge(cc string) int {
+	for _, part := range strings.Split(cc, ",") {
+		part = strings.TrimSpace(part)
+		if !strings.HasPrefix(part, "max-age=") {
+			continue
+		}
+		n, err := strconv.Atoi(strings.TrimPrefix(part, "max-age="))
+		if err != nil {
+			return 0
+		}
+		return n
+	}
+	return 0
 }
 
 // Default SW scope is the script directory (/static/js/). Pages live at /, so
