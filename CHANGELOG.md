@@ -4,6 +4,19 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.21.2] - 2026-10-15
+
+### Fixed
+
+- Kit flash uses a stable `amarra-flash` id so Drive removes the notice instead of reusing its DOM node as the next page wrapper. Delayed removal of the old notice cannot remove page content (#345).
+- Cancelling a Drive confirmation on a link, form or submit button prevents the native browser action as well as the fetch (#346).
+- Live contains panics from initial `Mount` and `Render` in the connection reader, logs the stack and closes only the affected socket with a generic internal error. Other connections and new requests continue serving (#347).
+- Drive rechecks navigation ownership after reading a response body, preventing stale HTML, stream operations and history changes after a newer visit completes (#348).
+
+### Upgrade
+
+- Patch release: no new public API or breaking changes. Run `amarra-cais upgrade v0.21.2` in existing apps and `amarra-cais pwa --bump` to refresh vendored JavaScript. Apps overriding `web/templates/components/flash.html` should add `id="amarra-flash"`; delayed dismiss callbacks should query `#amarra-flash` when they run rather than retaining a DOM node across navigation.
+
 ## [0.21.1] - 2026-10-13
 
 ### Fixed
