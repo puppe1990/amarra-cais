@@ -69,3 +69,30 @@ for (const confirmedElement of ["form", "submitter", "link"]) {
     expect(requests).toEqual([]);
   });
 }
+
+test("Drive removes flash without reusing it as the next page wrapper", async ({ page }) => {
+  await page.goto("/login");
+  // Native login consumes the one-shot flash on the destination, without the
+  // shell-change Drive fallback making a second GET before this probe.
+  await page
+    .locator("form:has(#email)")
+    .evaluate((form) => form.setAttribute("data-amarra-skip", ""));
+  await page.locator("#email").fill("demo@example.com");
+  await page.locator("#password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  const flash = page.locator("#amarra-flash");
+  await expect(flash).toBeVisible();
+  await page.evaluate(() => {
+    window.__oldFlash = document.getElementById("amarra-flash");
+    const link = document.createElement("a");
+    link.href = "/dashboard";
+    link.textContent = "Flash navigation probe";
+    document.querySelector("#amarra-main").append(link);
+  });
+  await page.getByText("Flash navigation probe", { exact: true }).click();
+  await expect(flash).toHaveCount(0);
+  expect(await page.evaluate(() => window.__oldFlash.isConnected)).toBe(false);
+  await page.evaluate(() => window.__oldFlash.remove());
+  await expect(page.locator("#amarra-main")).not.toBeEmpty();
+});
