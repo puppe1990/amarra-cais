@@ -4,6 +4,21 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.22.1] - 2026-10-15
+
+### Fixed
+
+- `amarra-cais upgrade` from 0.21.1 to 0.22.0 prints SignOut/`Delete` error handling, `users.is_admin` + `RequireAdmin`, and the `amarra-flash` id. A CHANGELOG `### Upgrade` section without a matching `frameworkMigrations` row now fails the suite (#354).
+- `StaticForEnv` in production sends `Cache-Control: public, max-age=31536000` on successful `/static/*` responses and `public, max-age=0, must-revalidate` on `sw.js`. 404s are not long-cached. Development stays `no-store`. HTML from `view.Write` remains `no-store` (#80, #355).
+
+### Added
+
+- `amarra-cais doctor` (and `--mobile`) warns when `web/static/fonts/*.{woff2,woff,ttf,otf}` exceeds 200 KiB so a copied Material Symbols variable file shows up before PageSpeed (#356).
+
+### Upgrade
+
+- Patch release: no public API change. Run `amarra-cais upgrade v0.22.1` in existing apps and `amarra-cais pwa --bump`. Production static cache is automatic; drop app wrappers that only set those headers. `doctor` now flags oversized self-hosted fonts.
+
 ## [0.22.0] - 2026-10-15
 
 ### Security
