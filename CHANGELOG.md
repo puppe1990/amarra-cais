@@ -4,6 +4,25 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.22.0] - 2026-10-15
+
+### Security
+
+- Generated session admin CRUD requires a persisted `users.is_admin` role on every request. Public signup defaults to a non-admin account; the development demo account is an admin. Guests redirect to login and ordinary users receive 403. Missing schemas and database failures deny access (#350).
+- Logout and login rotation propagate session deletion failures without clearing or replacing the cookie. Generated handlers return 500 instead of a success redirect and sanitize production errors (#352).
+
+### Fixed
+
+- Legacy SQLite session tables with existing rows migrate atomically using a constant column default and a transactional expiry backfill. Sessions retain `created_at + 7 days`; invalid creation dates expire immediately. Failed backfills roll back safely and migrations are idempotent (#351).
+
+### Changed
+
+- **Breaking API:** `session.Store.Delete(token string)` now returns `error`, as does `session.SignOut`. Custom stores must adopt the new signature and return failures. Login and logout callers must handle errors before reporting success.
+
+### Upgrade
+
+- Minor release because the public session store contract changes. Update the CLI and run `amarra-cais upgrade v0.22.0` in apps. Existing source is not rewritten: migrate `users.is_admin`, protect admin groups with `middleware.RequireAdmin("/login", deps.Store.DB())`, promote only trusted accounts explicitly, and handle `SignOut` errors. See [security upgrade instructions](docs/security-upgrade.md). Refresh vendored assets with `amarra-cais pwa --bump`.
+
 ## [0.21.2] - 2026-10-15
 
 ### Fixed
