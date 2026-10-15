@@ -10,6 +10,7 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.22.1", Title: "production static Cache-Control", Action: "production /static 200s send public, max-age=31536000; sw.js is must-revalidate. Drop app wrappers that only set those headers. doctor warns when web/static/fonts exceeds 200 KiB"},
 	{Version: "0.22.0", Title: "SignOut and Delete return error", Action: "handle session.Store.Delete and session.SignOut errors in logout and login rotation before redirecting; see docs/security-upgrade.md"},
 	{Version: "0.22.0", Title: "admin CRUD requires is_admin", Action: "generated /admin/* CRUD requires users.is_admin plus middleware.RequireAdmin; public signup no longer promotes admin"},
 	{Version: "0.21.2", Title: "flash override needs amarra-flash id", Action: "apps overriding web/templates/components/flash.html must keep id=\"amarra-flash\""},
