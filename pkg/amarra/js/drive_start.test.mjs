@@ -317,7 +317,7 @@ test("start skips navigation when confirm is cancelled", async () => {
   fire(doc, ev);
   await Promise.resolve();
   assert.equal(fetches.length, 0);
-  assert.equal(ev.defaultPrevented, false);
+  assert.equal(ev.defaultPrevented, true);
 });
 
 test("start uses data-amarra-method on links", async () => {
@@ -365,3 +365,32 @@ test("start includes submitter and formaction in the Drive POST", async () => {
   assert.equal(fetches[0].body instanceof URLSearchParams, true);
   assert.deepEqual([...fetches[0].body.entries()], [["op", "create"]]);
 });
+
+for (const confirmedElement of ["form", "submitter"]) {
+  for (const accepted of [false, true]) {
+    test(`start ${accepted ? "accepts" : "cancels"} ${confirmedElement} confirmation without native POST`, async () => {
+      const doc = fakeDocument();
+      const { fetches, fetchFn } = recordingFetch();
+      start({
+        document: doc,
+        location: { href: "http://a/", origin: "http://a" },
+        fetchFn,
+        popstate: false,
+        morphFn() {},
+        FormData: FakeFormData,
+        confirm: () => accepted,
+      });
+      const form = fakeForm({ action: "/delete" });
+      const submitter = { getAttribute: () => null };
+      const element = confirmedElement === "form" ? form : submitter;
+      const original = element.getAttribute;
+      element.getAttribute = (name) =>
+        name === "data-amarra-confirm" ? "Delete?" : original(name);
+      const ev = submitEvent(form, { submitter });
+      fire(doc, ev);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      assert.equal(ev.defaultPrevented, true);
+      assert.equal(fetches.length, accepted ? 1 : 0);
+    });
+  }
+}

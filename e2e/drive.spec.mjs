@@ -39,3 +39,33 @@ test("422 signup submit focuses the first aria-invalid field", async ({ page }) 
   await expect(page.locator("#email")).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator("#email")).toBeFocused();
 });
+
+for (const confirmedElement of ["form", "submitter", "link"]) {
+  test(`cancel ${confirmedElement} confirmation blocks native action`, async ({ page }) => {
+    await page.goto("/login");
+    const requests = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/cancel-probe")) requests.push(request.url());
+    });
+    page.on("dialog", (dialog) => dialog.dismiss());
+    await page.evaluate((element) => {
+      const confirm = 'data-amarra-confirm="Delete?"';
+      document.querySelector("#amarra-main").innerHTML =
+        element === "link"
+          ? `<a href="/cancel-probe" ${confirm}>Cancel probe</a>`
+          : `<form action="/cancel-probe" method="post" ${element === "form" ? confirm : ""}>
+            <button ${element === "submitter" ? confirm : ""}>Cancel probe</button></form>`;
+      document.addEventListener(
+        element === "link" ? "click" : "submit",
+        (event) => {
+          window.__cancelPrevented = event.defaultPrevented;
+        },
+        { once: true }
+      );
+    }, confirmedElement);
+    await page.getByText("Cancel probe", { exact: true }).click();
+    expect(await page.evaluate(() => window.__cancelPrevented)).toBe(true);
+    await expect(page).toHaveURL(/\/login$/);
+    expect(requests).toEqual([]);
+  });
+}
