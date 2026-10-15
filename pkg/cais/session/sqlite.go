@@ -23,23 +23,38 @@ func EnsureSQLiteSchema(db *sql.DB) error {
 	return migrateSQLiteSchema(db)
 }
 
-// migrateSQLiteSchema adds expires_at for databases created before session TTL shipped.
-// ALTER is idempotent via pragma check — avoids breaking existing app.db files on upgrade.
+// migrateSQLiteSchema preserves each legacy session's original seven-day TTL.
+// SQLite forbids computed defaults in ALTER on populated tables (#351).
 func migrateSQLiteSchema(db *sql.DB) error {
-	var count int
-	err := db.QueryRow(
-		`SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'expires_at'`,
-	).Scan(&count)
+	tx, err := db.Begin()
 	if err != nil {
+		return fmt.Errorf("sessions schema begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	if err := backfillSQLiteExpiry(tx); err != nil {
 		return fmt.Errorf("sessions schema migrate: %w", err)
 	}
-	if count == 0 {
-		_, err = db.Exec(`ALTER TABLE sessions ADD COLUMN expires_at TEXT NOT NULL DEFAULT (datetime('now', '+7 days'))`)
-		if err != nil {
-			return fmt.Errorf("sessions schema migrate: %w", err)
-		}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("sessions schema commit: %w", err)
 	}
 	return nil
+}
+
+func backfillSQLiteExpiry(tx *sql.Tx) error {
+	var count int
+	if err := tx.QueryRow("SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'expires_at'").Scan(&count); err != nil {
+		return err
+	}
+	if count != 0 {
+		return nil
+	}
+	if _, err := tx.Exec("ALTER TABLE sessions ADD COLUMN expires_at TEXT NOT NULL DEFAULT ''"); err != nil {
+		return err
+	}
+	// Invalid/missing creation dates expire immediately; never extend credentials
+	// whose age cannot be established. Keep ALTER and backfill atomic.
+	_, err := tx.Exec("UPDATE sessions SET expires_at = COALESCE(datetime(created_at, '+7 days'), datetime('now'))")
+	return err
 }
 
 // SQLiteStore persists sessions in SQLite.

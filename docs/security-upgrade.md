@@ -19,3 +19,7 @@ UPDATE users SET is_admin = 1 WHERE email = ?;
 ```
 
 Replace `RequireAuth` with `RequireAdmin` on existing `/admin/*` groups. A framework/CLI update does not rewrite existing app source. Minimal apps need `g auth` before session admin access can be granted. Personal resources also require app-specific ownership checks.
+
+## Legacy session expiry (#351)
+
+`session.EnsureSQLiteSchema` migrates populated legacy tables transactionally. Existing sessions retain expiry at `created_at + 7 days`; older sessions remain expired. Missing or invalid creation dates expire immediately. Repeating the migration is safe, and a failed backfill rolls back the column addition so it can be retried.
