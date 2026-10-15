@@ -93,8 +93,11 @@ func (s *SQLiteStore) Get(token string) (int64, bool) {
 	return id, true
 }
 
-func (s *SQLiteStore) Delete(token string) {
-	_, _ = s.db.Exec("DELETE FROM sessions WHERE token = ?", token)
+func (s *SQLiteStore) Delete(token string) error {
+	if _, err := s.db.Exec("DELETE FROM sessions WHERE token = ?", token); err != nil {
+		return fmt.Errorf("delete session: %w", err)
+	}
+	return nil
 }
 
 func (s *SQLiteStore) PruneExpired() (int64, error) {

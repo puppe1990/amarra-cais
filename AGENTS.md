@@ -160,7 +160,10 @@ r.Use(middleware.LoadSession(deps.Store.Sessions()))
 r.Use(middleware.Flash(cfg))
 r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
 auth := handlers.NewAuthHandler(views, store, site, store.Sessions(), cfg, catalog)
-session.SignIn(w, sessions, r, userID, session.CookieOptionsFromConfig(cfg))
+if err := session.SignIn(w, sessions, r, userID, session.CookieOptionsFromConfig(cfg)); err != nil {
+    httpx.ServerError(w, err, cfg)
+    return
+}
 flash.Set(w, "notice", "Bem-vindo!", cfg.CookieSecure())
 ```
 

@@ -3,6 +3,7 @@ package session
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -68,7 +69,9 @@ func TestSignOut_ClearsCookieAndSession(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: DefaultCookieName, Value: token})
 	rr := httptest.NewRecorder()
 
-	SignOut(rr, store, req, CookieOptions{})
+	if err := SignOut(rr, store, req, CookieOptions{}); err != nil {
+		t.Fatal(err)
+	}
 
 	if _, ok := store.Get(token); ok {
 		t.Error("session should be deleted")
@@ -77,5 +80,48 @@ func TestSignOut_ClearsCookieAndSession(t *testing.T) {
 	defer func() { _ = res.Body.Close() }()
 	if len(res.Cookies()) != 1 || res.Cookies()[0].MaxAge != -1 {
 		t.Error("expected cleared cookie")
+	}
+}
+
+func TestSessionRevocationFailure_DoesNotChangeCookie(t *testing.T) {
+	for _, action := range []string{"login", "logout"} {
+		t.Run(action, func(t *testing.T) {
+			db := testDB(t)
+			store := NewSQLiteStore(db)
+			token, err := store.Create(7)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := db.Exec("CREATE TRIGGER refuse_delete BEFORE DELETE ON sessions BEGIN SELECT RAISE(FAIL, 'simulated write failure'); END"); err != nil {
+				t.Fatal(err)
+			}
+			req := httptest.NewRequest("POST", "/"+action, nil)
+			req.AddCookie(&http.Cookie{Name: DefaultCookieName, Value: token})
+			rr := httptest.NewRecorder()
+			if action == "login" {
+				err = SignIn(rr, store, req, 7, CookieOptions{})
+			} else {
+				err = SignOut(rr, store, req, CookieOptions{})
+			}
+			if err == nil {
+				t.Fatal("revocation failure must reach caller")
+			}
+			if strings.Contains(err.Error(), token) {
+				t.Fatal("error must not contain session token")
+			}
+			if len(rr.Result().Cookies()) != 0 {
+				t.Fatal("failed revocation must not change cookie or issue a new token")
+			}
+			if _, ok := store.Get(token); !ok {
+				t.Fatal("trigger should leave original session intact")
+			}
+			var count int
+			if err := db.QueryRow("SELECT COUNT(*) FROM sessions").Scan(&count); err != nil {
+				t.Fatal(err)
+			}
+			if count != 1 {
+				t.Fatalf("sessions = %d, want 1", count)
+			}
+		})
 	}
 }

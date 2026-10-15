@@ -23,3 +23,19 @@ Replace `RequireAuth` with `RequireAdmin` on existing `/admin/*` groups. A frame
 ## Legacy session expiry (#351)
 
 `session.EnsureSQLiteSchema` migrates populated legacy tables transactionally. Existing sessions retain expiry at `created_at + 7 days`; older sessions remain expired. Missing or invalid creation dates expire immediately. Repeating the migration is safe, and a failed backfill rolls back the column addition so it can be retried.
+
+## Session revocation errors (#352)
+
+`session.Store.Delete(token string)` now returns `error`. Custom stores must return deletion failures and return `nil` after successful deletion. `session.SignOut` now returns `error`; `SignIn` also propagates failures while revoking the previous session. No replacement or cleared cookie is sent when revocation fails, so the client can retry. A failed logout does not revoke the server token.
+
+Existing apps must handle the error before redirecting or reporting success:
+
+```go
+if err := session.SignOut(w, sessions, r, session.CookieOptionsFromConfig(cfg)); err != nil {
+    httpx.ServerError(w, err, cfg)
+    return
+}
+http.Redirect(w, r, "/login", http.StatusSeeOther)
+```
+
+The scaffold logs errors in production through `httpx.ServerError` and returns HTTP 500 without a success redirect. Never include session tokens in errors or logs. Existing login handlers should already check the error from `SignIn`.
