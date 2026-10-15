@@ -98,6 +98,9 @@ func TestKit_flashReadsPageData(t *testing.T) {
 		Data: map[string]any{"Flash": "Saved!"},
 	}, cais.Config{})
 	body := rr.Body.String()
+	if !strings.Contains(body, `id="amarra-flash"`) {
+		t.Fatalf("flash needs stable morph identity: %q", body)
+	}
 	if !strings.Contains(body, "Saved!") {
 		t.Fatalf("flash did not read page .Flash: %q", body)
 	}

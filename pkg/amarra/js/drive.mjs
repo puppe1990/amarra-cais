@@ -264,6 +264,8 @@ export async function visit(url, opts = {}) {
       return { action: "assign" };
     }
     const html = authFailure ? "" : await res.text();
+    // Reading the body can outlive a newer visit even after fetch resolved (#348).
+    if (!isCurrentSequence(doc, seq)) return { action: "superseded" };
     if (stream) {
       for (const op of parseSSE(html)) applyOp(op, doc, opts);
       return { action: "stream" };
@@ -321,9 +323,9 @@ export function start(opts = {}) {
     ) {
       return;
     }
+    event.preventDefault();
     if (!confirmOk(a, opts.confirm)) return;
     const method = requestMethod(a, "GET");
-    event.preventDefault();
     const hrefURL = resolved?.href ?? href;
     void (async () => {
       if (await visitIntoFrame(a, hrefURL, shared)) return;
@@ -360,9 +362,9 @@ export function start(opts = {}) {
     ) {
       return;
     }
+    event.preventDefault();
     if (!confirmOk(form, opts.confirm) || !confirmOk(submitter, opts.confirm)) return;
     const verb = requestMethod(form, method);
-    event.preventDefault();
     const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
     const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
     const body = verb === "GET" ? undefined : driveFormBody(fd);

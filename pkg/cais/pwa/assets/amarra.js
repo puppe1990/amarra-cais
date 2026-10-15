@@ -1,4 +1,4 @@
-/* amarra-cais v0.21.1 */
+/* amarra-cais v0.21.2 */
 (() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
@@ -2733,6 +2733,7 @@ ${lines.join("\n")}
         return { action: "assign" };
       }
       const html = authFailure ? "" : await res.text();
+      if (!isCurrentSequence(doc, seq)) return { action: "superseded" };
       if (stream) {
         for (const op of parseSSE(html)) applyOp(op, doc, opts);
         return { action: "stream" };
@@ -2785,9 +2786,9 @@ ${lines.join("\n")}
       })) {
         return;
       }
+      event.preventDefault();
       if (!confirmOk(a, opts.confirm)) return;
       const method = requestMethod(a, "GET");
-      event.preventDefault();
       const hrefURL = resolved?.href ?? href;
       void (async () => {
         if (await visitIntoFrame(a, hrefURL, shared)) return;
@@ -2811,9 +2812,9 @@ ${lines.join("\n")}
       })) {
         return;
       }
+      event.preventDefault();
       if (!confirmOk(form, opts.confirm) || !confirmOk(submitter, opts.confirm)) return;
       const verb = requestMethod(form, method);
-      event.preventDefault();
       const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
       const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
       const body = verb === "GET" ? void 0 : driveFormBody(fd);

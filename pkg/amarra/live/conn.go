@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -126,6 +127,14 @@ func (h *Hub) serve(w http.ResponseWriter, r *http.Request) {
 
 func (c *conn) readLoop(ctx context.Context, r *http.Request, cancel context.CancelFunc) {
 	defer cancel()
+	// The reader owns the initial Mount/Render in its own goroutine, outside
+	// HTTP middleware recovery. Contain a broken view to this socket (#347).
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Printf("amarra live join panic: %v\n%s", rec, debug.Stack())
+			_ = c.ws.Close(websocket.StatusInternalError, "internal error")
+		}
+	}()
 	joined := false
 	for {
 		_, data, err := c.ws.Read(ctx)
@@ -219,8 +228,9 @@ func (c *conn) join(ctx context.Context) (Rendered, error) {
 	if err := c.view.Mount(ctx, c.sock); err != nil {
 		return Rendered{}, err
 	}
+	rendered := c.view.Render()
 	c.joined = true
-	return c.view.Render(), nil
+	return rendered, nil
 }
 
 // clientMessage hides internal error detail outside development (#98); the
