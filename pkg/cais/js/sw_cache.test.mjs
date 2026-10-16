@@ -32,6 +32,7 @@ function createServiceWorker({ fetchImpl } = {}) {
   const handlers = {};
   const cacheStore = new Map();
   const deleted = [];
+  const fetchCalls = [];
   const cache = {
     put(req, res) {
       cacheStore.set(req.url, res);
@@ -75,13 +76,16 @@ function createServiceWorker({ fetchImpl } = {}) {
         return Promise.resolve(cacheStore.get(key));
       },
     },
-    fetch: fetchImpl ?? (() => Promise.resolve(response("ok"))),
+    fetch: (req, init) => {
+      fetchCalls.push({ req, init });
+      return (fetchImpl ?? (() => Promise.resolve(response("ok"))))(req, init);
+    },
     Response: { error: () => ({ type: "error" }) },
     URL,
   };
   vm.createContext(sandbox);
   vm.runInContext(SW_SOURCE, sandbox);
-  return { handlers, cacheStore, deleted };
+  return { handlers, cacheStore, deleted, fetchCalls };
 }
 
 async function fire(handlers, req) {
@@ -172,4 +176,30 @@ test("amarra:clear-cache message wipes the cache", async () => {
   }
   await Promise.all(waits);
   assert.ok(deleted.length > 0, "message must clear the cache");
+});
+
+// #359: network-first for amarra.js/css used a bare fetch(), so the browser
+// HTTP cache could still return last year's bytes even after a deploy.
+test("network-first CSS and JS revalidate the HTTP cache", async () => {
+  const { handlers, fetchCalls } = createServiceWorker({
+    fetchImpl: () => Promise.resolve(response("fresh", { "cache-control": "max-age=31536000" })),
+  });
+  await fire(handlers, request("https://app.test/static/js/amarra.js", { accept: "*/*" }));
+  await fire(handlers, request("https://app.test/static/css/styles.css", { accept: "text/css" }));
+  assert.equal(fetchCalls.length, 2);
+  for (const call of fetchCalls) {
+    assert.equal(call.init?.cache, "no-cache");
+  }
+});
+
+test("network-first CSS still falls back to Cache Storage when offline", async () => {
+  const { handlers, cacheStore } = createServiceWorker({
+    fetchImpl: () => Promise.reject(new Error("offline")),
+  });
+  cacheStore.set("https://app.test/static/css/styles.css", response("cached-css"));
+  const res = await fire(
+    handlers,
+    request("https://app.test/static/css/styles.css", { accept: "text/css" })
+  );
+  assert.equal(res.body, "cached-css");
 });

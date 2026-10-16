@@ -60,7 +60,7 @@ Sem ele, ambos os caminhos caem no `http.NotFound` (`text/plain`).
 
 ## Raiz exata e arquivos estáticos
 
-Um pattern `"/"` sozinho é reescrito para o wildcard de fim de path `/{$}`, então o handler da home corresponde apenas à raiz exata em vez de a todo path não correspondido (como `/.env` ou `/nope`). Patterns reais de subárvore como `"/static/"` mantêm o comportamento de prefixo. Sirva arquivos com `r.Static(prefix, dir)` (ou `StaticForEnv` com um `Config`). Em desenvolvimento ele define `Cache-Control: no-store` para que edições de JS/CSS valham sem um rebuild. Em produção (e em `Static`, que usa um `Config` vazio) as respostas 200 de `/static/*` saem com `public, max-age=31536000` e `sw.js` com `public, max-age=0, must-revalidate`. O estático não passa pelo `wrap()` do router (`handlePattern`), então CSS e fontes não ganham cookie de sessão/flash.
+Um pattern `"/"` sozinho é reescrito para o wildcard de fim de path `/{$}`, então o handler da home corresponde apenas à raiz exata em vez de a todo path não correspondido (como `/.env` ou `/nope`). Patterns reais de subárvore como `"/static/"` mantêm o comportamento de prefixo. Sirva arquivos com `r.Static(prefix, dir)` (ou `StaticForEnv` com um `Config`). Em desenvolvimento ele define `Cache-Control: no-store` para que edições de JS/CSS valham sem um rebuild. Em produção (e em `Static`, que usa um `Config` vazio) fontes, ícones e imagens saem com `public, max-age=31536000`; CSS, JS, o web manifest e `sw.js` saem com `public, max-age=0, must-revalidate` — esses nomes de arquivo não mudam entre deploys. O estático não passa pelo `wrap()` do router (`handlePattern`), então CSS e fontes não ganham cookie de sessão/flash.
 
 ## Conflitos no ServeMux
 

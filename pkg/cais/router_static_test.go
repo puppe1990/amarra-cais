@@ -34,7 +34,7 @@ func TestStaticForEnv_development_noCache(t *testing.T) {
 
 func TestStaticForEnv_production_allowsCache(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "app.js"), []byte("v1"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "icon.png"), []byte("png"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -42,7 +42,7 @@ func TestStaticForEnv_production_allowsCache(t *testing.T) {
 	r.StaticForEnv("/static", dir, Config{Env: "production"})
 
 	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/static/app.js", nil)
+	req := httptest.NewRequest(http.MethodGet, "/static/icon.png", nil)
 	r.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
@@ -58,6 +58,49 @@ func TestStaticForEnv_production_allowsCache(t *testing.T) {
 	}
 	if strings.Contains(cc, "no-store") {
 		t.Error("production static should not force no-store")
+	}
+}
+
+// #359: styles.css and amarra.js are stable names. A year-long TTL keeps the
+// previous deploy's bytes in the HTTP cache after HTML (no-store) already
+// points at the new files.
+func TestStaticForEnv_production_cssJSMustRevalidate(t *testing.T) {
+	dir := t.TempDir()
+	cssDir := filepath.Join(dir, "css")
+	jsDir := filepath.Join(dir, "js")
+	if err := os.MkdirAll(cssDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(jsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(cssDir, "styles.css"), []byte("body{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(jsDir, "amarra.js"), []byte("/* js */"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	r := NewRouter()
+	r.StaticForEnv("/static", dir, Config{Env: "production"})
+
+	for _, path := range []string{"/static/css/styles.css", "/static/js/amarra.js"} {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		r.ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("%s status = %d", path, rr.Code)
+		}
+		cc := rr.Header().Get("Cache-Control")
+		if !strings.Contains(cc, "must-revalidate") && !strings.Contains(cc, "max-age=0") {
+			t.Errorf("%s Cache-Control = %q, want must-revalidate or max-age=0", path, cc)
+		}
+		if cacheControlMaxAge(cc) >= 86400 {
+			t.Errorf("%s must not be cached for a year, Cache-Control = %q", path, cc)
+		}
+		if strings.Contains(cc, "immutable") {
+			t.Errorf("%s must not be immutable, got %q", path, cc)
+		}
 	}
 }
 
@@ -92,7 +135,7 @@ func TestStaticForEnv_production_swJSMustRevalidate(t *testing.T) {
 
 func TestStatic_emptyConfigGetsProductionTTL(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "app.js"), []byte("v1"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "icon.png"), []byte("png"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -100,7 +143,7 @@ func TestStatic_emptyConfigGetsProductionTTL(t *testing.T) {
 	r.Static("/static", dir)
 
 	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/static/app.js", nil)
+	req := httptest.NewRequest(http.MethodGet, "/static/icon.png", nil)
 	r.ServeHTTP(rr, req)
 
 	cc := rr.Header().Get("Cache-Control")
