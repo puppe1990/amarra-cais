@@ -2505,6 +2505,30 @@ ${lines.join("\n")}
     prev.el.disabled = prev.disabled;
     if (prev.text != null) prev.el.textContent = prev.text;
   }
+  function withQuery(action, fd) {
+    if (!fd || typeof fd.entries !== "function") return action;
+    const params = new URLSearchParams();
+    for (const [key, value] of fd.entries()) {
+      if (typeof value === "string") params.append(key, value);
+    }
+    const raw = String(action ?? "");
+    try {
+      const u = new URL(raw, "http://amarra.invalid");
+      u.search = params.toString();
+      if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) {
+        return u.toString();
+      }
+      return u.pathname + u.search + u.hash;
+    } catch {
+      const q = params.toString();
+      if (!q) return raw;
+      const hashAt = raw.indexOf("#");
+      const before = hashAt === -1 ? raw : raw.slice(0, hashAt);
+      const hash = hashAt === -1 ? "" : raw.slice(hashAt);
+      const base = before.split("?")[0];
+      return `${base}?${q}${hash}`;
+    }
+  }
   function driveFormBody(formData, URLSearchParamsCtor = URLSearchParams, FileCtor = typeof File !== "undefined" ? File : null) {
     if (!formData) return null;
     for (const [, value] of formData.entries()) {
@@ -2935,16 +2959,6 @@ ${lines.join("\n")}
     } catch {
       return null;
     }
-  }
-  function withQuery(action, fd) {
-    if (!fd || typeof fd.entries !== "function") return action;
-    const params = new URLSearchParams();
-    for (const [key, value] of fd.entries()) {
-      if (typeof value === "string") params.append(key, value);
-    }
-    const q = params.toString();
-    if (!q) return action;
-    return action.includes("?") ? `${action}&${q}` : `${action}?${q}`;
   }
 
   // pkg/amarra/js/live.mjs

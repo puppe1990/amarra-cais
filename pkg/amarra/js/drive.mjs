@@ -16,6 +16,7 @@ import {
   driveFormBody,
   requestMethod,
   restoreSubmit,
+  withQuery,
 } from "./drive_form.mjs";
 import { captureScroll, focusFirstInvalid, restoreScroll } from "./drive_restore.mjs";
 
@@ -504,15 +505,4 @@ function resolveURL(href, location) {
   } catch {
     return null;
   }
-}
-
-function withQuery(action, fd) {
-  if (!fd || typeof fd.entries !== "function") return action;
-  const params = new URLSearchParams();
-  for (const [key, value] of fd.entries()) {
-    if (typeof value === "string") params.append(key, value);
-  }
-  const q = params.toString();
-  if (!q) return action;
-  return action.includes("?") ? `${action}&${q}` : `${action}?${q}`;
 }

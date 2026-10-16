@@ -258,7 +258,7 @@ function submitEvent(form, extras = {}) {
 function FakeFormData(form, submitter) {
   this.form = form;
   this.submitter = submitter;
-  this.pairs = [];
+  this.pairs = [...(form?.fields ?? [])];
   if (submitter?.name) this.pairs.push([submitter.name, submitter.value ?? ""]);
 }
 FakeFormData.prototype.entries = function* entries() {
@@ -364,6 +364,82 @@ test("start includes submitter and formaction in the Drive POST", async () => {
   assert.equal(fetches[0].method, "POST");
   assert.equal(fetches[0].body instanceof URLSearchParams, true);
   assert.deepEqual([...fetches[0].body.entries()], [["op", "create"]]);
+});
+
+// #361: native GET replaces the action query with the form fields. Concatenating
+// left q=antigo as the first value, and r.URL.Query().Get("q") kept reading it.
+test("start GET form replaces the action query instead of appending", async () => {
+  const doc = fakeDocument();
+  const location = { href: "http://localhost/items?q=antigo", origin: "http://localhost" };
+  const { fetches, fetchFn } = recordingFetch();
+  start({
+    document: doc,
+    location,
+    fetchFn,
+    popstate: false,
+    morphFn() {},
+    FormData: FakeFormData,
+  });
+  const form = fakeForm({ action: "http://localhost/items?q=antigo", method: "get" });
+  form.fields = [["q", "novo"]];
+  const ev = submitEvent(form);
+  fire(doc, ev);
+  assert.equal(ev.defaultPrevented, true);
+  await Promise.resolve();
+  assert.equal(fetches.length, 1);
+  assert.equal(fetches[0].url, "http://localhost/items?q=novo");
+  assert.equal(fetches[0].method, "GET");
+  assert.equal(fetches[0].body, undefined);
+});
+
+test("start GET form with omitted action does not keep the current page query", async () => {
+  const doc = fakeDocument();
+  const location = {
+    href: "http://localhost/items?page=2",
+    origin: "http://localhost",
+  };
+  const { fetches, fetchFn } = recordingFetch();
+  start({
+    document: doc,
+    location,
+    fetchFn,
+    popstate: false,
+    morphFn() {},
+    FormData: FakeFormData,
+  });
+  const form = fakeForm({ action: "", method: "get" });
+  form.action = "http://localhost/items?page=2";
+  form.fields = [["q", "novo"]];
+  fire(doc, submitEvent(form));
+  await Promise.resolve();
+  assert.equal(fetches.length, 1);
+  assert.equal(fetches[0].url, "http://localhost/items?q=novo");
+});
+
+test("start GET form keeps repeated fields and puts the fragment after the query", async () => {
+  const doc = fakeDocument();
+  const location = { href: "http://localhost/items", origin: "http://localhost" };
+  const { fetches, fetchFn } = recordingFetch();
+  start({
+    document: doc,
+    location,
+    fetchFn,
+    popstate: false,
+    morphFn() {},
+    FormData: FakeFormData,
+  });
+  const form = fakeForm({
+    action: "http://localhost/items?q=antigo#lista",
+    method: "get",
+  });
+  form.fields = [
+    ["tag", "a"],
+    ["tag", "b"],
+  ];
+  fire(doc, submitEvent(form));
+  await Promise.resolve();
+  assert.equal(fetches.length, 1);
+  assert.equal(fetches[0].url, "http://localhost/items?tag=a&tag=b#lista");
 });
 
 for (const confirmedElement of ["form", "submitter"]) {
