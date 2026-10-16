@@ -205,7 +205,7 @@ flash.Set(w, "notice", "Saved!", cfg.CookieSecure())
 http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 ```
 
-Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only.
+Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only. A GET 404 whose HTML still has `#amarra-main` morphs and `pushState`s that URL; a 500 with the same marker morphs without pushing (so a refresh does not re-POST). Responses without `#amarra-main` and network failures emit `amarra:drive-error` with a toast — Drive never retries the mutation (#360).
 
 ### Template loader contract
 

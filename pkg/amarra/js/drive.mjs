@@ -78,6 +78,8 @@ function defaultDriveWarn(msg) {
   }
 }
 
+const DRIVE_ERROR_MESSAGE = "Não foi possível carregar a página.";
+
 export function applyDriveResponse({
   status,
   html,
@@ -95,13 +97,15 @@ export function applyDriveResponse({
     location?.reload?.();
     return { action: "reload" };
   }
-  if (status !== 200 && status !== 422) {
-    emitDriveError(doc);
-    return { action: "ignore" };
-  }
 
   const fragment = extractMainHTML(html);
   if (fragment == null) {
+    // #360: 404/500 without a Drive page used to stay silent after
+    // preventDefault. Tell the user; keep 200/422 on the missing-main warning.
+    if (status !== 200 && status !== 422) {
+      emitDriveError(doc, { status, message: DRIVE_ERROR_MESSAGE });
+      return { action: "ignore" };
+    }
     // Silent ignores cost hours of debugging (#83): the target HTML has no
     // (or unbalanced) #amarra-main, so there is nothing to morph.
     warn(
@@ -117,7 +121,9 @@ export function applyDriveResponse({
   applyLayoutMarker(doc, html);
   applyShellMarker(doc, html);
   if (main) (morphFn ?? morph)(main, fragment);
-  if (status === 200 && push && url && history?.pushState) {
+  // 404 is a navigation to a missing resource; keep the URL in sync (#360).
+  // 500/422 stay on the current URL so a refresh does not re-POST.
+  if ((status === 200 || status === 404) && push && url && history?.pushState) {
     if (!location?.href || url !== location.href) {
       history.pushState({ amarra: true, scrollY: 0 }, "", url);
     }
@@ -282,6 +288,9 @@ export async function visit(url, opts = {}) {
       push: opts.push !== false,
       window: win,
     });
+  } catch {
+    emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE });
+    return { action: "error" };
   } finally {
     if (isCurrentSequence(doc, seq)) hideProgress(doc);
   }
@@ -330,7 +339,7 @@ export function start(opts = {}) {
     void (async () => {
       if (await visitIntoFrame(a, hrefURL, shared)) return;
       await visit(hrefURL, { ...shared, method });
-    })().catch(() => emitDriveError(doc));
+    })().catch(() => emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE }));
   });
 
   doc.addEventListener("submit", (event) => {
@@ -374,7 +383,7 @@ export function start(opts = {}) {
       method: verb,
       body,
     })
-      .catch(() => emitDriveError(doc))
+      .catch(() => emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE }))
       .finally(() => restoreSubmit(disabled));
   });
 
@@ -455,9 +464,11 @@ function formDataWithSubmitter(form, submitter, Ctor) {
   }
 }
 
-function emitDriveError(doc) {
+function emitDriveError(doc, detail) {
   if (doc && typeof doc.dispatchEvent === "function") {
-    doc.dispatchEvent(new CustomEvent("amarra:drive-error", { bubbles: true }));
+    doc.dispatchEvent(
+      new CustomEvent("amarra:drive-error", { bubbles: true, detail: detail ?? {} })
+    );
   }
 }
 

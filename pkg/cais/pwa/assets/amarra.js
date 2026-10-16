@@ -2129,9 +2129,11 @@
       afterMorph(doc);
       scan(doc);
     });
-    doc.addEventListener("amarra:drive-error", () => {
+    doc.addEventListener("amarra:drive-error", (ev) => {
       rollbackOptimistic(optimistic);
       optimistic = null;
+      const message = ev.detail?.message;
+      if (message) showToast(message, doc);
     });
     doc.addEventListener(
       "click",
@@ -2582,6 +2584,7 @@ ${lines.join("\n")}
     } catch {
     }
   }
+  var DRIVE_ERROR_MESSAGE = "N\xE3o foi poss\xEDvel carregar a p\xE1gina.";
   function applyDriveResponse({
     status,
     html,
@@ -2599,12 +2602,12 @@ ${lines.join("\n")}
       location?.reload?.();
       return { action: "reload" };
     }
-    if (status !== 200 && status !== 422) {
-      emitDriveError(doc);
-      return { action: "ignore" };
-    }
     const fragment = extractMainHTML(html);
     if (fragment == null) {
+      if (status !== 200 && status !== 422) {
+        emitDriveError(doc, { status, message: DRIVE_ERROR_MESSAGE });
+        return { action: "ignore" };
+      }
       warn(
         `amarra drive: ignored ${status} response for ${url ?? "(unknown url)"} \u2014 #amarra-main missing or unbalanced HTML`
       );
@@ -2618,7 +2621,7 @@ ${lines.join("\n")}
     applyLayoutMarker(doc, html);
     applyShellMarker(doc, html);
     if (main) (morphFn ?? morph)(main, fragment);
-    if (status === 200 && push && url && history?.pushState) {
+    if ((status === 200 || status === 404) && push && url && history?.pushState) {
       if (!location?.href || url !== location.href) {
         history.pushState({ amarra: true, scrollY: 0 }, "", url);
       }
@@ -2750,6 +2753,9 @@ ${lines.join("\n")}
         push: opts.push !== false,
         window: win
       });
+    } catch {
+      emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE });
+      return { action: "error" };
     } finally {
       if (isCurrentSequence(doc, seq)) hideProgress(doc);
     }
@@ -2793,7 +2799,7 @@ ${lines.join("\n")}
       void (async () => {
         if (await visitIntoFrame(a, hrefURL, shared)) return;
         await visit(hrefURL, { ...shared, method });
-      })().catch(() => emitDriveError(doc));
+      })().catch(() => emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE }));
     });
     doc.addEventListener("submit", (event) => {
       if (event.defaultPrevented) return;
@@ -2823,7 +2829,7 @@ ${lines.join("\n")}
         ...shared,
         method: verb,
         body
-      }).catch(() => emitDriveError(doc)).finally(() => restoreSubmit(disabled));
+      }).catch(() => emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE })).finally(() => restoreSubmit(disabled));
     });
     if (typeof window !== "undefined" && opts.popstate !== false) {
       window.addEventListener("popstate", () => {
@@ -2892,9 +2898,11 @@ ${lines.join("\n")}
       return fd;
     }
   }
-  function emitDriveError(doc) {
+  function emitDriveError(doc, detail) {
     if (doc && typeof doc.dispatchEvent === "function") {
-      doc.dispatchEvent(new CustomEvent("amarra:drive-error", { bubbles: true }));
+      doc.dispatchEvent(
+        new CustomEvent("amarra:drive-error", { bubbles: true, detail: detail ?? {} })
+      );
     }
   }
   function findAnchor(target) {
