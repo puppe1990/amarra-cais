@@ -10,6 +10,7 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.22.2", Title: "revalidate CSS/JS; Drive 404 and GET query", Action: "production CSS/JS/webmanifest/sw.js send must-revalidate; fonts/icons keep the year TTL. Drive morphs 404/500 HTML with #amarra-main (404 pushState, 500 does not) and GET forms replace the action query. Run amarra-cais pwa --bump"},
 	{Version: "0.22.1", Title: "production static Cache-Control", Action: "production /static 200s send public, max-age=31536000; sw.js is must-revalidate. Drop app wrappers that only set those headers. doctor warns when web/static/fonts exceeds 200 KiB"},
 	{Version: "0.22.0", Title: "SignOut and Delete return error", Action: "handle session.Store.Delete and session.SignOut errors in logout and login rotation before redirecting; see docs/security-upgrade.md"},
 	{Version: "0.22.0", Title: "admin CRUD requires is_admin", Action: "generated /admin/* CRUD requires users.is_admin plus middleware.RequireAdmin; public signup no longer promotes admin"},

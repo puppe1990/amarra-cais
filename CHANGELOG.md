@@ -4,6 +4,18 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.22.2] - 2026-10-16
+
+### Fixed
+
+- Production `StaticForEnv` no longer year-caches unversioned CSS, JS, the web manifest, or `sw.js`. Those URLs stay the same across deploys, so they now send `public, max-age=0, must-revalidate`. Fonts, icons, and images keep the year-long TTL. The service worker network-first fetch for `amarra.js` and `/static/css/` uses `cache: "no-cache"` and still falls back to Cache Storage offline (#359).
+- Drive morphs a 404/500 HTML body that contains `#amarra-main` instead of ignoring it. 404 also `pushState`s; 500 does not, so a refresh does not re-POST. Bodies without the marker and network failures emit `amarra:drive-error` with a toast. Mutations are not retried (#360).
+- GET Drive forms replace the action query with the serialized fields (native GET semantics) instead of appending. Repeated fields stay repeated; the fragment stays after the query (#361).
+
+### Upgrade
+
+- Patch release: no public API change. Run `amarra-cais upgrade v0.22.2` in existing apps and `amarra-cais pwa --bump`. CSS/JS revalidation is automatic. GET forms that relied on leftover `action` query params should persist those as hidden inputs.
+
 ## [0.22.1] - 2026-10-15
 
 ### Fixed
