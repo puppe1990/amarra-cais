@@ -205,7 +205,7 @@ flash.Set(w, "notice", "Saved!", cfg.CookieSecure())
 http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 ```
 
-Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only.
+Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only. A GET 404 whose HTML still has `#amarra-main` morphs and `pushState`s that URL; a 500 with the same marker morphs without pushing (so a refresh does not re-POST). Responses without `#amarra-main` and network failures emit `amarra:drive-error` with a toast — Drive never retries the mutation (#360).
 
 ### Template loader contract
 
@@ -218,7 +218,7 @@ Drive requests still render the layout so JS can morph `#amarra-main`. Frame req
 | `partials/*.html`                | `{{ template "card" . }}`      | **flat only** — `partials/posts/card.html` never loads; the miss surfaces at render time, not at boot |
 | `components/*.html`              | `<.input>` override            | flat only; shipped kit + app overrides keyed by file stem; an unknown `<.x>` fails at boot            |
 
-**Public HTML contract** (`amarra.js`): `data-amarra-skip` (opt out of Drive), `data-amarra-confirm`, `data-amarra-method`, `data-amarra-disable-with`, `data-amarra-frame`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-debounce` / `amarra-hook` / `amarra-live`, `<amarra-frame loading="lazy">`. Drive intercepts all same-origin clicks/submits by default — no opt-in attribute exists. A layout with more than one shell marks it on `<body>` (`data-amarra-shell`, the scaffold emits `auth`/`app` from `.Site.LoggedIn`): when the response carries a different value Drive does a full navigation instead of morphing `#amarra-main` (#249). HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
+**Public HTML contract** (`amarra.js`): `data-amarra-skip` (opt out of Drive), `data-amarra-confirm`, `data-amarra-method`, `data-amarra-disable-with`, `data-amarra-frame`, `amarra-click` / `amarra-change` / `amarra-submit` / `amarra-debounce` / `amarra-hook` / `amarra-live`, `<amarra-frame loading="lazy">`. Drive intercepts all same-origin clicks/submits by default — no opt-in attribute exists. GET forms replace the action query with the serialized fields (native GET semantics); persist extra params as hidden inputs, not as leftovers on `action` (#361). A layout with more than one shell marks it on `<body>` (`data-amarra-shell`, the scaffold emits `auth`/`app` from `.Site.LoggedIn`): when the response carries a different value Drive does a full navigation instead of morphing `#amarra-main` (#249). HTMX is not a public dependency. Layout loads a single script: `/static/js/amarra.js`.
 
 ```html
 {{ define "content" }}
@@ -290,7 +290,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 - Double-submit cookie (`cais_csrf`) — token in cookie + form field or `X-CSRF-Token` header; no server-side token store
 - Skip set (`skipCSRF`): `/health`, `/static/`, `/api/` + Bearer, and the crawler files `/sitemap.xml`, `/robots.txt`, `/llms.txt` — these GETs must go out **without `Set-Cookie`**, or Search Console answers "Não foi possível buscar o sitemap" (#342). Closed set: an app's own `.xml` route may be authenticated, so never widen it to an extension match.
 
-**Static files** — `StaticForEnv` registers via `handlePattern`, not `wrap()`, so `/static` never gets session/flash. Development is `no-store`. Production 200s are `public, max-age=31536000`; `sw.js` is `must-revalidate`. Do not send that year-long TTL on 404s. HTML from `view.Write` stays `no-store` (#80, #355).
+**Static files** — `StaticForEnv` registers via `handlePattern`, not `wrap()`, so `/static` never gets session/flash. Development is `no-store`. Production 200s for fonts/icons/images are `public, max-age=31536000`; CSS, JS, the web manifest, and `sw.js` are `public, max-age=0, must-revalidate` because those URLs stay the same across deploys (#359). Do not send the year-long TTL on 404s. HTML from `view.Write` stays `no-store` (#80, #355). The service worker network-first fetch for `amarra.js` and `/static/css/` uses `cache: "no-cache"` so the HTTP cache cannot keep last year's bytes.
 
 **HTML templates** — pass `meta.ForRequest(site, r)` / `amarraData`; layout renders `<meta name="csrf-token">` + `amarra.js` sends `X-CSRF-Token` on Drive requests. Forms: `{{ csrfField .CSRFToken }}` or hidden `csrf_token` input. Kit `<.form>` injects the CSRF field itself from the root data (`$.CSRFToken`) — do not duplicate it inside the slot.
 

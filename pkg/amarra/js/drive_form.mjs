@@ -30,6 +30,34 @@ export function restoreSubmit(prev) {
   if (prev.text != null) prev.el.textContent = prev.text;
 }
 
+// Native GET replaces the action's query with the form fields. Concatenating
+// (`?q=antigo` + `&q=novo`) left Go's Query().Get("q") reading the old value,
+// and a `#fragment` swallowed the serialized fields (#361).
+export function withQuery(action, fd) {
+  if (!fd || typeof fd.entries !== "function") return action;
+  const params = new URLSearchParams();
+  for (const [key, value] of fd.entries()) {
+    if (typeof value === "string") params.append(key, value);
+  }
+  const raw = String(action ?? "");
+  try {
+    const u = new URL(raw, "http://amarra.invalid");
+    u.search = params.toString();
+    if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) {
+      return u.toString();
+    }
+    return u.pathname + u.search + u.hash;
+  } catch {
+    const q = params.toString();
+    if (!q) return raw;
+    const hashAt = raw.indexOf("#");
+    const before = hashAt === -1 ? raw : raw.slice(0, hashAt);
+    const hash = hashAt === -1 ? "" : raw.slice(hashAt);
+    const base = before.split("?")[0];
+    return `${base}?${q}${hash}`;
+  }
+}
+
 export function driveFormBody(
   formData,
   URLSearchParamsCtor = URLSearchParams,

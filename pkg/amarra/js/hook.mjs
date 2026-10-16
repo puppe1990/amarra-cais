@@ -157,9 +157,11 @@ export function start(opts = {}) {
     scan(doc);
   });
 
-  doc.addEventListener("amarra:drive-error", () => {
+  doc.addEventListener("amarra:drive-error", (ev) => {
     rollbackOptimistic(optimistic);
     optimistic = null;
+    const message = ev.detail?.message;
+    if (message) showToast(message, doc);
   });
 
   doc.addEventListener(

@@ -640,7 +640,7 @@ test("visit emits amarra:drive-error on 404 and 500", async () => {
   const doc = {
     querySelector: (sel) => (sel === "#amarra-main" ? main : null),
     dispatchEvent(ev) {
-      events.push(ev.type);
+      events.push(ev);
       return true;
     },
   };
@@ -666,10 +666,121 @@ test("visit emits amarra:drive-error on 404 and 500", async () => {
     history: { pushState() {} },
   });
   assert.equal(main.innerHTML, "old");
-  assert.deepEqual(
-    events.filter((t) => t === "amarra:drive-error"),
-    ["amarra:drive-error", "amarra:drive-error"]
+  const errors = events.filter((ev) => ev.type === "amarra:drive-error");
+  assert.equal(errors.length, 2);
+  for (const ev of errors) {
+    assert.match(String(ev.detail?.message ?? ""), /Não foi possível carregar a página/);
+  }
+});
+
+// #360: a 404 HTML page with #amarra-main used to emit drive-error and leave
+// the previous screen up after preventDefault, so broken links looked like
+// no-ops. Morph the error page and keep the URL in sync.
+test("visit morphs a 404 page with #amarra-main and pushes the URL", async () => {
+  const main = { innerHTML: "old" };
+  const pushed = [];
+  const events = [];
+  const result = await visit("http://a/missing", {
+    fetchFn: async () => ({
+      status: 404,
+      url: "http://a/missing",
+      headers: { get: () => null },
+      text: async () => `<main id="amarra-main">Página não encontrada</main>`,
+    }),
+    document: {
+      querySelector: (sel) => (sel === "#amarra-main" ? main : null),
+      dispatchEvent(ev) {
+        events.push(ev.type);
+        return true;
+      },
+    },
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: {
+      pushState(_s, _t, url) {
+        pushed.push(url);
+      },
+    },
+  });
+  assert.equal(result.action, "morph");
+  assert.match(main.innerHTML, /Página não encontrada/);
+  assert.deepEqual(pushed, ["http://a/missing"]);
+  assert.equal(
+    events.includes("amarra:drive-error"),
+    false,
+    "a rendered 404 is a navigation, not a silent error"
   );
+});
+
+test("visit morphs a 500 page with #amarra-main without pushing or retrying", async () => {
+  const main = { innerHTML: "old" };
+  const pushed = [];
+  let fetches = 0;
+  const result = await visit("http://a/broken", {
+    method: "POST",
+    body: "title=x",
+    fetchFn: async () => {
+      fetches += 1;
+      return {
+        status: 500,
+        url: "http://a/broken",
+        headers: { get: () => null },
+        text: async () => `<main id="amarra-main">Erro interno</main>`,
+      };
+    },
+    document: {
+      querySelector: (sel) => (sel === "#amarra-main" ? main : null),
+      dispatchEvent() {
+        return true;
+      },
+    },
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: {
+      pushState(_s, _t, url) {
+        pushed.push(url);
+      },
+    },
+  });
+  assert.equal(result.action, "morph");
+  assert.match(main.innerHTML, /Erro interno/);
+  assert.deepEqual(pushed, []);
+  assert.equal(fetches, 1);
+});
+
+test("visit reports a network failure once without retrying", async () => {
+  const events = [];
+  const main = { innerHTML: "old" };
+  let fetches = 0;
+  const result = await visit("http://a/x", {
+    fetchFn: async () => {
+      fetches += 1;
+      throw new Error("offline");
+    },
+    document: {
+      querySelector: (sel) => (sel === "#amarra-main" ? main : null),
+      dispatchEvent(ev) {
+        events.push(ev);
+        return true;
+      },
+    },
+    morphFn() {
+      throw new Error("network failure must not morph");
+    },
+    history: {
+      pushState() {
+        throw new Error("network failure must not push");
+      },
+    },
+  });
+  assert.equal(result.action, "error");
+  assert.equal(main.innerHTML, "old");
+  assert.equal(fetches, 1);
+  const err = events.find((ev) => ev.type === "amarra:drive-error");
+  assert.ok(err);
+  assert.match(String(err.detail?.message ?? ""), /Não foi possível carregar a página/);
 });
 
 // #125: two fast clicks left two fetches in flight; the older response could

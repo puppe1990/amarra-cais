@@ -60,7 +60,7 @@ Without it, both paths fall back to `http.NotFound` (`text/plain`).
 
 ## Exact root and static files
 
-A bare `"/"` pattern is rewritten to the end-of-path wildcard `/{$}`, so the home handler matches only the exact root instead of every unmatched path (such as `/.env` or `/nope`). Real subtree patterns like `"/static/"` keep their prefix behavior. Serve files with `r.Static(prefix, dir)` (or `StaticForEnv` with a `Config`). Development sets `Cache-Control: no-store` so JS/CSS edits apply without a rebuild. Production (and `Static`, which uses an empty `Config`) sets `public, max-age=31536000` on successful `/static/*` responses and `public, max-age=0, must-revalidate` on `sw.js`. Static files skip router middleware (`handlePattern`, not `wrap()`), so session/flash cookies are not sent with CSS and fonts.
+A bare `"/"` pattern is rewritten to the end-of-path wildcard `/{$}`, so the home handler matches only the exact root instead of every unmatched path (such as `/.env` or `/nope`). Real subtree patterns like `"/static/"` keep their prefix behavior. Serve files with `r.Static(prefix, dir)` (or `StaticForEnv` with a `Config`). Development sets `Cache-Control: no-store` so JS/CSS edits apply without a rebuild. Production (and `Static`, which uses an empty `Config`) sets `public, max-age=31536000` on fonts, icons, and images, and `public, max-age=0, must-revalidate` on CSS, JS, the web manifest, and `sw.js` — those filenames stay the same across deploys. Static files skip router middleware (`handlePattern`, not `wrap()`), so session/flash cookies are not sent with CSS and fonts.
 
 ## ServeMux conflicts
 

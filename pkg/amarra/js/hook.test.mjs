@@ -233,6 +233,43 @@ test("start scans amarra-hook and rescans after amarra:morphed", () => {
   assert.deepEqual(events, ["connect:btn", "updated:btn"]);
 });
 
+test("amarra:drive-error with a message shows a toast", () => {
+  const host = {
+    innerHTML: "",
+    querySelector(sel) {
+      if (sel === "span") return this._span;
+      return null;
+    },
+  };
+  host._span = { textContent: "" };
+  const listeners = {};
+  const doc = {
+    listeners,
+    documentElement: { dataset: {} },
+    getElementById(id) {
+      return id === "amarra-toast-host" ? host : null;
+    },
+    addEventListener(type, fn) {
+      (listeners[type] ??= []).push(fn);
+    },
+    dispatchEvent(ev) {
+      for (const fn of listeners[ev.type] || []) fn(ev);
+      return true;
+    },
+    querySelectorAll() {
+      return [];
+    },
+  };
+  start({ document: doc });
+  doc.dispatchEvent(
+    new CustomEvent("amarra:drive-error", {
+      detail: { message: "Não foi possível carregar a página." },
+    })
+  );
+  assert.match(host.innerHTML, /role="status"/);
+  assert.equal(host._span.textContent, "Não foi possível carregar a página.");
+});
+
 test("amarra:drive-error rolls back optimistic UI from start()", () => {
   const listeners = {};
   const el = {

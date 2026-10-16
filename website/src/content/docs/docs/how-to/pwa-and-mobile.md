@@ -25,7 +25,7 @@ The service worker caches your CSS, JS, and pages. After you change templates or
 amarra-cais pwa --bump
 ```
 
-That refreshes the vendored assets and increments `CACHE_VERSION` in `sw.js`. `amarra-cais dev` auto-bumps the cache whenever `sw.js` exists, so local iteration stays fresh without a manual step. The service worker is network-first for `/static/js/amarra.js` and `/static/css/`.
+That refreshes the vendored assets and increments `CACHE_VERSION` in `sw.js`. `amarra-cais dev` auto-bumps the cache whenever `sw.js` exists, so local iteration stays fresh without a manual step. The service worker is network-first for `/static/js/amarra.js` and `/static/css/`, and those fetches use `cache: "no-cache"` so a deploy is not stuck behind a year-old HTTP cache.
 
 ## Run the mobile checks
 

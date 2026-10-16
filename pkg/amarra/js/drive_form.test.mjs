@@ -6,6 +6,7 @@ import {
   disableSubmit,
   restoreSubmit,
   driveFormBody,
+  withQuery,
 } from "./drive_form.mjs";
 
 test("confirmOk is true without data-amarra-confirm", () => {
@@ -118,4 +119,12 @@ test("driveFormBody keeps multipart FormData when a file is present", () => {
   ]);
 
   assert.equal(driveFormBody(fd, URLSearchParams, FakeFile), fd);
+});
+
+test("withQuery replaces a relative action query", () => {
+  assert.equal(withQuery("/items?q=antigo", fakeFormData([["q", "novo"]])), "/items?q=novo");
+});
+
+test("withQuery returns the action when FormData is missing", () => {
+  assert.equal(withQuery("/items?q=antigo", null), "/items?q=antigo");
 });

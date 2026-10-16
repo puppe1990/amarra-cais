@@ -47,7 +47,9 @@ function putIfCacheable(request, response) {
 // allowCachedFallback: only the static allowlist (amarra.js/css) may be served
 // from the cache; pages and Drive fragments never fall back to cached HTML.
 function networkFirst(request, fallbackURL, allowCachedFallback = false) {
-  return fetch(request)
+  // #359: a bare fetch() can be satisfied by a year-old HTTP cache of the
+  // unversioned URL. no-cache revalidates; Cache Storage still covers offline.
+  return fetch(request, { cache: "no-cache" })
     .then(async (response) => {
       if (response && response.ok) {
         await putIfCacheable(request, response);
