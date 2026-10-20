@@ -4,6 +4,20 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.23.1] - 2026-10-20
+
+### Fixed
+
+- Scaffold `AGENTS.md` and the website docs now state the Drive morph reuse contract: a node with the same `id` in both responses is the same DOM node, so JS listeners and expando properties survive while `value`/attributes come from the new HTML and JS-only `data-*` attributes are removed. The old "orphaned node" guidance was wrong for stable ids, and `dataset.ready` is not a safe init guard because the morph deletes the attribute and the re-init stacks listeners. The docs recommend one-time `document` delegation or explicit teardown (`removeEventListener`, `disconnect`, `cloneNode`) before re-init (#369).
+
+### Added
+
+- A scaffold/docs contract test and a Playwright e2e now pin same-id node reuse, HTML `value`/attribute updates, JS-only `data-*` removal, and listener/property survival. No morph behavior change (#369).
+
+### Upgrade
+
+- Patch release: no public API or runtime change. Run `amarra-cais upgrade v0.23.1` and `amarra-cais pwa --bump`. Apps that guard an `amarra:morphed` re-init with `dataset.ready` should switch to one-time `document` delegation or explicit teardown.
+
 ## [0.23.0] - 2026-10-20
 
 ### Security

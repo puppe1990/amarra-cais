@@ -10,6 +10,7 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.23.1", Title: "Drive same-id morph reuse docs", Action: "a stable id keeps the same DOM node; listeners and JS properties survive, while value/attributes come from the new HTML and JS-only data-* attributes are removed. Replace dataset.ready init guards with one-time document delegation or teardown (removeEventListener/disconnect/cloneNode) before re-init. No runtime or API change"},
 	{Version: "0.23.0", Title: "CSRF Bearer validation; proxied loopback; Drive POST download", Action: "CSRF no longer exempts /api/ or an unvalidated Bearer; session routes under /api/ need csrf_token or X-CSRF-Token, and bearer clients need ADMIN_TOKEN (set it in dev too) or middleware.BearerAPI(prefix, verify). /logs, /jobs and /_dev/reload reject forwarding headers. Drive saves POST file responses as a blob. Run amarra-cais pwa --bump"},
 	{Version: "0.22.2", Title: "revalidate CSS/JS; Drive 404 and GET query", Action: "production CSS/JS/webmanifest/sw.js send must-revalidate; fonts/icons keep the year TTL. Drive morphs 404/500 HTML with #amarra-main (404 pushState, 500 does not) and GET forms replace the action query. Run amarra-cais pwa --bump"},
 	{Version: "0.22.1", Title: "production static Cache-Control", Action: "production /static 200s send public, max-age=31536000; sw.js is must-revalidate. Drop app wrappers that only set those headers. doctor warns when web/static/fonts exceeds 200 KiB"},
