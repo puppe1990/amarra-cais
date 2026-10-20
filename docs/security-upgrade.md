@@ -39,3 +39,15 @@ http.Redirect(w, r, "/login", http.StatusSeeOther)
 ```
 
 The scaffold logs errors in production through `httpx.ServerError` and returns HTTP 500 without a success redirect. Never include session tokens in errors or logs. Existing login handlers should already check the error from `SignIn`.
+
+## CSRF bearer exemption (#364)
+
+`middleware.CSRF` no longer exempts every route under `/api/` or any request with an `Authorization: Bearer` header. A session route under `/api/` must send the double-submit token; an invalid Bearer never falls back to the session cookie.
+
+A machine client skips CSRF only when its Bearer token matches `ADMIN_TOKEN` (the same gate `AdminAuth` uses) or when the app registers the prefix explicitly:
+
+```go
+r.Use(middleware.CSRF(cfg, middleware.BearerAPI("/api/hooks/", verifyHookToken)))
+```
+
+`verifyHookToken` must compare the presented token in constant time, like `AdminAuth` does. The token is validated before content type, so form-encoded clients (`curl -d`) keep working. Never register a prefix that also serves session routes: the session fallback would turn the exemption into a bypass. In development, set `ADMIN_TOKEN` before exercising a bearer API; `AdminAuth` being a no-op when the variable is unset does not make CSRF skip.

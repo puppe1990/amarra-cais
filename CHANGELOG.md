@@ -4,6 +4,25 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.23.0] - 2026-10-20
+
+### Security
+
+- `middleware.CSRF` no longer exempts every route under `/api/` or any request with an `Authorization: Bearer` header. A session-authenticated route under `/api/` keeps the double-submit check, so a cross-site form cannot mutate with the victim's cookie. Bearer requests skip only when the token matches `ADMIN_TOKEN` (the gate `AdminAuth` enforces) or an explicitly registered `BearerAPI(prefix, verify)`; an invalid Bearer never falls back to the session cookie. The token is validated before content type, so form-encoded machine clients (`curl -d`) keep working (#364).
+- `/logs`, `/jobs` and `/_dev/reload` reject `Forwarded`, `X-Real-IP` and any `X-Forwarded-*` header instead of trusting a loopback `RemoteAddr`. A reverse proxy on the same host forwards internet traffic from `127.0.0.1`; `/logs` was exposing request paths and SQL arguments. Direct loopback and SSH tunnels still work (#365).
+
+### Fixed
+
+- Drive saves a non-HTML response to a mutation (POST/PUT/PATCH/DELETE) from the fetched body through a blob URL named by `Content-Disposition`, instead of assigning `location`. The old path discarded the response and made the browser repeat the request as GET, losing filters/body or receiving 405. GET attachments keep native navigation (#366).
+
+### Added
+
+- `middleware.BearerAPI(prefix, verify)` with `CSRFOption` and `BearerVerifier` lets an app declare an API prefix authenticated exclusively by a custom Bearer token. CSRF skips it only when the verifier accepts the token; never register a prefix that also serves session routes (#364).
+
+### Upgrade
+
+- Minor release because the CSRF behavior changes and `BearerAPI` is new public API. Run `amarra-cais upgrade v0.23.0` and `amarra-cais pwa --bump`. Session routes under `/api/` now need `csrf_token` or `X-CSRF-Token`. Bearer clients must send `ADMIN_TOKEN` (set it in development too) or register `BearerAPI(prefix, verify)`. See [security upgrade](docs/security-upgrade.md#csrf-bearer-exemption-364).
+
 ## [0.22.2] - 2026-10-16
 
 ### Fixed
