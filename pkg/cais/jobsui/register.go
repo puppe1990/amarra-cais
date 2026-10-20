@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"strings"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 	"github.com/puppe1990/amarra-cais/pkg/cais/csrf"
 	"github.com/puppe1990/amarra-cais/pkg/cais/jobs"
+	"github.com/puppe1990/amarra-cais/pkg/cais/netutil"
 )
 
 type handler struct {
@@ -37,43 +37,19 @@ func Register(r *cais.Router, db *sql.DB) error {
 	return nil
 }
 
+// localOnly keeps the queue dashboard on direct loopback connections (#100).
+// RemoteAddr alone is not enough: the documented deploy puts Caddy on the same
+// host, so proxied internet requests also arrive as 127.0.0.1. The shared
+// helper rejects any forwarding header and is the same contract /logs and the
+// dev reload use (#365).
 func localOnly(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !isLoopback(r) {
+		if !netutil.IsLoopbackRequest(r) {
 			http.Error(w, "jobs dashboard only available on localhost (SSH tunnel in production)", http.StatusForbidden)
 			return
 		}
 		next(w, r)
 	}
-}
-
-// isLoopback reports whether the request reached the app directly over the
-// loopback interface (#100). RemoteAddr alone is not enough: the documented
-// deploy puts Caddy on the same host, so proxied internet requests also arrive
-// as 127.0.0.1. Any forwarding header proves the hop went through a proxy, so
-// only plain loopback connections (SSH tunnel, curl on the box) qualify.
-func isLoopback(r *http.Request) bool {
-	if hasForwardingHeaders(r) {
-		return false
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		host = r.RemoteAddr
-	}
-	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
-}
-
-func hasForwardingHeaders(r *http.Request) bool {
-	if r.Header.Get("Forwarded") != "" || r.Header.Get("X-Real-IP") != "" {
-		return true
-	}
-	for name := range r.Header {
-		if strings.HasPrefix(strings.ToLower(name), "x-forwarded-") {
-			return true
-		}
-	}
-	return false
 }
 
 func (h *handler) serveDashboard(w http.ResponseWriter, r *http.Request) {

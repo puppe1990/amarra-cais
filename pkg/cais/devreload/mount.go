@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/puppe1990/amarra-cais/pkg/cais"
-	"github.com/puppe1990/amarra-cais/pkg/cais/devlog"
+	"github.com/puppe1990/amarra-cais/pkg/cais/netutil"
 )
 
 // Enabled reports whether the reload route and watcher are active — development
@@ -32,7 +32,7 @@ func (h *Hub) Register(r *cais.Router, env string) {
 
 func localOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !devlog.IsLoopback(r) {
+		if !netutil.IsLoopbackRequest(r) {
 			http.Error(w, "dev reload only available on localhost", http.StatusForbidden)
 			return
 		}

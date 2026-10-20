@@ -477,8 +477,8 @@ In `ENV=development`:
 
 - `middleware.LoggerTo(devlog.MirrorDefault(...))` — JSON request logs when `cfg.LogJSON()` (`kind: request`); `LOG_FORMAT=text` opts out
 - `sqllog.ConfigForEnv(env)` — SQL JSON logs in development (`kind: sql`); plain text when `JSON: false`. `sqllog.DB`/`Tx` log `ExecContext`/`QueryContext`/`QueryRowContext`; short methods delegate to `context.Background()`. Generated stores may keep the short methods (#264).
-- `devlog.Register(r, cfg.Env, buf)` — mounts `/logs` (localhost only)
-- `jobsui.Register(r, db)` — mounts `/jobs` (localhost only, all envs; SSH tunnel in production)
+- `devlog.Register(r, cfg.Env, buf)` — mounts `/logs` (direct loopback only; forwarding headers are rejected, #365)
+- `jobsui.Register(r, db)` — mounts `/jobs` (direct loopback only, all envs; SSH tunnel in production)
 
 Boot banner via `boot.Print` in `cmd/server/main.go`. Port auto-pick via `cais.ResolvePort` when preferred port is busy.
 
@@ -498,7 +498,7 @@ Editing HTML/CSS must not cost a rebuild (#340). In `ENV=development` the scaffo
 
 - loads templates from `web/templates` (or `TEMPLATES_DIR`) with `os.DirFS`; production keeps the `//go:embed` copy (`templateFS` in `internal/cli/tpl_scaffold_main.go`)
 - runs `devreload.Watch` (`pkg/cais/devreload`): a poll watcher (`400ms`, `150ms` settle) over the templates dir + built `styles.css` calls `view.Renderer.ReloadFromDir` on a `.html` change — a full re-parse (kit `ExpandAll` + every locale set, #211) swapped under `mu.Lock`; a parse error logs and keeps the previous set
-- pings open tabs over `GET /_dev/reload` (dev-only, localhost-only, `devreload.Hub`); the layout's dev script reloads the tab, and a changed `boot` id means air restarted the process for a `.go` edit
+- pings open tabs over `GET /_dev/reload` (dev-only, direct loopback only; forwarding headers are rejected, #365, `devreload.Hub`); the layout's dev script reloads the tab, and a changed `boot` id means air restarted the process for a `.go` edit
 - keeps air for `.go` only: `include_ext = ["go"]` and `web` in `exclude_dir`, or the Tailwind write would rebuild the process
 
 `app.Deps.DevReload` is nil in production, so the route is not mounted. Tests: `pkg/cais/devreload`, `pkg/amarra/view/renderer_reload_test.go`, `internal/cli/tpl_scaffold_devreload_test.go`, e2e `e2e/dev-reload.spec.mjs`.
@@ -614,7 +614,7 @@ Register handlers in `internal/jobs/registry.go`. Built-in: `PruneSessions`. Pro
 
 Console bindings: `store`, `cfg`, `db`, plus any custom keys in `Bindings`. Commands: `help`, `sql`, `reload`, `history`, `!N`/`!!`, `exit`. Arrow keys when stdin is a TTY.
 
-`/logs` — development-only log viewer (localhost). Shows request + SQL logs.
+`/logs` — development-only log viewer (direct loopback; forwarding headers are rejected). Shows request + SQL logs.
 
 `/jobs` — queue dashboard (localhost, all envs). Counts, failed retry/discard, scheduled, recurring. `amarra-cais doctor` warns if `jobsui.Register` is missing.
 
