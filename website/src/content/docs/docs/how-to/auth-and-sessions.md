@@ -58,7 +58,7 @@ Pick one of two modes:
 
 `amarra-cais g resource` defaults to session auth (`--admin-auth session`). Choose `--admin-auth bearer` for token-only admin APIs that have no login pages.
 
-`AdminAuth` accepts a Bearer header only — it does not read query params. Set `ADMIN_TOKEN` in production; `cfg.Validate()` fails on boot when it is missing. When `ADMIN_TOKEN` is unset the middleware is a no-op, which is the development behavior.
+`AdminAuth` accepts a Bearer header only — it does not read query params. Set `ADMIN_TOKEN` in production; `cfg.Validate()` fails on boot when it is missing. When `ADMIN_TOKEN` is unset the middleware is a no-op, which is the development behavior. CSRF also requires the Bearer token to match `ADMIN_TOKEN` before exempting a request, so set it locally when testing a bearer API; a custom token uses `middleware.BearerAPI(prefix, verify)` (#364).
 
 :::caution
 Treat `ADMIN_TOKEN` as a production secret. Store it in the process environment (for example `/etc/myapp/env` with `chmod 600`) and never commit it.

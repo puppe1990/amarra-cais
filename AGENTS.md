@@ -143,7 +143,7 @@ r.Post("/webhooks/incoming/{token}", receiver)
 | Browser admin (default) | `middleware.RequireAdmin("/login", db)` | `amarra-cais g resource` default |
 | Bearer token API        | `middleware.AdminAuth(cfg)`             | `--admin-auth bearer`            |
 
-Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `AdminAuth` accepts Bearer header only, no query params. No-op in development when unset.
+Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `AdminAuth` accepts Bearer header only, no query params. No-op in development when unset — but CSRF only exempts a Bearer request whose token matches `ADMIN_TOKEN`, so set it locally when exercising a bearer API, or register `middleware.BearerAPI(prefix, verify)` for a custom token (#364).
 
 Session admin routes require `users.is_admin = 1` (#350); public signup defaults to 0. See `docs/security-upgrade.md` for existing apps and promotion.
 
@@ -288,7 +288,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 
 - `middleware.CSRF(cfg)` on the router (validates POST/PUT/DELETE/PATCH)
 - Double-submit cookie (`cais_csrf`) — token in cookie + form field or `X-CSRF-Token` header; no server-side token store
-- Skip set (`skipCSRF`): `/health`, `/static/`, `/api/` + Bearer, and the crawler files `/sitemap.xml`, `/robots.txt`, `/llms.txt` — these GETs must go out **without `Set-Cookie`**, or Search Console answers "Não foi possível buscar o sitemap" (#342). Closed set: an app's own `.xml` route may be authenticated, so never widen it to an extension match.
+- Skip set (`skipCSRF`): `/health`, `/static/`, the crawler files `/sitemap.xml`, `/robots.txt`, `/llms.txt`, and machine clients whose Bearer token matches `ADMIN_TOKEN` (or a `BearerAPI(prefix, verify)` registration). The token is validated before any content-type check, so `curl -d` clients work and an unvalidated header on a form still gets the double-submit check. The crawler GETs must go out **without `Set-Cookie`**, or Search Console answers "Não foi possível buscar o sitemap" (#342). `/api/` alone is not exempt: a session route under it keeps the double-submit check, and an invalid Bearer never falls back to the session cookie (#364). Closed set for crawler files: an app's own `.xml` route may be authenticated, so never widen it to an extension match.
 
 **Static files** — `StaticForEnv` registers via `handlePattern`, not `wrap()`, so `/static` never gets session/flash. Development is `no-store`. Production 200s for fonts/icons/images are `public, max-age=31536000`; CSS, JS, the web manifest, and `sw.js` are `public, max-age=0, must-revalidate` because those URLs stay the same across deploys (#359). Do not send the year-long TTL on 404s. HTML from `view.Write` stays `no-store` (#80, #355). The service worker network-first fetch for `amarra.js` and `/static/css/` uses `cache: "no-cache"` so the HTTP cache cannot keep last year's bytes.
 

@@ -293,12 +293,30 @@ func TestCSRF_pageAndUnsafeMethodKeepTheirBehavior(t *testing.T) {
 	}
 }
 
-// #331: a machine client has no CSRF cookie/field, so an authenticated POST to
-// /api/ must reach the handler (401/201), not die in 403 before auth runs.
-func TestCSRF_skipsAPIPrefixWithoutToken(t *testing.T) {
-	called := false
+// #364: the /api/ prefix is a naming convention, not proof of the auth model.
+// A session-authenticated route under it must keep the double-submit check —
+// a cross-site form can hit it with the victim's cookie and no token.
+func TestCSRF_apiPrefixFormPostWithoutToken_rejects(t *testing.T) {
 	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		called = true
+		t.Error("handler should not be called")
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/account", strings.NewReader("name=changed"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", "https://other.example")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("status = %d, want 403", rr.Code)
+	}
+}
+
+// #364: a JSON POST to /api/ without a Bearer is not a machine client either.
+// It must present the double-submit token instead of riding the prefix.
+func TestCSRF_apiPrefixJSONWithoutBearer_rejects(t *testing.T) {
+	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("handler should not be called")
 	}))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/projetos", strings.NewReader(`{"uc":"3004512"}`))
@@ -306,34 +324,117 @@ func TestCSRF_skipsAPIPrefixWithoutToken(t *testing.T) {
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
 
-	if !called {
-		t.Fatalf("handler not called for /api/ request; status = %d", rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("status = %d, want 403", rr.Code)
 	}
 }
 
-// #331: the Bearer criterion is the minimum for APIs outside the /api/ prefix.
-// A cross-site form cannot attach Authorization, so this does not weaken the
-// cookie/form protection.
-func TestCSRF_skipsBearerAuthorization(t *testing.T) {
+// #331/#364: the Bearer skip survives, but only for the token AdminAuth would
+// accept. A stray header must not turn a session route into a CSRF bypass.
+func TestCSRF_adminBearerToken_skips(t *testing.T) {
 	called := false
-	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := CSRF(cais.Config{AdminToken: "hs_test"})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 	}))
 
 	req := httptest.NewRequest(http.MethodPost, "/projetos", strings.NewReader(`{"uc":"1"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "bearer hs_test") // lowercase on purpose
+	req.Header.Set("Authorization", "Bearer hs_test")
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
 
 	if !called {
-		t.Fatalf("handler not called for Bearer request; status = %d", rr.Code)
+		t.Fatalf("handler not called for valid Bearer request; status = %d", rr.Code)
 	}
 }
 
-// #331: a classic HTML form keeps its CSRF protection even when a stray Bearer
-// header is present — form posts are browser traffic, and a cross-site form
-// cannot attach Authorization; that header there is noise, not a machine client.
+// #364: curl -d defaults to form encoding, so a validated Bearer must still
+// skip on form content. Only an unvalidated header is rejected.
+func TestCSRF_adminBearerToken_skipsFormBody(t *testing.T) {
+	called := false
+	h := CSRF(cais.Config{AdminToken: "hs_test"})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/projetos", strings.NewReader("uc=1"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Bearer hs_test")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if !called {
+		t.Fatalf("handler not called for valid Bearer form request; status = %d", rr.Code)
+	}
+}
+
+// #364: an invalid Bearer must not exempt the request. Otherwise a same-site
+// script could attach any Bearer value and fall back to the session cookie.
+func TestCSRF_invalidBearerToken_doesNotSkip(t *testing.T) {
+	h := CSRF(cais.Config{AdminToken: "hs_test"})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("handler should not be called")
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/account", strings.NewReader(`{"name":"changed"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer wrong")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("status = %d, want 403", rr.Code)
+	}
+}
+
+// #364: apps with their own API token declare the prefix and verifier
+// explicitly. Only that prefix skips, and only when the verifier accepts the
+// token — form content is fine once the token is validated (curl -d clients).
+func TestCSRF_bearerAPI_exemptsOnlyRegisteredPrefix(t *testing.T) {
+	verifyHook := func(r *http.Request) bool {
+		return r.Header.Get("Authorization") == "Bearer hook-secret"
+	}
+	h := CSRF(cais.Config{}, BearerAPI("/hooks/", verifyHook))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+
+	cases := []struct {
+		name   string
+		path   string
+		auth   string
+		form   bool
+		status int
+	}{
+		{name: "registered prefix", path: "/hooks/kiwify", auth: "Bearer hook-secret", status: http.StatusNoContent},
+		{name: "other prefix", path: "/other/kiwify", auth: "Bearer hook-secret", status: http.StatusForbidden},
+		{name: "wrong token", path: "/hooks/kiwify", auth: "Bearer wrong", status: http.StatusForbidden},
+		{name: "no token", path: "/hooks/kiwify", status: http.StatusForbidden},
+		{name: "form body with valid token", path: "/hooks/kiwify", auth: "Bearer hook-secret", form: true, status: http.StatusNoContent},
+		{name: "form body with wrong token", path: "/hooks/kiwify", auth: "Bearer wrong", form: true, status: http.StatusForbidden},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body io.Reader = strings.NewReader(`{"event":"paid"}`)
+			contentType := "application/json"
+			if tc.form {
+				body = strings.NewReader("event=paid")
+				contentType = "application/x-www-form-urlencoded"
+			}
+			req := httptest.NewRequest(http.MethodPost, tc.path, body)
+			req.Header.Set("Content-Type", contentType)
+			if tc.auth != "" {
+				req.Header.Set("Authorization", tc.auth)
+			}
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+			if rr.Code != tc.status {
+				t.Errorf("status = %d, want %d", rr.Code, tc.status)
+			}
+		})
+	}
+}
+
+// #331/#364: a classic HTML form keeps its CSRF protection when the Bearer is
+// not valid. Form posts are browser traffic, and a cross-site form cannot
+// attach Authorization; that header there is noise, not a machine client.
 func TestCSRF_formPostWithStrayBearer_stillRejects(t *testing.T) {
 	h := CSRF(cais.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("handler should not be called")
