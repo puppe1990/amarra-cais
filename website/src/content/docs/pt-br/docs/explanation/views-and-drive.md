@@ -29,6 +29,17 @@ UI repetitiva não é trabalho de um framework aqui. Ela vem do kit incluído e 
 O shell da sidebar fica fora de `#amarra-main`, então um morph do Drive nunca o perturba. `amarra-hook="nav"` com `data-amarra-nav-on` / `data-amarra-nav-off` ressincroniza o link ativo após cada morph.
 :::
 
+## Scripts e reuso no morph
+
+O Drive faz morph de `#amarra-main` com Idiomorph e `morphStyle: "innerHTML"`. Um nó com o mesmo `id` nas duas respostas é o mesmo nó do DOM depois do morph: listeners JS e propriedades expandidas sobrevivem, enquanto `value`/atributos vêm do HTML novo e atributos `data-*` gravados só pelo JS são removidos. Nós extras sem `id` correspondente (chrome injetado, overlays) são removidos.
+
+Tags `<script>` inline não rodam num morph do Drive. Coloque o comportamento num script estático carregado pelo layout e escolha um dos caminhos:
+
+- delegação em `document`, registrada uma vez atrás de uma flag em `window`;
+- teardown antes do reinit (`removeEventListener`, `disconnect`, `cloneNode`) no `amarra:morphed`.
+
+Não use `dataset.ready` como guarda de inicialização: o morph remove o atributo `data-*`, então a guarda não pula o reinit e `addEventListener` empilha um segundo listener. Os hooks do framework seguem esse contrato (`updated` → `disconnect` → `connect`).
+
 ## Os trade-offs
 
 HTML-first não sai de graça, e o Amarra deixa os custos explícitos:

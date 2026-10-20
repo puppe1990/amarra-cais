@@ -53,6 +53,10 @@ go mod tidy
 cp "$ROOT/e2e/fixtures/dialog.html" web/templates/pages/dialog.html
 "$TMP/amarra-cais" g handler picker
 cp "$ROOT/e2e/fixtures/picker.html" web/templates/pages/picker.html
+"$TMP/amarra-cais" g handler morphone
+"$TMP/amarra-cais" g handler morptwo
+cp "$ROOT/e2e/fixtures/morph_reuse.html" web/templates/pages/morphone.html
+cp "$ROOT/e2e/fixtures/morph_reuse.html" web/templates/pages/morptwo.html
 "$TMP/amarra-cais" g live counter
 "$TMP/amarra-cais" g stream chat
 go mod tidy

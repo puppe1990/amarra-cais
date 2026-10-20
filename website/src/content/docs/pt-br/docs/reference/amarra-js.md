@@ -17,6 +17,12 @@ Uma requisição que troca o **shell** do layout (login, signup, logout) precisa
 
 O layout renderiza `<meta name="csrf-token">`, e o Drive envia `X-CSRF-Token` em suas requisições (em par com o cookie double-submit `cais_csrf`).
 
+## Scripts e reuso no morph
+
+Um nó com o mesmo `id` nas duas respostas é o mesmo nó do DOM depois do morph: listeners JS e propriedades expandidas sobrevivem, enquanto `value`/atributos vêm do HTML novo e atributos `data-*` gravados só pelo JS são removidos. Tags `<script>` inline não rodam num morph; coloque o comportamento num script estático do layout e faça delegação em `document` uma vez atrás de uma flag em `window`, ou teardown antes do reinit (`removeEventListener`, `disconnect`, `cloneNode`) no `amarra:morphed`.
+
+Não use `dataset.ready` como guarda de inicialização: o morph remove o atributo `data-*`, então a guarda não pula o reinit e `addEventListener` empilha um segundo listener. Os hooks embutidos seguem `updated` → `disconnect` → `connect`.
+
 ## Atributos
 
 | Atributo                        | Aplica-se a               | Efeito                                                                                    |
