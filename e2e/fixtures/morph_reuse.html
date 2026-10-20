@@ -1,0 +1,15 @@
+{{ define "content" }}
+<div class="p-6 max-w-md">
+  <h1 id="morph-title">{{ .Title }}</h1>
+  <form id="morph-form" action="/morphone">
+    <label for="morph-field">Field</label>
+    <input id="morph-field" name="field" value="{{ .Title }}" data-server="{{ .Title }}" />
+    <label for="morph-select">UF</label>
+    <select id="morph-select" name="uf" data-server="{{ .Title }}">
+      <option value="SP">SP</option>
+      <option value="RJ">RJ</option>
+    </select>
+    <a id="to-other" href="/morptwo">other page</a>
+  </form>
+</div>
+{{ end }}
