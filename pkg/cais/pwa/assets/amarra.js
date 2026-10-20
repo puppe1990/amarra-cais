@@ -2555,6 +2555,82 @@ ${lines.join("\n")}
     if (el && typeof el.focus === "function") el.focus();
   }
 
+  // pkg/amarra/js/drive_download.mjs
+  function isMutationMethod(method) {
+    const verb = String(method ?? "GET").toUpperCase();
+    return verb !== "GET" && verb !== "HEAD";
+  }
+  function filenameFromDisposition(disposition, requestURL = "") {
+    const raw = String(disposition ?? "");
+    const extended = raw.match(/filename\*\s*=\s*([^;]+)/i);
+    if (extended) return sanitizeFilename(decodeFilename(extendedFilename(extended[1])));
+    const quoted = raw.match(/filename\s*=\s*"([^"]*)"/i);
+    if (quoted) return sanitizeFilename(decodeFilename(quoted[1]));
+    const plain = raw.match(/filename\s*=\s*([^;]+)/i);
+    if (plain) return sanitizeFilename(decodeFilename(plain[1].trim()));
+    return filenameFromURL(requestURL);
+  }
+  function extendedFilename(value) {
+    const name = value.trim().replace(/^"|"$/g, "");
+    const at = name.indexOf("''");
+    return at >= 0 ? name.slice(at + 2) : name;
+  }
+  function decodeFilename(value) {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  function filenameFromURL(url) {
+    try {
+      const path = new URL(String(url || ""), "http://amarra.invalid").pathname;
+      return sanitizeFilename(path.slice(path.lastIndexOf("/") + 1));
+    } catch {
+      return "download";
+    }
+  }
+  function sanitizeFilename(value) {
+    const clean = String(value ?? "").replace(/[\u0000-\u001f\\/]+/g, "_").replace(/^\.+/, "").trim();
+    return clean || "download";
+  }
+  async function downloadBlobResponse(res, opts = {}) {
+    const blob = await res.blob();
+    if (typeof opts.isCurrent === "function" && !opts.isCurrent()) return null;
+    const filename = filenameFromDisposition(
+      res.headers?.get?.("content-disposition"),
+      res.url || opts.url
+    );
+    const createObjectURL = opts.createObjectURL ?? globalThis.URL?.createObjectURL?.bind(globalThis.URL);
+    const revokeObjectURL = opts.revokeObjectURL ?? globalThis.URL?.revokeObjectURL?.bind(globalThis.URL);
+    if (typeof createObjectURL !== "function") {
+      throw new Error("download: URL.createObjectURL is unavailable");
+    }
+    const objectURL = createObjectURL(blob);
+    const anchor = downloadAnchor(opts.document, objectURL, filename);
+    anchor.click?.();
+    anchor.remove?.();
+    scheduleRevoke(objectURL, revokeObjectURL, opts.schedule);
+    return { filename };
+  }
+  function downloadAnchor(doc, objectURL, filename) {
+    if (!doc?.createElement) throw new Error("download: document.createElement is unavailable");
+    const anchor = doc.createElement("a");
+    anchor.href = objectURL;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    anchor.hidden = true;
+    (doc.body ?? doc.documentElement)?.appendChild?.(anchor);
+    return anchor;
+  }
+  function scheduleRevoke(objectURL, revokeObjectURL, schedule) {
+    if (typeof revokeObjectURL !== "function") return;
+    const later = schedule ?? globalThis.setTimeout?.bind(globalThis);
+    const revoke = () => revokeObjectURL(objectURL);
+    if (typeof later === "function") later(revoke, 0);
+    else revoke();
+  }
+
   // pkg/amarra/js/drive.mjs
   function shouldInterceptClick({
     href,
@@ -2736,11 +2812,12 @@ ${lines.join("\n")}
   async function visit(url, opts = {}) {
     const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
     const doc = opts.document;
+    const method = opts.method ?? "GET";
     const seq = bumpSequence(doc);
     showProgress(doc);
     try {
       const res = await fetchFn(url, {
-        method: opts.method ?? "GET",
+        method,
         headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
         body: opts.body,
         redirect: "follow",
@@ -2756,6 +2833,18 @@ ${lines.join("\n")}
       const authFailure = res.status === 401 || res.status === 403;
       const stream = isStreamResponse(res.headers);
       if (!authFailure && !stream && !isHtmlResponse(res.headers)) {
+        if (isMutationMethod(method)) {
+          const file = await downloadBlobResponse(res, {
+            document: doc,
+            url: res.url || url,
+            createObjectURL: opts.createObjectURL,
+            revokeObjectURL: opts.revokeObjectURL,
+            schedule: opts.schedule,
+            isCurrent: () => isCurrentSequence(doc, seq)
+          });
+          if (!file) return { action: "superseded" };
+          return { action: "download", filename: file.filename };
+        }
         assignLocation(location, res.url || url);
         return { action: "assign" };
       }
