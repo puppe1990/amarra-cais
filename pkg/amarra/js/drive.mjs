@@ -19,6 +19,7 @@ import {
   withQuery,
 } from "./drive_form.mjs";
 import { captureScroll, focusFirstInvalid, restoreScroll } from "./drive_restore.mjs";
+import { downloadBlobResponse, isMutationMethod } from "./drive_download.mjs";
 
 export function shouldInterceptClick({
   href,
@@ -244,11 +245,12 @@ function applyShellMarker(doc, html) {
 export async function visit(url, opts = {}) {
   const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
   const doc = opts.document;
+  const method = opts.method ?? "GET";
   const seq = bumpSequence(doc);
   showProgress(doc);
   try {
     const res = await fetchFn(url, {
-      method: opts.method ?? "GET",
+      method,
       headers: { ...driveHeaders(opts.csrfToken), ...opts.headers },
       body: opts.body,
       redirect: "follow",
@@ -266,7 +268,21 @@ export async function visit(url, opts = {}) {
     if (!authFailure && !stream && !isHtmlResponse(res.headers)) {
       // #332: a PDF/DXF/SVG/attachment response has no #amarra-main to morph.
       // Drive used to read it as text, end as "ignore" after preventDefault,
-      // and the file never downloaded — hand the navigation to the browser.
+      // and the file never downloaded. A GET can be handed to the browser;
+      // #366: a mutation cannot, because assign would discard the response and
+      // replay the POST as GET (losing body/filters). Save those bytes instead.
+      if (isMutationMethod(method)) {
+        const file = await downloadBlobResponse(res, {
+          document: doc,
+          url: res.url || url,
+          createObjectURL: opts.createObjectURL,
+          revokeObjectURL: opts.revokeObjectURL,
+          schedule: opts.schedule,
+          isCurrent: () => isCurrentSequence(doc, seq),
+        });
+        if (!file) return { action: "superseded" };
+        return { action: "download", filename: file.filename };
+      }
       assignLocation(location, res.url || url);
       return { action: "assign" };
     }

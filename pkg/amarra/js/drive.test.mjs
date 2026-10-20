@@ -413,6 +413,129 @@ test("visit assigns when the response is an attachment even if typed as HTML", a
   assert.deepEqual(assigned, ["http://a/projetos/1/export"]);
 });
 
+function fakeDownloadDocument() {
+  const anchors = [];
+  const doc = {
+    body: {
+      appendChild(el) {
+        el.appended = true;
+      },
+    },
+    querySelector: () => null,
+    getElementById: (id) => ({ id, style: {}, hidden: false }),
+    createElement(tag) {
+      const el = {
+        tag,
+        style: {},
+        download: "",
+        href: "",
+        clicked: 0,
+        removed: false,
+        setAttribute() {},
+        appendChild() {},
+        click() {
+          this.clicked += 1;
+        },
+        remove() {
+          this.removed = true;
+        },
+      };
+      anchors.push(el);
+      return el;
+    },
+  };
+  return { doc, anchors };
+}
+
+// #366: a POST export returns the file in the response body. Assigning
+// location would discard it and replay the mutation as a GET.
+test("visit downloads the response body of a POST export", async () => {
+  const { doc, anchors } = fakeDownloadDocument();
+  const requests = [];
+  const objectURLs = [];
+  const revoked = [];
+  const result = await visit("http://a/projetos/1/export", {
+    method: "POST",
+    body: "filter=paid",
+    fetchFn: async (url, init) => {
+      requests.push({ url, method: init.method, body: init.body });
+      return {
+        status: 200,
+        url: "http://a/projetos/1/export",
+        headers: {
+          get: (name) =>
+            name === "content-type"
+              ? "application/pdf"
+              : name === "content-disposition"
+                ? 'attachment; filename="filtrados.pdf"'
+                : null,
+        },
+        blob: async () => ({ bytes: "pdf" }),
+        text: async () => {
+          throw new Error("a file response must not be read as text");
+        },
+      };
+    },
+    document: doc,
+    location: {
+      href: "http://a/projetos/1",
+      assign(url) {
+        throw new Error(`must not navigate to ${url}`);
+      },
+    },
+    history: { pushState() {}, replaceState() {} },
+    createObjectURL(blob) {
+      objectURLs.push(blob);
+      return "blob:export";
+    },
+    revokeObjectURL(url) {
+      revoked.push(url);
+    },
+    schedule(fn) {
+      fn();
+    },
+  });
+
+  assert.equal(result.action, "download");
+  assert.equal(result.filename, "filtrados.pdf");
+  assert.deepEqual(requests, [
+    { url: "http://a/projetos/1/export", method: "POST", body: "filter=paid" },
+  ]);
+  assert.deepEqual(objectURLs, [{ bytes: "pdf" }]);
+  assert.equal(anchors.length, 1);
+  assert.equal(anchors[0].href, "blob:export");
+  assert.equal(anchors[0].download, "filtrados.pdf");
+  assert.equal(anchors[0].clicked, 1);
+  assert.equal(anchors[0].appended, true);
+  assert.equal(anchors[0].removed, true);
+  assert.deepEqual(revoked, ["blob:export"]);
+});
+
+// A mutation that answers HTML still morphs; only files take the blob path.
+test("visit morphs an HTML response to a mutation", async () => {
+  const main = { innerHTML: "old" };
+  const { doc } = fakeDownloadDocument();
+  doc.querySelector = (sel) => (sel === "#amarra-main" ? main : null);
+  const result = await visit("http://a/projetos", {
+    method: "POST",
+    body: "name=New",
+    fetchFn: async () => ({
+      status: 200,
+      url: "http://a/projetos",
+      headers: { get: () => "text/html; charset=utf-8" },
+      text: async () => `<main id="amarra-main"><p>created</p></main>`,
+    }),
+    document: doc,
+    location: { href: "http://a/projetos" },
+    history: { pushState() {}, replaceState() {} },
+    morphFn(el, html) {
+      el.innerHTML = html;
+    },
+  });
+  assert.equal(result.action, "morph");
+  assert.equal(main.innerHTML.trim(), "<p>created</p>");
+});
+
 test("visit still morphs a text/html response with #amarra-main", async () => {
   const main = { innerHTML: "old" };
   const result = await visit("http://a/x", {

@@ -143,7 +143,7 @@ r.Post("/webhooks/incoming/{token}", receiver)
 | Browser admin (default) | `middleware.RequireAdmin("/login", db)` | `amarra-cais g resource` default |
 | Bearer token API        | `middleware.AdminAuth(cfg)`             | `--admin-auth bearer`            |
 
-Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `AdminAuth` accepts Bearer header only, no query params. No-op in development when unset.
+Set `ADMIN_TOKEN` in production (`cfg.Validate()` fails on boot if missing). `AdminAuth` accepts Bearer header only, no query params. No-op in development when unset — but CSRF only exempts a Bearer request whose token matches `ADMIN_TOKEN`, so set it locally when exercising a bearer API, or register `middleware.BearerAPI(prefix, verify)` for a custom token (#364).
 
 Session admin routes require `users.is_admin = 1` (#350); public signup defaults to 0. See `docs/security-upgrade.md` for existing apps and promotion.
 
@@ -205,7 +205,7 @@ flash.Set(w, "notice", "Saved!", cfg.CookieSecure())
 http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 ```
 
-Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only. A GET 404 whose HTML still has `#amarra-main` morphs and `pushState`s that URL; a 500 with the same marker morphs without pushing (so a refresh does not re-POST). Responses without `#amarra-main` and network failures emit `amarra:drive-error` with a toast — Drive never retries the mutation (#360).
+Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only. A GET 404 whose HTML still has `#amarra-main` morphs and `pushState`s that URL; a 500 with the same marker morphs without pushing (so a refresh does not re-POST). Responses without `#amarra-main` and network failures emit `amarra:drive-error` with a toast — Drive never retries the mutation (#360). A non-HTML response (PDF/DXF/SVG/attachment) to GET is handed to the browser; the same response to a mutation is saved from the fetched body through a blob URL named by `Content-Disposition`, never replayed as GET (#366).
 
 ### Template loader contract
 
@@ -288,7 +288,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 
 - `middleware.CSRF(cfg)` on the router (validates POST/PUT/DELETE/PATCH)
 - Double-submit cookie (`cais_csrf`) — token in cookie + form field or `X-CSRF-Token` header; no server-side token store
-- Skip set (`skipCSRF`): `/health`, `/static/`, `/api/` + Bearer, and the crawler files `/sitemap.xml`, `/robots.txt`, `/llms.txt` — these GETs must go out **without `Set-Cookie`**, or Search Console answers "Não foi possível buscar o sitemap" (#342). Closed set: an app's own `.xml` route may be authenticated, so never widen it to an extension match.
+- Skip set (`skipCSRF`): `/health`, `/static/`, the crawler files `/sitemap.xml`, `/robots.txt`, `/llms.txt`, and machine clients whose Bearer token matches `ADMIN_TOKEN` (or a `BearerAPI(prefix, verify)` registration). The token is validated before any content-type check, so `curl -d` clients work and an unvalidated header on a form still gets the double-submit check. The crawler GETs must go out **without `Set-Cookie`**, or Search Console answers "Não foi possível buscar o sitemap" (#342). `/api/` alone is not exempt: a session route under it keeps the double-submit check, and an invalid Bearer never falls back to the session cookie (#364). Closed set for crawler files: an app's own `.xml` route may be authenticated, so never widen it to an extension match.
 
 **Static files** — `StaticForEnv` registers via `handlePattern`, not `wrap()`, so `/static` never gets session/flash. Development is `no-store`. Production 200s for fonts/icons/images are `public, max-age=31536000`; CSS, JS, the web manifest, and `sw.js` are `public, max-age=0, must-revalidate` because those URLs stay the same across deploys (#359). Do not send the year-long TTL on 404s. HTML from `view.Write` stays `no-store` (#80, #355). The service worker network-first fetch for `amarra.js` and `/static/css/` uses `cache: "no-cache"` so the HTTP cache cannot keep last year's bytes.
 
@@ -477,8 +477,8 @@ In `ENV=development`:
 
 - `middleware.LoggerTo(devlog.MirrorDefault(...))` — JSON request logs when `cfg.LogJSON()` (`kind: request`); `LOG_FORMAT=text` opts out
 - `sqllog.ConfigForEnv(env)` — SQL JSON logs in development (`kind: sql`); plain text when `JSON: false`. `sqllog.DB`/`Tx` log `ExecContext`/`QueryContext`/`QueryRowContext`; short methods delegate to `context.Background()`. Generated stores may keep the short methods (#264).
-- `devlog.Register(r, cfg.Env, buf)` — mounts `/logs` (localhost only)
-- `jobsui.Register(r, db)` — mounts `/jobs` (localhost only, all envs; SSH tunnel in production)
+- `devlog.Register(r, cfg.Env, buf)` — mounts `/logs` (direct loopback only; forwarding headers are rejected, #365)
+- `jobsui.Register(r, db)` — mounts `/jobs` (direct loopback only, all envs; SSH tunnel in production)
 
 Boot banner via `boot.Print` in `cmd/server/main.go`. Port auto-pick via `cais.ResolvePort` when preferred port is busy.
 
@@ -498,7 +498,7 @@ Editing HTML/CSS must not cost a rebuild (#340). In `ENV=development` the scaffo
 
 - loads templates from `web/templates` (or `TEMPLATES_DIR`) with `os.DirFS`; production keeps the `//go:embed` copy (`templateFS` in `internal/cli/tpl_scaffold_main.go`)
 - runs `devreload.Watch` (`pkg/cais/devreload`): a poll watcher (`400ms`, `150ms` settle) over the templates dir + built `styles.css` calls `view.Renderer.ReloadFromDir` on a `.html` change — a full re-parse (kit `ExpandAll` + every locale set, #211) swapped under `mu.Lock`; a parse error logs and keeps the previous set
-- pings open tabs over `GET /_dev/reload` (dev-only, localhost-only, `devreload.Hub`); the layout's dev script reloads the tab, and a changed `boot` id means air restarted the process for a `.go` edit
+- pings open tabs over `GET /_dev/reload` (dev-only, direct loopback only; forwarding headers are rejected, #365, `devreload.Hub`); the layout's dev script reloads the tab, and a changed `boot` id means air restarted the process for a `.go` edit
 - keeps air for `.go` only: `include_ext = ["go"]` and `web` in `exclude_dir`, or the Tailwind write would rebuild the process
 
 `app.Deps.DevReload` is nil in production, so the route is not mounted. Tests: `pkg/cais/devreload`, `pkg/amarra/view/renderer_reload_test.go`, `internal/cli/tpl_scaffold_devreload_test.go`, e2e `e2e/dev-reload.spec.mjs`.
@@ -614,7 +614,7 @@ Register handlers in `internal/jobs/registry.go`. Built-in: `PruneSessions`. Pro
 
 Console bindings: `store`, `cfg`, `db`, plus any custom keys in `Bindings`. Commands: `help`, `sql`, `reload`, `history`, `!N`/`!!`, `exit`. Arrow keys when stdin is a TTY.
 
-`/logs` — development-only log viewer (localhost). Shows request + SQL logs.
+`/logs` — development-only log viewer (direct loopback; forwarding headers are rejected). Shows request + SQL logs.
 
 `/jobs` — queue dashboard (localhost, all envs). Counts, failed retry/discard, scheduled, recurring. `amarra-cais doctor` warns if `jobsui.Register` is missing.
 

@@ -10,15 +10,60 @@ import (
 )
 
 // CSRF protects state-changing requests with a double-submit cookie token.
-func CSRF(cfg cais.Config) func(http.Handler) http.Handler {
+// Options add explicit bearer-only API prefixes; no path is exempt by naming
+// convention alone (#364).
+func CSRF(cfg cais.Config, opts ...CSRFOption) func(http.Handler) http.Handler {
+	policy := newCSRFPolicy(cfg, opts...)
 	return func(next http.Handler) http.Handler {
-		return csrfHandler(cfg, next)
+		return csrfHandler(cfg, policy, next)
 	}
 }
 
-func csrfHandler(cfg cais.Config, next http.Handler) http.Handler {
+// CSRFOption configures a bearer-only API exemption.
+type CSRFOption func(*csrfPolicy)
+
+// BearerVerifier reports whether the request carries a Bearer token accepted by
+// an app-specific API.
+type BearerVerifier func(*http.Request) bool
+
+// BearerAPI declares prefix as an API authenticated exclusively by a Bearer
+// token accepted by verify. Requests there skip the double-submit check only
+// when they carry a Bearer token and verify accepts it; form-encoded machine
+// clients are fine because a browser form cannot attach Authorization. Never
+// register a prefix that also serves session routes: the session fallback
+// would turn a stray header into a CSRF bypass (#364).
+func BearerAPI(prefix string, verify BearerVerifier) CSRFOption {
+	return func(policy *csrfPolicy) {
+		if prefix == "" || verify == nil {
+			return
+		}
+		policy.bearerAPIs = append(policy.bearerAPIs, csrfBearerAPI{prefix: prefix, verify: verify})
+	}
+}
+
+type csrfPolicy struct {
+	adminToken string
+	bearerAPIs []csrfBearerAPI
+}
+
+type csrfBearerAPI struct {
+	prefix string
+	verify BearerVerifier
+}
+
+func newCSRFPolicy(cfg cais.Config, opts ...CSRFOption) csrfPolicy {
+	policy := csrfPolicy{adminToken: cfg.AdminToken}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&policy)
+		}
+	}
+	return policy
+}
+
+func csrfHandler(cfg cais.Config, policy csrfPolicy, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if skipCSRF(r) {
+		if skipCSRF(policy, r) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -70,24 +115,39 @@ func isSafeMethod(method string) bool {
 	}
 }
 
-// skipCSRF reports whether a request bypasses the double-submit check: health
-// and static probes, crawler files that carry no form, the /api/ machine-client
-// convention, and requests carrying an Authorization: Bearer header (#331) —
-// a machine client has no CSRF cookie or form field, so the 403 used to run
-// before the handler authenticated it.
+// skipCSRF reports whether a request bypasses the double-submit check:
+// health/static probes, crawler files that carry no form, and machine clients
+// that authenticate with a Bearer token the route's auth gate would accept.
 //
-// A classic HTML form post keeps its CSRF protection even when a stray Bearer
-// header is present: cross-site forms cannot attach Authorization, so a Bearer
-// on form content there is browser/extension noise, not a machine client.
-func skipCSRF(r *http.Request) bool {
+// #364: /api/ is a naming convention, not proof that the route is Bearer-only.
+// A session route under it must keep CSRF; otherwise a cross-site form (or a
+// stray Authorization header) could mutate with the victim's cookie.
+func skipCSRF(policy csrfPolicy, r *http.Request) bool {
 	path := r.URL.Path
-	if path == "/health" ||
-		isCrawlerFile(path) ||
-		strings.HasPrefix(path, "/static/") ||
-		strings.HasPrefix(path, "/api/") {
+	if path == "/health" || isCrawlerFile(path) || strings.HasPrefix(path, "/static/") {
 		return true
 	}
-	return hasBearerAuthorization(r) && !isFormContentType(r)
+	return policy.skipsBearer(r)
+}
+
+// skipsBearer accepts a machine client only when the token is one AdminAuth
+// would accept (or an explicitly registered BearerAPI verifier). The token is
+// validated before any content-type check: curl -d sends a form body, and a
+// cross-site form cannot attach Authorization at all. An unvalidated header on
+// a form therefore still falls through to the double-submit check (#364).
+func (p csrfPolicy) skipsBearer(r *http.Request) bool {
+	if !hasBearerAuthorization(r) {
+		return false
+	}
+	if bearerMatches(r, p.adminToken) {
+		return true
+	}
+	for _, api := range p.bearerAPIs {
+		if strings.HasPrefix(r.URL.Path, api.prefix) && api.verify(r) {
+			return true
+		}
+	}
+	return false
 }
 
 // isCrawlerFile covers the public documents a crawler fetches: the framework's
@@ -108,17 +168,4 @@ func isCrawlerFile(path string) bool {
 
 func hasBearerAuthorization(r *http.Request) bool {
 	return strings.HasPrefix(strings.ToLower(r.Header.Get("Authorization")), "bearer ")
-}
-
-func isFormContentType(r *http.Request) bool {
-	ct := r.Header.Get("Content-Type")
-	if i := strings.IndexByte(ct, ';'); i >= 0 {
-		ct = ct[:i]
-	}
-	switch strings.ToLower(strings.TrimSpace(ct)) {
-	case "application/x-www-form-urlencoded", "multipart/form-data", "text/plain":
-		return true
-	default:
-		return false
-	}
 }

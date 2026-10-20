@@ -174,6 +174,17 @@ func TestRegister_devOnlyAndLocalhostOnly(t *testing.T) {
 		t.Fatalf("non-loopback dev request = %d, want 403", rr.Code)
 	}
 
+	// #365: Caddy on the same host forwards external reload requests from
+	// 127.0.0.1; the forwarding header is the only evidence of the proxy hop.
+	proxied := httptest.NewRequest(http.MethodGet, ReloadPath, nil)
+	proxied.RemoteAddr = "127.0.0.1:5555"
+	proxied.Header.Set("X-Forwarded-For", "203.0.113.7")
+	rr = httptest.NewRecorder()
+	dev.ServeHTTP(rr, proxied.WithContext(cancelAfterFirstWrite(proxied.Context())))
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("proxied loopback dev request = %d, want 403", rr.Code)
+	}
+
 	prod := cais.NewRouter()
 	New().Register(prod, "production")
 	rr = httptest.NewRecorder()
