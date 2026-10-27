@@ -75,6 +75,28 @@ function cssEscape(id) {
   return String(id).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
 }
 
+// #375: a fixed reconnect synchronized every client after an outage, and a
+// permanent rejection (bad CSRF, failed mount) retried forever. Backoff is
+// bounded and jittered so reconnects spread out.
+const LIVE_RECONNECT_CODES = new Set([1003, 1008, 1011]);
+
+export function reconnectDelay(attempt, opts = {}) {
+  const base = opts.baseMs ?? 1000;
+  const max = opts.maxMs ?? 30000;
+  const factor = opts.factor ?? 2;
+  const jitter = opts.jitter ?? 0.2;
+  const random = opts.random ?? Math.random;
+  const capped = Math.min(max, base * factor ** Math.max(0, attempt - 1));
+  const spread = capped * jitter;
+  return Math.max(0, Math.round(capped - spread + random() * spread * 2));
+}
+
+export function liveState(root, state, detail = {}) {
+  root?.setAttribute?.("data-amarra-live-state", state);
+  if (typeof root?.dispatchEvent !== "function" || typeof CustomEvent !== "function") return;
+  root.dispatchEvent(new CustomEvent("amarra:live-state", { bubbles: true, detail: { state, ...detail } }));
+}
+
 export function start(opts = {}) {
   const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
   if (!doc || typeof doc.addEventListener !== "function") return;
@@ -83,17 +105,58 @@ export function start(opts = {}) {
 
   const WS = opts.WebSocket ?? (typeof WebSocket !== "undefined" ? WebSocket : null);
   const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-  const sockets = new Map();
+  const connections = new Map();
+  const setTimer = opts.setTimeout ?? setTimeout;
+  const clearTimer = opts.clearTimeout ?? clearTimeout;
+  const disabled = opts.reconnectMs !== undefined && opts.reconnectMs < 0;
 
-  function connect(root) {
-    if (!root || !WS || !location) return;
-    const view = root.getAttribute("amarra-live");
-    if (!view) return;
-    const topic = root.getAttribute("data-amarra-topic") || view;
-    const url = wsURL(location, { view, topic });
-    const ws = new WS(url);
-    sockets.set(root, ws);
+  function removed(root) {
+    return root.isConnected === false || (typeof doc.contains === "function" && !doc.contains(root));
+  }
+
+  function onClose(root, record, ev) {
+    record.ws = null;
+    if (!connections.has(root)) return;
+    if (removed(root)) {
+      root?.removeAttribute?.("data-amarra-live-state");
+      connections.delete(root);
+      return;
+    }
+    const code = ev?.code ?? 1006;
+    if (LIVE_RECONNECT_CODES.has(code)) {
+      record.failed = true;
+      liveState(root, "failed", { permanent: true, code, reason: ev?.reason ?? "", attempt: record.attempts });
+      return;
+    }
+    if (disabled) {
+      liveState(root, "closed", { code });
+      return;
+    }
+    record.attempts += 1;
+    const wait = reconnectDelay(record.attempts, {
+      baseMs: opts.reconnectMs ?? 1000,
+      maxMs: opts.maxMs,
+      jitter: opts.jitter,
+      random: opts.random,
+    });
+    liveState(root, "reconnecting", { code, attempt: record.attempts, retryInMs: wait });
+    record.timer = setTimer(() => {
+      record.timer = null;
+      if (!connections.has(root) || removed(root)) {
+        connections.delete(root);
+        return;
+      }
+      open(root, record);
+    }, wait);
+  }
+
+  function open(root, record) {
+    const ws = new WS(record.url);
+    record.ws = ws;
+    liveState(root, "connecting", { attempt: record.attempts });
     ws.addEventListener("open", () => {
+      record.attempts = 0;
+      liveState(root, "open");
       const csrf = opts.csrfToken ?? csrfTokenFromMeta(doc);
       ws.send(JSON.stringify({ type: "join", csrf }));
     });
@@ -112,28 +175,38 @@ export function start(opts = {}) {
       setLoading(root._amarraPending, root, false);
       root._amarraPending = null;
     });
-    ws.addEventListener("close", () => {
-      sockets.delete(root);
-      const wait = opts.reconnectMs ?? 1000;
-      if (wait < 0) return;
-      setTimeout(() => {
-        if (!doc.contains?.(root) && root.isConnected === false) return;
-        connect(root);
-      }, wait);
-    });
+    ws.addEventListener("close", (ev) => onClose(root, record, ev));
+  }
+
+  function connect(root) {
+    if (!root || !WS || !location || connections.has(root)) return;
+    const view = root.getAttribute("amarra-live");
+    if (!view) return;
+    const topic = root.getAttribute("data-amarra-topic") || view;
+    const record = {
+      url: wsURL(location, { view, topic }),
+      ws: null,
+      attempts: 0,
+      timer: null,
+      failed: false,
+    };
+    connections.set(root, record);
+    open(root, record);
   }
 
   // #113: Drive morphs the page on navigation; rescan on amarra:morphed so a
   // chat reached via link still joins, and close sockets of replaced roots.
+  // A pending backoff keeps its record, so the morph cannot open a duplicate.
   function sync() {
-    for (const [root, ws] of sockets) {
-      if (root.isConnected === false) {
-        ws?.close?.();
-        sockets.delete(root);
-      }
+    for (const [root, record] of connections) {
+      if (!removed(root)) continue;
+      if (record.timer) clearTimer(record.timer);
+      record.ws?.close?.();
+      root?.removeAttribute?.("data-amarra-live-state");
+      connections.delete(root);
     }
     doc.querySelectorAll?.("[amarra-live]").forEach((el) => {
-      if (!sockets.has(el)) connect(el);
+      if (!connections.has(el)) connect(el);
     });
   }
   sync();
