@@ -4,6 +4,31 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.24.0] - 2026-10-27
+
+### Added
+
+- `migrate.RollbackOptions` with `RollbackLastWithOptions` / `RollbackLastDirWithOptions`; `AllowRecordOnly` keeps the old behavior of deleting only the `schema_migrations` row (#374).
+- Live sends a `resync` message after an inbox overflow: once the queued events drain, the connection renders the current state and reports `lost`. The client morphs the view and emits `amarra:live-resync` with `detail.lost` (#376).
+- Live connection state is observable through `data-amarra-live-state` (`connecting`, `open`, `reconnecting`, `failed`, `closed`) and the `amarra:live-state` event (`code`, `attempt`, `retryInMs`, `permanent`, `reason`) (#375).
+
+### Changed
+
+- `amarra-cais db rollback` refuses a migration without a `-- down` section and returns `ErrRollbackWithoutDown`. Removing only the record left the schema behind, so the next apply retried the up SQL and failed on the existing table or column. `--allow-record-only` opts into the old behavior explicitly (#374).
+- The Live client reconnects with bounded exponential backoff plus jitter (1s → 30s), resets the attempt count on `open`, treats close codes 1003/1008/1011 as permanent, cancels a pending attempt when the root leaves the document, and keeps one socket per root (#375).
+
+### Fixed
+
+- A fresh scaffold now emits the shipped kit CSS: `tailwind.config.js` scans `./web/templates/**/*.html` plus the module's `pkg/amarra/view/components/**/*.html`, resolved with `go list -m`. Before, 153 kit-only utilities were pruned and `<.input>`, `<.button>` and `<.flash />` rendered unstyled (#372).
+- A `form.html` override that reads `.Class` (or `.Id`/`.Target`/`.Novalidate`) no longer 500s inside `{{ range }}`; those attributes are isolated as empty `$vars` like `button` and `nav` already did (#373).
+
+### Upgrade
+
+- Minor release: `db rollback` changes its default contract, and Live adds public API/protocol. Run `amarra-cais upgrade v0.24.0` and `amarra-cais pwa --bump`.
+- Copy `shippedKitContent()` from a fresh `amarra-cais new` into `tailwind.config.js` (or run `amarra-cais g component <name>` for every kit component the app uses) and rebuild CSS; otherwise the kit stays unstyled.
+- `db rollback` without a `-- down` section now fails; add the down block or pass `--allow-record-only`.
+- Live clients no longer retry close codes 1003/1008/1011; listen for `amarra:live-state` and `amarra:live-resync` when the interface needs to surface recovery.
+
 ## [0.23.1] - 2026-10-20
 
 ### Fixed
