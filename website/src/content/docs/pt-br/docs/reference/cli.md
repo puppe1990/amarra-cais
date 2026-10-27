@@ -62,13 +62,13 @@ Adicione `--dry-run` a qualquer um dos comandos para imprimir as mudanças plane
 
 ## Banco de dados
 
-| Comando                                              | Descrição                                                                |
-| ---------------------------------------------------- | ------------------------------------------------------------------------ |
-| `amarra-cais db migrate`                             | Executa as migrations pendentes.                                         |
-| `amarra-cais db status`                              | Lista as migrations aplicadas e pendentes.                               |
+| Comando                                              | Descrição                                                                               |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `amarra-cais db migrate`                             | Executa as migrations pendentes.                                                        |
+| `amarra-cais db status`                              | Lista as migrations aplicadas e pendentes.                                              |
 | `amarra-cais db rollback [--allow-record-only]`      | Reverte a última migration; exige uma seção `-- down`, salvo com `--allow-record-only`. |
-| `amarra-cais db prune-sessions`                      | Exclui as sessões de login expiradas.                                    |
-| `amarra-cais db seed` / `amarra-cais db seed --list` | Executa `internal/db/seeds.go` / lista os helpers de seed referenciados. |
+| `amarra-cais db prune-sessions`                      | Exclui as sessões de login expiradas.                                                   |
+| `amarra-cais db seed` / `amarra-cais db seed --list` | Executa `internal/db/seeds.go` / lista os helpers de seed referenciados.                |
 
 ## Jobs em background
 

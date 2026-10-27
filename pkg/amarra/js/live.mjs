@@ -65,7 +65,12 @@ export function applyLiveMessage(msg, root, morphFn = morph, extras = {}) {
   if (msg.navigate && extras.location) extras.location.href = msg.navigate;
   const pushFn = extras.dispatchPush ?? dispatchLivePush;
   for (const p of msg.pushes || []) pushFn(p.event, p.payload);
-  if (msg.type === "resync" && doc && typeof doc.dispatchEvent === "function" && typeof CustomEvent === "function") {
+  if (
+    msg.type === "resync" &&
+    doc &&
+    typeof doc.dispatchEvent === "function" &&
+    typeof CustomEvent === "function"
+  ) {
     // The server rendered the authoritative state after dropping events (#376).
     doc.dispatchEvent(
       new CustomEvent("amarra:live-resync", { bubbles: true, detail: { lost: msg.lost ?? 0 } })
@@ -100,7 +105,9 @@ export function reconnectDelay(attempt, opts = {}) {
 export function liveState(root, state, detail = {}) {
   root?.setAttribute?.("data-amarra-live-state", state);
   if (typeof root?.dispatchEvent !== "function" || typeof CustomEvent !== "function") return;
-  root.dispatchEvent(new CustomEvent("amarra:live-state", { bubbles: true, detail: { state, ...detail } }));
+  root.dispatchEvent(
+    new CustomEvent("amarra:live-state", { bubbles: true, detail: { state, ...detail } })
+  );
 }
 
 export function start(opts = {}) {
@@ -117,7 +124,9 @@ export function start(opts = {}) {
   const disabled = opts.reconnectMs !== undefined && opts.reconnectMs < 0;
 
   function removed(root) {
-    return root.isConnected === false || (typeof doc.contains === "function" && !doc.contains(root));
+    return (
+      root.isConnected === false || (typeof doc.contains === "function" && !doc.contains(root))
+    );
   }
 
   function onClose(root, record, ev) {
@@ -131,7 +140,12 @@ export function start(opts = {}) {
     const code = ev?.code ?? 1006;
     if (LIVE_RECONNECT_CODES.has(code)) {
       record.failed = true;
-      liveState(root, "failed", { permanent: true, code, reason: ev?.reason ?? "", attempt: record.attempts });
+      liveState(root, "failed", {
+        permanent: true,
+        code,
+        reason: ev?.reason ?? "",
+        attempt: record.attempts,
+      });
       return;
     }
     if (disabled) {

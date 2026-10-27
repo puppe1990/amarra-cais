@@ -3146,7 +3146,9 @@ ${lines.join("\n")}
   function liveState(root, state, detail = {}) {
     root?.setAttribute?.("data-amarra-live-state", state);
     if (typeof root?.dispatchEvent !== "function" || typeof CustomEvent !== "function") return;
-    root.dispatchEvent(new CustomEvent("amarra:live-state", { bubbles: true, detail: { state, ...detail } }));
+    root.dispatchEvent(
+      new CustomEvent("amarra:live-state", { bubbles: true, detail: { state, ...detail } })
+    );
   }
   function start4(opts = {}) {
     const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
@@ -3173,7 +3175,12 @@ ${lines.join("\n")}
       const code = ev?.code ?? 1006;
       if (LIVE_RECONNECT_CODES.has(code)) {
         record.failed = true;
-        liveState(root, "failed", { permanent: true, code, reason: ev?.reason ?? "", attempt: record.attempts });
+        liveState(root, "failed", {
+          permanent: true,
+          code,
+          reason: ev?.reason ?? "",
+          attempt: record.attempts
+        });
         return;
       }
       if (disabled) {
