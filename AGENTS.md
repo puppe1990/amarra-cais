@@ -469,7 +469,7 @@ CREATE TABLE bookmarks (...);
 DROP TABLE IF EXISTS bookmarks;
 ```
 
-`amarra-cais db rollback` executes the `-- down` SQL when present, then removes the `schema_migrations` row. Without a down section, only the record is removed.
+`amarra-cais db rollback` executes the `-- down` SQL, then removes the `schema_migrations` row. Without a down section it refuses (the schema would stay behind and the next apply would collide); `--allow-record-only` keeps the old record-only behavior (#374).
 
 ## Development logging
 
@@ -565,7 +565,7 @@ amarra-cais routes   # list HTTP routes from internal/app/routes.go
 amarra-cais link [../amarra-cais] [--unlink]  # go.mod replace for local framework dev (unlink before push)
 amarra-cais db migrate        # run pending migrations
 amarra-cais db status         # list applied/pending migrations
-amarra-cais db rollback       # roll back last migration (runs -- down SQL when present)
+amarra-cais db rollback       # roll back last migration (requires -- down; --allow-record-only opts out)
 amarra-cais db prune-sessions # delete expired login sessions from SQLite
 amarra-cais db seed           # run internal/db/seeds.go (idempotent; safe in production for catalog data)
 amarra-cais db seed --list    # list seed helpers referenced in seeds.go

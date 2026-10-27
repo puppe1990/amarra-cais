@@ -2,6 +2,7 @@ package cli
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,7 +25,7 @@ func (c *CLI) cmdDB(args []string) error {
 	case "status":
 		return c.cmdDBStatus()
 	case "rollback":
-		return c.cmdDBRollback()
+		return c.cmdDBRollback(args[1:])
 	case "prune-sessions":
 		return c.cmdDBPruneSessions()
 	case "seed":
@@ -123,7 +124,17 @@ func (c *CLI) cmdDBMigrate() error {
 	return nil
 }
 
-func (c *CLI) cmdDBRollback() error {
+func (c *CLI) cmdDBRollback(args []string) error {
+	allowRecordOnly := false
+	for _, arg := range args {
+		switch arg {
+		case "--allow-record-only":
+			allowRecordOnly = true
+		default:
+			return fmt.Errorf("unknown rollback option %q (use --allow-record-only)", arg)
+		}
+	}
+
 	dir, err := c.appDir()
 	if err != nil {
 		return err
@@ -134,13 +145,16 @@ func (c *CLI) cmdDBRollback() error {
 	}
 	defer cleanup()
 
-	result, err := migrate.RollbackLastDir(db, migrationsDir)
+	result, err := migrate.RollbackLastDirWithOptions(db, migrationsDir, migrate.RollbackOptions{AllowRecordOnly: allowRecordOnly})
+	if errors.Is(err, migrate.ErrRollbackWithoutDown) {
+		return fmt.Errorf("%w\n   add a -- down section to the migration, or rerun: amarra-cais db rollback --allow-record-only", err)
+	}
 	if err != nil {
 		return err
 	}
 	_, _ = fmt.Fprintf(c.Out, "=> Rolled back %s\n", result.Version)
 	if !result.RanDownSQL {
-		_, _ = fmt.Fprintln(c.Out, "   Warning: no -- down section; only schema_migrations record was removed")
+		_, _ = fmt.Fprintln(c.Out, "   Warning: no -- down section; only the schema_migrations record was removed")
 	}
 	return nil
 }

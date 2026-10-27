@@ -41,7 +41,7 @@ CREATE TABLE bookmarks (
 DROP TABLE IF EXISTS bookmarks;
 ```
 
-`amarra-cais db rollback` executa o SQL de `-- down` quando presente, depois remove a linha de `schema_migrations`. Sem uma seção down, apenas o registro é removido.
+`amarra-cais db rollback` executa o SQL de `-- down`, depois remove a linha de `schema_migrations`. Uma migration sem seção down é recusada: remover só o registro deixa o schema para trás e o próximo `db migrate` colide com a tabela ou coluna existente. Adicione o bloco `-- down` ou passe `--allow-record-only` para aceitar a divergência explicitamente.
 
 ## Rodar migrations
 
