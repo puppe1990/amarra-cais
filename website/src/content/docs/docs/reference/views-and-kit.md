@@ -99,6 +99,10 @@ Every component has exactly one slot: `.Inner`. `<.form>` injects the CSRF field
 
 Kit fields use `:user-invalid` so the browser does not paint red on first paint. A 422 still sets `.Error` / `aria-invalid` from Go; the two signals coexist.
 
+## Styling the kit
+
+The shipped kit HTML lives inside the Go module. A scaffold's `tailwind.config.js` scans `./web/templates/**/*.html` plus the module's `pkg/amarra/view/components/**/*.html`, resolved with `go list -m -f '{{.Dir}}' github.com/puppe1990/amarra-cais`. Keep that entry: without it Tailwind prunes every utility used only by the kit and `<.input>`, `<.button>` and `<.flash />` render unstyled (#372). An app generated before this change can copy `shippedKitContent()` from a fresh `amarra-cais new` or run `amarra-cais g component <name>` for each component it uses.
+
 ## Kit attribute interpolation
 
 Kit attributes interpolate like plain markup, so a single value can mix static text with page data:

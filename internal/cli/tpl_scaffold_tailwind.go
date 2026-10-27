@@ -1,9 +1,28 @@
 // Scaffold tailwind.config.js template, split from input.css (#288).
 package cli
 
-const tplTailwind = `/** @type {import("tailwindcss").Config} */
+const tplTailwind = `const { execSync } = require("node:child_process");
+
+// #372: the kit HTML lives inside the Go module, not in web/templates, so
+// Tailwind never sees its utility classes and a fresh app renders unstyled
+// components. Resolve the module the same way Go does; a local replace
+// (amarra-cais link) keeps working.
+function shippedKitContent() {
+  try {
+    const out = execSync("go list -m -f {{"{{"}}.Dir{{"}}"}} github.com/puppe1990/amarra-cais", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const dir = out.trim().replace(/\\/g, "/");
+    return dir ? [dir + "/pkg/amarra/view/components/**/*.html"] : [];
+  } catch {
+    return [];
+  }
+}
+
+/** @type {import("tailwindcss").Config} */
 module.exports = {
-  content: ["./web/templates/**/*.html"],
+  content: ["./web/templates/**/*.html", ...shippedKitContent()],
   safelist: [
     "cais-password-wrap",
     "cais-password-toggle",
