@@ -1,4 +1,4 @@
-/* amarra-cais v0.23.1 */
+/* amarra-cais v0.24.0 */
 (() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
