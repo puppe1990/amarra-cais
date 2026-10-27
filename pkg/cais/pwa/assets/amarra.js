@@ -3265,7 +3265,7 @@ ${lines.join("\n")}
       if (!root) return false;
       const name = eventName(kind === "submit" ? el : el.closest?.(`[amarra-${kind}]`) || el, kind);
       if (!name) return false;
-      const ws = sockets.get(root);
+      const ws = connections.get(root)?.ws;
       if (!ws || ws.readyState !== 1) return false;
       const payload = extra ?? {};
       const send = () => {

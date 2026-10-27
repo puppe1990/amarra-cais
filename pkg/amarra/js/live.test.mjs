@@ -277,7 +277,9 @@ function liveFixture(view = "counter") {
     addEventListener(type, fn) {
       (this.handlers[type] ||= []).push(fn);
     }
-    send() {}
+    send(data) {
+      (this.sent ||= []).push(data);
+    }
     close() {
       this.closed = true;
       this.readyState = 3;
@@ -390,4 +392,27 @@ test("live does not open duplicate sockets for one root", () => {
 
   timers[0].fn();
   assert.equal(sockets.length, 2);
+});
+
+// #375: the connection refactor renamed the map; a click must still reach the
+// joined socket instead of throwing on the old `sockets` binding.
+test("live click sends the event on the joined socket", () => {
+  const { sockets, listeners, root } = liveFixture();
+  sockets[0].open();
+  const button = {
+    value: "Inc",
+    textContent: "Inc",
+    getAttribute: (name) => (name === "amarra-click" ? "inc" : ""),
+    closest(sel) {
+      if (sel === "[amarra-click]") return button;
+      if (sel === "[amarra-live]") return root;
+      return null;
+    },
+  };
+  for (const fn of listeners.click || []) fn({ target: button, preventDefault() {} });
+  const sent = sockets[0].sent.map((raw) => JSON.parse(raw));
+  const event = sent.at(-1);
+  assert.equal(event.type, "event");
+  assert.equal(event.event, "inc");
+  assert.deepEqual(event.payload, { value: "Inc" });
 });
