@@ -39,6 +39,27 @@ func (v *counterView) Render() Rendered {
 	return Rendered{Target: "count", HTML: fmt.Sprintf("<span>%d</span>", v.n)}
 }
 
+type slowCounterView struct {
+	mu sync.Mutex
+	n  int
+}
+
+func (v *slowCounterView) Mount(context.Context, Socket) error { return nil }
+
+func (v *slowCounterView) Handle(context.Context, Event) error {
+	time.Sleep(2 * time.Millisecond)
+	v.mu.Lock()
+	v.n++
+	v.mu.Unlock()
+	return nil
+}
+
+func (v *slowCounterView) Render() Rendered {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	return Rendered{Target: "count", HTML: fmt.Sprintf("<span>%d</span>", v.n)}
+}
+
 type panicView struct{ counterView }
 
 func (v *panicView) Handle(context.Context, Event) error {
@@ -434,6 +455,49 @@ func TestLive_handleErrorShownInDevelopment(t *testing.T) {
 	errMsg := liveErrorMsg(t, "development", "sql: no such table: secret_widgets")
 	if !strings.Contains(errMsg.Message, "secret_widgets") {
 		t.Fatalf("development should keep the detail, got %q", errMsg.Message)
+	}
+}
+
+// #376: a full inbox drops events, so the client would keep a stale view.
+// After draining the queue the connection sends one resync with the current
+// Render, and Lost names how many events never ran.
+func TestLive_overflowResyncsToCurrentRender(t *testing.T) {
+	h := NewHub(Config{OriginPatterns: []string{"*"}})
+	view := &slowCounterView{}
+	h.Register("slow", func() View { return view })
+	s := httptest.NewServer(h.Handler())
+	t.Cleanup(s.Close)
+
+	c := dialLive(t, s, "slow", "tok")
+	defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }()
+	writeJSON(t, c, inMsg{Type: typeJoin, CSRF: "tok"})
+	_ = readJSON(t, c)
+
+	const events = 40
+	for i := 0; i < events; i++ {
+		h.Broadcast("slow", Event{Name: "inc"})
+	}
+
+	var resync outMsg
+	for i := 0; i <= events; i++ {
+		msg := readJSON(t, c)
+		if msg.Type == typeResync {
+			resync = msg
+			break
+		}
+	}
+	if resync.Type != typeResync {
+		t.Fatal("no resync after overflow")
+	}
+	if resync.Lost <= 0 {
+		t.Fatalf("resync.Lost = %d, want the dropped count", resync.Lost)
+	}
+	want := fmt.Sprintf("<span>%d</span>", events-int(resync.Lost))
+	if resync.HTML != want {
+		t.Errorf("resync HTML = %q, want %q (the current Render)", resync.HTML, want)
+	}
+	if got := h.Dropped(); got != resync.Lost {
+		t.Errorf("Hub.Dropped() = %d, resync.Lost = %d", got, resync.Lost)
 	}
 }
 

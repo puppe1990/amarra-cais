@@ -153,6 +153,25 @@ test("applyLiveMessage morphs target id", () => {
   assert.deepEqual(calls, [[target, "<b>1</b>"]]);
 });
 
+// #376: an overflow resync replaces the view with the authoritative Render and
+// reports how many events were dropped.
+test("applyLiveMessage applies resync and reports lost events", () => {
+  const calls = [];
+  const events = [];
+  const doc = { dispatchEvent: (ev) => events.push(ev) };
+  const root = { ownerDocument: doc, querySelector: () => null };
+  applyLiveMessage(
+    { type: "resync", html: "<b>2</b>", lost: 3 },
+    root,
+    (el, html) => calls.push([el, html]),
+    { document: doc }
+  );
+  assert.deepEqual(calls, [[root, "<b>2</b>"]]);
+  const resync = events.find((ev) => ev.type === "amarra:live-resync");
+  assert.ok(resync, "resync event should reach the app");
+  assert.deepEqual(resync.detail, { lost: 3 });
+});
+
 // g live counter Rendered.HTML is the #count element; innerHTML morph throws in Idiomorph (#294).
 test("applyLiveMessage morphs a named target as outerHTML", () => {
   const calls = [];

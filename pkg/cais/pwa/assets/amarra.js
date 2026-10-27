@@ -3102,7 +3102,7 @@ ${lines.join("\n")}
   }
   function applyLiveMessage(msg, root, morphFn = morph, extras = {}) {
     if (!msg || !root) return;
-    if (msg.type !== "ok" && msg.type !== "morph") return;
+    if (msg.type !== "ok" && msg.type !== "morph" && msg.type !== "resync") return;
     const html = msg.html ?? "";
     if (html !== "") {
       if (msg.target) {
@@ -3119,6 +3119,11 @@ ${lines.join("\n")}
     if (msg.navigate && extras.location) extras.location.href = msg.navigate;
     const pushFn = extras.dispatchPush ?? dispatchLivePush;
     for (const p of msg.pushes || []) pushFn(p.event, p.payload);
+    if (msg.type === "resync" && doc && typeof doc.dispatchEvent === "function" && typeof CustomEvent === "function") {
+      doc.dispatchEvent(
+        new CustomEvent("amarra:live-resync", { bubbles: true, detail: { lost: msg.lost ?? 0 } })
+      );
+    }
     if (doc && typeof doc.dispatchEvent === "function") {
       doc.dispatchEvent(new CustomEvent("amarra:morphed", { bubbles: true }));
     }

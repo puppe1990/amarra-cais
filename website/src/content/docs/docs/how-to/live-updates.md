@@ -38,6 +38,17 @@ Live is **single-replica**. If you run more than one instance behind a load bala
 
 Slow clients are dropped rather than blocking the hub. Drops are counted by `hub.Dropped()` and logged on the first drop and then every 100th, so a stalled phone does not silently starve other subscribers. Watch that counter when you suspect a client is falling behind.
 
+## Reconnect and overflow recovery
+
+The browser client reconnects with bounded exponential backoff plus jitter (1s, 2s, 4s… capped at 30s), resets the attempt count after a successful `open`, and cancels any pending attempt when the root leaves the document. It never opens two sockets for the same root. Close codes `1003`, `1008` (bad CSRF) and `1011` (failed mount) are permanent: the socket stops retrying instead of repeating the same rejected handshake.
+
+Connection state is observable on the `amarra-live` root:
+
+- `data-amarra-live-state`: `connecting`, `open`, `reconnecting`, `failed`, or `closed`.
+- `amarra:live-state` event (`detail.state`, plus `code`, `attempt`, `retryInMs`, `permanent`, `reason` when relevant).
+
+When a slow client's inbox overflows, the event cannot run, so the hub does not pretend it did. After draining the queue the server sends a `resync` message with the current `Render()` and the number of lost events; the client morphs the whole view (or the view's named target) and emits `amarra:live-resync` with `detail.lost`. The view converges on the server state — dropped events are not replayed, so keep the state the view renders persisted and authoritative.
+
 :::note
 Outside development, Live hides handler error detail from the client, so a failed broadcast does not leak server internals.
 :::

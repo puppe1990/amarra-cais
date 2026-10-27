@@ -3,12 +3,13 @@ package live
 import "encoding/json"
 
 const (
-	typeJoin  = "join"
-	typeEvent = "event"
-	typeOK    = "ok"
-	typeMorph = "morph"
-	typeAck   = "ack"
-	typeError = "error"
+	typeJoin   = "join"
+	typeEvent  = "event"
+	typeOK     = "ok"
+	typeMorph  = "morph"
+	typeAck    = "ack"
+	typeError  = "error"
+	typeResync = "resync"
 )
 
 type inMsg struct {
@@ -24,6 +25,7 @@ type outMsg struct {
 	HTML     string     `json:"html,omitempty"`
 	Target   string     `json:"target,omitempty"`
 	Ref      string     `json:"ref,omitempty"`
+	Lost     int64      `json:"lost,omitempty"`
 	Message  string     `json:"message,omitempty"`
 	Patch    string     `json:"patch,omitempty"`
 	Navigate string     `json:"navigate,omitempty"`
