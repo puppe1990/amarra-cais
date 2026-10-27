@@ -61,7 +61,7 @@ func expandCall(call componentCall, components map[string]string) (string, error
 // the row and 500s on a struct without that field (#43 form enctype, #302 button).
 // Page-data fields stay on `.` (flash .Flash, pagination .HasPrev / .Page).
 var optionalKitTagAttrs = map[string][]string{
-	"form":          {"enctype", "method"},
+	"form":          {"enctype", "method", "class", "id", "target", "novalidate"},
 	"button":        {"type", "class", "click"},
 	"nav":           {"class"},
 	"input":         {"type", "value", "accept", "error"},

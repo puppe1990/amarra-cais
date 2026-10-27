@@ -62,13 +62,13 @@ Add `--dry-run` to either command to print planned changes without writing files
 
 ## Database
 
-| Command                                              | Description                                                         |
-| ---------------------------------------------------- | ------------------------------------------------------------------- |
-| `amarra-cais db migrate`                             | Run pending migrations.                                             |
-| `amarra-cais db status`                              | List applied and pending migrations.                                |
-| `amarra-cais db rollback`                            | Roll back the last migration (runs the `-- down` SQL when present). |
-| `amarra-cais db prune-sessions`                      | Delete expired login sessions.                                      |
-| `amarra-cais db seed` / `amarra-cais db seed --list` | Run `internal/db/seeds.go` / list the seed helpers it references.   |
+| Command                                              | Description                                                                                        |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `amarra-cais db migrate`                             | Run pending migrations.                                                                            |
+| `amarra-cais db status`                              | List applied and pending migrations.                                                               |
+| `amarra-cais db rollback [--allow-record-only]`      | Roll back the last migration; requires a `-- down` section unless `--allow-record-only` is passed. |
+| `amarra-cais db prune-sessions`                      | Delete expired login sessions.                                                                     |
+| `amarra-cais db seed` / `amarra-cais db seed --list` | Run `internal/db/seeds.go` / list the seed helpers it references.                                  |
 
 ## Background jobs
 

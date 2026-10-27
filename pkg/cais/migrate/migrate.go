@@ -40,9 +40,26 @@ type RollbackResult struct {
 	RanDownSQL bool
 }
 
-// RollbackLastDir removes the last applied migration record from a filesystem directory.
+// ErrRollbackWithoutDown refuses a rollback that would drop only the
+// schema_migrations row while leaving the schema behind (#374).
+var ErrRollbackWithoutDown = errors.New("migration has no -- down section")
+
+// RollbackOptions tunes RollbackLast.
+type RollbackOptions struct {
+	// AllowRecordOnly removes only the schema_migrations row when the file has
+	// no -- down section. The schema stays, so the next Apply retries the up SQL
+	// and can fail on objects that already exist (#374).
+	AllowRecordOnly bool
+}
+
+// RollbackLastDir removes the last applied migration from a filesystem directory.
 func RollbackLastDir(db *sql.DB, dir string) (RollbackResult, error) {
 	return RollbackLast(db, os.DirFS(dir), ".")
+}
+
+// RollbackLastDirWithOptions is RollbackLastDir with rollback options.
+func RollbackLastDirWithOptions(db *sql.DB, dir string, opts RollbackOptions) (RollbackResult, error) {
+	return RollbackLastWithOptions(db, os.DirFS(dir), ".", opts)
 }
 
 // Apply runs pending SQL migrations from dir inside migrations in sorted order.
@@ -143,8 +160,15 @@ func Status(db *sql.DB, migrations fs.FS, dir string) ([]Entry, error) {
 
 // RollbackLast rolls back the last applied migration. When the migration file
 // contains a -- down section, that SQL is executed before removing the
-// schema_migrations record. Without a down section, only the record is removed.
+// schema_migrations record. Without a down section it refuses with
+// ErrRollbackWithoutDown; pass RollbackOptions{AllowRecordOnly: true} to remove
+// only the record and leave the schema (#374).
 func RollbackLast(db *sql.DB, migrations fs.FS, dir string) (RollbackResult, error) {
+	return RollbackLastWithOptions(db, migrations, dir, RollbackOptions{})
+}
+
+// RollbackLastWithOptions is RollbackLast with rollback options.
+func RollbackLastWithOptions(db *sql.DB, migrations fs.FS, dir string, opts RollbackOptions) (RollbackResult, error) {
 	entries, err := Status(db, migrations, dir)
 	if err != nil {
 		return RollbackResult{}, err
@@ -166,6 +190,12 @@ func RollbackLast(db *sql.DB, migrations fs.FS, dir string) (RollbackResult, err
 		return RollbackResult{}, fmt.Errorf("read migration %s: %w", lastApplied, err)
 	}
 	_, downSQL := parseMigrationSQL(string(sqlBytes))
+	if downSQL == "" && !opts.AllowRecordOnly {
+		return RollbackResult{}, fmt.Errorf(
+			"%w: %s; add a -- down section to the migration or allow a record-only rollback",
+			ErrRollbackWithoutDown, lastApplied,
+		)
+	}
 	ranDown := downSQL != ""
 
 	tx, err := db.Begin()

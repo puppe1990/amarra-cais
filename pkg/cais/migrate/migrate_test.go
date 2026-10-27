@@ -2,7 +2,9 @@ package migrate
 
 import (
 	"database/sql"
+	"errors"
 	"io/fs"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -177,7 +179,7 @@ func TestListSQL_ignoresNonSQLFiles(t *testing.T) {
 	}
 }
 
-func TestRollbackLast_removesLastAppliedMigration(t *testing.T) {
+func TestRollbackLast_allowRecordOnlyRemovesLastAppliedMigration(t *testing.T) {
 	migrations := fstest.MapFS{
 		"migrations/001_users.sql": &fstest.MapFile{
 			Data: []byte(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);`),
@@ -192,7 +194,7 @@ func TestRollbackLast_removesLastAppliedMigration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := RollbackLast(db, migrations, "migrations")
+	result, err := RollbackLastWithOptions(db, migrations, "migrations", RollbackOptions{AllowRecordOnly: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -334,7 +336,10 @@ DROP TABLE posts;`),
 	}
 }
 
-func TestRollbackLast_withoutDownSection_removesRecord(t *testing.T) {
+// #374: a record-only rollback leaves the schema behind, so the next Apply
+// retries the up SQL against objects that already exist. Refuse by default and
+// name the migration + the fix.
+func TestRollbackLast_withoutDownSection_refusesWithGuidance(t *testing.T) {
 	migrations := fstest.MapFS{
 		"migrations/001_users.sql": &fstest.MapFile{
 			Data: []byte(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);`),
@@ -346,7 +351,42 @@ func TestRollbackLast_withoutDownSection_removesRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := RollbackLast(db, migrations, "migrations")
+	_, err := RollbackLast(db, migrations, "migrations")
+	if !errors.Is(err, ErrRollbackWithoutDown) {
+		t.Fatalf("err = %v, want ErrRollbackWithoutDown", err)
+	}
+	for _, want := range []string{"001_users", "-- down"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q should mention %q", err, want)
+		}
+	}
+
+	var count int
+	if err := db.QueryRow("SELECT COUNT(*) FROM schema_migrations").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("schema_migrations count = %d, want 1 after refusal", count)
+	}
+	var name string
+	if err := db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").Scan(&name); err != nil {
+		t.Fatalf("users table should still exist after refusal: %v", err)
+	}
+}
+
+func TestRollbackLast_withoutDownSection_allowRecordOnly(t *testing.T) {
+	migrations := fstest.MapFS{
+		"migrations/001_users.sql": &fstest.MapFile{
+			Data: []byte(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);`),
+		},
+	}
+
+	db := testDB(t)
+	if err := Apply(db, migrations, "migrations"); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := RollbackLastWithOptions(db, migrations, "migrations", RollbackOptions{AllowRecordOnly: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -27,7 +27,33 @@ func TestCLI_DBStatus_listsMigrations(t *testing.T) {
 	}
 }
 
-func TestCLI_DBRollback_removesLastMigration(t *testing.T) {
+// #374: without a -- down section a rollback would keep the schema and drop
+// only the record, so the next apply can fail. Refuse and point at the flag.
+func TestCLI_DBRollback_requiresDownSection(t *testing.T) {
+	dir := t.TempDir()
+	writeMinimalApp(t, dir)
+
+	c := &CLI{Out: &bytes.Buffer{}}
+	if err := c.Run([]string{"db", "migrate"}); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := (&CLI{Out: &buf}).Run([]string{"db", "rollback"})
+	if err == nil {
+		t.Fatal("expected rollback to refuse a migration without -- down")
+	}
+	for _, want := range []string{"001_contacts", "no -- down section", "--allow-record-only"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q should mention %q", err, want)
+		}
+	}
+	if strings.Contains(buf.String(), "=> Rolled back") {
+		t.Errorf("refused rollback must not report success: %q", buf.String())
+	}
+}
+
+func TestCLI_DBRollback_allowRecordOnly(t *testing.T) {
 	dir := t.TempDir()
 	writeMinimalApp(t, dir)
 
@@ -38,7 +64,7 @@ func TestCLI_DBRollback_removesLastMigration(t *testing.T) {
 
 	var buf bytes.Buffer
 	c2 := &CLI{Out: &buf}
-	if err := c2.Run([]string{"db", "rollback"}); err != nil {
+	if err := c2.Run([]string{"db", "rollback", "--allow-record-only"}); err != nil {
 		t.Fatal(err)
 	}
 	out := buf.String()

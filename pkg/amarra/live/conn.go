@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/coder/websocket"
@@ -26,6 +27,10 @@ type conn struct {
 	writeM sync.Mutex
 	mu     sync.Mutex
 	active time.Time
+	// resyncNeeded marks a dropped event; once the inbox drains, run sends the
+	// current Render so the view converges instead of staying stale (#376).
+	resyncNeeded atomic.Bool
+	lostEvents   atomic.Int64
 	// stateM serializes Mount/Render/Handle and guards joined (#112): a
 	// Broadcast can deliver an event before the join handshake, and Handle must
 	// never run with zero state.
@@ -40,7 +45,10 @@ func (c *conn) push(ev Event) {
 	case c.inbox <- ev:
 	default:
 		// Slow client: drop the newest event instead of blocking the hub, but
-		// make the loss observable (#96). Log the first drop and every 100th.
+		// make the loss observable (#96) and recoverable (#376). Log the first
+		// drop and every 100th.
+		c.resyncNeeded.Store(true)
+		c.lostEvents.Add(1)
 		n := c.hub.dropped.Add(1)
 		if n == 1 || n%100 == 0 {
 			log.Printf("amarra live: dropped event %q (topic %s, inbox full, total dropped %d)", ev.Name, c.topic, n)
@@ -195,6 +203,7 @@ func (c *conn) run(ctx context.Context) {
 		case ev := <-c.inbox:
 			c.touch()
 			c.dispatch(ctx, ev)
+			c.resyncIfDrained(ctx)
 		}
 	}
 }
@@ -218,6 +227,27 @@ func (c *conn) dispatch(ctx context.Context, ev Event) {
 	if ev.Ref != "" {
 		c.write(ctx, outMsg{Type: typeAck, Ref: ev.Ref})
 	}
+}
+
+// resyncIfDrained sends the authoritative Render after a drop, once the queued
+// events have run. Waiting for an empty inbox keeps the resync last, so the
+// client converges on the final state instead of an intermediate one (#376).
+func (c *conn) resyncIfDrained(ctx context.Context) {
+	if len(c.inbox) > 0 || !c.resyncNeeded.CompareAndSwap(true, false) {
+		return
+	}
+	lost := c.lostEvents.Swap(0)
+	c.stateM.Lock()
+	joined := c.joined
+	out := Rendered{}
+	if joined {
+		out = c.view.Render()
+	}
+	c.stateM.Unlock()
+	if !joined {
+		return
+	}
+	c.write(ctx, outMsg{Type: typeResync, HTML: out.HTML, Target: out.Target, Lost: lost})
 }
 
 // join runs Mount once and flips joined under stateM, so concurrently queued

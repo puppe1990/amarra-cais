@@ -99,6 +99,10 @@ Todo componente tem exatamente um slot: `.Inner`. O `<.form>` injeta o campo CSR
 
 Os campos do kit usam `:user-invalid` para não pintar vermelho no primeiro paint. Um 422 continua definindo `.Error` / `aria-invalid` no Go; os dois sinais convivem.
 
+## Estilizando o kit
+
+O HTML do kit embutido vive dentro do módulo Go. O `tailwind.config.js` de um scaffold varre `./web/templates/**/*.html` mais `pkg/amarra/view/components/**/*.html` do módulo, resolvido com `go list -m -f '{{.Dir}}' github.com/puppe1990/amarra-cais`. Mantenha essa entrada: sem ela o Tailwind poda toda utilidade usada só pelo kit e `<.input>`, `<.button>` e `<.flash />` ficam sem estilo (#372). Um app gerado antes desta mudança pode copiar `shippedKitContent()` de um `amarra-cais new` novo ou rodar `amarra-cais g component <nome>` para cada componente que usa.
+
 ## Interpolação de atributos do kit
 
 Os atributos do kit interpolam como markup comum, então um único valor pode misturar texto estático com dados da página:

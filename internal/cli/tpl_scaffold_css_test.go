@@ -1,6 +1,9 @@
 package cli
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -55,6 +58,41 @@ func TestTplInputCSS_paletteVariablesSwitchTheme(t *testing.T) {
 		if darkVal == lightVal {
 			t.Errorf("html.light does not change %s (%q) — the toggle would be a no-op", v, darkVal)
 		}
+	}
+}
+
+// #372: the kit HTML lives inside the Go module, so a scaffold that scans only
+// web/templates/** never emits the kit utilities (bg-copper, px-3, …) and
+// input/button/flash render unstyled.
+func TestTplTailwind_scansShippedKit(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "tailwind.config.js")
+	if err := writeTemplate(path, tplTailwind, scaffoldData{}); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"shippedKitContent()",
+		"go list -m -f {{.Dir}} github.com/puppe1990/amarra-cais",
+		"/pkg/amarra/view/components/**/*.html",
+	} {
+		if !strings.Contains(string(body), want) {
+			t.Errorf("tailwind.config.js missing %q:\n%s", want, body)
+		}
+	}
+
+	out, err := exec.Command("go", "list", "-m", "-f", "{{.Dir}}", "github.com/puppe1990/amarra-cais").Output()
+	if err != nil {
+		t.Fatalf("go list module dir: %v", err)
+	}
+	matches, err := filepath.Glob(filepath.Join(strings.TrimSpace(string(out)), "pkg/amarra/view/components/*.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) < 20 {
+		t.Errorf("kit glob resolved %d components, want the shipped kit", len(matches))
 	}
 }
 

@@ -43,7 +43,8 @@ Usage:
   amarra-cais console               Interactive app console (Go REPL + SQL)
   amarra-cais db migrate            Run pending SQL migrations
   amarra-cais db status             List migration status
-  amarra-cais db rollback           Roll back last migration (runs -- down SQL when present)
+  amarra-cais db rollback [--allow-record-only]
+                             Roll back last migration (requires a -- down section)
   amarra-cais db prune-sessions     Delete expired login sessions from SQLite
   amarra-cais db seed               Run internal/db/seeds.go
   amarra-cais jobs work [--queues default,mail] [--concurrency 2]

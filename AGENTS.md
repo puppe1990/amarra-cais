@@ -258,9 +258,11 @@ Shipped kit (override in `web/templates/components/`): `form`, `input`, `passwor
 
 `{{ linkTo "/x" "Label" }}` emits a plain `<a>` — Drive intercepts it by default. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
 
+**Kit CSS** — the scaffold's `tailwind.config.js` scans `./web/templates/**/*.html` plus the module's `pkg/amarra/view/components/**/*.html` (resolved with `go list -m`), because the kit HTML never lives in the app. Dropping that entry prunes every kit-only utility and a fresh app renders `<.input>`/`<.button>`/`<.flash />` unstyled (#372).
+
 **Kit attributes interpolate** like plain markup: `<.stat label="Potência" value="{{ .Power }} kWp" />` renders `5 kWp`, and a value may mix text with several actions (a bare `{{ .X }}` keeps the raw expression, so non-string data still works in the component's `if`/`range`). A control action (`{{ if }}`/`{{ range }}`) in an attribute value fails at boot instead of printing `{{ … }}` to the user (#72). Optional tag attrs (`class`, `click`, `enctype`, `accept`, …) are empty `$vars` when omitted so a kit tag inside `{{ range }}` does not 500 on the row (#43, #302); `<.flash />` and pagination still read page data.
 
-**Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only, so Live is **single-replica**: two app replicas do not share sockets (cross-replica fan-out needs an external bus). Slow-client drops are counted by `hub.Dropped()` and logged (first drop, then every 100). `sock.Patch`, `sock.Stream`, and `sock.Push` ride on the morph message.
+**Live** (`GET /amarra/live`) is an opt-in WebSocket hub. CRUD stays on Drive. Register views with `hub.Register`; pages use `amarra-live` + `amarra-click`. CSRF is the join payload vs the handshake cookie. Hub is in-process only, so Live is **single-replica**: two app replicas do not share sockets (cross-replica fan-out needs an external bus). Slow-client drops are counted by `hub.Dropped()` and logged (first drop, then every 100); after the inbox drains, the connection sends one `resync` with the current `Render()` and `Lost`, and the client emits `amarra:live-resync` so the view converges instead of staying stale (#376). The client reconnects with bounded exponential backoff + jitter, resets the attempt count on `open`, treats 1003/1008/1011 as permanent (`data-amarra-live-state="failed"` + `amarra:live-state`), cancels when the root leaves the document, and never opens two sockets for one root (#375). `sock.Patch`, `sock.Stream`, and `sock.Push` ride on the morph message.
 
 **Stream HTTP:** `stream.WriteHTTP(w, stream.Op{Kind: "append", Target: "list", HTML: row})` with `Content-Type: text/vnd.amarra-stream` applies ops instead of morphing `#amarra-main`.
 
@@ -469,7 +471,7 @@ CREATE TABLE bookmarks (...);
 DROP TABLE IF EXISTS bookmarks;
 ```
 
-`amarra-cais db rollback` executes the `-- down` SQL when present, then removes the `schema_migrations` row. Without a down section, only the record is removed.
+`amarra-cais db rollback` executes the `-- down` SQL, then removes the `schema_migrations` row. Without a down section it refuses (the schema would stay behind and the next apply would collide); `--allow-record-only` keeps the old record-only behavior (#374).
 
 ## Development logging
 
@@ -565,7 +567,7 @@ amarra-cais routes   # list HTTP routes from internal/app/routes.go
 amarra-cais link [../amarra-cais] [--unlink]  # go.mod replace for local framework dev (unlink before push)
 amarra-cais db migrate        # run pending migrations
 amarra-cais db status         # list applied/pending migrations
-amarra-cais db rollback       # roll back last migration (runs -- down SQL when present)
+amarra-cais db rollback       # roll back last migration (requires -- down; --allow-record-only opts out)
 amarra-cais db prune-sessions # delete expired login sessions from SQLite
 amarra-cais db seed           # run internal/db/seeds.go (idempotent; safe in production for catalog data)
 amarra-cais db seed --list    # list seed helpers referenced in seeds.go

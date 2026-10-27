@@ -123,6 +123,37 @@ func TestKit_formPassesThroughSkipAndClass(t *testing.T) {
 	}
 }
 
+// #373: restyling form.html naturally copies the button.html pattern
+// `{{ if .Class }}`; inside a range the omitted class must stay a $var instead
+// of reading Class from the row struct.
+func TestKit_formOverrideInsideRangeDoesNotReadClassFromRow(t *testing.T) {
+	type row struct{ ID int64 }
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"components/form.html": &fstest.MapFile{Data: []byte(
+			`<form action="{{ .Action }}" method="{{ .Method }}"{{ if .Class }} class="{{ .Class }}"{{ end }}>{{ csrfField $.CSRFToken }}{{ .Inner }}</form>`,
+		)},
+		"pages/home.html": &fstest.MapFile{Data: []byte(
+			`{{ define "content" }}{{ range .Items }}<.form action="/toggle" method="post"><button type="submit">Go</button></.form>{{ end }}{{ end }}`,
+		)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"Items": []row{{ID: 1}, {ID: 2}}, "CSRFToken": "tok"},
+	}, cais.Config{})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rr.Code, rr.Body.String())
+	}
+	if got := strings.Count(rr.Body.String(), `action="/toggle"`); got != 2 {
+		t.Errorf("rendered %d forms, want 2: %s", got, rr.Body.String())
+	}
+}
+
 func TestKit_buttonInsideRangeDoesNotReadClickFromRow(t *testing.T) {
 	// #302: omitted Click/Class must be $vars. A row struct without those
 	// fields 500s when the shipped button still looks up .Click on `.`.
