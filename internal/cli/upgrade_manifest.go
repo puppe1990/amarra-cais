@@ -10,6 +10,7 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.25.1", Title: "pwa stops writing the scaffold welcome image", Action: "run amarra-cais pwa to refresh runtime assets; it no longer recreates web/static/img/go-on-cais.jpg after the app deletes it. doctor now lists the file while the placeholder remains"},
 	{Version: "0.25.0", Title: "Third-party iframes need CSP_FRAME_SRC", Action: "SecurityHeaders now emits frame-src 'self'; set CSP_FRAME_SRC=https://host (space-separated for several) to embed a video room, map or player. frame-ancestors 'none' and X-Frame-Options: DENY stay fixed"},
 	{Version: "0.24.0", Title: "Tailwind must scan the shipped kit", Action: "copy shippedKitContent() from a fresh amarra-cais new into tailwind.config.js content (go list -m plus pkg/amarra/view/components/**/*.html) and rebuild CSS; otherwise input/button/flash stay unstyled"},
 	{Version: "0.24.0", Title: "db rollback requires -- down", Action: "add a -- down section to the migration or pass --allow-record-only; RollbackLastWithOptions{AllowRecordOnly: true} is the programmatic equivalent"},
