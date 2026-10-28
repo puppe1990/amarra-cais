@@ -132,11 +132,45 @@ func TestWriteStatic(t *testing.T) {
 		"web/static/js/amarra.js",
 		"web/static/offline.html",
 		"web/static/icons/icon.png",
-		"web/static/img/go-on-cais.jpg",
 		"web/static/og.png",
 	} {
 		if _, err := os.Stat(filepath.Join(dir, path)); err != nil {
 			t.Errorf("missing %s: %v", path, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, "web/static/img/go-on-cais.jpg")); !os.IsNotExist(err) {
+		t.Errorf("WriteStatic must not write the scaffold welcome image (#382)")
+	}
+}
+
+// #382: `new` ships the welcome JPG; `pwa` only refreshes runtime assets, so
+// it must not resurrect the file after an app replaces its brand and deletes it.
+func TestPWA_doesNotResurrectScaffoldImage(t *testing.T) {
+	dir := t.TempDir()
+	if err := InstallForAmarra(dir, "app"); err != nil {
+		t.Fatal(err)
+	}
+	jpg := filepath.Join(dir, "web/static/img/go-on-cais.jpg")
+	if _, err := os.Stat(jpg); err != nil {
+		t.Fatalf("new scaffold should write the welcome image: %v", err)
+	}
+	if err := os.Remove(jpg); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, run := range []struct {
+		name string
+		fn   func() error
+	}{
+		{"WriteStaticAmarra", func() error { return WriteStaticAmarra(dir, DefaultConfig("app")) }},
+		{"WriteStaticInertia", func() error { return WriteStaticInertia(dir, DefaultConfig("app")) }},
+		{"WriteStatic", func() error { return WriteStatic(dir, DefaultConfig("app")) }},
+	} {
+		if err := run.fn(); err != nil {
+			t.Fatalf("%s: %v", run.name, err)
+		}
+		if _, err := os.Stat(jpg); !os.IsNotExist(err) {
+			t.Fatalf("%s resurrected the deleted scaffold image (#382)", run.name)
 		}
 	}
 }

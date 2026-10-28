@@ -148,6 +148,11 @@ func DefaultBrandAssets() map[string][]byte {
 	if fav, err := assets.ReadFile("assets/favicon.svg"); err == nil {
 		out["favicon.svg"] = fav
 	}
+	// The scaffold welcome art is not a PWA runtime asset, but doctor still
+	// warns while an app ships the placeholder (#382).
+	if jpg, err := assets.ReadFile("assets/go-on-cais.jpg"); err == nil {
+		out["img/go-on-cais.jpg"] = jpg
+	}
 	return out
 }
 

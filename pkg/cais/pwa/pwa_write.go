@@ -47,9 +47,6 @@ func WriteStatic(appDir string, cfg Config) error {
 	if err := writeUserAsset("assets/offline.html", filepath.Join(staticDir, "offline.html"), cfg.Force); err != nil {
 		return err
 	}
-	if err := writeUserAsset("assets/go-on-cais.jpg", filepath.Join(staticDir, "img", "go-on-cais.jpg"), cfg.Force); err != nil {
-		return err
-	}
 	// SW via SyncServiceWorker so CACHE_VERSION is preserved on upgrades.
 	if _, _, err := SyncServiceWorker(appDir); err != nil {
 		return err
@@ -110,9 +107,6 @@ func WriteStaticInertia(appDir string, cfg Config) error {
 	if err := writeUserAsset("assets/offline.html", filepath.Join(staticDir, "offline.html"), cfg.Force); err != nil {
 		return err
 	}
-	if err := writeUserAsset("assets/go-on-cais.jpg", filepath.Join(staticDir, "img", "go-on-cais.jpg"), cfg.Force); err != nil {
-		return err
-	}
 	if _, _, err := SyncServiceWorker(appDir); err != nil {
 		return err
 	}
@@ -146,7 +140,12 @@ func WriteStaticAmarra(appDir string, cfg Config) error {
 
 // InstallForAmarra writes PWA assets for Amarra scaffolds (no HTMX).
 func InstallForAmarra(appDir, name string) error {
-	return WriteStaticAmarra(appDir, DefaultConfig(name))
+	if err := WriteStaticAmarra(appDir, DefaultConfig(name)); err != nil {
+		return err
+	}
+	// The welcome JPG is scaffold art, not a runtime PWA asset: only `new`
+	// writes it, so `amarra-cais pwa` cannot resurrect a deleted file (#382).
+	return writeUserAsset("assets/go-on-cais.jpg", filepath.Join(appDir, "web", "static", "img", "go-on-cais.jpg"), false)
 }
 
 func writeManifest(path string, cfg Config) error {
