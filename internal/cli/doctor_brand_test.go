@@ -22,6 +22,9 @@ func TestDoctor_WarnsWhileBrandAssetsAreScaffoldDefaults(t *testing.T) {
 	if !strings.Contains(out, "icons/icon.png") || !strings.Contains(out, "og.png") {
 		t.Errorf("warning should name the placeholder files, got:\n%s", out)
 	}
+	if !strings.Contains(out, "go-on-cais.jpg") {
+		t.Errorf("warning should name the scaffold welcome image, got:\n%s", out)
+	}
 }
 
 func TestDoctor_OKAfterBrandAssetsReplaced(t *testing.T) {

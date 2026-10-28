@@ -41,7 +41,7 @@ O CSP padrão bloqueia `fonts.googleapis.com`. O scaffold linka a fonte de títu
 
 ## Assets de marca
 
-Os scaffolds entregam a marca do barco da documentação em `web/static/favicon.svg` (ícone da aba), um tile **placeholder neutro** (`pkg/cais/pwa/assets/icon.png`, 512×512) e um `icons/icon-512-maskable.png` gerado. O manifest separa os ícones `any` (192 + 512) do ícone `maskable`. `amarra-cais doctor` avisa enquanto `web/static/favicon.svg`, `web/static/icons/*` e `og.png` ainda forem os padrões entregues. Substitua-os pela sua própria marca antes de publicar; `amarra-cais pwa --force` restaura os assets de marca para os padrões se você precisar de uma folha em branco.
+Os scaffolds entregam a marca do barco da documentação em `web/static/favicon.svg` (ícone da aba), um tile **placeholder neutro** (`pkg/cais/pwa/assets/icon.png`, 512×512), um `icons/icon-512-maskable.png` gerado e o `web/static/img/go-on-cais.jpg` de boas-vindas usado pelo define `cais_logo`. O manifest separa os ícones `any` (192 + 512) do ícone `maskable`. `amarra-cais doctor` avisa enquanto `web/static/favicon.svg`, `web/static/icons/*`, `og.png` e `img/go-on-cais.jpg` ainda forem os padrões entregues. Substitua-os pela sua própria marca antes de publicar; `amarra-cais pwa --force` restaura os assets de marca para os padrões se você precisar de uma folha em branco. O `new` grava o JPG de boas-vindas uma vez — `amarra-cais pwa` atualiza só os assets de runtime e não o recria se o app apagar o arquivo (#382).
 
 ## Checklist mobile
 
