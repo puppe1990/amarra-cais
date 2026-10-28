@@ -4,6 +4,17 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.25.0] - 2026-10-28
+
+### Added
+
+- `cais.Config.CSPFrameSrc`, read from `CSP_FRAME_SRC`: `SecurityHeaders` now emits `frame-src 'self'` plus the configured hosts, so third-party iframes (video room, map, player) can be embedded (#379). The default `'self'` preserves the previous behavior for apps that do not configure it, while an explicit directive stops the browser from silently falling back to `default-src 'self'`.
+
+### Upgrade
+
+- Minor release because `CSPFrameSrc` is new public API. Run `amarra-cais upgrade v0.25.0` and `amarra-cais pwa --bump` only if the app ships the bundle (`amarra.js`).
+- Apps that embed a third-party iframe set `CSP_FRAME_SRC=https://host` (space-separated hosts for several). `frame-ancestors 'none'` and `X-Frame-Options: DENY` stay fixed: this release allows embedding others, not being embedded by other sites.
+
 ## [0.24.0] - 2026-10-27
 
 ### Added
