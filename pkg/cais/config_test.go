@@ -3,6 +3,8 @@ package cais
 import (
 	"os"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func TestConfig_DefaultPort(t *testing.T) {
@@ -218,6 +220,7 @@ func TestConfig_SecurityPolicy_developmentDefaults(t *testing.T) {
 	t.Setenv("CSP_CONNECT_SRC", "")
 	t.Setenv("CSP_MEDIA_SRC", "")
 	t.Setenv("CSP_IMG_SRC", "")
+	t.Setenv("CSP_FRAME_SRC", "")
 
 	cfg := Load()
 	// #262: development matches production for camera and img-src. Barcode
@@ -230,6 +233,9 @@ func TestConfig_SecurityPolicy_developmentDefaults(t *testing.T) {
 	}
 	if cfg.CSPMediaSrc != "blob:" {
 		t.Errorf("CSPMediaSrc = %q, want blob:", cfg.CSPMediaSrc)
+	}
+	if cfg.CSPFrameSrc != "" {
+		t.Errorf("CSPFrameSrc = %q, want empty (frame-src stays 'self')", cfg.CSPFrameSrc)
 	}
 }
 
@@ -254,6 +260,8 @@ func TestConfig_SecurityPolicy_loadFromEnv(t *testing.T) {
 	t.Setenv("CSP_MEDIA_SRC", "blob:")
 	t.Setenv("CSP_FONT_SRC", "https://fonts.gstatic.com")
 	t.Setenv("CSP_SCRIPT_SRC", "https://cdn.example.com")
+	frameHost := "https://" + gofakeit.New(379).DomainName()
+	t.Setenv("CSP_FRAME_SRC", frameHost)
 
 	cfg := Load()
 	if cfg.PermissionsPolicy != "camera=(self), geolocation=(self)" {
@@ -273,6 +281,9 @@ func TestConfig_SecurityPolicy_loadFromEnv(t *testing.T) {
 	}
 	if cfg.CSPScriptSrc != "https://cdn.example.com" {
 		t.Errorf("CSPScriptSrc = %q", cfg.CSPScriptSrc)
+	}
+	if cfg.CSPFrameSrc != frameHost {
+		t.Errorf("CSPFrameSrc = %q, want %q", cfg.CSPFrameSrc, frameHost)
 	}
 }
 

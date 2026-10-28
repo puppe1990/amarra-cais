@@ -21,7 +21,7 @@ As sessions são baseadas em cookie (`pkg/cais/session`) com `SignIn` / `SignOut
 
 ## Headers de segurança
 
-`middleware.SecurityHeaders(cfg)` roda depois do `Recover` e define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Permissions-Policy`. Em produção ele também adiciona `Strict-Transport-Security`. Câmera e imagens de terceiros ficam desligadas por default (`camera=()`, `img-src 'self' data:`). Apps que precisam de scanner ou de um CDN de imagens setam `PERMISSIONS_POLICY` e `CSP_IMG_SRC`.
+`middleware.SecurityHeaders(cfg)` roda depois do `Recover` e define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Permissions-Policy`. Em produção ele também adiciona `Strict-Transport-Security`. Câmera e imagens de terceiros ficam desligadas por default (`camera=()`, `img-src 'self' data:`). Apps que precisam de scanner ou de um CDN de imagens setam `PERMISSIONS_POLICY` e `CSP_IMG_SRC`. Iframes de terceiros são bloqueados por `frame-src 'self'`; libere por host com `CSP_FRAME_SRC`, enquanto `frame-ancestors 'none'` e `X-Frame-Options: DENY` mantêm o app não-embutível por outros sites (#379).
 
 A Content-Security-Policy em `script-src` é `'self'` mais um nonce por requisição. `view.Write` injeta `.CSPNonce` em dados `map[string]any` para o snippet FOUC do tema e os scripts inline do service worker. Coloque `nonce="{{ .CSPNonce }}"` em todo `<script>` inline. Apps que ainda precisam de inline sem nonce setam `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
 

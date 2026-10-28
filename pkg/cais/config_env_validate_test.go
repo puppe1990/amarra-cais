@@ -3,6 +3,8 @@ package cais
 import (
 	"strings"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func TestConfig_Validate_rejectsInvalidMaxBodyBytes(t *testing.T) {
@@ -59,6 +61,9 @@ func TestConfig_Validate_validMaxBodyBytes(t *testing.T) {
 }
 
 func TestConfig_Validate_rejectsInvalidEnv(t *testing.T) {
+	faker := gofakeit.New(379)
+	frameHost := "https://" + faker.DomainName()
+	frameInjected := "https://" + faker.DomainName()
 	cases := []struct {
 		name    string
 		env     map[string]string
@@ -88,6 +93,12 @@ func TestConfig_Validate_rejectsInvalidEnv(t *testing.T) {
 			env:     map[string]string{"CSP_SCRIPT_SRC": "https://cdn.example.com\nhttps://evil.example"},
 			wantVar: "CSP_SCRIPT_SRC",
 			wantVal: "https://cdn.example.com",
+		},
+		{
+			name:    "CSP_FRAME_SRC line break",
+			env:     map[string]string{"CSP_FRAME_SRC": frameHost + "\n" + frameInjected},
+			wantVar: "CSP_FRAME_SRC",
+			wantVal: frameHost,
 		},
 	}
 	for _, tc := range cases {

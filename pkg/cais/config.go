@@ -26,6 +26,7 @@ type Config struct {
 	CSPStyleSrc       string
 	CSPConnectSrc     string
 	CSPMediaSrc       string
+	CSPFrameSrc       string
 	CSPImgSrc         string
 	CSPFontSrc        string
 	CSPScriptSrc      string
@@ -128,6 +129,7 @@ func Load() Config {
 	} else if cfg.Env == "development" {
 		cfg.CSPMediaSrc = "blob:"
 	}
+	cfg.setCSPFromEnv("CSP_FRAME_SRC", &cfg.CSPFrameSrc)
 	cfg.setCSPFromEnv("CSP_IMG_SRC", &cfg.CSPImgSrc)
 	cfg.setCSPFromEnv("CSP_FONT_SRC", &cfg.CSPFontSrc)
 	cfg.setCSPFromEnv("CSP_SCRIPT_SRC", &cfg.CSPScriptSrc)

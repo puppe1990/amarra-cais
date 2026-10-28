@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/brianvoe/gofakeit/v7"
+
 	"github.com/puppe1990/amarra-cais/pkg/cais"
 )
 
@@ -80,6 +82,41 @@ func TestSecurityHeaders_mediaSrc(t *testing.T) {
 	csp := rr.Header().Get("Content-Security-Policy")
 	if !strings.Contains(csp, "media-src 'self' blob:") {
 		t.Errorf("CSP missing media-src blob:, got %q", csp)
+	}
+}
+
+// #379: without an explicit frame-src the browser falls back to default-src
+// 'self' and blocks every third-party iframe, with no env escape hatch.
+func TestSecurityHeaders_frameSrc(t *testing.T) {
+	newCSP := func(cfg cais.Config) string {
+		t.Helper()
+		h := SecurityHeaders(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		rr := httptest.NewRecorder()
+		h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+		return rr.Header().Get("Content-Security-Policy")
+	}
+
+	if got := cspDirective(newCSP(cais.Config{Env: "development"}), "frame-src"); got != "frame-src 'self'" {
+		t.Errorf("default frame-src = %q, want \"frame-src 'self'\"", got)
+	}
+
+	faker := gofakeit.New(379)
+	first := "https://" + faker.DomainName()
+	second := "https://" + faker.DomainName()
+	extra := first + " " + second
+	csp := newCSP(cais.Config{Env: "development", CSPFrameSrc: extra})
+	want := "frame-src 'self' " + extra
+	if got := cspDirective(csp, "frame-src"); got != want {
+		t.Errorf("frame-src = %q, want %q", got, want)
+	}
+
+	// Seeded property check over many random embed hosts.
+	for i := 0; i < 20; i++ {
+		host := "https://" + faker.DomainName()
+		got := cspDirective(newCSP(cais.Config{Env: "development", CSPFrameSrc: host}), "frame-src")
+		if want := "frame-src 'self' " + host; got != want {
+			t.Fatalf("case %d: frame-src = %q, want %q", i, got, want)
+		}
 	}
 }
 
