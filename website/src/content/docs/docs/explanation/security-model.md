@@ -21,7 +21,7 @@ Sessions are cookie-based (`pkg/cais/session`) with `SignIn` / `SignOut`. A sess
 
 ## Security headers
 
-`middleware.SecurityHeaders(cfg)` runs after `Recover` and sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. In production it also adds `Strict-Transport-Security`. Camera and third-party images are off by default (`camera=()`, `img-src 'self' data:`). Apps that need a scanner or a remote image CDN set `PERMISSIONS_POLICY` and `CSP_IMG_SRC`.
+`middleware.SecurityHeaders(cfg)` runs after `Recover` and sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. In production it also adds `Strict-Transport-Security`. Camera and third-party images are off by default (`camera=()`, `img-src 'self' data:`). Apps that need a scanner or a remote image CDN set `PERMISSIONS_POLICY` and `CSP_IMG_SRC`. Third-party iframes are blocked by `frame-src 'self'`; opt in per host with `CSP_FRAME_SRC`, while `frame-ancestors 'none'` and `X-Frame-Options: DENY` keep the app unembeddable by other sites (#379).
 
 The Content-Security-Policy `script-src` is `'self'` plus a per-request nonce. `view.Write` injects `.CSPNonce` into `map[string]any` page data so the FOUC theme snippet and the service-worker inline scripts can run. Stamp `nonce="{{ .CSPNonce }}"` on every inline `<script>`. Apps that still need unsigned inline scripts set `CSP_SCRIPT_SRC='unsafe-inline'` (#263).
 

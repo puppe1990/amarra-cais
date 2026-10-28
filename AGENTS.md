@@ -323,6 +323,7 @@ Pass `meta.SiteFrom(appName, cfg.AppURL)` from bootstrap for OG/Twitter in page 
 - `middleware.SecurityHeaders(cfg)` on the router (after `Recover`)
 - Sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`
 - Default `Permissions-Policy` is `camera=(), microphone=(), geolocation=()` in every env; `img-src` is `'self' data:` unless `CSP_IMG_SRC` is set (#262). A scanner app sets `PERMISSIONS_POLICY=camera=(self), microphone=(), geolocation=()` and a remote image CDN via `CSP_IMG_SRC=https://images.example.com`
+- `frame-src` is `'self'`; third-party embeds (video room, map, player) opt in with space-separated hosts in `CSP_FRAME_SRC` (#379). `frame-ancestors 'none'` and `X-Frame-Options: DENY` stay fixed — the app is not embeddable by other sites
 - CSP `script-src` is `'self'` plus a per-request nonce (`view.Write` injects `.CSPNonce` into `map[string]any` page data). Stamp `nonce="{{ .CSPNonce }}"` on every inline `<script>` (FOUC snippet, SW register). Apps that still need unsigned inline scripts set `CSP_SCRIPT_SRC='unsafe-inline'` (#263)
 - Adds `Strict-Transport-Security` in production (`ENV=production`)
 - CSRF and flash cookies use `Secure` when `cfg.CookieSecure()` is true

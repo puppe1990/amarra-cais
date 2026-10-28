@@ -36,8 +36,8 @@ func applySecurityHeaders(w http.ResponseWriter, r *http.Request, cfg cais.Confi
 		r = r.WithContext(cais.WithScriptNonce(r.Context(), nonce))
 	}
 	w.Header().Set("Content-Security-Policy", fmt.Sprintf(
-		"default-src 'self'; script-src %s; style-src %s; img-src %s; font-src %s; connect-src %s; media-src %s; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-		scriptSrc, styleSrc(cfg), imgSrc(cfg), fontSrc(cfg), connectSrc(cfg), mediaSrc(cfg),
+		"default-src 'self'; script-src %s; style-src %s; img-src %s; font-src %s; connect-src %s; media-src %s; frame-src %s; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+		scriptSrc, styleSrc(cfg), imgSrc(cfg), fontSrc(cfg), connectSrc(cfg), mediaSrc(cfg), frameSrc(cfg),
 	))
 	if cfg.Env == "production" {
 		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
@@ -67,6 +67,11 @@ func connectSrc(cfg cais.Config) string {
 
 func mediaSrc(cfg cais.Config) string {
 	return appendSrc("'self'", cfg.CSPMediaSrc)
+}
+
+// frameSrc defaults to 'self' so third-party embeds need CSP_FRAME_SRC (#379).
+func frameSrc(cfg cais.Config) string {
+	return appendSrc("'self'", cfg.CSPFrameSrc)
 }
 
 func imgSrc(cfg cais.Config) string {

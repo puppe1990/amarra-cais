@@ -90,6 +90,7 @@ TRUSTED_PROXIES=
 # CSP_FONT_SRC=https://fonts.gstatic.com
 # CSP_CONNECT_SRC=
 # CSP_MEDIA_SRC=
+# CSP_FRAME_SRC=https://www.youtube.com
 # CSP_IMG_SRC=
 # CSP_SCRIPT_SRC=
 # Unsigned inline scripts (pre-#263): CSP_SCRIPT_SRC='unsafe-inline'
