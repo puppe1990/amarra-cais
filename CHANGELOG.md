@@ -4,6 +4,17 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.25.1] - 2026-10-28
+
+### Fixed
+
+- `amarra-cais pwa` (and `pwa --bump`) no longer recreates `web/static/img/go-on-cais.jpg` when the app deleted it. The welcome JPG is scaffold art written once by `new`; `WriteStatic`, `WriteStaticInertia` and `WriteStaticAmarra` now refresh runtime assets only (#382).
+- `pwa.DefaultBrandAssets()` includes `img/go-on-cais.jpg`, so `amarra-cais doctor` warns while the app still ships the scaffold placeholder (#382).
+
+### Upgrade
+
+- Patch release: no public API change. Run `amarra-cais upgrade v0.25.1` and `amarra-cais pwa --bump`; the JPG stays gone if the app removed it. Apps that keep the welcome layout see `img/go-on-cais.jpg` in the doctor brand warning until they replace it.
+
 ## [0.25.0] - 2026-10-28
 
 ### Added
