@@ -31,12 +31,19 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"| `internal/app/`             | Bootstrap, `registerRoutes`    |\n" +
 	"| `internal/handlers/`        | HTTP handlers (`view.Write`)   |\n" +
 	"| `internal/store/`           | SQLite + migrations            |\n" +
-	"| `internal/models/`          | Domain structs                 |\n" +
+	"| `internal/models/`          | Row structs (SQL columns)      |\n" +
 	"| `web/templates/layouts/`    | Amarra layout (`#amarra-main`) |\n" +
 	"| `web/templates/pages/`      | HTML pages                     |\n" +
 	"| `web/templates/components/` | App component overrides        |\n" +
 	"| `web/static/`               | CSS, `amarra.js`, PWA          |\n\n" +
 	"Patch markers (do not remove): `registerRoutes`, `Close() error`, `<!-- cais:nav -->`, `// cais:live-views`.\n\n" +
+	"## When this app is more than CRUD\n\n" +
+	"`internal/models/` holds row structs (SQL columns) and page payloads. `g resource` stays table admin: validate, write, render. Keep handlers thin and the store greppable SQL.\n\n" +
+	"Create `internal/<context>` (one package named after the business, e.g. `internal/billing`) when:\n\n" +
+	"- An invariant spans fields or entities (a change that is not \"add a column\")\n" +
+	"- The business uses names that are not table columns\n" +
+	"- A flow is a transaction or policy, not a CRUD form\n\n" +
+	"Do not add `internal/domain` plus `internal/services` by default. Do not emit aggregates, domain events, or CQRS. Do not put methods on every generated model.\n\n" +
 	"## Amarra HTML\n\n" +
 	"Handlers render HTML via `view.Write`:\n\n" +
 	"```go\n" +

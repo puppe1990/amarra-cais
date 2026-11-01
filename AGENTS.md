@@ -750,3 +750,4 @@ Agents implement the categories listed — do not invent extra ops policy.
 - Add `vite.config.js` / Svelte pages to `amarra-cais new`
 - Use `$form` store syntax or Svelte 4 `new App()` in scaffolds
 - Replace the scaffold Tailwind palette (`ink`/`foam`/`copper`/`tide`) without restyling the kit components that use those classes (`amarra-cais doctor` warns) — re-theming through the `--amarra-*` CSS variables keeps the kit working in both themes
+- Emit aggregates, domain events, CQRS, or an `internal/domain` folder from generators / the scaffold

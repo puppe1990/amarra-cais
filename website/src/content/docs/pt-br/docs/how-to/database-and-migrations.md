@@ -23,7 +23,7 @@ Ou faça o scaffold da camada de dados:
 amarra-cais g model bookmark --fields title:string,url:url
 ```
 
-`g model` escreve a struct do model, a migration e os métodos de store — sem handlers, templates ou rotas. Para uma migration vazia, use `amarra-cais g migration add_tags`.
+`g model` escreve a struct do model, a migration e os métodos de store — sem handlers, templates ou rotas. Os models gerados são structs da linha para essas colunas; invariantes que não são “adicionar coluna” ficam em `internal/<contexto>`, não como método em todo model. Para uma migration vazia, use `amarra-cais g migration add_tags`.
 
 ## Escrever a migration
 

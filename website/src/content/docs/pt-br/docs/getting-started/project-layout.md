@@ -35,6 +35,7 @@ Os templates são parseados uma única vez com `view.Load` — uma tag `<.compon
 ## Convenções que vale manter
 
 - Um arquivo de handler por domínio, com um `*_test.go` correspondente (SQLite `:memory:`, sem mocks).
+- `internal/models/` guarda structs da linha (colunas SQL). Um app que sai do CRUD cria `internal/<contexto>` para invariantes e nomes do negócio; não inventa `internal/domain` + CQRS, e `g resource` continua sendo admin de tabela.
 - Os handlers recebem dependências (`Store`, `*view.Renderer`, `cais.Config`) via construtor — sem globais.
 - `registerRoutes`, `Close() error` e o marcador `<!-- cais:nav -->` no layout são o que os geradores e o `amarra-cais destroy` alteram; mantenha-os.
 - As páginas são HTML, não JSON: sem verificações de `HX-Request`, sem payloads do Inertia.

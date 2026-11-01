@@ -23,7 +23,7 @@ Or scaffold the data layer:
 amarra-cais g model bookmark --fields title:string,url:url
 ```
 
-`g model` writes the model struct, the migration, and the store methods — no handlers, templates, or routes. For an empty migration, use `amarra-cais g migration add_tags`.
+`g model` writes the model struct, the migration, and the store methods — no handlers, templates, or routes. Generated models are row structs for those columns; invariants that are not "add a column" belong in `internal/<context>`, not as methods on every model. For an empty migration, use `amarra-cais g migration add_tags`.
 
 ## Write the migration
 
