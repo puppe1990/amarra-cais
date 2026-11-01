@@ -17,21 +17,21 @@ sidebar:
 
 ### `amarra-cais g` subcommands
 
-| Generator                                   | What it does                                                          |
-| ------------------------------------------- | --------------------------------------------------------------------- |
-| `g handler <name>`                          | Handler + test + `web/templates/pages/<name>.html` + route patch.     |
-| `g page <name>`                             | Page template only.                                                   |
-| `g resource <name> [options]`               | Kit-based admin CRUD, optionally a public list.                       |
-| `g model <name> [--fields …]`               | Model + migration + store methods (no handlers, templates or routes). |
-| `g migration <name>`                        | New `NNN_<name>.sql`.                                                 |
+| Generator                                   | What it does                                                             |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
+| `g handler <name>`                          | Handler + test + `web/templates/pages/<name>.html` + route patch.        |
+| `g page <name>`                             | Page template only.                                                      |
+| `g resource <name> [options]`               | Kit-based admin CRUD, optionally a public list.                          |
+| `g model <name> [--fields …]`               | Model + migration + store methods (no handlers, templates or routes).    |
+| `g migration <name>`                        | New `NNN_<name>.sql`.                                                    |
 | `g auth`                                    | Login/logout, `/settings` password change, and a protected `/dashboard`. |
-| `g console`                                 | `cmd/console/main.go`.                                                |
-| `g ci`                                      | CI workflow, pre-commit, lint and Prettier.                           |
-| `g job <name> [--cron "0 3 * * *"]`         | Job handler, registry and worker.                                     |
-| `g stream chat [--live]`                    | SSE chat scaffold.                                                    |
-| `g live <name>`                             | Live view + page (WebSocket).                                         |
-| `g component <name>` / `g component --list` | Seed a kit override / list overridable components.                    |
-| `g sitemap`                                 | Public `post` resource (blog) plus a dynamic `/sitemap.xml` route.    |
+| `g console`                                 | `cmd/console/main.go`.                                                   |
+| `g ci`                                      | CI workflow, pre-commit, lint and Prettier.                              |
+| `g job <name> [--cron "0 3 * * *"]`         | Job handler, registry and worker.                                        |
+| `g stream chat [--live]`                    | SSE chat scaffold.                                                       |
+| `g live <name>`                             | Live view + page (WebSocket).                                            |
+| `g component <name>` / `g component --list` | Seed a kit override / list overridable components.                       |
+| `g sitemap`                                 | Public `post` resource (blog) plus a dynamic `/sitemap.xml` route.       |
 
 ### `amarra-cais destroy` subcommands
 
