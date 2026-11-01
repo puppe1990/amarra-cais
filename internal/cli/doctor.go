@@ -37,6 +37,9 @@ func runDoctor(w io.Writer, dir string, opts doctorOptions) error {
 	checks = append(checks,
 		checkSSEWriteTimeout(dir),
 		checkJobsUI(dir),
+	)
+	checks = append(checks, checkI18n(dir)...)
+	checks = append(checks,
 		checkAir(),
 		checkCSS(dir),
 		checkPalette(dir),
