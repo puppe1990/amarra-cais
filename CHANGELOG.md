@@ -4,6 +4,21 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.26.0] - 2026-11-01
+
+### Added
+
+- `amarra-cais doctor` warns when an i18n catalog is missing a key used in templates (`t "…"`) or Go (`t` / `.t` / `.T`). Parity across catalogs is a `[warn]`, never a `[FAIL]` — `Catalog.T` already returns the key (#385).
+- Generated auth includes a logged-in password change at `GET`/`POST /settings`. `ChangePassword` updates the hash and revokes that user's sessions in one transaction, then `SignOut` + 303 `/login` — the same contract as reset. `amarra-cais new` and `g auth` both emit it (#386).
+- Generated `AGENTS.md` names `internal/models/` as row structs and adds **When this app is more than CRUD**: create `internal/<context>` for invariants; generators do not emit aggregates, domain events, CQRS, or `internal/domain` (#388).
+- Website glossary (EN + pt-BR) defines Drive, Frame, Stream, Live, kit, morph, shell, resource, doctor and the rest in one sentence plus the contract page (#387).
+
+### Upgrade
+
+- Minor release: new generator surface (`/settings`) and a new doctor check. Run `amarra-cais upgrade v0.26.0`.
+- Apps generated before this with a full auth stack do not pick up `/settings` from `g auth` (it returns when `FindUserByEmail` already exists). Copy `auth_settings.go`, the store methods, the routes and `pages/settings.html` from a fresh scaffold.
+- `amarra-cais pwa --bump` is optional; the JS bundle banner is the only asset change.
+
 ## [0.25.1] - 2026-10-28
 
 ### Fixed
