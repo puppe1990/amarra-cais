@@ -26,7 +26,7 @@ Usage:
                              Generate SSE chat (optional Live WebSocket)
   amarra-cais g [--dry-run] job <name> [--cron "0 3 * * *"]
                              Generate job handler + cmd/worker + registry
-  amarra-cais g [--dry-run] auth                Add login/logout and protect dashboard
+  amarra-cais g [--dry-run] auth                Add login/logout, /settings password change, and protect dashboard
   amarra-cais g [--dry-run] console             Scaffold cmd/console/main.go
   amarra-cais g [--dry-run] ci                  Add GitHub Actions CI, pre-commit, lint, Prettier
   amarra-cais install               npm install (if package.json) + go mod tidy

@@ -209,4 +209,48 @@ func TestResetPasswordWithToken_consumesToken(t *testing.T) {
 		t.Fatal("password was not updated")
 	}
 }
+
+func TestChangePassword_revokesOnlyThatUsersSessions(t *testing.T) {
+	s := newResetTestStore(t)
+	user, err := s.FindUserByEmail("demo@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherID, err := s.CreateUser("other@example.com", "hash")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	token, err := s.Sessions().Create(user.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherToken, err := s.Sessions().Create(otherID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	newHash, err := session.HashPassword("changed-password-123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ChangePassword(user.ID, newHash); err != nil {
+		t.Fatalf("ChangePassword: %v", err)
+	}
+
+	if _, ok := s.Sessions().Get(token); ok {
+		t.Fatal("target user sessions must be revoked")
+	}
+	if _, ok := s.Sessions().Get(otherToken); !ok {
+		t.Fatal("other user sessions must remain")
+	}
+
+	updated, err := s.FindUser(user.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !session.VerifyPassword(updated.PasswordHash, "changed-password-123") {
+		t.Fatal("password was not updated")
+	}
+}
 `

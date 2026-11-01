@@ -93,7 +93,7 @@ const tplAgentsMD = "# {{.AppName}} — AI Conventions\n\n" +
 	"amarra-cais g migration add_notes\n" +
 	"amarra-cais g live counter         # WebSocket Live view + /live/counter\n" +
 	"amarra-cais g stream chat --live   # chat with Live WS (SSE is the default)\n" +
-	"amarra-cais g auth                 # if app was --blank/--minimal\n" +
+	"amarra-cais g auth                 # login/logout + /settings password change, if app was --blank/--minimal\n" +
 	"amarra-cais db migrate\n" +
 	"```\n\n" +
 	"Or by hand:\n\n" +

@@ -23,6 +23,8 @@ func scaffoldAuth(dir string, data scaffoldData, dryRun bool) error {
 		"internal/models/user.go":                  tplUserModel,
 		"internal/handlers/auth.go":                tplAuthHandler,
 		"internal/handlers/auth_test.go":           tplAuthTest,
+		"internal/handlers/auth_settings.go":       tplAuthSettings,
+		"internal/handlers/auth_settings_test.go":  tplAuthSettingsTest,
 		"internal/store/password_reset.go":         tplStorePasswordReset,
 		"internal/store/password_reset_test.go":    tplStorePasswordResetTest,
 		migrationPath:                              tplMigrationAuth,
@@ -30,6 +32,7 @@ func scaffoldAuth(dir string, data scaffoldData, dryRun bool) error {
 		"web/templates/pages/signup.html":          tplPageSignup,
 		"web/templates/pages/forgot_password.html": tplPageForgotPassword,
 		"web/templates/pages/reset_password.html":  tplPageResetPassword,
+		"web/templates/pages/settings.html":        tplPageSettings,
 		"web/templates/pages/dashboard.html":       tplPageDashboard,
 	}
 
@@ -139,7 +142,7 @@ type Store interface {`,
 	if !strings.Contains(content, ifaceMarker) {
 		return fmt.Errorf("could not patch store interface for auth")
 	}
-	ifaceInsert := "\n\tFindUserByEmail(email string) (models.User, error)\n\tCreateUser(email, passwordHash string) (int64, error)\n\tCreatePasswordResetToken(userID int64) (string, error)\n\tClearPasswordResetTokens(userID int64) error\n\tFindPasswordResetUserID(token string) (int64, bool)\n\tResetPasswordWithToken(token, passwordHash string) error"
+	ifaceInsert := "\n\tFindUserByEmail(email string) (models.User, error)\n\tFindUser(id int64) (models.User, error)\n\tCreateUser(email, passwordHash string) (int64, error)\n\tCreatePasswordResetToken(userID int64) (string, error)\n\tClearPasswordResetTokens(userID int64) error\n\tFindPasswordResetUserID(token string) (int64, bool)\n\tResetPasswordWithToken(token, passwordHash string) error\n\tChangePassword(id int64, passwordHash string) error"
 	if !strings.Contains(content, "Sessions() session.Store") {
 		ifaceInsert += "\n\tSessions() session.Store"
 	}
@@ -151,6 +154,18 @@ func (s *SQLiteStore) FindUserByEmail(email string) (models.User, error) {
 	err := s.db.QueryRow(
 		"SELECT id, email, password_hash, created_at FROM users WHERE email = ?",
 		email,
+	).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.CreatedAt)
+	if err != nil {
+		return models.User{}, fmt.Errorf("find user: %w", err)
+	}
+	return u, nil
+}
+
+func (s *SQLiteStore) FindUser(id int64) (models.User, error) {
+	var u models.User
+	err := s.db.QueryRow(
+		"SELECT id, email, password_hash, created_at FROM users WHERE id = ?",
+		id,
 	).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.CreatedAt)
 	if err != nil {
 		return models.User{}, fmt.Errorf("find user: %w", err)
@@ -170,6 +185,25 @@ func (s *SQLiteStore) CreateUser(email, passwordHash string) (int64, error) {
 		return 0, fmt.Errorf("create user: %w", err)
 	}
 	return result.LastInsertId()
+}
+
+func (s *SQLiteStore) ChangePassword(id int64, passwordHash string) error {
+	tx, err := s.db.Raw().Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.Exec("UPDATE users SET password_hash = ? WHERE id = ?", passwordHash, id); err != nil {
+		return fmt.Errorf("update password: %w", err)
+	}
+	if _, err := tx.Exec("DELETE FROM sessions WHERE user_id = ?", id); err != nil {
+		return fmt.Errorf("revoke sessions: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit change password: %w", err)
+	}
+	return nil
 }
 `
 	if !strings.Contains(content, "func (s *SQLiteStore) Sessions()") {
@@ -305,6 +339,8 @@ func patchRoutesForAuth(dir string, dryRun bool) error {
 	r.Get("/reset-password", auth.ResetPassword)
 	r.Post("/reset-password", resetLimit.Middleware(http.HandlerFunc(auth.ResetPasswordPost)).ServeHTTP)
 	r.Post("/logout", auth.LogoutPost)
+	r.Get("/settings", middleware.RequireAuthFunc("/login", auth.Settings))
+	r.Post("/settings", resetLimit.Middleware(http.HandlerFunc(auth.SettingsPost)).ServeHTTP)
 
 `
 	// AST-safe insertion: splicing statements before `func registerRoutes` puts them

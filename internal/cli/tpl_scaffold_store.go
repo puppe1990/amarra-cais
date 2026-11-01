@@ -23,11 +23,13 @@ var ErrEmailTaken = errors.New("email already registered")
 
 type Store interface {
 	FindUserByEmail(email string) (models.User, error)
+	FindUser(id int64) (models.User, error)
 	CreateUser(email, passwordHash string) (int64, error)
 	CreatePasswordResetToken(userID int64) (string, error)
 	ClearPasswordResetTokens(userID int64) error
 	FindPasswordResetUserID(token string) (int64, bool)
 	ResetPasswordWithToken(token, passwordHash string) error
+	ChangePassword(id int64, passwordHash string) error
 	Sessions() session.Store
 	Ping() error
 	DB() *sql.DB
@@ -99,6 +101,18 @@ func (s *SQLiteStore) FindUserByEmail(email string) (models.User, error) {
 	return u, nil
 }
 
+func (s *SQLiteStore) FindUser(id int64) (models.User, error) {
+	var u models.User
+	err := s.db.QueryRow(
+		"SELECT id, email, password_hash, created_at FROM users WHERE id = ?",
+		id,
+	).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.CreatedAt)
+	if err != nil {
+		return models.User{}, fmt.Errorf("find user: %w", err)
+	}
+	return u, nil
+}
+
 func (s *SQLiteStore) CreateUser(email, passwordHash string) (int64, error) {
 	result, err := s.db.Exec(
 		"INSERT INTO users (email, password_hash) VALUES (?, ?)",
@@ -111,6 +125,25 @@ func (s *SQLiteStore) CreateUser(email, passwordHash string) (int64, error) {
 		return 0, fmt.Errorf("create user: %w", err)
 	}
 	return result.LastInsertId()
+}
+
+func (s *SQLiteStore) ChangePassword(id int64, passwordHash string) error {
+	tx, err := s.db.Raw().Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.Exec("UPDATE users SET password_hash = ? WHERE id = ?", passwordHash, id); err != nil {
+		return fmt.Errorf("update password: %w", err)
+	}
+	if _, err := tx.Exec("DELETE FROM sessions WHERE user_id = ?", id); err != nil {
+		return fmt.Errorf("revoke sessions: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit change password: %w", err)
+	}
+	return nil
 }
 
 func (s *SQLiteStore) Sessions() session.Store {
