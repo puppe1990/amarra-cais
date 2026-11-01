@@ -10,6 +10,8 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.26.0", Title: "Logged-in password change at /settings", Action: "new and g auth emit GET/POST /settings; ChangePassword updates the hash and revokes that user's sessions, then SignOut. A full app already past g auth does not gain the route automatically — copy auth_settings.go, FindUser, ChangePassword, routes and pages/settings.html from a fresh scaffold"},
+	{Version: "0.26.0", Title: "doctor warns on missing i18n keys", Action: "amarra-cais doctor reports [warn] when a catalog is missing a key used in templates or Go; it never fails the run. Add the key or fix the literal"},
 	{Version: "0.25.1", Title: "pwa stops writing the scaffold welcome image", Action: "run amarra-cais pwa to refresh runtime assets; it no longer recreates web/static/img/go-on-cais.jpg after the app deletes it. doctor now lists the file while the placeholder remains"},
 	{Version: "0.25.0", Title: "Third-party iframes need CSP_FRAME_SRC", Action: "SecurityHeaders now emits frame-src 'self'; set CSP_FRAME_SRC=https://host (space-separated for several) to embed a video room, map or player. frame-ancestors 'none' and X-Frame-Options: DENY stay fixed"},
 	{Version: "0.24.0", Title: "Tailwind must scan the shipped kit", Action: "copy shippedKitContent() from a fresh amarra-cais new into tailwind.config.js content (go list -m plus pkg/amarra/view/components/**/*.html) and rebuild CSS; otherwise input/button/flash stay unstyled"},
