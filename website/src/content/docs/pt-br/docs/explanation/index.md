@@ -15,6 +15,7 @@ Leia estes textos quando você estiver decidindo se o Amarra se encaixa em um pr
 - [Cais vs Amarra](/amarra-cais/pt-br/docs/explanation/cais-vs-amarra/) — a divisão entre o Cais v0.11.x (Inertia + Svelte) e o Amarra (HTML-first), e o que significa migrar.
 - [Modelo de segurança](/amarra-cais/pt-br/docs/explanation/security-model/) — como CSRF, sessions, headers, rate limits e production gates se encaixam.
 - [Jobs e SQLite](/amarra-cais/pt-br/docs/explanation/jobs-and-sqlite/) — por que um único arquivo SQLite cuida de requests, streams e da fila em background.
+- [Glossário](/amarra-cais/pt-br/docs/explanation/glossary/) — Drive, Frame, Stream, Live, kit, morph e as outras palavras do produto, uma frase cada.
 
 :::tip
 Procurando passos em vez de justificativas? Comece pelos [guias práticos](/amarra-cais/pt-br/docs/how-to/) ou pela [referência](/amarra-cais/pt-br/docs/reference/).

@@ -45,13 +45,16 @@ func TestScaffoldNewApp_includesAgentsMD(t *testing.T) {
 				"page-owned chrome",
 				"amarra:morphed",
 				"event delegation",
+				"When this app is more than CRUD",
+				"internal/<context>",
+				"Row structs",
 				tc.name, // AppName rendered into title
 			} {
 				if !strings.Contains(text, needle) {
 					t.Errorf("AGENTS.md missing %q", needle)
 				}
 			}
-			for _, stale := range []string{"Inertia", "web/src/pages"} {
+			for _, stale := range []string{"Inertia", "web/src/pages", "Domain structs"} {
 				if strings.Contains(text, stale) {
 					t.Errorf("AGENTS.md still mentions %q", stale)
 				}

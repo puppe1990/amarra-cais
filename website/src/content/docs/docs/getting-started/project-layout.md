@@ -35,6 +35,7 @@ Templates are parsed a single time with `view.Load` — an unknown `<.component>
 ## Conventions worth keeping
 
 - One handler file per domain with a matching `*_test.go` (SQLite `:memory:`, no mocks).
+- `internal/models/` holds row structs that match SQL columns. An app that outgrows CRUD creates `internal/<context>` for invariants and business names; it does not invent `internal/domain` plus CQRS, and `g resource` stays table admin.
 - Handlers take dependencies (`Store`, `*view.Renderer`, `cais.Config`) via constructor — no globals.
 - `registerRoutes`, `Close() error` and the `<!-- cais:nav -->` marker in the layout are what generators and `amarra-cais destroy` patch; keep them.
 - Pages are HTML, not JSON: no `HX-Request` checks, no Inertia payloads.

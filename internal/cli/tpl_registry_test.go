@@ -74,6 +74,9 @@ func TestScaffoldTemplates_allRequiredPresent(t *testing.T) {
 		TplPageSignup             string
 		TplPageForgotPassword     string
 		TplPageResetPassword      string
+		TplAuthSettings           string
+		TplAuthSettingsTest       string
+		TplPageSettings           string
 	}{
 		TplGoMod:                  tplGoMod,
 		TplEmptyCSS:               tplEmptyCSS,
@@ -140,6 +143,9 @@ func TestScaffoldTemplates_allRequiredPresent(t *testing.T) {
 		TplPageSignup:             tplPageSignup,
 		TplPageForgotPassword:     tplPageForgotPassword,
 		TplPageResetPassword:      tplPageResetPassword,
+		TplAuthSettings:           tplAuthSettings,
+		TplAuthSettingsTest:       tplAuthSettingsTest,
+		TplPageSettings:           tplPageSettings,
 	})
 
 	for i := 0; i < v.NumField(); i++ {

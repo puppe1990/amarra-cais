@@ -75,6 +75,8 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		"internal/handlers/auth_test.go":           tplAuthTest,
 		"internal/handlers/auth_signup_test.go":    tplAuthSignupTest,
 		"internal/handlers/auth_reset_test.go":     tplAuthResetTest,
+		"internal/handlers/auth_settings.go":       tplAuthSettings,
+		"internal/handlers/auth_settings_test.go":  tplAuthSettingsTest,
 		"web/embed.go":                             tplWebEmbed,
 		"web/templates/layouts/app.html":           tplLayout,
 		"web/templates/pages/home.html":            tplPageHome,
@@ -83,6 +85,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		"web/templates/pages/signup.html":          tplPageSignup,
 		"web/templates/pages/forgot_password.html": tplPageForgotPassword,
 		"web/templates/pages/reset_password.html":  tplPageResetPassword,
+		"web/templates/pages/settings.html":        tplPageSettings,
 		"web/templates/components/.gitkeep":        "",
 		"web/static/css/styles.css":                tplEmptyCSS,
 		"input.css":                                tplInputCSS,
@@ -151,6 +154,8 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		delete(files, "internal/handlers/auth_test.go")
 		delete(files, "internal/handlers/auth_signup_test.go")
 		delete(files, "internal/handlers/auth_reset_test.go")
+		delete(files, "internal/handlers/auth_settings.go")
+		delete(files, "internal/handlers/auth_settings_test.go")
 		delete(files, "internal/handlers/locale.go")
 		delete(files, "internal/handlers/locale_test.go")
 		delete(files, "internal/models/user.go")
@@ -165,6 +170,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		delete(files, "web/templates/pages/signup.html")
 		delete(files, "web/templates/pages/forgot_password.html")
 		delete(files, "web/templates/pages/reset_password.html")
+		delete(files, "web/templates/pages/settings.html")
 		files["web/templates/layouts/app.html"] = tplLayoutMinimal
 		files["internal/app/routes.go"] = tplRoutesMinimal
 		files["internal/store/store.go"] = tplStoreMinimal

@@ -15,6 +15,7 @@ func TestAuthPages_centeredOnScreen(t *testing.T) {
 		"signup":          tplPageSignup,
 		"forgot-password": tplPageForgotPassword,
 		"reset-password":  tplPageResetPassword,
+		"settings":        tplPageSettings,
 	}
 	for name, tpl := range pages {
 		if !strings.Contains(tpl, "min-h-[calc(100vh-12rem)]") {

@@ -50,6 +50,10 @@ var enMessages = map[string]string{
 	"auth.signup_prompt":               "Don't have an account?",
 	"auth.login_prompt":                "Already have an account?",
 	"auth.email_taken":                 "This email is already registered.",
+	"settings.title":                    "Account settings",
+	"settings.submit":                   "Update password",
+	"settings.current_password":         "Current password",
+	"settings.current_password_invalid": "Current password is incorrect.",
 
 	"home.title":            "Home",
 	"home.welcome":          "Welcome, %s!",
@@ -108,6 +112,10 @@ var ptMessages = map[string]string{
 	"auth.signup_prompt":               "Não tem conta?",
 	"auth.login_prompt":                "Já tem conta?",
 	"auth.email_taken":                 "Este email já está cadastrado.",
+	"settings.title":                    "Configurações da conta",
+	"settings.submit":                   "Atualizar senha",
+	"settings.current_password":         "Senha atual",
+	"settings.current_password_invalid": "A senha atual está incorreta.",
 
 	"home.title":            "Página Inicial",
 	"home.welcome":          "Bem-vindo, %s!",

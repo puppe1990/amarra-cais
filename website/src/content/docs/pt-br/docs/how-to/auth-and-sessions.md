@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-O Amarra entrega sessões baseadas em cookie respaldadas por SQLite. Todo app criado com `amarra-cais new` já inclui login, logout e um `/dashboard` protegido. Adicione o mesmo scaffolding a um app existente com `amarra-cais g auth` e depois rode `amarra-cais db migrate` para criar as tabelas de sessão.
+O Amarra entrega sessões baseadas em cookie respaldadas por SQLite. Todo app criado com `amarra-cais new` já inclui login, logout, troca de senha logado em `/settings` (revoga sessões, faz SignOut e 303 `/login`) e um `/dashboard` protegido. Adicione o mesmo scaffolding a um app existente com `amarra-cais g auth` e depois rode `amarra-cais db migrate` para criar as tabelas de sessão.
 
 ## Configure o middleware de sessão
 

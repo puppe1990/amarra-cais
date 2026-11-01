@@ -24,7 +24,7 @@ sidebar:
 | `g resource <name> [options]`               | CRUD de admin baseado no kit, opcionalmente com uma listagem pública.               |
 | `g model <name> [--fields …]`               | Model + migration + métodos de store (sem handlers, templates ou rotas).            |
 | `g migration <name>`                        | Novo `NNN_<name>.sql`.                                                              |
-| `g auth`                                    | Login/logout e um `/dashboard` protegido.                                           |
+| `g auth`                                    | Login/logout, troca de senha em `/settings` e um `/dashboard` protegido.            |
 | `g console`                                 | `cmd/console/main.go`.                                                              |
 | `g ci`                                      | Workflow de CI, pre-commit, lint e Prettier.                                        |
 | `g job <name> [--cron "0 3 * * *"]`         | Handler de job, registry e worker.                                                  |

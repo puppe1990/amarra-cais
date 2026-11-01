@@ -38,3 +38,4 @@ Esse é o recorte de mini app. Sair dele significa outra store, ou sqlc gerado e
 - [Guias práticos](/amarra-cais/pt-br/docs/how-to/) — receitas focadas em tarefas: formulários, auth, jobs, streaming, deploy.
 - [Referência](/amarra-cais/pt-br/docs/reference/) — CLI, geradores, router, kit, middleware, API de jobs.
 - [Explicação](/amarra-cais/pt-br/docs/explanation/) — por que HTML-first, o Drive e um único arquivo SQLite.
+- [Glossário](/amarra-cais/pt-br/docs/explanation/glossary/) — Drive, Frame, kit, morph e o resto do vocabulário do produto.

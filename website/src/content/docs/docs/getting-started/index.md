@@ -38,3 +38,4 @@ This is the mini-app cut. Leaving it means another store, or generated sqlc on t
 - [How-to guides](/amarra-cais/docs/how-to/) — task-focused recipes: forms, auth, jobs, streaming, deploy.
 - [Reference](/amarra-cais/docs/reference/) — CLI, generators, router, kit, middleware, jobs API.
 - [Explanation](/amarra-cais/docs/explanation/) — why HTML-first, Drive, and one SQLite file.
+- [Glossary](/amarra-cais/docs/explanation/glossary/) — Drive, Frame, kit, morph and the rest of the product vocabulary.

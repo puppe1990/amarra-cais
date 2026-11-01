@@ -15,6 +15,7 @@ Read these when you are deciding whether Amarra fits a project, or when a behavi
 - [Cais vs Amarra](/amarra-cais/docs/explanation/cais-vs-amarra/) — the Cais v0.11.x (Inertia + Svelte) and Amarra (HTML-first) split, and what migrating means.
 - [Security model](/amarra-cais/docs/explanation/security-model/) — how CSRF, sessions, headers, rate limits and production gates fit together.
 - [Jobs and SQLite](/amarra-cais/docs/explanation/jobs-and-sqlite/) — why one SQLite file handles requests, streams and the background queue.
+- [Glossary](/amarra-cais/docs/explanation/glossary/) — Drive, Frame, Stream, Live, kit, morph and the other product words, one sentence each.
 
 :::tip
 Looking for steps instead of rationale? Start with the [how-to guides](/amarra-cais/docs/how-to/) or the [reference](/amarra-cais/docs/reference/).

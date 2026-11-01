@@ -153,7 +153,7 @@ Session admin routes require `users.is_admin = 1` (#350); public signup defaults
 
 ## Session auth
 
-`amarra-cais new` includes login/logout and protects `/dashboard`. Add to existing apps with `amarra-cais g auth`.
+`amarra-cais new` includes login/logout, a logged-in `/settings` password change, and protects `/dashboard`. Add to existing apps with `amarra-cais g auth`.
 
 ```go
 r.Use(middleware.LoadSession(deps.Store.Sessions()))
@@ -526,7 +526,7 @@ amarra-cais g [--dry-run] page about
 amarra-cais g [--dry-run] component card
 amarra-cais g component --list       # kit components an app can override
 amarra-cais g [--dry-run] migration add_tags
-amarra-cais g [--dry-run] auth       # login/logout + protected dashboard
+amarra-cais g [--dry-run] auth       # login/logout + /settings password change + protected dashboard
 amarra-cais g [--dry-run] console    # scaffold cmd/console/main.go
 amarra-cais g [--dry-run] ci         # add CI/pre-commit to existing apps
 amarra-cais g [--dry-run] job send_welcome --cron "0 3 * * *"
@@ -750,3 +750,4 @@ Agents implement the categories listed — do not invent extra ops policy.
 - Add `vite.config.js` / Svelte pages to `amarra-cais new`
 - Use `$form` store syntax or Svelte 4 `new App()` in scaffolds
 - Replace the scaffold Tailwind palette (`ink`/`foam`/`copper`/`tide`) without restyling the kit components that use those classes (`amarra-cais doctor` warns) — re-theming through the `--amarra-*` CSS variables keeps the kit working in both themes
+- Emit aggregates, domain events, CQRS, or an `internal/domain` folder from generators / the scaffold

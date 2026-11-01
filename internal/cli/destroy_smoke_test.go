@@ -72,7 +72,7 @@ func TestDestroyAuth_leavesCompilableApp(t *testing.T) {
 	}
 	routes := readDestroyFixture(t, filepath.Join(appDir, "internal/app/routes.go"))
 	for _, gone := range []string{
-		`"/login"`, `"/signup"`, `"/logout"`, "/forgot-password", "/reset-password",
+		`"/login"`, `"/signup"`, `"/logout"`, "/forgot-password", "/reset-password", `"/settings"`,
 		"loginLimit", "resetLimit", "auth.",
 	} {
 		if strings.Contains(routes, gone) {

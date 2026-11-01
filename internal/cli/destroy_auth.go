@@ -15,6 +15,8 @@ func destroyAuth(dir string, dryRun bool) error {
 		"internal/handlers/auth_test.go",
 		"internal/handlers/auth_signup_test.go",
 		"internal/handlers/auth_reset_test.go",
+		"internal/handlers/auth_settings.go",
+		"internal/handlers/auth_settings_test.go",
 		"internal/store/password_reset.go",
 		"internal/store/password_reset_test.go",
 		"web/src/pages/Login.svelte",
@@ -27,6 +29,7 @@ func destroyAuth(dir string, dryRun bool) error {
 		"web/templates/pages/signup.html",
 		"web/templates/pages/forgot_password.html",
 		"web/templates/pages/reset_password.html",
+		"web/templates/pages/settings.html",
 	}
 
 	migrationsDir := filepath.Join(dir, "internal/store/migrations")
@@ -84,6 +87,8 @@ func removeStoreAuthMethods(content string) (string, error) {
 		"ClearPasswordResetTokens",
 		"FindPasswordResetUserID",
 		"ResetPasswordWithToken",
+		"FindUser",
+		"ChangePassword",
 	}
 	names := make(map[string]bool, len(patterns))
 	for _, p := range patterns {

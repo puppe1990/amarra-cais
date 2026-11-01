@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-Amarra ships cookie-based sessions backed by SQLite. Every `amarra-cais new` app already includes login, logout, and a protected `/dashboard`. Add the same scaffolding to an existing app with `amarra-cais g auth`, then run `amarra-cais db migrate` to create the session tables.
+Amarra ships cookie-based sessions backed by SQLite. Every `amarra-cais new` app already includes login, logout, a logged-in `/settings` password change (revokes sessions, signs out, 303 `/login`), and a protected `/dashboard`. Add the same scaffolding to an existing app with `amarra-cais g auth`, then run `amarra-cais db migrate` to create the session tables.
 
 ## Wire the session middleware
 
