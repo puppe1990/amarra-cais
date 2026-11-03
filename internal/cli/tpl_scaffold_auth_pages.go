@@ -75,15 +75,15 @@ const tplPageResetPassword = `{{"{{"}} define "content" {{"}}"}}
 {{"{{"}} end {{"}}"}}`
 
 const tplPageSettings = `{{"{{"}} define "content" {{"}}"}}
-<div class="flex items-center justify-center min-h-[calc(100vh-12rem)] px-4 py-8">
-<div class="w-full max-w-md mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
-  <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "settings.title" {{"}}"}}</h2>
-  <.form action="/settings" method="post" data-amarra-skip>
-    <.password name="current_password" label="{{"{{"}} t "settings.current_password" {{"}}"}}" error="{{"{{"}} fieldError .Errors "current_password" {{"}}"}}" autocomplete="current-password" required="required" />
-    <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="new-password" required="required" />
-    <.password name="password_confirmation" label="{{"{{"}} t "auth.password_confirmation_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password_confirmation" {{"}}"}}" autocomplete="new-password" required="required" />
-    <.button type="submit">{{"{{"}} t "settings.submit" {{"}}"}}</.button>
-  </.form>
-</div>
+<div class="flex min-h-[calc(100svh-11rem)] items-center justify-center py-8">
+  <div class="w-full max-w-sm rounded-xl border border-foam/10 bg-tide/40 p-6">
+    <h1 class="font-serif text-2xl font-medium text-foam">{{"{{"}} t "settings.title" {{"}}"}}</h1>
+    <.form action="/settings" method="post" data-amarra-skip class="mt-6 space-y-5">
+      <.password name="current_password" label="{{"{{"}} t "settings.current_password" {{"}}"}}" error="{{"{{"}} fieldError .Errors "current_password" {{"}}"}}" autocomplete="current-password" required="required" />
+      <.password name="password" label="{{"{{"}} t "auth.password_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password" {{"}}"}}" autocomplete="new-password" required="required" />
+      <.password name="password_confirmation" label="{{"{{"}} t "auth.password_confirmation_label" {{"}}"}}" error="{{"{{"}} fieldError .Errors "password_confirmation" {{"}}"}}" autocomplete="new-password" required="required" />
+      <.button type="submit" class="amarra-btn amarra-btn-primary w-full">{{"{{"}} t "settings.submit" {{"}}"}}</.button>
+    </.form>
+  </div>
 </div>
 {{"{{"}} end {{"}}"}}`

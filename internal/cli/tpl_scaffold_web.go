@@ -207,9 +207,10 @@ const tplPageHomePre = `{{"{{"}} define "content" {{"}}"}}
     `
 
 // The boarding CTA needs a /login route; minimal/blank ship none, so their home
-// page reuses the same landing without it (#336).
+// page reuses the same landing without it (#336). The label names where the flow
+// lands (the dashboard) so it never doubles the header's "Sign in" link.
 const tplPageHomeCTA = `<div class="mt-8">
-      <a href="/login" class="amarra-btn amarra-btn-primary h-12 px-5 text-[15px]">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+      <a href="/login" class="amarra-btn amarra-btn-primary h-12 px-5 text-[15px]">{{"{{"}} t "home.cta_open" {{"}}"}}<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m0 0l-6-6m6 6l-6 6" /></svg></a>
     </div>`
 
 const tplPageHomePost = `

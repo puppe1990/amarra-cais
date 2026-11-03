@@ -40,6 +40,7 @@ var enMessages = map[string]string{
 	"home.welcome":       "Welcome, %s!",
 	"home.hero_heading":  "%s is running",
 	"home.tagline":       "Mini Go app with Amarra, Tailwind, and SQLite.",
+	"home.cta_open":      "Open the dashboard",
 	"home.stack":         "Go · Amarra · SQLite",
 	"home.next_steps":    "Next steps",
 	"home.step_resource": "Generate your first resource",

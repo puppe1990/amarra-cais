@@ -40,6 +40,7 @@ var ptMessages = map[string]string{
 	"home.welcome":       "Bem-vindo, %s!",
 	"home.hero_heading":  "%s está no ar",
 	"home.tagline":       "Mini app Go com Amarra, Tailwind e SQLite.",
+	"home.cta_open":      "Abrir o painel",
 	"home.stack":         "Go · Amarra · SQLite",
 	"home.next_steps":    "Próximos passos",
 	"home.step_resource": "Gere seu primeiro resource",
