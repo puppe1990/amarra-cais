@@ -4,6 +4,23 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.27.0] - 2026-11-03
+
+### Changed
+
+- Default front redesigned, end to end: the scaffold layout, home, dashboard, auth pages (login/signup/reset/settings), the shipped kit, the generated resource pages, `pkg/cais/forms` helpers and `offline.html` share one craft direction — 4px rhythm, tinted neutral surfaces with a single accent, 16px/1.5 icons, sentence-case labels, roman Fraunces, radius scale 8/12/16, one easing curve and one entrance. Palette (ink/foam/copper/tide) and both themes keep working (#393).
+- Home states what the app is: `%s is running` plus the real tagline, with the CLI command in the "Next steps" panel. The CTA opens the dashboard (`home.cta_open`) instead of doubling the header's "Sign in", and carries an arrow icon.
+- Kit components render shared control classes (`.amarra-btn*`, `.amarra-field`, `.amarra-label`, `.amarra-error`) defined in the scaffold `input.css`. `<.flash />` draws on the palette (it was a slate box on dark), errors and toasts stop hardcoding reds, and the new `danger`/`success` CSS variables carry semantic colour in both themes.
+- `pkg/cais/forms` helpers (`fieldInput`, `fieldSelect`, `fieldPassword`) render the same classes as the kit, so generator forms and kit forms look alike.
+- Admin index clamps long URL cells (row actions clipped past the frame), resource pages drop the uppercase mono labels, and public list rows, pagination, empty states and the bulk bar follow the new rows/cards.
+
+### Upgrade
+
+- Minor release: the framework kit changes shape. Run `amarra-cais upgrade v0.27.0`.
+- Copy the `@layer components` control block (`.amarra-btn*`, `.amarra-field`, `.amarra-label`, `.amarra-error`) and the palette variables from a fresh scaffold's `input.css`, keep `danger`/`success` in `tailwind.config.js` colours, then run `amarra-cais css`. A refreshed kit renders unstyled without them.
+- Scaffold pages are app-owned: copy `layouts/app.html` and `pages/*.html` from a fresh scaffold to adopt the new front, or keep yours — the kit styles both.
+- `amarra-cais pwa --bump` is optional; the JS bundle banner is the only asset change.
+
 ## [0.26.0] - 2026-11-01
 
 ### Added
