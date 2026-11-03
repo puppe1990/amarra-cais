@@ -44,6 +44,9 @@ func TestHomeHandler_RendersHTML(t *testing.T) {
 	if !strings.Contains(body, "is running") {
 		t.Errorf("body missing heading, got: %s", body)
 	}
+	if strings.Contains(body, ` + "`" + `data-amarra-outlet=` + "`" + `) {
+		t.Errorf("home must not emit outlets; the handler opts in (#397), got: %s", body)
+	}
 }
 
 func TestHomeHandler_ContentType(t *testing.T) {

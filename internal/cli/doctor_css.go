@@ -10,6 +10,33 @@ import (
 	"time"
 )
 
+func checkKitClasses(dir string) doctorCheck {
+	const name = "kit css classes"
+	cfgPath := filepath.Join(dir, "tailwind.config.js")
+	cfg, err := os.ReadFile(cfgPath)
+	if err != nil {
+		return doctorCheck{Name: name, OK: true, Detail: "skipped (no tailwind.config.js)"}
+	}
+	kitPath := filepath.Join(dir, "web/static/css/kit-classes.txt")
+	if _, err := os.Stat(kitPath); err != nil {
+		return doctorCheck{
+			Name:     name,
+			Optional: true,
+			Detail:   "web/static/css/kit-classes.txt missing — Tailwind prunes kit utilities when go list -m cannot see the module (#391)",
+			FixHint:  "copy kit-classes.txt from a fresh amarra-cais new (or amarra-cais upgrade) and rebuild CSS",
+		}
+	}
+	if !strings.Contains(string(cfg), "kit-classes.txt") {
+		return doctorCheck{
+			Name:     name,
+			Optional: true,
+			Detail:   "tailwind.config.js does not scan kit-classes.txt — kit CSS can go missing on a PaaS build (#391)",
+			FixHint:  "add ./web/static/css/kit-classes.txt to content in tailwind.config.js",
+		}
+	}
+	return doctorCheck{Name: name, OK: true, Detail: "kit-classes.txt vendored for CSS builds without the Go module"}
+}
+
 func checkCSS(dir string) doctorCheck {
 	path := filepath.Join(dir, cssOutput)
 	if _, err := os.Stat(path); err != nil {
@@ -69,6 +96,7 @@ func newestTailwindInput(dir string) (time.Time, string) {
 		}
 	}
 	consider(filepath.Join(dir, cssInput), cssInput)
+	consider(filepath.Join(dir, "web/static/css/kit-classes.txt"), "web/static/css/kit-classes.txt")
 	templates := filepath.Join(dir, "web", "templates")
 	_ = filepath.WalkDir(templates, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {

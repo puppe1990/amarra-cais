@@ -25,7 +25,7 @@ O service worker faz cache do seu CSS, JS e páginas. Depois de mudar templates 
 amarra-cais pwa --bump
 ```
 
-Isso atualiza os assets vendored e incrementa `CACHE_VERSION` em `sw.js`. `amarra-cais dev` incrementa o cache automaticamente sempre que `sw.js` existe, então a iteração local fica atualizada sem um passo manual. O service worker é network-first para `/static/js/amarra.js` e `/static/css/`, e esses fetches usam `cache: "no-cache"` para um deploy não ficar preso no cache HTTP do ano passado.
+Isso atualiza os assets vendored e incrementa `CACHE_VERSION` em `sw.js`. `amarra-cais dev` incrementa o cache automaticamente sempre que `sw.js` existe, então a iteração local fica atualizada sem um passo manual. O service worker é network-first para `/static/js/` (JS do framework e da app) e `/static/css/`, e esses fetches usam `cache: "no-cache"` para um deploy não ficar preso no cache HTTP do ano passado. Ícones, imagens e o web manifest continuam cache-first e ainda precisam de `--bump`.
 
 ## Rode as verificações mobile
 
@@ -33,7 +33,7 @@ Isso atualiza os assets vendored e incrementa `CACHE_VERSION` em `sw.js`. `amarr
 amarra-cais doctor --mobile
 ```
 
-O doctor mobile verifica o markup de flash, o CSP de Google Fonts, `amarra.js`, o cache do service worker (network-first `/static/js/amarra.js`), o CSS do formulário de chat, o container de scroll `#chat-messages` e o `lan_urls` do health.
+O doctor mobile verifica o markup de flash, o CSP de Google Fonts, `amarra.js`, o cache do service worker (network-first `/static/js/`), o CSS do formulário de chat, o container de scroll `#chat-messages` e o `lan_urls` do health.
 
 :::caution
 O CSP padrão bloqueia `fonts.googleapis.com`. O scaffold linka a fonte de título do site de docs (Fraunces) e já libera os dois hosts no `.env` gerado — apague esse `<link>` e as linhas `CSP_STYLE_SRC` / `CSP_FONT_SRC` para voltar ao padrão estrito com fontes do sistema.

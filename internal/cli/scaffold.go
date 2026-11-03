@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais/fsutil"
 	"github.com/puppe1990/amarra-cais/pkg/cais/pwa"
 )
@@ -88,6 +89,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 		"web/templates/pages/settings.html":        tplPageSettings,
 		"web/templates/components/.gitkeep":        "",
 		"web/static/css/styles.css":                tplEmptyCSS,
+		"web/static/css/kit-classes.txt":           view.KitClassesFile(),
 		"input.css":                                tplInputCSS,
 		"tailwind.config.js":                       tplTailwind,
 		"package.json":                             tplPackageJSON,
@@ -128,6 +130,7 @@ func scaffoldNewApp(dir string, data scaffoldData, minimal bool, blank bool) err
 			"web/templates/pages/home.html":          tplPageHomeSlim,
 			"web/templates/components/.gitkeep":      "",
 			"web/static/css/styles.css":              tplEmptyCSS,
+			"web/static/css/kit-classes.txt":         view.KitClassesFile(),
 			"input.css":                              tplInputCSS,
 			"tailwind.config.js":                     tplTailwind,
 			"package.json":                           tplPackageJSON,

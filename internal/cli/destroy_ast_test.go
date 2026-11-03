@@ -56,6 +56,75 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	}
 }
 
+func TestUnpatchHandlerRoutes_dropsNestedTapRoute(t *testing.T) {
+	content := `package app
+
+import (
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
+
+	"example.com/app/internal/handlers"
+)
+
+func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
+	home := handlers.NewHomeHandler(deps.Views, deps.Site, deps.Catalog, cfg)
+	dashboard := handlers.NewDashboardHandler(deps.Views, deps.Store, deps.Site, deps.Catalog, cfg)
+	r.Get("/", home.ServeHTTP)
+	r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
+	r.Post("/dashboard/tap", middleware.RequireAuthFunc("/login", dashboard.TapPost))
+}
+`
+	out, err := unpatchHandlerRoutes(content, dataForHandler("dashboard"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, gone := range []string{"dashboard", "/dashboard/tap", "RequireAuthFunc"} {
+		if strings.Contains(out, gone) {
+			t.Errorf("destroy handler left %q:\n%s", gone, out)
+		}
+	}
+	if !strings.Contains(out, "home.ServeHTTP") {
+		t.Errorf("dropped home:\n%s", out)
+	}
+}
+
+func TestUnpatchAuthRoutes_unwrapsDashboardTap(t *testing.T) {
+	content := `package app
+
+import (
+	"net/http"
+
+	"github.com/puppe1990/amarra-cais/pkg/cais"
+	"github.com/puppe1990/amarra-cais/pkg/cais/middleware"
+
+	"example.com/app/internal/handlers"
+)
+
+func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
+	auth := handlers.NewAuthHandler(deps.Views, deps.Store, deps.Site, deps.Store.Sessions(), cfg, deps.Catalog)
+	dashboard := handlers.NewDashboardHandler(deps.Views, deps.Store, deps.Site, deps.Catalog, cfg)
+	r.Get("/login", auth.Login)
+	r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
+	r.Post("/dashboard/tap", middleware.RequireAuthFunc("/login", dashboard.TapPost))
+}
+`
+	out, err := unpatchAuthRoutes(content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, "RequireAuthFunc") || strings.Contains(out, `"/login"`) || strings.Contains(out, "auth.") {
+		t.Errorf("auth wrap survived:\n%s", out)
+	}
+	for _, want := range []string{
+		`r.Get("/dashboard", dashboard.ServeHTTP)`,
+		`r.Post("/dashboard/tap", dashboard.TapPost)`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+}
+
 func TestRemoveStoreResourceMethods_exactNamesOnly(t *testing.T) {
 	data := dataForResource("bookmark")
 	content := `package store

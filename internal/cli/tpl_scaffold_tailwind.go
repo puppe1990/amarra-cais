@@ -14,15 +14,29 @@ function shippedKitContent() {
       stdio: ["ignore", "pipe", "ignore"],
     });
     const dir = out.trim().replace(/\\/g, "/");
-    return dir ? [dir + "/pkg/amarra/view/components/**/*.html"] : [];
-  } catch {
+    if (!dir) {
+      console.warn(
+        "amarra-cais: shippedKitContent: empty module dir; kit-classes.txt still covers kit utilities. Run go mod download before npm run build (#391)."
+      );
+      return [];
+    }
+    return [dir + "/pkg/amarra/view/components/**/*.html"];
+  } catch (err) {
+    console.warn(
+      "amarra-cais: shippedKitContent: go list -m failed; kit-classes.txt still covers kit utilities. Run go mod download before npm run build (#391).",
+      err && err.message ? err.message : err
+    );
     return [];
   }
 }
 
 /** @type {import("tailwindcss").Config} */
 module.exports = {
-  content: ["./web/templates/**/*.html", ...shippedKitContent()],
+  content: [
+    "./web/templates/**/*.html",
+    "./web/static/css/kit-classes.txt",
+    ...shippedKitContent(),
+  ],
   safelist: [
     "cais-password-wrap",
     "cais-password-toggle",

@@ -8,25 +8,18 @@ import (
 )
 
 // LinkTo renders an anchor for Drive. href and label are HTML-escaped.
-// Drive intercepts same-origin links by default, so no attribute is needed;
-// opt out with data-amarra-skip on the link when a full visit is required.
-// An optional map may set method, confirm, and frame (Turbo-shaped attrs).
+// Drive intercepts same-origin links by default, so no attribute is needed.
+// An optional map may set method, confirm, frame, skip (emits
+// data-amarra-skip when truthy — a full visit, #398), and disable-with.
 func LinkTo(href, label string, opts ...any) template.HTML {
-	var method, confirm, frame string
+	var method, confirm, frame, skip, disableWith string
 	if len(opts) > 0 {
 		if m, ok := opts[0].(map[string]any); ok {
-			method = fmt.Sprint(m["method"])
-			if method == "<nil>" || method == "" {
-				method = ""
-			}
-			confirm = fmt.Sprint(m["confirm"])
-			if confirm == "<nil>" || confirm == "" {
-				confirm = ""
-			}
-			frame = fmt.Sprint(m["frame"])
-			if frame == "<nil>" || frame == "" {
-				frame = ""
-			}
+			method = optString(m["method"])
+			confirm = optString(m["confirm"])
+			frame = optString(m["frame"])
+			skip = truthyDataAttr(m["skip"])
+			disableWith = optString(m["disable-with"])
 		}
 	}
 	var b strings.Builder
@@ -36,10 +29,41 @@ func LinkTo(href, label string, opts ...any) template.HTML {
 	writeDataAttr(&b, "data-amarra-method", method)
 	writeDataAttr(&b, "data-amarra-confirm", confirm)
 	writeDataAttr(&b, "data-amarra-frame", frame)
+	writeDataAttr(&b, "data-amarra-skip", skip)
+	writeDataAttr(&b, "data-amarra-disable-with", disableWith)
 	b.WriteString(`>`)
 	template.HTMLEscape(&b, []byte(label))
 	b.WriteString(`</a>`)
 	return template.HTML(b.String())
+}
+
+func optString(v any) string {
+	if v == nil {
+		return ""
+	}
+	s := fmt.Sprint(v)
+	if s == "<nil>" {
+		return ""
+	}
+	return s
+}
+
+// truthyDataAttr returns "true" so writeDataAttr emits a present attribute
+// (Drive uses hasAttribute). false / "" / nil stay empty.
+func truthyDataAttr(v any) string {
+	switch t := v.(type) {
+	case bool:
+		if t {
+			return "true"
+		}
+		return ""
+	case string:
+		if t == "" || t == "false" || t == "0" || t == "<nil>" {
+			return ""
+		}
+		return "true"
+	}
+	return ""
 }
 
 // safeHref returns href when it is a relative reference or an allowed scheme,
@@ -68,6 +92,24 @@ func safeHref(href string) string {
 	return "#"
 }
 
+// Outlet wraps inner text in <template data-amarra-outlet="id"> so Drive can
+// update a shell node after morphing #amarra-main (#397). Inner is escaped
+// unless it is already template.HTML.
+func Outlet(id string, inner any) template.HTML {
+	var b strings.Builder
+	b.WriteString(`<template data-amarra-outlet="`)
+	template.HTMLEscape(&b, []byte(id))
+	b.WriteString(`">`)
+	switch v := inner.(type) {
+	case template.HTML:
+		b.WriteString(string(v))
+	default:
+		template.HTMLEscape(&b, []byte(fmt.Sprint(v)))
+	}
+	b.WriteString(`</template>`)
+	return template.HTML(b.String())
+}
+
 func writeDataAttr(b *strings.Builder, name, value string) {
 	if value == "" {
 		return
@@ -91,6 +133,7 @@ func Dict(kv ...any) map[string]any {
 func helperFuncs() template.FuncMap {
 	return template.FuncMap{
 		"linkTo":         LinkTo,
+		"outlet":         Outlet,
 		"dict":           Dict,
 		"paginationHref": PaginationHref,
 		"sortHref":       SortHref,

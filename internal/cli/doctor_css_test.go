@@ -146,6 +146,31 @@ func TestCheckCSS_staleWhenInputCSSIsNewer(t *testing.T) {
 	}
 }
 
+func TestCheckKitClasses_warnsWhenFileMissing(t *testing.T) {
+	dir := t.TempDir()
+	writeFileAt(t, filepath.Join(dir, "tailwind.config.js"), "content: [...shippedKitContent()]", time.Now())
+	c := checkKitClasses(dir)
+	if c.OK {
+		t.Fatal("missing kit-classes.txt must not be [ok]")
+	}
+	if !c.Optional {
+		t.Error("missing kit-classes.txt should warn, not fail doctor")
+	}
+	if !strings.Contains(c.Detail, "kit-classes.txt") {
+		t.Errorf("Detail = %q, want kit-classes.txt", c.Detail)
+	}
+}
+
+func TestCheckKitClasses_okWhenVendored(t *testing.T) {
+	dir := t.TempDir()
+	writeFileAt(t, filepath.Join(dir, "tailwind.config.js"), `content: ["./web/static/css/kit-classes.txt", ...shippedKitContent()]`, time.Now())
+	writeFileAt(t, filepath.Join(dir, "web/static/css/kit-classes.txt"), "bg-copper\n", time.Now())
+	c := checkKitClasses(dir)
+	if !c.OK {
+		t.Fatalf("vendored kit-classes.txt should be OK, got %+v", c)
+	}
+}
+
 func TestCheckCSS_freshAfterRebuild(t *testing.T) {
 	dir := t.TempDir()
 	template := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)

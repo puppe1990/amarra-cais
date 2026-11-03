@@ -2,10 +2,8 @@ package cli
 
 import (
 	"go/ast"
-	"go/token"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func unpatchRoutesForResource(dir string, data scaffoldData, dryRun bool) error {
@@ -67,8 +65,16 @@ func unpatchRoutesForHandler(dir string, data scaffoldData, dryRun bool) error {
 	if err != nil {
 		return err
 	}
-	// Statement-exact removal (#168): the handler's var assignment and its
-	// r.Get/r.Post on "/<snake>" calling <camel>.ServeHTTP.
+	content, err := unpatchHandlerRoutes(string(body), data)
+	if err != nil {
+		return err
+	}
+	return updateScaffoldFile(path, []byte(content), "internal/app/routes.go", dryRun)
+}
+
+// unpatchHandlerRoutes drops the handler assignment and every route that
+// calls it, including nested paths such as POST /dashboard/tap (#397).
+func unpatchHandlerRoutes(content string, data scaffoldData) (string, error) {
 	camel := data.Camel
 	drop := func(st ast.Stmt) bool {
 		switch s := st.(type) {
@@ -79,43 +85,18 @@ func unpatchRoutesForHandler(dir string, data scaffoldData, dryRun bool) error {
 				}
 			}
 		case *ast.ExprStmt:
-			call, ok := s.X.(*ast.CallExpr)
-			if !ok || len(call.Args) == 0 {
-				return false
-			}
-			sel, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok {
-				return false
-			}
-			if recv, ok := sel.X.(*ast.Ident); !ok || recv.Name != "r" {
-				return false
-			}
-			lit, ok := call.Args[0].(*ast.BasicLit)
-			if !ok || lit.Kind != token.STRING || strings.Trim(lit.Value, "`\"") != "/"+data.Snake {
-				return false
-			}
-			matches := false
-			ast.Inspect(call, func(n ast.Node) bool {
-				if inner, ok := n.(*ast.SelectorExpr); ok {
-					if id, ok := inner.X.(*ast.Ident); ok && id.Name == camel {
-						matches = true
-					}
-				}
-				return true
-			})
-			return matches
+			return stmtCallsIdent(s, camel)
 		}
 		return false
 	}
-	content, err := removeStmtsFromFunc(string(body), "registerRoutes", drop)
+	content, err := removeStmtsFromFunc(content, "registerRoutes", drop)
 	if err != nil {
-		return err
+		return "", err
 	}
 	content, err = pruneUnusedAssigns(content, "registerRoutes")
 	if err != nil {
-		return err
+		return "", err
 	}
 	content = dropUnusedImport(content, "http")
-	content = dropUnusedImport(content, "middleware")
-	return updateScaffoldFile(path, []byte(content), "internal/app/routes.go", dryRun)
+	return dropUnusedImport(content, "middleware"), nil
 }

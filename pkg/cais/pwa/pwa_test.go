@@ -24,6 +24,30 @@ func TestDefaultConfig(t *testing.T) {
 	}
 }
 
+// #399: app JS under /static/js/*.js used to be cache-first, so a deploy
+// without `amarra-cais pwa --bump` left installed PWAs on stale app code.
+func TestServiceWorker_networkFirstForAppJS(t *testing.T) {
+	data, err := assets.ReadFile("assets/sw.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, `url.pathname.startsWith("/static/js/")`) {
+		t.Error("sw.js must network-first all of /static/js/, not only amarra.js")
+	}
+	if strings.Contains(content, `url.pathname === "/static/js/amarra.js"`) {
+		t.Error("narrow amarra.js allowlist left in place")
+	}
+	nfIdx := strings.Index(content, `startsWith("/static/js/")`)
+	cfIdx := strings.Index(content, `url.pathname.startsWith("/static/")`)
+	if nfIdx < 0 || cfIdx < 0 || nfIdx > cfIdx {
+		t.Error("network-first /static/js/ must run before cache-first /static/")
+	}
+	if !strings.Contains(content, "function cacheFirst") {
+		t.Error("icons/images/manifest still need cache-first")
+	}
+}
+
 func TestServiceWorker_networkFirstForSPABuild(t *testing.T) {
 	data, err := assets.ReadFile("assets/sw.js")
 	if err != nil {

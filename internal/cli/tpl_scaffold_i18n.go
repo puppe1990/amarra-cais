@@ -69,6 +69,8 @@ var enMessages = map[string]string{
 	"dashboard.title":  "Dashboard",
 	"dashboard.env":    "Environment",
 	"dashboard.locale": "Locale",
+	"dashboard.taps":   "Taps",
+	"dashboard.tap":    "Tap",
 
 	"layout.theme_light": "Light mode",
 	"layout.theme_dark":  "Dark mode",
@@ -122,6 +124,8 @@ var ptMessages = map[string]string{
 	"dashboard.title":  "Dashboard",
 	"dashboard.env":    "Ambiente",
 	"dashboard.locale": "Idioma",
+	"dashboard.taps":   "Toques",
+	"dashboard.tap":    "Tocar",
 
 	"layout.theme_light": "Modo claro",
 	"layout.theme_dark":  "Modo escuro",

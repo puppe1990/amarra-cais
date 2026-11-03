@@ -33,6 +33,7 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	r.Post("/logout", auth.LogoutPost)
 	r.Post("/locale", handlers.PostLocale(cfg))
 	r.Get("/dashboard", middleware.RequireAuthFunc("/login", dashboard.ServeHTTP))
+	r.Post("/dashboard/tap", middleware.RequireAuthFunc("/login", dashboard.TapPost))
 	r.Get("/settings", middleware.RequireAuthFunc("/login", auth.Settings))
 	r.Post("/settings", resetLimit.Middleware(http.HandlerFunc(auth.SettingsPost)).ServeHTTP)
 }

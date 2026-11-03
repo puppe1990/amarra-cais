@@ -4,6 +4,7 @@ const tplViewData = `package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
@@ -42,10 +43,28 @@ func amarraData(r *http.Request, site meta.Site, extra map[string]any) map[strin
 	if cat := i18n.CatalogFromRequest(r); cat != nil {
 		data["Locale"] = cat.Locale()
 	}
+	data["Taps"] = tapsFromRequest(r)
 	for k, v := range extra {
 		data[k] = v
 	}
 	return data
+}
+
+// tapsFromRequest reads the demo shell-counter cookie (#397). Missing or
+// garbage values are 0 so the layout span always has a number.
+func tapsFromRequest(r *http.Request) int {
+	if r == nil {
+		return 0
+	}
+	c, err := r.Cookie("amarra_taps")
+	if err != nil {
+		return 0
+	}
+	n, err := strconv.Atoi(c.Value)
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
 }
 
 // writeView names the layout at the call site: an app with a second layout (a

@@ -2,19 +2,24 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeDialog } from "./hook_dialog.mjs";
 
-function openerButton(label = "Open") {
+function openerButton(label = "Open", attrs = {}) {
   const listeners = {};
   return {
     label,
     listeners,
+    attrs: { ...attrs },
     addEventListener(type, fn) {
       (listeners[type] ??= []).push(fn);
     },
     removeEventListener(type, fn) {
       listeners[type] = (listeners[type] || []).filter((f) => f !== fn);
     },
-    click() {
-      (listeners.click || []).forEach((fn) => fn({ preventDefault() {} }));
+    getAttribute(n) {
+      return Object.hasOwn(this.attrs, n) ? this.attrs[n] : null;
+    },
+    click(ev) {
+      const event = ev ?? { preventDefault() {} };
+      (listeners.click || []).forEach((fn) => fn(event));
     },
     focus() {
       this.focused = true;
@@ -22,9 +27,25 @@ function openerButton(label = "Open") {
   };
 }
 
-function dialogEl() {
+function frameEl() {
+  const attrs = {};
+  return {
+    attrs,
+    tagName: "AMARRA-FRAME",
+    getAttribute(n) {
+      return Object.hasOwn(attrs, n) ? attrs[n] : null;
+    },
+    setAttribute(n, v) {
+      attrs[n] = String(v);
+    },
+  };
+}
+
+function dialogEl(opts = {}) {
   const listeners = {};
   const attrs = {};
+  const frame = opts.frame ?? null;
+  const body = opts.body ?? null;
   return {
     listeners,
     attrs,
@@ -42,6 +63,11 @@ function dialogEl() {
     },
     removeEventListener(type, fn) {
       listeners[type] = (listeners[type] || []).filter((f) => f !== fn);
+    },
+    querySelector(sel) {
+      if (sel === "amarra-frame") return frame;
+      if (sel === "[data-amarra-dialog-body]") return body;
+      return null;
     },
     focus() {
       this.focused = true;
@@ -141,4 +167,68 @@ test("dialog hook updated rebinds buttons replaced by a morph", () => {
   assert.equal(freshDlg.open, true, "fresh opener must open the fresh dialog");
   assert.equal(staleDlg.open, false, "stale dialog must stay closed");
   assert.equal((staleDlg.listeners.close || []).length, 0, "stale close listener removed");
+});
+
+// #392: opener href / data-amarra-dialog-src loads into the inner amarra-frame.
+test("dialog hook loads opener href into the inner amarra-frame", () => {
+  const frame = frameEl();
+  const dlg = dialogEl({ frame });
+  const open = openerButton("Preview", { href: "/books/1/chapters/6/preview" });
+  makeDialog().connect(container([open], [dlg]));
+
+  let prevented = false;
+  open.click({
+    preventDefault() {
+      prevented = true;
+    },
+  });
+
+  assert.equal(prevented, true, "preventDefault must run before Drive intercepts");
+  assert.equal(dlg.open, true);
+  assert.equal(frame.attrs.src, "/books/1/chapters/6/preview");
+});
+
+test("dialog hook prefers data-amarra-dialog-src over href", () => {
+  const frame = frameEl();
+  const dlg = dialogEl({ frame });
+  const open = openerButton("Preview", {
+    href: "/full-page",
+    "data-amarra-dialog-src": "/books/1/preview",
+  });
+  makeDialog().connect(container([open], [dlg]));
+  open.click();
+  assert.equal(frame.attrs.src, "/books/1/preview");
+});
+
+test("dialog hook without href only showModal", () => {
+  const frame = frameEl();
+  frame.attrs.src = "stale";
+  const dlg = dialogEl({ frame });
+  const open = openerButton();
+  makeDialog().connect(container([open], [dlg]));
+  open.click();
+  assert.equal(dlg.open, true);
+  assert.equal(frame.attrs.src, "stale");
+});
+
+test("dialog hook second opener swaps the frame src", () => {
+  const frame = frameEl();
+  const dlg = dialogEl({ frame });
+  const first = openerButton("06", { href: "/chapters/6/preview" });
+  const second = openerButton("08", { href: "/chapters/8/preview" });
+  makeDialog().connect(container([first, second], [dlg]));
+  first.click();
+  assert.equal(frame.attrs.src, "/chapters/6/preview");
+  second.click();
+  assert.equal(frame.attrs.src, "/chapters/8/preview");
+});
+
+test("dialog hook loads src onto data-amarra-dialog-body when no frame", () => {
+  const body = frameEl();
+  body.tagName = "DIV";
+  const dlg = dialogEl({ body });
+  const open = openerButton("Preview", { href: "/preview" });
+  makeDialog().connect(container([open], [dlg]));
+  open.click();
+  assert.equal(body.attrs.src, "/preview");
 });

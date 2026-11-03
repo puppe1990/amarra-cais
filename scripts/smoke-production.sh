@@ -16,6 +16,36 @@ export CAIS_SKIP_TIDY=1
 APP="$TMP/smokeprod"
 "$TMP/amarra-cais" new smokeprod "$APP"
 cd "$APP"
+
+# #396: CSS as Cleat does it — Tailwind before the module is in GOMODCACHE.
+# GH runners keep `go` in /usr/bin, so hiding it from PATH is not enough:
+# stub the binary so `go list -m` fails and shippedKitContent() falls back
+# to kit-classes.txt (#391).
+test -f web/static/css/kit-classes.txt
+EMPTY_MOD="$TMP/gomod-empty"
+HIDE_GO="$TMP/hide-go"
+mkdir -p "$EMPTY_MOD" "$HIDE_GO"
+printf '#!/bin/sh\nexit 127\n' >"$HIDE_GO/go"
+chmod +x "$HIDE_GO/go"
+NODE_BIN="$(dirname "$(command -v node)")"
+NPM_BIN="$(dirname "$(command -v npm)")"
+NPX_BIN="$(dirname "$(command -v npx)")"
+CSS_PATH="${HIDE_GO}:${NODE_BIN}:${NPM_BIN}:${NPX_BIN}:/usr/bin:/bin"
+if PATH="$CSS_PATH" go list -m github.com/puppe1990/amarra-cais >/dev/null 2>&1; then
+  echo "go list -m still resolves the module; CSS gate is invalid" >&2
+  exit 1
+fi
+GOMODCACHE="$EMPTY_MOD" PATH="$CSS_PATH" npm install
+GOMODCACHE="$EMPTY_MOD" PATH="$CSS_PATH" npx tailwindcss -i input.css -o web/static/css/styles.css --minify
+if ! grep -q 'bg-copper' web/static/css/styles.css; then
+  echo "styles.css missing .bg-copper (kit CSS pruned)" >&2
+  exit 1
+fi
+if ! grep -q 'amarra-btn' web/static/css/styles.css; then
+  echo "styles.css missing .amarra-btn" >&2
+  exit 1
+fi
+
 go mod tidy
 go build -o "$TMP/server" ./cmd/server
 

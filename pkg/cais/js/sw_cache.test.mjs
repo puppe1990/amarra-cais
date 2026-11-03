@@ -192,6 +192,59 @@ test("network-first CSS and JS revalidate the HTTP cache", async () => {
   }
 });
 
+// #399: app JS used to be cache-first under the /static/ catch-all.
+test("network-first covers app JS under /static/js/", async () => {
+  const sw = createServiceWorker({
+    fetchImpl: () => Promise.resolve(response("fresh-app-js", { "cache-control": "max-age=3600" })),
+  });
+  sw.cacheStore.set("https://app.test/static/js/sintaxe.js", response("stale-app-js"));
+  const res = await fire(
+    sw.handlers,
+    request("https://app.test/static/js/sintaxe.js", { accept: "*/*" })
+  );
+  assert.equal(res.body, "fresh-app-js");
+  assert.equal(sw.fetchCalls.length, 1);
+  assert.equal(sw.fetchCalls[0].init?.cache, "no-cache");
+});
+
+test("network-first app JS still falls back to Cache Storage when offline", async () => {
+  const sw = createServiceWorker({
+    fetchImpl: () => Promise.reject(new Error("offline")),
+  });
+  sw.cacheStore.set("https://app.test/static/js/sintaxe.js", response("cached-js"));
+  const res = await fire(
+    sw.handlers,
+    request("https://app.test/static/js/sintaxe.js", { accept: "*/*" })
+  );
+  assert.equal(res.body, "cached-js");
+});
+
+test("icons, images, and manifest stay cache-first", async () => {
+  const sw = createServiceWorker({
+    fetchImpl: () => Promise.resolve(response("fresh", { "cache-control": "max-age=3600" })),
+  });
+  sw.cacheStore.set("https://app.test/static/icons/icon-192.png", response("cached-icon"));
+  sw.cacheStore.set("https://app.test/static/manifest.webmanifest", response("cached-manifest"));
+  sw.cacheStore.set("https://app.test/static/img/hero.jpg", response("cached-img"));
+
+  const icon = await fire(
+    sw.handlers,
+    request("https://app.test/static/icons/icon-192.png", { accept: "image/png" })
+  );
+  const manifest = await fire(
+    sw.handlers,
+    request("https://app.test/static/manifest.webmanifest", { accept: "application/manifest+json" })
+  );
+  const img = await fire(
+    sw.handlers,
+    request("https://app.test/static/img/hero.jpg", { accept: "image/jpeg" })
+  );
+  assert.equal(icon.body, "cached-icon");
+  assert.equal(manifest.body, "cached-manifest");
+  assert.equal(img.body, "cached-img");
+  assert.equal(sw.fetchCalls.length, 0, "cache-first must not hit the network when cached");
+});
+
 test("network-first CSS still falls back to Cache Storage when offline", async () => {
   const { handlers, cacheStore } = createServiceWorker({
     fetchImpl: () => Promise.reject(new Error("offline")),

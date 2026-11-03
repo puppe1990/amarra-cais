@@ -7,6 +7,14 @@ import (
 	"testing"
 )
 
+func TestHasNetworkFirstSPA_acceptsStaticJSPrefix(t *testing.T) {
+	body := `function networkFirst(){}
+if (url.pathname.startsWith("/static/js/")) { event.respondWith(networkFirst(request)); }`
+	if !HasNetworkFirstSPA(body) {
+		t.Error("network-first /static/js/ should count as SPA strategy (#399)")
+	}
+}
+
 func TestHasNetworkFirstSPA(t *testing.T) {
 	legacy := `if (url.pathname.startsWith("/static/")) {
   caches.match(request)

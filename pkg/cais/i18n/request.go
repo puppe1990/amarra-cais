@@ -31,6 +31,31 @@ func CatalogForRequest(r *http.Request, catalogs map[string]*Catalog, fallback s
 	return CatalogForRequestNamed(r, catalogs, fallback, CookieName)
 }
 
+// PathLocale returns the first prefix that matches r.URL.Path as a locale tag.
+// Prefixes are path segments ("en", "pt") matched at the start (/en, /en/...).
+// A prefix may include a leading slash. No match returns "".
+// Inject the result as ?lang= before LocaleMiddleware for path-prefix i18n (#400).
+func PathLocale(r *http.Request, prefixes ...string) string {
+	if r == nil || r.URL == nil {
+		return ""
+	}
+	path := r.URL.Path
+	if path == "" {
+		path = "/"
+	}
+	for _, raw := range prefixes {
+		tag := strings.Trim(strings.TrimSpace(raw), "/")
+		if tag == "" {
+			continue
+		}
+		head := "/" + tag
+		if path == head || strings.HasPrefix(path, head+"/") {
+			return NormalizeLocale(tag)
+		}
+	}
+	return ""
+}
+
 // CatalogForRequestNamed is CatalogForRequest with a product-prefixed cookie (cifra_locale).
 func CatalogForRequestNamed(r *http.Request, catalogs map[string]*Catalog, fallback, cookieName string) *Catalog {
 	if c := catalogFromQuery(r, catalogs); c != nil {

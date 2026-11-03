@@ -115,7 +115,7 @@ func (c *Catalog) OGLocale() string {
 }
 
 // Funcs returns template helpers: t, htmlLang, ogLocale, localeBase,
-// localeTags, localeLabel.
+// localeTags, localeLabel, localeHrefs.
 func (c *Catalog) Funcs() template.FuncMap {
 	return template.FuncMap{
 		"t": func(key string, args ...any) string {
@@ -132,7 +132,14 @@ func (c *Catalog) Funcs() template.FuncMap {
 		// from locales= / page .Locales; empty falls back to en|pt (#300).
 		"localeTags":  localeTagsFrom,
 		"localeLabel": localeLabelFrom,
+		"localeHrefs": localeHrefsFrom,
 	}
+}
+
+// LocaleHref is one kit locale-toggle link (tag + dest) for path-prefix i18n (#400).
+type LocaleHref struct {
+	Tag  string
+	Href string
 }
 
 func localeTagsFrom(v any) []string {
@@ -166,6 +173,28 @@ func localeTagsFrom(v any) []string {
 func localeLabelFrom(v any) string {
 	s, _ := v.(string)
 	return strings.ToUpper(NormalizeLocale(s))
+}
+
+func localeHrefsFrom(v any) []LocaleHref {
+	s, _ := v.(string)
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := make([]LocaleHref, 0, len(parts))
+	seen := map[string]bool{}
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		tag, href, ok := strings.Cut(part, ":")
+		tag = NormalizeLocale(strings.TrimSpace(tag))
+		href = strings.TrimSpace(href)
+		if !ok || tag == "" || href == "" || seen[tag] {
+			continue
+		}
+		seen[tag] = true
+		out = append(out, LocaleHref{Tag: tag, Href: href})
+	}
+	return out
 }
 
 // MergeFuncs combines i18n funcs with additional template funcs.

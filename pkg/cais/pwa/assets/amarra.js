@@ -764,6 +764,7 @@
   var drive_exports = {};
   __export(drive_exports, {
     applyDriveResponse: () => applyDriveResponse,
+    applyOutlets: () => applyOutlets,
     driveHeaders: () => driveHeaders,
     extractMainHTML: () => extractMainHTML,
     extractMainTagName: () => extractMainTagName,
@@ -1078,6 +1079,7 @@
             ev?.preventDefault?.();
             opener = btn;
             dlg.showModal?.();
+            loadDialogSrc(btn, dlg);
           };
           btn[OPEN] = fn;
           btn.addEventListener?.("click", fn);
@@ -1126,6 +1128,12 @@
     };
   }
   var dialog = makeDialog();
+  function loadDialogSrc(btn, dlg) {
+    const src = btn.getAttribute?.("data-amarra-dialog-src") || btn.getAttribute?.("href") || "";
+    if (!src) return;
+    const frame = dlg.querySelector?.("amarra-frame") || dlg.querySelector?.("[data-amarra-dialog-body]");
+    if (frame?.setAttribute) frame.setAttribute("src", src);
+  }
 
   // pkg/amarra/js/hook_dropdown.mjs
   var BTN = "_amarraDropdownToggle";
@@ -2678,6 +2686,29 @@ ${lines.join("\n")}
   function extractMainTagName(html) {
     return extractMainOpen(String(html ?? ""))?.[1]?.toUpperCase() ?? null;
   }
+  function applyOutlets(doc, html) {
+    if (!doc?.getElementById) return;
+    const source = String(html ?? "");
+    const re = /<template\b[^>]*\bdata-amarra-outlet=["']([^"']+)["'][^>]*>([\s\S]*?)<\/template>/gi;
+    let m;
+    while (m = re.exec(source)) {
+      const target = doc.getElementById(m[1]);
+      if (!target) continue;
+      fillOutlet(doc, target, m[2]);
+    }
+  }
+  function fillOutlet(doc, target, inner) {
+    if (typeof doc.createElement === "function") {
+      const tpl = doc.createElement("template");
+      tpl.innerHTML = inner;
+      const nodes = [...tpl.content?.childNodes ?? []];
+      if (typeof target.replaceChildren === "function") {
+        target.replaceChildren(...nodes);
+        return;
+      }
+    }
+    if ("innerHTML" in target) target.innerHTML = inner;
+  }
   function defaultDriveWarn(msg) {
     try {
       globalThis.console?.warn?.(msg);
@@ -2721,6 +2752,7 @@ ${lines.join("\n")}
     applyLayoutMarker(doc, html);
     applyShellMarker(doc, html);
     if (main) (morphFn ?? morph)(main, fragment);
+    applyOutlets(doc, html);
     if ((status === 200 || status === 404) && push && url && history?.pushState) {
       if (!location?.href || url !== location.href) {
         history.pushState({ amarra: true, scrollY: 0 }, "", url);

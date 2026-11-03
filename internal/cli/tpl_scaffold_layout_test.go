@@ -274,6 +274,36 @@ func TestLayoutTemplates_sidebarToggleAccessible(t *testing.T) {
 	}
 }
 
+func TestLayoutTemplates_hasOutletSlot(t *testing.T) {
+	if !strings.Contains(tplLayout, `id="amarra-taps"`) {
+		t.Error("signed-in layout missing #amarra-taps shell outlet (#397)")
+	}
+	if !strings.Contains(tplLayout, `.Outlets`) {
+		t.Error("layout missing {{ .Outlets }} slot outside #amarra-main (#397)")
+	}
+}
+
+func TestDashboardHandlerTemplate_optsIntoOutlet(t *testing.T) {
+	if !strings.Contains(tplDashboardHandler, `view.Outlet("amarra-taps"`) {
+		t.Error("dashboard GET must opt in to the taps outlet (#397)")
+	}
+	if !strings.Contains(tplDashboardHandler, "TapPost") {
+		t.Error("dashboard must have TapPost 303 demo (#397)")
+	}
+	if !strings.Contains(tplRoutes, `/dashboard/tap`) {
+		t.Error("routes must register POST /dashboard/tap (#397)")
+	}
+	if !strings.Contains(tplPageDashboard, `/dashboard/tap`) {
+		t.Error("dashboard page must POST the tap demo (#397)")
+	}
+}
+
+func TestHomeHandlerTemplate_doesNotEmitOutlet(t *testing.T) {
+	if strings.Contains(tplHomeHandler, "view.Outlet") {
+		t.Error("home must not emit outlets; the handler opts in (#397)")
+	}
+}
+
 func TestLayoutTemplates_dashboardUsesLogoutForm(t *testing.T) {
 	if !strings.Contains(tplPageDashboard, `action="/logout"`) {
 		t.Error("dashboard page should post logout")

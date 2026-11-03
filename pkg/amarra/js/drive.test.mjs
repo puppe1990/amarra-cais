@@ -5,6 +5,7 @@ import {
   driveHeaders,
   extractMainHTML,
   applyDriveResponse,
+  applyOutlets,
   visit,
   start,
 } from "./drive.mjs";
@@ -128,6 +129,56 @@ test("applyDriveResponse morphs on 200 and pushState", () => {
   assert.equal(result.action, "morph");
   assert.equal(main.innerHTML.trim(), "<p>new</p>");
   assert.deepEqual(pushed, ["http://a/x"]);
+});
+
+// #397: Drive morphs only #amarra-main; shell nodes update from explicit
+// <template data-amarra-outlet> in the same HTML.
+test("applyOutlets replaces a named shell node", () => {
+  const taps = { innerHTML: "0" };
+  applyOutlets(
+    { getElementById: (id) => (id === "amarra-taps" ? taps : null) },
+    `<main id="amarra-main">x</main><template data-amarra-outlet="amarra-taps">3</template>`
+  );
+  assert.equal(taps.innerHTML, "3");
+});
+
+test("applyOutlets leaves the node when the template is missing", () => {
+  const taps = { innerHTML: "0" };
+  applyOutlets({ getElementById: () => taps }, `<main id="amarra-main">x</main>`);
+  assert.equal(taps.innerHTML, "0");
+});
+
+test("applyOutlets ignores a missing target id", () => {
+  applyOutlets(
+    { getElementById: () => null },
+    `<template data-amarra-outlet="ghost">nope</template>`
+  );
+});
+
+test("applyDriveResponse applies outlets after morphing main", () => {
+  const main = { innerHTML: "old" };
+  const taps = { innerHTML: "0" };
+  const doc = {
+    title: "old",
+    querySelector: () => null,
+    getElementById(id) {
+      return id === "amarra-taps" ? taps : null;
+    },
+    dispatchEvent() {},
+  };
+  applyDriveResponse({
+    status: 200,
+    html: `<html><body><span id="amarra-taps">0</span><main id="amarra-main"><p>new</p></main><template data-amarra-outlet="amarra-taps">3</template></body></html>`,
+    url: "http://a/x",
+    main,
+    document: doc,
+    morphFn: (el, html) => {
+      el.innerHTML = html;
+    },
+    history: { pushState() {} },
+  });
+  assert.equal(main.innerHTML.trim(), "<p>new</p>");
+  assert.equal(taps.innerHTML, "3");
 });
 
 test("applyDriveResponse does full visit on layout mismatch", () => {

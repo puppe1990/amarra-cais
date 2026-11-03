@@ -70,7 +70,7 @@ amarra-cais pwa          # pwa.InstallForAmarra → web/static/js/amarra.js
 amarra-cais pwa --bump   # after HTML/template changes on phones
 ```
 
-Delete leftover `/static/build/` and HTMX / `cais.js` copies. SW is network-first for `/static/js/amarra.js`.
+Delete leftover `/static/build/` and HTMX / `cais.js` copies. SW is network-first for `/static/js/`.
 
 ## 8. CLI
 
