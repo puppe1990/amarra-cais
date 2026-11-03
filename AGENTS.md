@@ -258,7 +258,7 @@ Shipped kit (override in `web/templates/components/`): `form`, `input`, `passwor
 
 `{{ linkTo "/x" "Label" }}` emits a plain `<a>` — Drive intercepts it by default. Optional `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`.
 
-**Kit CSS** — the scaffold's `tailwind.config.js` scans `./web/templates/**/*.html` plus the module's `pkg/amarra/view/components/**/*.html` (resolved with `go list -m`), because the kit HTML never lives in the app. Dropping that entry prunes every kit-only utility and a fresh app renders `<.input>`/`<.button>`/`<.flash />` unstyled (#372).
+**Kit CSS** — the scaffold's `tailwind.config.js` scans `./web/templates/**/*.html`, `./web/static/css/kit-classes.txt`, plus the module's `pkg/amarra/view/components/**/*.html` (resolved with `go list -m`). The kit HTML never lives in the app; `kit-classes.txt` is the fallback when `go list -m` fails (PaaS CSS before `go: downloading`, #391). `shippedKitContent()` warns on that failure. Dropping both entries prunes kit-only utilities and `<.input>`/`<.button>`/`<.flash />` render unstyled (#372).
 
 **Kit attributes interpolate** like plain markup: `<.stat label="Potência" value="{{ .Power }} kWp" />` renders `5 kWp`, and a value may mix text with several actions (a bare `{{ .X }}` keeps the raw expression, so non-string data still works in the component's `if`/`range`). A control action (`{{ if }}`/`{{ range }}`) in an attribute value fails at boot instead of printing `{{ … }}` to the user (#72). Optional tag attrs (`class`, `click`, `enctype`, `accept`, …) are empty `$vars` when omitted so a kit tag inside `{{ range }}` does not 500 on the row (#43, #302); `<.flash />` and pagination still read page data.
 

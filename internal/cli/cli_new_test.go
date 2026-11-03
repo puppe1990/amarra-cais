@@ -69,6 +69,7 @@ func TestCLI_NewCreatesApp(t *testing.T) {
 		"web/templates/pages/dashboard.html",
 		"web/templates/pages/login.html",
 		"web/static/js/amarra.js",
+		"web/static/css/kit-classes.txt",
 		"package.json",
 		"web/static/manifest.webmanifest",
 		"web/static/js/sw.js",

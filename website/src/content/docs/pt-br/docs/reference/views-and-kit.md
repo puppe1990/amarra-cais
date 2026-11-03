@@ -101,7 +101,7 @@ Os campos do kit usam `:user-invalid` para não pintar vermelho no primeiro pain
 
 ## Estilizando o kit
 
-O HTML do kit embutido vive dentro do módulo Go. O `tailwind.config.js` de um scaffold varre `./web/templates/**/*.html` mais `pkg/amarra/view/components/**/*.html` do módulo, resolvido com `go list -m -f '{{.Dir}}' github.com/puppe1990/amarra-cais`. Mantenha essa entrada: sem ela o Tailwind poda toda utilidade usada só pelo kit e `<.input>`, `<.button>` e `<.flash />` ficam sem estilo (#372). Um app gerado antes desta mudança pode copiar `shippedKitContent()` de um `amarra-cais new` novo ou rodar `amarra-cais g component <nome>` para cada componente que usa.
+O HTML do kit embutido vive dentro do módulo Go. O `tailwind.config.js` de um scaffold varre `./web/templates/**/*.html`, `./web/static/css/kit-classes.txt` e `pkg/amarra/view/components/**/*.html` do módulo, resolvido com `go list -m -f '{{.Dir}}' github.com/puppe1990/amarra-cais`. Mantenha o arquivo e o glob: sem eles o Tailwind poda toda utilidade usada só pelo kit e `<.input>`, `<.button>` e `<.flash />` ficam sem estilo (#372). O `kit-classes.txt` é o fallback quando o `go list -m` falha — no PaaS o CSS costuma rodar antes do `go: downloading` (#391). O `shippedKitContent()` avisa nessa falha; o `amarra-cais doctor` avisa se o arquivo faltar. Rode `go mod download` antes de `npm run build` quando der. Um app gerado antes desta mudança pode copiar `kit-classes.txt` e `shippedKitContent()` de um `amarra-cais new` novo ou rodar `amarra-cais g component <nome>` para cada componente que usa.
 
 ## Interpolação de atributos do kit
 

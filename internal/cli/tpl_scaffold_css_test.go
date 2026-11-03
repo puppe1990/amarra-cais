@@ -64,6 +64,25 @@ func TestTplInputCSS_paletteVariablesSwitchTheme(t *testing.T) {
 // #372: the kit HTML lives inside the Go module, so a scaffold that scans only
 // web/templates/** never emits the kit utilities (bg-copper, px-3, …) and
 // input/button/flash render unstyled.
+// #391: go list -m is silent today, so a PaaS CSS build before the module
+// lands in GOMODCACHE prunes kit utilities. The scaffold must vendor a class
+// list and warn when the module scan fails.
+func TestTplTailwind_vendorsKitClassesWithoutModule(t *testing.T) {
+	for _, want := range []string{
+		`"./web/static/css/kit-classes.txt"`,
+		"console.warn",
+		"shippedKitContent()",
+	} {
+		if !strings.Contains(tplTailwind, want) {
+			t.Errorf("tailwind.config.js missing %q", want)
+		}
+	}
+	if strings.Contains(tplTailwind, "catch {\n    return [];\n  }") ||
+		strings.Contains(tplTailwind, "catch {\n      return [];") {
+		t.Error("shippedKitContent must not swallow go list -m with an empty catch")
+	}
+}
+
 func TestTplTailwind_scansShippedKit(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "tailwind.config.js")
 	if err := writeTemplate(path, tplTailwind, scaffoldData{}); err != nil {
