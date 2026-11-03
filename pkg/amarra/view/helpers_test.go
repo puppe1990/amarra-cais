@@ -33,6 +33,33 @@ func TestLinkTo_escapesHrefAndLabel(t *testing.T) {
 	}
 }
 
+func TestLinkTo_skipEmitsDataAmarraSkip(t *testing.T) {
+	got := string(LinkTo("/en/x", "EN", map[string]any{"skip": true}))
+	if !strings.Contains(got, `href="/en/x"`) {
+		t.Errorf("href dropped: %s", got)
+	}
+	if !strings.Contains(got, `data-amarra-skip="true"`) {
+		t.Errorf("missing data-amarra-skip: %s", got)
+	}
+	if strings.Contains(got, "hreflang") {
+		t.Errorf("hreflang leaked: %s", got)
+	}
+}
+
+func TestLinkTo_withoutSkipKeepsExactHTML(t *testing.T) {
+	got := string(LinkTo("/x", "Hi"))
+	if got != `<a href="/x">Hi</a>` {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestLinkTo_disableWith(t *testing.T) {
+	got := string(LinkTo("/x", "Save", map[string]any{"disable-with": "Saving…"}))
+	if !strings.Contains(got, `data-amarra-disable-with="Saving…"`) {
+		t.Errorf("missing disable-with: %s", got)
+	}
+}
+
 func TestLinkTo_methodConfirmFrame(t *testing.T) {
 	got := string(LinkTo("/x", "Del", map[string]any{
 		"method":  "delete",

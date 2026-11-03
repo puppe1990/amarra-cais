@@ -21,7 +21,7 @@ O Amarra registra um conjunto de funções helper no view renderer para que os t
 | `flashMessage`    | `{{ flashMessage .Flash }}`                                                               | O aviso flash de uso único.                                    |
 | `linkTo`          | `{{ linkTo "/items/1" "Delete" (dict "method" "delete" "confirm" "Delete this item?") }}` | Um `<a>` simples que o Drive intercepta.                       |
 | `t`               | `{{ t "key" }}`                                                                           | Uma string localizada do catálogo.                             |
-| `dict`            | `(dict "method" "delete" "confirm" "Sure?" "frame" "cart")`                               | Um map, usado para passar opções.                              |
+| `dict`            | `(dict "method" "delete" "confirm" "Sure?" "frame" "cart" "skip" true)`                    | Um map, usado para passar opções.                              |
 
 ## CSRF
 
@@ -86,7 +86,7 @@ Nunca imprima `{{ .Flash }}` — isso transforma a struct em string. Mantenha `<
 {{ linkTo "/items/1" "Delete" (dict "method" "delete" "confirm" "Delete this item?") }}
 ```
 
-Opções: `"method"` (por exemplo, `delete`), `"confirm"` (texto de confirmação) e `"frame"` (um id de frame, como `cart`).
+Opções: `"method"` (por exemplo, `delete`), `"confirm"` (texto de confirmação), `"frame"` (um id de frame, como `cart`), `"skip"` (`true` emite `data-amarra-skip` para uma visita completa) e `"disable-with"`.
 
 ## i18n
 
