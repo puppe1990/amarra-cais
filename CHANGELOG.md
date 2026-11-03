@@ -4,6 +4,33 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.28.0] - 2026-11-03
+
+### Added
+
+- Drive outlets: after morphing `#amarra-main`, `<template data-amarra-outlet="id">` copies into `#id` in the shell (`replaceChildren`, no scripts). Helper `view.Outlet("id", inner)` / `{{ outlet "id" .N }}`. A missing template or id is a no-op. The scaffold dashboard opts in with a tap counter 303 demo (#397).
+- `{{ linkTo }}` accepts `skip: true` and emits `data-amarra-skip` so Drive leaves the click to the browser (#398).
+- Dialog hook: an opener `href` or `data-amarra-dialog-src` is copied onto the inner `<amarra-frame>` (or `[data-amarra-dialog-body]`); setting `src` loads the fragment via `Amarra-Frame`. `preventDefault` runs first so Drive does not morph `#amarra-main`. Static dialogs without href stay as they are (#392).
+- Kit `<.locale-toggle links="pt:/artigo/x,en:/en/y">` emits `<a hreflang data-amarra-skip>` for path-prefix i18n. POST `/locale` stays the default. `i18n.PathLocale(r, "en")` matches `/en` and `/en/...` so an app can inject `?lang=` before `LocaleMiddleware` (#400).
+
+### Fixed
+
+- Scaffold vendors `web/static/css/kit-classes.txt` so Tailwind still emits kit utilities when `go list -m` cannot see the module (PaaS CSS before `go: downloading`). `shippedKitContent()` warns instead of returning empty. Pins include `bg-copper` (#391).
+- `scripts/smoke-production.sh` hides `go` from PATH, builds CSS against `kit-classes.txt`, and fails if `.bg-copper` or `.amarra-btn` is missing (#396).
+- Service worker network-first fetch covers all of `/static/js/` (framework + app JS) and `/static/css/`, so a deploy of app JS no longer needs `amarra-cais pwa --bump`. Icons, images, and the web manifest stay cache-first (#399).
+- `destroy handler dashboard` removes `POST /dashboard/tap`; `destroy auth` unwraps every `RequireAuthFunc("/login", dashboard.*)` (#397).
+
+### Changed
+
+- Production session cookie is `__Host-cais_session` (Secure, Path=/, no Domain), mirroring CSRF (#173). `TokenFromRequest` still reads a leftover `cais_session` so a deploy rotates without logging everyone out. `ClearCookie(Secure)` drops both names (#395).
+
+### Upgrade
+
+- Minor release: new public APIs (`view.Outlet`, `LinkTo` skip, `i18n.PathLocale`, locale-toggle `links`, `__Host-cais_session`). Run `amarra-cais upgrade v0.28.0`.
+- Copy `web/static/css/kit-classes.txt` from a fresh scaffold (and keep it in `tailwind.config.js` `content`) if PaaS builds CSS before `go mod download`.
+- Production logins issue `__Host-cais_session`. Leftover `cais_session` cookies still authenticate until they expire or the user signs out.
+- Run `amarra-cais pwa` so vendored `amarra.js` and `sw.js` pick up outlets, dialog src, and network-first `/static/js/`. `--bump` is still required after changing icons/images/manifest.
+
 ## [0.27.0] - 2026-11-03
 
 ### Changed
