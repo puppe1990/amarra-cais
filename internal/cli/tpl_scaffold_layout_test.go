@@ -286,25 +286,30 @@ func TestLayoutTemplates_dashboardUsesStat(t *testing.T) {
 	}
 }
 
-func TestPageHome_greetingHarborLayout(t *testing.T) {
+func TestPageHome_statesWhatTheAppIs(t *testing.T) {
 	for _, token := range []string{
 		`data-testid="amarra-ready"`,
-		"amarra-grain",
-		"home.rails_heading",
-		"home.cta_board",
-		"home.berth_label",
-		"home.manifest_label",
-		"home.tide_mark",
+		"home.hero_heading",
+		"home.tagline",
+		"home.next_steps",
+		"home.stack",
+		"home.powered_by",
+		"amarra-tick",
 	} {
 		if !strings.Contains(tplPageHome, token) {
 			t.Errorf("home page missing %q", token)
 		}
 	}
-	if !strings.Contains(tplI18nEn, `"home.cta_board"`) || !strings.Contains(tplI18nEn, "Come aboard") {
-		t.Error("en catalog missing home.cta_board")
+	for _, gone := range []string{"amarra-grain", "amarra-lantern", "italic", "uppercase"} {
+		if strings.Contains(tplPageHome, gone) {
+			t.Errorf("home page should not keep the slop marker %q", gone)
+		}
 	}
-	if !strings.Contains(tplI18nPt, "Suba a bordo") {
-		t.Error("pt catalog missing boarding CTA")
+	if !strings.Contains(tplI18nEn, `"home.hero_heading"`) || !strings.Contains(tplI18nEn, "%s is running") {
+		t.Error("en catalog missing home.hero_heading")
+	}
+	if !strings.Contains(tplI18nPt, "%s está no ar") {
+		t.Error("pt catalog missing the running headline")
 	}
 	if !strings.Contains(tplLayoutBaseOpen, `href="/login"`) {
 		t.Error("shell header should link to /login")
@@ -350,10 +355,11 @@ func TestScaffoldPages_dropIndigoAndHTMX(t *testing.T) {
 			}
 		}
 	}
-	for _, blob := range []string{tplPageLogin, tplPageDashboard} {
-		if !strings.Contains(blob, "border-copper") && !strings.Contains(blob, "text-copper") {
-			t.Error("inner pages should use copper tokens on the harbor shell")
-		}
+	if !strings.Contains(tplPageLogin, "amarra-btn-primary") {
+		t.Error("login should carry the shared primary button class")
+	}
+	if !strings.Contains(tplPageDashboard, `<.stat`) {
+		t.Error("dashboard should present its numbers with kit <.stat>")
 	}
 }
 
@@ -385,7 +391,7 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 	} {
 		for _, token := range []string{
 			`<aside id="amarra-nav"`,
-			`fixed left-0 top-[57px] bottom-0`,
+			`fixed left-0 top-14 bottom-0`,
 			`w-60`,
 			`lg:ml-60`,
 			`amarra-sidebar-toggle`,
@@ -397,7 +403,7 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 			`<.form action="/logout"`,
 			`<.flash />`,
 			`amarra-toast-host`,
-			`template "icon_chart_nav"`,
+			`amarra-nav-link`,
 			`<!-- cais:nav -->`,
 		} {
 			if !strings.Contains(tpl, token) {
@@ -416,7 +422,7 @@ func TestLayoutTemplates_sidebarShell(t *testing.T) {
 		if strings.Contains(tpl, ">Home<") {
 			t.Errorf("%s layout sidebar should not contain a Home item", name)
 		}
-		if !strings.Contains(tpl, `id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5`) {
+		if !strings.Contains(tpl, `id="amarra-main" class="flex-grow px-4 py-6 sm:px-6 lg:px-8`) {
 			t.Errorf("%s layout missing #amarra-main shell classes", name)
 		}
 		if !strings.Contains(tpl, `{{"{{"}} if .Site.LoggedIn {{"}}"}} lg:ml-60`) {

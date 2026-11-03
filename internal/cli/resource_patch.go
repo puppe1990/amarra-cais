@@ -312,13 +312,13 @@ func layoutNavFile(dir string) (path string, inertia bool) {
 }
 
 func adminNavLink(data scaffoldData) string {
-	return fmt.Sprintf(`          <a href="/admin/%s" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s</a>
+	return fmt.Sprintf(`          <a href="/admin/%s" class="amarra-nav-link relative flex h-9 items-center rounded-lg pl-4 pr-3 text-sm text-foam/60 hover:bg-foam/5 hover:text-foam flex-shrink-0">%s</a>
 `, data.Plural, toTitle(data.Plural))
 }
 
 func publicNavLink(data scaffoldData, inertia bool) string {
 	_ = inertia
-	return fmt.Sprintf(`          <a href="/%s" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-foam/50 hover:text-foam flex-shrink-0">%s (public)</a>
+	return fmt.Sprintf(`          <a href="/%s" class="amarra-nav-link relative flex h-9 items-center rounded-lg pl-4 pr-3 text-sm text-foam/60 hover:bg-foam/5 hover:text-foam flex-shrink-0">%s (public)</a>
 `, data.Plural, toTitle(data.Plural))
 }
 
@@ -369,8 +369,8 @@ func patchLayoutLogoHref(dir, content string, data scaffoldData) string {
 		return content
 	}
 	return strings.Replace(content,
-		`<a href="/" class="font-bold`,
-		fmt.Sprintf(`<a href="/%s" class="font-bold`, data.Plural),
+		`<a href="/" class="group flex`,
+		fmt.Sprintf(`<a href="/%s" class="group flex`, data.Plural),
 		1,
 	)
 }

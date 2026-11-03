@@ -72,7 +72,7 @@ func TestScaffoldNewApp_includesPasswordSettings(t *testing.T) {
 		`name="current_password"`,
 		`name="password_confirmation"`,
 		`<.password`,
-		`min-h-[calc(100vh-12rem)]`,
+		`min-h-[calc(100svh-11rem)]`,
 	} {
 		if !strings.Contains(page, needle) {
 			t.Errorf("settings.html missing %q", needle)

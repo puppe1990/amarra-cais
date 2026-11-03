@@ -10,13 +10,16 @@ const tplInputCSS = `@tailwind base;
      are the published docs-site look (harbor night + cream paper, sea-teal accent,
      coral) so a new app lands on the same design as the documentation. Keep the
      ink/foam/copper/tide keys — the kit classes and amarra-cais doctor read them;
-     copper carries the sea teal now (#258). */
+     copper carries the sea teal now (#258). danger/success are the toned semantic
+     pair (errors, positive deltas) so the palette never borrows Tailwind reds. */
   :root {
     --amarra-ink: 8 19 24;
     --amarra-foam: 244 234 216;
     --amarra-copper: 31 139 163;
     --amarra-tide: 18 36 40;
     --amarra-coral: 224 122 74;
+    --amarra-danger: 229 72 77;
+    --amarra-success: 76 195 138;
   }
 
   html.light {
@@ -25,10 +28,25 @@ const tplInputCSS = `@tailwind base;
     --amarra-copper: 15 107 128;
     --amarra-tide: 228 217 196;
     --amarra-coral: 224 122 74;
+    --amarra-danger: 220 38 38;
+    --amarra-success: 22 163 74;
   }
 
   body {
     @apply font-sans antialiased text-foam bg-ink;
+  }
+
+  /* One curve and one duration for every interactive surface. Only paint and
+     transform transition, never layout (width/height/top/left). */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary {
+    transition-property: color, background-color, border-color, opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 
@@ -57,29 +75,83 @@ const tplInputCSS = `@tailwind base;
   input:user-invalid,
   select:user-invalid,
   textarea:user-invalid {
-    border-color: rgb(220 38 38);
+    border-color: rgb(var(--amarra-danger));
+  }
+
+  /* Shared control kit: the shipped components and the Go form helpers
+     (fieldInput, fieldSelect, fieldPassword) render these classes, so a field
+     looks the same no matter which generator wrote it. */
+  .amarra-label {
+    @apply mb-2 block text-sm text-foam/70;
+  }
+
+  .amarra-field {
+    @apply w-full rounded-lg border border-foam/15 bg-ink px-3 py-2 text-sm text-foam placeholder:text-foam/40 focus:border-copper/60 focus:outline-none focus:ring-2 focus:ring-copper/30;
+  }
+
+  .amarra-error {
+    @apply mt-2 text-[13px] leading-5 text-danger;
+  }
+
+  .amarra-btn {
+    @apply inline-flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-copper focus-visible:ring-offset-2 focus-visible:ring-offset-ink disabled:pointer-events-none disabled:opacity-60;
+  }
+
+  .amarra-btn-primary {
+    @apply bg-copper text-ink hover:bg-copper/90 active:scale-[0.98];
+  }
+
+  .amarra-btn-secondary {
+    @apply border border-foam/15 bg-ink text-foam/80 hover:bg-foam/5 hover:text-foam active:scale-[0.98];
+  }
+
+  .amarra-btn-danger {
+    @apply bg-danger text-ink hover:bg-danger/90 active:scale-[0.98];
+  }
+
+  .amarra-btn-quiet {
+    @apply px-2 text-foam/60 hover:text-foam;
   }
 
   .cais-nav-icon {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
   }
 
-  .amarra-grain::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.11;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  /* Signature: the mooring tick marks the active nav row and section labels,
+     and nowhere else. */
+  .amarra-nav-link {
+    position: relative;
   }
 
+  .amarra-nav-link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    border-radius: 1px;
+    background-color: rgb(var(--amarra-copper));
+  }
+
+  .amarra-tick::before {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 0.75rem;
+    margin-right: 0.375rem;
+    border-radius: 1px;
+    background-color: rgb(var(--amarra-copper));
+    vertical-align: -0.0625rem;
+  }
+
+  /* One entrance on load: a short fade and rise for the hero. */
   @keyframes amarra-rise {
     from {
       opacity: 0;
-      transform: translateY(1.15rem);
+      transform: translateY(0.5rem);
     }
     to {
       opacity: 1;
@@ -87,48 +159,16 @@ const tplInputCSS = `@tailwind base;
     }
   }
 
-  @keyframes amarra-lantern {
-    0%,
-    100% {
-      opacity: 0.38;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.72;
-      transform: scale(1.08);
-    }
-  }
-
   .amarra-rise {
-    animation-name: amarra-rise;
-    animation-duration: 0.85s;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-    animation-fill-mode: both;
+    animation: amarra-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .amarra-rise-delay-1 {
-    animation-delay: 90ms;
-  }
-
-  .amarra-rise-delay-2 {
-    animation-delay: 180ms;
-  }
-
-  .amarra-rise-delay-3 {
-    animation-delay: 280ms;
-  }
-
-  .amarra-rise-delay-4 {
-    animation-delay: 380ms;
-  }
-
-  .amarra-lantern {
-    animation: amarra-lantern 6.5s ease-in-out infinite;
+    animation-delay: 60ms;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .amarra-rise,
-    .amarra-lantern {
+    .amarra-rise {
       animation: none;
     }
   }
@@ -153,7 +193,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-skeleton {
-    @apply animate-pulse bg-tide rounded-lg;
+    @apply animate-pulse rounded-lg bg-tide;
   }
 
   .cais-auth-screen {
@@ -210,7 +250,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-trigger {
-    @apply flex w-full items-center justify-between gap-2 border border-copper/40 bg-ink px-3 py-2 text-left text-foam outline-none focus:ring-2 focus:ring-copper;
+    @apply flex w-full items-center justify-between gap-2 rounded-lg border border-foam/15 bg-ink px-3 py-2 text-left text-sm text-foam focus:border-copper/60 focus:outline-none focus:ring-2 focus:ring-copper/30;
   }
 
   .cais-select-search-trigger:disabled {
@@ -218,7 +258,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-panel {
-    @apply absolute z-20 mt-1 w-full overflow-hidden border border-copper/40 bg-ink shadow-lg;
+    @apply absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-foam/15 bg-ink shadow-lg;
   }
 
   .cais-select-search-input {
@@ -234,12 +274,12 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-option {
-    @apply cursor-pointer px-3 py-2 text-sm text-foam;
+    @apply cursor-pointer px-3 py-2 text-sm text-foam/80;
   }
 
   .cais-select-search-option:hover,
   .cais-select-search-option.is-highlighted {
-    @apply bg-copper/10;
+    @apply bg-foam/5 text-foam;
   }
 
   .cais-select-search-option.is-selected {
@@ -251,7 +291,7 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-select-search-chevron {
-    @apply h-4 w-4 flex-shrink-0 text-copper/70;
+    @apply h-4 w-4 flex-shrink-0 text-foam/50;
   }
 
   .cais-chat-shell {
@@ -281,18 +321,15 @@ const tplInputCSS = `@tailwind base;
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 9999px;
-    border: 1px solid rgb(226 232 240);
-    background: rgb(255 255 255);
-    color: rgb(31 139 163);
+    border: 1px solid rgb(var(--amarra-foam) / 0.15);
+    background: rgb(var(--amarra-ink));
+    color: rgb(var(--amarra-copper));
     box-shadow:
       0 10px 15px -3px rgb(0 0 0 / 0.1),
       0 4px 6px -4px rgb(0 0 0 / 0.1);
     transform: translateX(-50%) translateY(0.5rem);
     opacity: 0;
     pointer-events: none;
-    transition:
-      opacity 0.2s ease,
-      transform 0.2s ease;
   }
 
   .cais-chat-scroll-down:not(.hidden) {
@@ -312,15 +349,14 @@ const tplInputCSS = `@tailwind base;
   }
 
   .cais-msg-time {
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     line-height: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    color: rgb(148 163 184);
+    font-weight: 500;
+    color: rgb(var(--amarra-foam) / 0.5);
   }
 
   .cais-msg-user .cais-msg-time {
-    color: rgb(129 140 248);
+    color: rgb(var(--amarra-copper));
   }
 
   .cais-thinking-dots {
@@ -335,7 +371,7 @@ const tplInputCSS = `@tailwind base;
     width: 0.35rem;
     height: 0.35rem;
     border-radius: 9999px;
-    background: rgb(148 163 184);
+    background: rgb(var(--amarra-foam) / 0.5);
     animation: cais-thinking-bounce 1.2s ease-in-out infinite;
   }
 

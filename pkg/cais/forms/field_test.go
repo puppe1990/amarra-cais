@@ -45,7 +45,7 @@ func TestFieldInput_rendersTextInputAndError(t *testing.T) {
 	if !strings.Contains(html, "required") && !strings.Contains(html, "Name") {
 		t.Error("missing label")
 	}
-	if !strings.Contains(html, "required") || !strings.Contains(html, `class="text-red-600`) {
+	if !strings.Contains(html, "required") || !strings.Contains(html, `class="amarra-error"`) {
 		t.Error("missing error paragraph")
 	}
 }

@@ -58,11 +58,11 @@ func FieldInput(f FieldData) template.HTML {
 	var b strings.Builder
 	switch f.Type {
 	case "textarea":
-		b.WriteString(`<div><label class="block text-sm font-medium text-foam/70 mb-1" for="`)
+		b.WriteString(`<div><label class="amarra-label" for="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><textarea class="w-full border border-copper/40 bg-ink text-foam rounded-lg px-3 py-2 min-h-[80px] focus:ring-2 focus:ring-copper outline-none" id="`)
+		b.WriteString(`</label><textarea class="amarra-field min-h-[80px] user-invalid:border-danger" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
@@ -70,11 +70,11 @@ func FieldInput(f FieldData) template.HTML {
 		b.WriteString(template.HTMLEscapeString(f.Value))
 		b.WriteString(`</textarea>`)
 	case "float":
-		b.WriteString(`<div><label class="block text-sm font-medium text-foam/70 mb-1" for="`)
+		b.WriteString(`<div><label class="amarra-label" for="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><input class="w-full border border-copper/40 bg-ink text-foam rounded-lg px-3 py-2 focus:ring-2 focus:ring-copper outline-none" type="number" step="any" id="`)
+		b.WriteString(`</label><input class="amarra-field user-invalid:border-danger" type="number" step="any" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
@@ -88,7 +88,7 @@ func FieldInput(f FieldData) template.HTML {
 	case "checkbox":
 		b.WriteString(`<label class="flex items-center gap-2 text-sm text-foam/80"><input type="checkbox" name="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
-		b.WriteString(`" class="rounded border-copper/40 bg-ink text-copper"`)
+		b.WriteString(`" class="accent-copper"`)
 		if f.Value == "true" || f.Value == "1" || strings.EqualFold(f.Value, "on") {
 			b.WriteString(` checked`)
 		}
@@ -96,11 +96,11 @@ func FieldInput(f FieldData) template.HTML {
 		b.WriteString(template.HTMLEscapeString(f.Label))
 		b.WriteString(`</label>`)
 	default:
-		b.WriteString(`<div><label class="block text-sm font-medium text-foam/70 mb-1" for="`)
+		b.WriteString(`<div><label class="amarra-label" for="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
 		b.WriteString(`">`)
 		b.WriteString(template.HTMLEscapeString(f.Label))
-		b.WriteString(`</label><input class="w-full border border-copper/40 bg-ink text-foam rounded-none px-3 py-2 focus:ring-2 focus:ring-copper outline-none" type="`)
+		b.WriteString(`</label><input class="amarra-field user-invalid:border-danger" type="`)
 		b.WriteString(template.HTMLEscapeString(f.Type))
 		b.WriteString(`" id="`)
 		b.WriteString(template.HTMLEscapeString(f.Name))
@@ -115,7 +115,7 @@ func FieldInput(f FieldData) template.HTML {
 		b.WriteString(` />`)
 	}
 	if f.Error != "" && f.Type != "checkbox" {
-		b.WriteString(`<p class="text-red-600 text-sm mt-1">`)
+		b.WriteString(`<p class="amarra-error">`)
 		b.WriteString(template.HTMLEscapeString(f.Error))
 		b.WriteString(`</p>`)
 	}

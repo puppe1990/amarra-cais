@@ -1,10 +1,10 @@
 <div>
-  <label class="block text-sm font-medium text-foam/70 mb-1" for="{{ .Name }}">{{ .Label }}</label>
+  <label class="amarra-label" for="{{ .Name }}">{{ .Label }}</label>
   <textarea
-    class="w-full border border-copper/40 bg-ink text-foam rounded-none px-3 py-2 focus:ring-2 focus:ring-copper outline-none user-invalid:border-red-600"
+    class="amarra-field min-h-[80px] user-invalid:border-danger"
     id="{{ .Name }}"
     name="{{ .Name }}"
     {{- if .Error }} aria-invalid="true"{{ end }}
   >{{ .Inner }}</textarea>
-  {{ if .Error }}<p class="text-red-600 text-sm mt-1">{{ .Error }}</p>{{ end }}
+  {{ if .Error }}<p class="amarra-error">{{ .Error }}</p>{{ end }}
 </div>

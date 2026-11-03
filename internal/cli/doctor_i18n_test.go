@@ -183,7 +183,7 @@ func TestDoctor_i18nParityAppearsAsWarn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	re := regexp.MustCompile(`\t"auth\.welcome":\s+"Bem-vindo!",\n`)
+	re := regexp.MustCompile(`\t"auth\.welcome":\s+"Bem-vindo de volta",\n`)
 	patched := re.ReplaceAllString(string(body), "")
 	if patched == string(body) {
 		t.Fatalf("could not strip auth.welcome from pt catalog:\n%s", body)
