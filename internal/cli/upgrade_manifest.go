@@ -10,6 +10,8 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.27.0", Title: "Default front redesigned (scaffold + kit)", Action: "the shipped kit now renders .amarra-btn*/.amarra-field/.amarra-label/.amarra-error and the danger/success variables. Copy the @layer components control block and the palette variables from a fresh scaffold's input.css (or diff yours), add danger/success to tailwind.config.js colours and run amarra-cais css — without them a refreshed kit renders unstyled"},
+	{Version: "0.27.0", Title: "Home CTA opens the dashboard", Action: "new home reads %s is running and the CTA carries home.cta_open (Open the dashboard / Abrir o painel) so it no longer doubles the header's Sign in. Copy pages/home.html and the home.cta_open key from a fresh scaffold; nothing breaks if you keep the old copy"},
 	{Version: "0.26.0", Title: "Logged-in password change at /settings", Action: "new and g auth emit GET/POST /settings; ChangePassword updates the hash and revokes that user's sessions, then SignOut. A full app already past g auth does not gain the route automatically — copy auth_settings.go, FindUser, ChangePassword, routes and pages/settings.html from a fresh scaffold"},
 	{Version: "0.26.0", Title: "doctor warns on missing i18n keys", Action: "amarra-cais doctor reports [warn] when a catalog is missing a key used in templates or Go; it never fails the run. Add the key or fix the literal"},
 	{Version: "0.25.1", Title: "pwa stops writing the scaffold welcome image", Action: "run amarra-cais pwa to refresh runtime assets; it no longer recreates web/static/img/go-on-cais.jpg after the app deletes it. doctor now lists the file while the placeholder remains"},
