@@ -25,7 +25,7 @@ The service worker caches your CSS, JS, and pages. After you change templates or
 amarra-cais pwa --bump
 ```
 
-That refreshes the vendored assets and increments `CACHE_VERSION` in `sw.js`. `amarra-cais dev` auto-bumps the cache whenever `sw.js` exists, so local iteration stays fresh without a manual step. The service worker is network-first for `/static/js/amarra.js` and `/static/css/`, and those fetches use `cache: "no-cache"` so a deploy is not stuck behind a year-old HTTP cache.
+That refreshes the vendored assets and increments `CACHE_VERSION` in `sw.js`. `amarra-cais dev` auto-bumps the cache whenever `sw.js` exists, so local iteration stays fresh without a manual step. The service worker is network-first for `/static/js/` (framework and app JS) and `/static/css/`, and those fetches use `cache: "no-cache"` so a deploy is not stuck behind a year-old HTTP cache. Icons, images, and the web manifest stay cache-first and still need `--bump`.
 
 ## Run the mobile checks
 
@@ -33,7 +33,7 @@ That refreshes the vendored assets and increments `CACHE_VERSION` in `sw.js`. `a
 amarra-cais doctor --mobile
 ```
 
-The mobile doctor verifies flash markup, Google Fonts CSP, `amarra.js`, the service-worker cache (network-first `/static/js/amarra.js`), chat form CSS, the `#chat-messages` scroll container, and the health `lan_urls`.
+The mobile doctor verifies flash markup, Google Fonts CSP, `amarra.js`, the service-worker cache (network-first `/static/js/`), chat form CSS, the `#chat-messages` scroll container, and the health `lan_urls`.
 
 :::caution
 The default CSP blocks `fonts.googleapis.com`. A scaffold links the docs-site heading font (Fraunces) and already allows both font hosts in its generated `.env` — delete that `<link>` and the `CSP_STYLE_SRC` / `CSP_FONT_SRC` lines to get the strict-CSP, system-font default back.

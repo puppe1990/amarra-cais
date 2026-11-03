@@ -91,7 +91,7 @@ amarra-cais g component card     # web/templates/components/card.html
 - **`/logs`** — localhost-only log viewer in development
 - **`/jobs`** — localhost-only queue dashboard (counts, failed retry/discard, recurring)
 - **Frontend** — server-rendered HTML; Drive morphs `#amarra-main` (no Vite)
-- **PWA** — SW is **network-first** for `/static/js/amarra.js` and `/static/css/`; `amarra-cais pwa --bump` after HTML changes on phones
+- **PWA** — SW is **network-first** for `/static/js/` and `/static/css/`; `amarra-cais pwa --bump` after icon/image/manifest changes on phones
 
 ## Structure
 

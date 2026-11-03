@@ -40,11 +40,12 @@ function putIfCacheable(request, response) {
   return caches.open(CACHE).then((cache) => cache.put(request, copy));
 }
 
-// Network-first for HTML Drive, amarra.js, and Tailwind CSS so template
-// and runtime updates show without a CACHE_VERSION bump. Other /static/
-// assets stay cache-first. Navigations fall back to offline.html.
+// Network-first for HTML Drive, /static/js/ (amarra.js + app JS), and
+// Tailwind CSS so template and runtime updates show without a CACHE_VERSION
+// bump (#399). Icons, images, and the manifest stay cache-first — those
+// still need `amarra-cais pwa --bump`. Navigations fall back to offline.html.
 //
-// allowCachedFallback: only the static allowlist (amarra.js/css) may be served
+// allowCachedFallback: only the static allowlist (js/css) may be served
 // from the cache; pages and Drive fragments never fall back to cached HTML.
 function networkFirst(request, fallbackURL, allowCachedFallback = false) {
   // #359: a bare fetch() can be satisfied by a year-old HTTP cache of the
@@ -109,7 +110,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname === "/static/js/amarra.js" || url.pathname.startsWith("/static/css/")) {
+  if (url.pathname.startsWith("/static/js/") || url.pathname.startsWith("/static/css/")) {
     event.respondWith(networkFirst(request, null, true));
     return;
   }

@@ -189,11 +189,11 @@ func checkPWACacheVersion(dir string) doctorCheck {
 		return doctorCheck{
 			Name:     "PWA cache version",
 			Optional: true,
-			Detail:   "sw.js missing network-first for /static/js/amarra.js",
+			Detail:   "sw.js missing network-first for /static/js/",
 			FixHint:  "amarra-cais pwa  # migrates sw.js; then amarra-cais pwa --bump on phones",
 		}
 	}
-	return doctorCheck{Name: "PWA cache version", OK: true, Detail: "CACHE_VERSION + network-first /static/js/amarra.js — bump after HTML/template changes"}
+	return doctorCheck{Name: "PWA cache version", OK: true, Detail: "CACHE_VERSION + network-first /static/js/ — bump after icon/image/manifest changes"}
 }
 
 func chatUsesAgentSlots(dir string) bool {
