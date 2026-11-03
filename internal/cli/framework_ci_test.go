@@ -59,8 +59,13 @@ func TestSmokeProduction_buildsCSSWithoutGoModule(t *testing.T) {
 			t.Errorf("smoke-production.sh missing %q", want)
 		}
 	}
-	if !strings.Contains(text, `command -v go`) && !strings.Contains(text, "GOMODCACHE") {
-		t.Error("CSS gate must hide go or empty GOMODCACHE so shippedKitContent fails like Cleat")
+	if !strings.Contains(text, "GOMODCACHE") {
+		t.Error("CSS gate must empty GOMODCACHE so shippedKitContent fails like Cleat")
+	}
+	// GH runners keep `go` in /usr/bin; hiding it from PATH is not enough —
+	// stub the binary so `go list -m` fails the same way as a missing tool.
+	if !strings.Contains(text, "hide-go") && !strings.Contains(text, "exit 127") {
+		t.Error("CSS gate must stub go so /usr/bin/go cannot resolve the module")
 	}
 	wf, err := os.ReadFile("../../.github/workflows/ci.yml")
 	if err != nil {

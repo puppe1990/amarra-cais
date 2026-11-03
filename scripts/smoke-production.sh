@@ -18,16 +18,21 @@ APP="$TMP/smokeprod"
 cd "$APP"
 
 # #396: CSS as Cleat does it — Tailwind before the module is in GOMODCACHE.
-# Hide `go` so shippedKitContent() cannot resolve the kit HTML (#391).
+# GH runners keep `go` in /usr/bin, so hiding it from PATH is not enough:
+# stub the binary so `go list -m` fails and shippedKitContent() falls back
+# to kit-classes.txt (#391).
 test -f web/static/css/kit-classes.txt
 EMPTY_MOD="$TMP/gomod-empty"
-mkdir -p "$EMPTY_MOD"
+HIDE_GO="$TMP/hide-go"
+mkdir -p "$EMPTY_MOD" "$HIDE_GO"
+printf '#!/bin/sh\nexit 127\n' >"$HIDE_GO/go"
+chmod +x "$HIDE_GO/go"
 NODE_BIN="$(dirname "$(command -v node)")"
 NPM_BIN="$(dirname "$(command -v npm)")"
 NPX_BIN="$(dirname "$(command -v npx)")"
-CSS_PATH="${NODE_BIN}:${NPM_BIN}:${NPX_BIN}:/usr/bin:/bin"
-if PATH="$CSS_PATH" command -v go >/dev/null 2>&1; then
-  echo "CSS PATH still has go; cannot reproduce an empty module scan" >&2
+CSS_PATH="${HIDE_GO}:${NODE_BIN}:${NPM_BIN}:${NPX_BIN}:/usr/bin:/bin"
+if PATH="$CSS_PATH" go list -m github.com/puppe1990/amarra-cais >/dev/null 2>&1; then
+  echo "go list -m still resolves the module; CSS gate is invalid" >&2
   exit 1
 fi
 GOMODCACHE="$EMPTY_MOD" PATH="$CSS_PATH" npm install
