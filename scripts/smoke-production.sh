@@ -16,6 +16,31 @@ export CAIS_SKIP_TIDY=1
 APP="$TMP/smokeprod"
 "$TMP/amarra-cais" new smokeprod "$APP"
 cd "$APP"
+
+# #396: CSS as Cleat does it — Tailwind before the module is in GOMODCACHE.
+# Hide `go` so shippedKitContent() cannot resolve the kit HTML (#391).
+test -f web/static/css/kit-classes.txt
+EMPTY_MOD="$TMP/gomod-empty"
+mkdir -p "$EMPTY_MOD"
+NODE_BIN="$(dirname "$(command -v node)")"
+NPM_BIN="$(dirname "$(command -v npm)")"
+NPX_BIN="$(dirname "$(command -v npx)")"
+CSS_PATH="${NODE_BIN}:${NPM_BIN}:${NPX_BIN}:/usr/bin:/bin"
+if PATH="$CSS_PATH" command -v go >/dev/null 2>&1; then
+  echo "CSS PATH still has go; cannot reproduce an empty module scan" >&2
+  exit 1
+fi
+GOMODCACHE="$EMPTY_MOD" PATH="$CSS_PATH" npm install
+GOMODCACHE="$EMPTY_MOD" PATH="$CSS_PATH" npx tailwindcss -i input.css -o web/static/css/styles.css --minify
+if ! grep -q 'bg-copper' web/static/css/styles.css; then
+  echo "styles.css missing .bg-copper (kit CSS pruned)" >&2
+  exit 1
+fi
+if ! grep -q 'amarra-btn' web/static/css/styles.css; then
+  echo "styles.css missing .amarra-btn" >&2
+  exit 1
+fi
+
 go mod tidy
 go build -o "$TMP/server" ./cmd/server
 

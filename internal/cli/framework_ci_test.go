@@ -39,6 +39,38 @@ func TestFrameworkCI_verifiesCommittedJSBundles(t *testing.T) {
 	}
 }
 
+// #396: smoke-production used to boot /login 200 without running Tailwind, so
+// #391 (kit classes missing when go list -m fails) was invisible in CI.
+func TestSmokeProduction_buildsCSSWithoutGoModule(t *testing.T) {
+	body, err := os.ReadFile("../../scripts/smoke-production.sh")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(body)
+	for _, want := range []string{
+		"kit-classes.txt",
+		"bg-copper",
+		"amarra-btn",
+		"tailwindcss",
+		"/health",
+		"/login",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("smoke-production.sh missing %q", want)
+		}
+	}
+	if !strings.Contains(text, `command -v go`) && !strings.Contains(text, "GOMODCACHE") {
+		t.Error("CSS gate must hide go or empty GOMODCACHE so shippedKitContent fails like Cleat")
+	}
+	wf, err := os.ReadFile("../../.github/workflows/ci.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(wf), "setup-node") {
+		t.Error("ci.yml smoke-production needs Node to run Tailwind")
+	}
+}
+
 func TestMakefile_hasBundleCheck(t *testing.T) {
 	body, err := os.ReadFile("../../Makefile")
 	if err != nil {
