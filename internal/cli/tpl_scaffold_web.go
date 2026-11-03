@@ -4,35 +4,36 @@ package cli
 const tplLayoutTitleDesc = `{{"{{"}} define "title" {{"}}"}}{{.AppName}}{{"{{"}} end {{"}}"}}
 {{"{{"}} define "description" {{"}}"}}{{.AppName}} — powered by Amarra{{"{{"}} end {{"}}"}}`
 
-const tplLayoutBrand = `<a href="/" class="flex items-center gap-3 group">
-            <span class="flex h-9 w-9 items-center justify-center border border-copper/70 text-copper group-hover:bg-copper group-hover:text-ink transition-colors" aria-hidden="true">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 20V8m0 0a3 3 0 116 0v1H5m14 11V9a3 3 0 00-3-3h-3" /></svg>
+const tplLayoutBrand = `<a href="/" class="group flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-foam/15 text-copper transition-colors group-hover:border-copper/60" aria-hidden="true">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 20V8m0 0a3 3 0 116 0v1H5m14 11V9a3 3 0 00-3-3h-3" /></svg>
             </span>
-            <span>
-              <span class="block font-serif text-xl leading-none tracking-tight text-foam">{{.AppName}}</span>
-              <span class="mt-1 block font-mono text-[10px] uppercase tracking-[0.28em] text-copper/80" title="Cais v{{"{{"}} .FrameworkVersionFull {{"}}"}}">Amarra v{{"{{"}} .FrameworkVersion {{"}}"}}</span>
+            <span class="min-w-0">
+              <span class="block truncate font-serif text-lg font-medium leading-tight text-foam">{{.AppName}}</span>
+              <span class="mt-1 block font-mono text-[11px] leading-none text-foam/50" title="Cais v{{"{{"}} .FrameworkVersionFull {{"}}"}}">Amarra v{{"{{"}} .FrameworkVersion {{"}}"}}</span>
             </span>
           </a>`
 
-const tplLayoutMenuButton = `<button type="button" id="amarra-sidebar-toggle" class="lg:hidden inline-flex h-11 w-11 items-center justify-center border border-copper/40 text-copper hover:border-copper hover:text-foam transition-colors" aria-label="Menu" aria-controls="amarra-nav" aria-expanded="false" amarra-hook="sidebar" data-amarra-sidebar-target="#amarra-nav">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7h16M4 12h16M4 17h16" /></svg>
+const tplLayoutMenuButton = `<button type="button" id="amarra-sidebar-toggle" class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-foam/15 text-foam/70 hover:bg-foam/5 hover:text-foam lg:hidden" aria-label="Menu" aria-controls="amarra-nav" aria-expanded="false" amarra-hook="sidebar" data-amarra-sidebar-target="#amarra-nav">
+            <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h16M4 12h16M4 17h16" /></svg>
           </button>`
 
 // Shared by the anonymous header and the signed-in sidebar so the theme
 // control never drifts between shells (#258). The tile shows the theme the
 // button turns on — sun while the app is dark, moon while it is light; the swap
-// is CSS-only on html.light, so the hook keeps owning just the label slot.
-const tplLayoutThemeToggle = `<button type="button" class="group inline-flex items-center gap-2 px-1.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f7f1e6" data-amarra-theme-color-off="#081318" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}">
-            <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center border border-copper/40 transition-colors group-hover:border-copper" aria-hidden="true">
+// is CSS-only on html.light, so the hook keeps owning just the label slot. The
+// label collapses to the icon on small screens so the header never wraps.
+const tplLayoutThemeToggle = `<button type="button" class="group inline-flex h-8 items-center gap-2 rounded-lg px-2 text-foam/70 hover:bg-foam/5 hover:text-foam" amarra-hook="theme" aria-pressed="false" data-amarra-theme-color="#f7f1e6" data-amarra-theme-color-off="#081318" data-amarra-theme-on-label="{{"{{"}} t "layout.theme_dark" {{"}}"}}" data-amarra-theme-off-label="{{"{{"}} t "layout.theme_light" {{"}}"}}">
+            <span class="flex h-4 w-4 flex-shrink-0 items-center justify-center" aria-hidden="true">
               <span class="[html.light_&]:hidden">{{"{{"}} template "icon_sun" . {{"}}"}}</span>
               <span class="hidden [html.light_&]:block">{{"{{"}} template "icon_moon" . {{"}}"}}</span>
             </span>
-            <span data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span>
+            <span class="hidden whitespace-nowrap text-sm sm:inline" data-amarra-theme-label>{{"{{"}} t "layout.theme_light" {{"}}"}}</span>
           </button>`
 
 // tplLayoutAuthLink goes into the anonymous header of the full scaffold only:
 // minimal/blank ship no /login route, so the link would 404 on a fresh app (#336).
-const tplLayoutAuthLink = `<a href="/login" class="font-mono text-[10px] uppercase tracking-[0.22em] text-copper hover:text-foam transition-colors">{{"{{"}} t "auth.login_title" {{"}}"}}</a>`
+const tplLayoutAuthLink = `<a href="/login" class="inline-flex h-8 items-center whitespace-nowrap rounded-lg px-3 text-sm text-foam/70 hover:bg-foam/5 hover:text-foam">{{"{{"}} t "auth.login_title" {{"}}"}}</a>`
 
 const tplLayoutBaseOpenPre = `{{"{{"}} define "app" {{"}}"}}
 <!doctype html>
@@ -72,8 +73,8 @@ const tplLayoutBaseOpenPre = `{{"{{"}} define "app" {{"}}"}}
     <div>
       {{"{{"}} if .Site.LoggedIn {{"}}"}}
       <!-- app shell: desktop is the fixed rail; mobile keeps a slim brand + menu bar -->
-      <header class="lg:hidden bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
-        <div class="px-4 py-3 flex items-center gap-4">
+      <header class="lg:hidden bg-ink border-b border-foam/10 sticky top-0 z-40">
+        <div class="px-4 h-14 flex items-center gap-4">
           ` + tplLayoutMenuButton + `
           ` + tplLayoutBrand + `
         </div>
@@ -81,10 +82,10 @@ const tplLayoutBaseOpenPre = `{{"{{"}} define "app" {{"}}"}}
       {{"{{"}} end {{"}}"}}
       {{"{{"}} if not .Site.LoggedIn {{"}}"}}
       <!-- auth shell: no sidebar; language, theme and login live in the header -->
-      <header class="bg-ink/95 backdrop-blur-sm border-b border-copper/30 sticky top-0 z-40">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+      <header class="bg-ink border-b border-foam/10 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
           ` + tplLayoutBrand + `
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1">
             <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
             ` + tplLayoutThemeToggle + `
             `
@@ -95,11 +96,11 @@ const tplLayoutBaseOpenPost = `
       </header>
       {{"{{"}} end {{"}}"}}
       {{"{{"}} if .Site.LoggedIn {{"}}"}}
-      <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-[57px] bottom-0 z-30 w-60 -translate-x-full invisible transition-transform data-[amarra-sidebar-open]:translate-x-0 data-[amarra-sidebar-open]:visible lg:translate-x-0 lg:visible lg:top-0">
-        <div class="h-full flex flex-col gap-1 p-3 overflow-y-auto no-scrollbar">
-          <div class="hidden lg:flex pb-3 mb-1 border-b border-foam/10">` + tplLayoutBrand + `</div>
+      <aside id="amarra-nav" class="bg-ink border-r border-foam/10 fixed left-0 top-14 bottom-0 z-30 w-60 -translate-x-full invisible transition-transform data-[amarra-sidebar-open]:translate-x-0 data-[amarra-sidebar-open]:visible lg:translate-x-0 lg:visible lg:top-0">
+        <div class="h-full flex flex-col gap-1 p-4 overflow-y-auto no-scrollbar">
+          <div class="hidden lg:flex items-center pb-4 mb-3 border-b border-foam/10">` + tplLayoutBrand + `</div>
           <!-- nav hook re-syncs active link after Drive morph (#27); SSR ActiveNav stays the first-paint default -->
-          <div amarra-hook="nav" data-amarra-nav-on="text-copper" data-amarra-nav-off="text-foam/50 hover:text-foam" class="flex flex-col gap-1">
+          <div amarra-hook="nav" data-amarra-nav-on="bg-foam/5 text-foam" data-amarra-nav-off="text-foam/60 hover:bg-foam/5 hover:text-foam" class="flex flex-col gap-1">
             `
 
 // tplLayoutBaseOpen keeps the /login link for the full scaffold;
@@ -108,34 +109,34 @@ const tplLayoutBaseOpen = tplLayoutBaseOpenPre + tplLayoutAuthLink + tplLayoutBa
 
 const tplLayoutBaseOpenSlim = tplLayoutBaseOpenPre + tplLayoutBaseOpenPost
 
-const tplLayoutNavFull = `<a href="/dashboard" class="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}text-copper{{"{{"}} else {{"}}"}}text-foam/50 hover:text-foam{{"{{"}} end {{"}}"}}">{{"{{"}} template "icon_chart_nav" . {{"}}"}}Dashboard</a>
+const tplLayoutNavFull = `<a href="/dashboard" class="amarra-nav-link relative flex h-9 items-center rounded-lg pl-4 pr-3 text-sm flex-shrink-0 {{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}}bg-foam/5 text-foam{{"{{"}} else {{"}}"}}text-foam/60 hover:bg-foam/5 hover:text-foam{{"{{"}} end {{"}}"}}"{{"{{"}} if eq .ActiveNav "dashboard" {{"}}"}} aria-current="page"{{"{{"}} end {{"}}"}}>Dashboard</a>
             <!-- cais:nav -->`
 
 const tplLayoutNavEmpty = tplLayoutNavFull
 
 const tplLayoutBaseClose = `
           </div>
-          <div class="mt-auto flex flex-col gap-3 border-t border-foam/10 pt-3">
+          <div class="mt-auto flex flex-col gap-2 border-t border-foam/10 pt-4">
             <div class="flex items-center justify-between gap-2">
               <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
               ` + tplLayoutThemeToggle + `
             </div>
             <.form action="/logout" method="post">
-              <button type="submit" class="w-full text-left px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em] transition flex items-center gap-2 flex-shrink-0 text-foam/50 hover:text-foam">{{"{{"}} template "icon_logout_nav" . {{"}}"}}{{"{{"}} t "auth.logout" {{"}}"}}</button>
+              <button type="submit" class="flex h-9 w-full items-center rounded-lg pl-4 pr-3 text-left text-sm text-foam/60 hover:bg-foam/5 hover:text-foam">{{"{{"}} t "auth.logout" {{"}}"}}</button>
             </.form>
           </div>
         </div>
       </aside>
       {{"{{"}} end {{"}}"}}
       <div id="amarra-toast-host" aria-live="polite"></div>
-      <main id="amarra-main" class="flex-grow px-4 sm:px-6 lg:px-8 py-5{{"{{"}} if .Site.LoggedIn {{"}}"}} lg:ml-60{{"{{"}} end {{"}}"}}">
+      <main id="amarra-main" class="flex-grow px-4 py-6 sm:px-6 lg:px-8{{"{{"}} if .Site.LoggedIn {{"}}"}} lg:ml-60{{"{{"}} end {{"}}"}}">
         <.flash />
         {{"{{"}} template "content" . {{"}}"}}
       </main>
     </div>
     {{"{{"}} if not .Site.LoggedIn {{"}}"}}
-    <footer class="mt-auto border-t border-foam/10 py-6 text-center font-mono text-[10px] uppercase tracking-[0.22em] text-foam/40">
-      <p>© 2026 {{.AppName}} · Built with Amarra</p>
+    <footer class="mt-auto border-t border-foam/10 py-6">
+      <p class="text-center text-xs text-foam/50">© 2026 {{.AppName}} · built with Amarra</p>
     </footer>
     {{"{{"}} end {{"}}"}}
     {{"{{"}} if eq .Site.Env "development" {{"}}"}}
@@ -193,56 +194,44 @@ const tplCaisLogo = `{{"{{"}} define "cais_logo" {{"}}"}}
   alt="Go on Cais"
   width="1024"
   height="683"
-  class="w-full max-w-lg rounded-2xl shadow-xl shadow-amber-950/15 ring-1 ring-amber-900/10"
+  class="w-full max-w-lg rounded-xl border border-foam/10"
 />
 {{"{{"}} end {{"}}"}}
 `
 
 const tplPageHomePre = `{{"{{"}} define "content" {{"}}"}}
-<section class="amarra-grain relative isolate overflow-hidden min-h-[calc(100vh-12rem)] -mx-4 sm:-mx-6 lg:-mx-8 -my-5 px-6 sm:px-10 lg:px-14 py-16 md:py-24">
-  <div class="pointer-events-none absolute -top-24 left-[12%] h-80 w-80 rounded-full bg-coral/25 blur-3xl amarra-lantern"></div>
-  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_12%_-10%,rgba(31,139,163,0.22),transparent_42%),radial-gradient(ellipse_at_100%_110%,rgba(11,47,58,0.55),transparent_50%)]"></div>
-  <svg class="pointer-events-none absolute right-[-6%] top-4 hidden h-[28rem] w-[28rem] text-copper/15 lg:block" viewBox="0 0 200 200" fill="none" aria-hidden="true">
-    <circle cx="100" cy="100" r="78" stroke="currentColor" stroke-width="0.6"></circle>
-    <circle cx="100" cy="100" r="52" stroke="currentColor" stroke-width="0.6"></circle>
-    <path d="M100 22v156M22 100h156" stroke="currentColor" stroke-width="0.4"></path>
-    <rect x="86" y="68" width="28" height="72" rx="4" stroke="currentColor" stroke-width="1.5"></rect>
-    <path d="M76 92h48M76 108h48" stroke="currentColor" stroke-width="2.2"></path>
-  </svg>
-  <div class="relative mx-auto max-w-6xl grid items-end gap-14 lg:grid-cols-12">
-    <div class="lg:col-span-7">
-      <p class="amarra-rise font-mono text-[11px] uppercase tracking-[0.32em] text-copper">{{"{{"}} t "home.berth_label" {{"}}"}}</p>
-      <h1 class="amarra-rise amarra-rise-delay-1 mt-5 font-serif italic text-[clamp(2.75rem,7vw,6.25rem)] leading-[0.88] text-foam">{{"{{"}} t "home.rails_heading" {{"}}"}}</h1>
-      <p data-testid="amarra-ready" class="amarra-rise amarra-rise-delay-2 mt-8 max-w-md text-lg leading-relaxed text-foam/65">{{"{{"}} t "home.rails_subtitle" .Site.AppName {{"}}"}}</p>
-      `
+<section class="mx-auto flex max-w-6xl flex-col gap-12 lg:min-h-[calc(100svh-11rem)] lg:flex-row lg:items-center lg:gap-16">
+  <div class="amarra-rise max-w-xl">
+    <h1 class="font-serif text-[clamp(2.25rem,5vw,3.75rem)] font-medium leading-[1.05] text-foam">{{"{{"}} t "home.hero_heading" .Site.AppName {{"}}"}}</h1>
+    <p data-testid="amarra-ready" class="mt-4 max-w-md text-lg leading-relaxed text-foam/70">{{"{{"}} t "home.tagline" {{"}}"}}</p>
+    `
 
 // The boarding CTA needs a /login route; minimal/blank ship none, so their home
 // page reuses the same landing without it (#336).
-const tplPageHomeCTA = `<div class="amarra-rise amarra-rise-delay-3 mt-10 flex flex-wrap items-center gap-6">
-        <a href="/login" class="inline-flex items-center gap-2 bg-copper px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-ink hover:bg-foam transition-colors">{{"{{"}} t "home.cta_board" {{"}}"}}</a>
-      </div>`
+const tplPageHomeCTA = `<div class="mt-8">
+      <a href="/login" class="amarra-btn amarra-btn-primary h-12 px-5 text-[15px]">{{"{{"}} t "auth.login_title" {{"}}"}}</a>
+    </div>`
 
 const tplPageHomePost = `
-      <div class="amarra-rise amarra-rise-delay-4 mt-14 flex items-center gap-4 text-copper/50">
-        <span class="h-px w-16 bg-copper/60"></span>
-        <span class="font-mono text-[10px] uppercase tracking-[0.35em]">{{"{{"}} t "home.tide_mark" {{"}}"}}</span>
+  </div>
+  <aside class="amarra-rise amarra-rise-delay-1 w-full lg:max-w-[26rem]">
+    <div class="overflow-hidden rounded-xl border border-foam/10 bg-tide/40">
+      <div class="flex items-center justify-between gap-4 border-b border-foam/10 px-5 py-3">
+        <p class="amarra-tick text-xs font-medium text-foam/70">{{"{{"}} t "home.next_steps" {{"}}"}}</p>
+        <span class="font-mono text-[11px] text-foam/50">{{"{{"}} t "home.stack" {{"}}"}}</span>
+      </div>
+      <ol class="space-y-3 px-5 py-5 text-sm text-foam/70">
+        <li class="flex gap-3"><span class="font-mono text-xs leading-5 tabular-nums text-foam/50">01</span><span>{{"{{"}} t "home.step_resource" {{"}}"}}</span></li>
+        <li class="flex gap-3"><span class="font-mono text-xs leading-5 tabular-nums text-foam/50">02</span><span>{{"{{"}} t "home.step_dev" {{"}}"}}</span></li>
+        <li class="flex gap-3"><span class="font-mono text-xs leading-5 tabular-nums text-foam/50">03</span><span>{{"{{"}} t "home.step_docs" {{"}}"}}</span></li>
+      </ol>
+      <div class="border-t border-foam/10 bg-ink/60 px-5 py-4">
+        <pre class="font-mono text-[13px] leading-6 text-copper"><span class="select-none text-foam/40">$ </span>amarra-cais g resource bookmark
+<span class="select-none text-foam/40">  </span>--fields title:string --public</pre>
       </div>
     </div>
-    <aside class="lg:col-span-5 amarra-rise amarra-rise-delay-2">
-      <div class="border border-copper/45 bg-ink/70 p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
-        <p class="font-mono text-[10px] uppercase tracking-[0.26em] text-copper">{{"{{"}} t "home.manifest_label" {{"}}"}}</p>
-        <p class="mt-3 font-serif text-3xl text-foam">{{"{{"}} .Site.AppName {{"}}"}}</p>
-        <p class="mt-1 font-mono text-xs text-foam/45">{{"{{"}} t "home.stack" {{"}}"}}</p>
-        <ol class="mt-7 space-y-3 font-mono text-[12px] text-foam/75">
-          <li><span class="text-copper">01 —</span> {{"{{"}} t "home.step_resource" {{"}}"}}</li>
-          <li><span class="text-copper">02 —</span> {{"{{"}} t "home.step_dev" {{"}}"}}</li>
-          <li><span class="text-copper">03 —</span> {{"{{"}} t "home.step_docs" {{"}}"}}</li>
-        </ol>
-        <pre class="mt-7 whitespace-pre-wrap break-words border-t border-foam/10 pt-4 font-mono text-[11px] leading-relaxed text-copper">amarra-cais g resource bookmark
---fields title:string --public</pre>
-      </div>
-    </aside>
-  </div>
+    <p class="mt-3 px-1 text-xs text-foam/50">{{"{{"}} t "home.powered_by" {{"}}"}}</p>
+  </aside>
 </section>
 {{"{{"}} end {{"}}"}}
 `
@@ -252,16 +241,14 @@ const tplPageHome = tplPageHomePre + tplPageHomeCTA + tplPageHomePost
 const tplPageHomeSlim = tplPageHomePre + tplPageHomePost
 
 const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
-<div class="w-full max-w-4xl mx-auto border border-copper/45 bg-ink/70 p-6 md:p-7 shadow-[10px_10px_0_0_rgba(31,139,163,0.22)]">
-  <div class="mb-5 pb-4 border-b border-foam/10">
-    <h2 class="font-serif text-2xl text-foam">{{"{{"}} t "dashboard.title" {{"}}"}}</h2>
-  </div>
-  <div class="grid gap-4 sm:grid-cols-2 mb-6">
+<div class="mx-auto w-full max-w-4xl">
+  <h1 class="font-serif text-3xl font-medium text-foam">{{"{{"}} t "dashboard.title" {{"}}"}}</h1>
+  <div class="mt-6 grid gap-4 sm:grid-cols-2">
     <.stat label="{{"{{"}} t "dashboard.env" {{"}}"}}" value="{{"{{"}} .Env {{"}}"}}" />
     <.stat label="{{"{{"}} t "dashboard.locale" {{"}}"}}" value="{{"{{"}} .Locale {{"}}"}}" />
   </div>
-  <.form action="/logout" method="post">
-    <.button type="submit">{{"{{"}} t "auth.logout" {{"}}"}}</.button>
+  <.form action="/logout" method="post" class="mt-8">
+    <.button type="submit" class="amarra-btn amarra-btn-secondary">{{"{{"}} t "auth.logout" {{"}}"}}</.button>
   </.form>
 </div>
 {{"{{"}} end {{"}}"}}

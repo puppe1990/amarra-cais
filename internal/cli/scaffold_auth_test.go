@@ -18,8 +18,8 @@ func TestAuthPages_centeredOnScreen(t *testing.T) {
 		"settings":        tplPageSettings,
 	}
 	for name, tpl := range pages {
-		if !strings.Contains(tpl, "min-h-[calc(100vh-12rem)]") {
-			t.Errorf("%s page should center on screen with min-h-[calc(100vh-12rem)]", name)
+		if !strings.Contains(tpl, "min-h-[calc(100svh-11rem)]") {
+			t.Errorf("%s page should center on screen with min-h-[calc(100svh-11rem)]", name)
 		}
 		if !strings.Contains(tpl, "items-center justify-center") {
 			t.Errorf("%s page should center content with items-center justify-center", name)
@@ -222,7 +222,7 @@ func TestScaffoldNewApp_includesAuth(t *testing.T) {
 			t.Fatalf("%s: %v", page, err)
 		}
 		text := string(pageBody)
-		for _, needle := range []string{"items-center", "justify-center", "border-copper"} {
+		for _, needle := range []string{"items-center", "justify-center", "bg-tide/40"} {
 			if !strings.Contains(text, needle) {
 				t.Errorf("%s missing %q", page, needle)
 			}

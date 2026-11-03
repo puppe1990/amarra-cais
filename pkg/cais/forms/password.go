@@ -13,11 +13,11 @@ const (
 // FieldPassword renders a password input with a show/hide toggle button.
 func FieldPassword(f FieldData) template.HTML {
 	var b strings.Builder
-	b.WriteString(`<div><label class="block text-sm font-medium text-foam/70 mb-1" for="`)
+	b.WriteString(`<div><label class="amarra-label" for="`)
 	b.WriteString(template.HTMLEscapeString(f.Name))
 	b.WriteString(`">`)
 	b.WriteString(template.HTMLEscapeString(f.Label))
-	b.WriteString(`</label><div class="cais-password-wrap"><input class="w-full border border-copper/40 bg-ink text-foam rounded-none px-3 py-2 focus:ring-2 focus:ring-copper outline-none" type="password" id="`)
+	b.WriteString(`</label><div class="cais-password-wrap"><input class="amarra-field user-invalid:border-danger" type="password" id="`)
 	b.WriteString(template.HTMLEscapeString(f.Name))
 	b.WriteString(`" name="`)
 	b.WriteString(template.HTMLEscapeString(f.Name))
@@ -33,7 +33,7 @@ func FieldPassword(f FieldData) template.HTML {
 	b.WriteString(passwordEyeHide)
 	b.WriteString(`</span></button></div>`)
 	if f.Error != "" {
-		b.WriteString(`<p class="text-red-600 text-sm mt-1">`)
+		b.WriteString(`<p class="amarra-error">`)
 		b.WriteString(template.HTMLEscapeString(f.Error))
 		b.WriteString(`</p>`)
 	}

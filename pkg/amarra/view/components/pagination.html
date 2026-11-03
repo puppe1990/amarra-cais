@@ -1,12 +1,12 @@
-<nav class="flex items-center justify-between">
+<nav class="flex items-center justify-between" aria-label="Pagination">
   {{ if .HasPrev }}
-  <a href="{{ paginationHref .Base .PrevPage }}" class="text-copper hover:text-foam">← Previous</a>
+  <a href="{{ paginationHref .Base .PrevPage }}" class="amarra-btn amarra-btn-quiet -ml-2 gap-1.5"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7" /></svg>Previous</a>
   {{ else }}
   <span></span>
   {{ end }}
-  <span class="text-sm text-foam/50">Page {{ .Page }}</span>
+  <span class="font-mono text-xs tabular-nums text-foam/50">Page {{ .Page }}</span>
   {{ if .HasNext }}
-  <a href="{{ paginationHref .Base .NextPage }}" class="text-copper hover:text-foam">Next →</a>
+  <a href="{{ paginationHref .Base .NextPage }}" class="amarra-btn amarra-btn-quiet -mr-2 gap-1.5">Next<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7" /></svg></a>
   {{ else }}
   <span></span>
   {{ end }}

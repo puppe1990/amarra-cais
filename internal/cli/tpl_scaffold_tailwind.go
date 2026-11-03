@@ -51,6 +51,9 @@ module.exports = {
         copper: "rgb(var(--amarra-copper) / <alpha-value>)",
         tide: "rgb(var(--amarra-tide) / <alpha-value>)",
         coral: "rgb(var(--amarra-coral) / <alpha-value>)",
+        /* Toned semantic pair per theme — never stock red/green from Tailwind. */
+        danger: "rgb(var(--amarra-danger) / <alpha-value>)",
+        success: "rgb(var(--amarra-success) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Avenir Next", "Segoe UI", "Helvetica Neue", "system-ui", "sans-serif"],

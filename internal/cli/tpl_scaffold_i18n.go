@@ -26,7 +26,7 @@ const tplI18nEn = `package i18n
 
 var enMessages = map[string]string{
 	"auth.invalid_credentials": "Invalid email or password.",
-	"auth.welcome":             "Welcome!",
+	"auth.welcome":             "Welcome back",
 	"auth.login_title":         "Sign in",
 	"auth.login_submit":        "Sign in",
 	"auth.email_label":         "Email",
@@ -55,30 +55,20 @@ var enMessages = map[string]string{
 	"settings.current_password":         "Current password",
 	"settings.current_password_invalid": "Current password is incorrect.",
 
-	"home.title":            "Home",
-	"home.welcome":          "Welcome, %s!",
-	"home.tagline":          "Mini Go app with Amarra, Tailwind, and SQLite.",
-	"home.default_name":     "Developer",
-	"home.rails_heading":    "You made landfall.",
-	"home.rails_subtitle":   "%s is tied to the quay.",
-	"home.berth_label":      "Berth 01 · Amarra",
-	"home.manifest_label":   "Manifest",
-	"home.cta_board":        "Come aboard",
-	"home.tide_mark":        "Flood tide",
-	"home.stack":            "Go · Amarra · SQLite",
-	"home.next_steps":       "Next steps",
-	"home.step_resource":    "Generate your first resource",
-	"home.step_dev":         "Start the dev server",
-	"home.step_docs":        "Explore the framework",
-	"home.powered_by":       "Powered by Cais — lightweight apps on Lightsail",
-	"home.minimal.tagline":  "Go app with Amarra, Tailwind, and SQLite — powered by Cais.",
-	"home.minimal.hint":     "Use ` + "`amarra-cais g resource <name> --public`" + ` to get started.",
+	"home.title":          "Home",
+	"home.hero_heading":   "%s is running",
+	"home.tagline":        "Mini Go app with Amarra, Tailwind, and SQLite.",
+	"home.stack":          "Go · Amarra · SQLite",
+	"home.next_steps":     "Next steps",
+	"home.step_resource":  "Generate your first resource",
+	"home.step_dev":       "Start the dev server",
+	"home.step_docs":      "Explore the framework",
+	"home.powered_by":     "Powered by Cais — lightweight apps on Lightsail",
 
-	"dashboard.title":    "Dashboard",
-	"dashboard.env":      "Environment:",
-	"dashboard.locale":   "Locale:",
+	"dashboard.title":  "Dashboard",
+	"dashboard.env":    "Environment",
+	"dashboard.locale": "Locale",
 
-	"layout.footer": "Running light on Lightsail",
 	"layout.theme_light": "Light mode",
 	"layout.theme_dark":  "Dark mode",
 }
@@ -88,7 +78,7 @@ const tplI18nPt = `package i18n
 
 var ptMessages = map[string]string{
 	"auth.invalid_credentials": "Email ou senha inválidos.",
-	"auth.welcome":             "Bem-vindo!",
+	"auth.welcome":             "Bem-vindo de volta",
 	"auth.login_title":         "Entrar",
 	"auth.login_submit":        "Entrar",
 	"auth.email_label":         "Email",
@@ -117,30 +107,20 @@ var ptMessages = map[string]string{
 	"settings.current_password":         "Senha atual",
 	"settings.current_password_invalid": "A senha atual está incorreta.",
 
-	"home.title":            "Página Inicial",
-	"home.welcome":          "Bem-vindo, %s!",
-	"home.tagline":          "Mini app Go com Amarra, Tailwind e SQLite.",
-	"home.default_name":     "Desenvolvedor",
-	"home.rails_heading":    "Você atracou.",
-	"home.rails_subtitle":   "%s está amarrado no cais.",
-	"home.berth_label":      "Vaga 01 · Amarra",
-	"home.manifest_label":   "Manifesto",
-	"home.cta_board":        "Suba a bordo",
-	"home.tide_mark":        "Maré enchente",
-	"home.stack":            "Go · Amarra · SQLite",
-	"home.next_steps":       "Próximos passos",
-	"home.step_resource":    "Gere seu primeiro resource",
-	"home.step_dev":         "Suba o servidor de desenvolvimento",
-	"home.step_docs":        "Explore o framework",
-	"home.powered_by":       "Powered by Cais — apps leves no Lightsail",
-	"home.minimal.tagline":  "App Go com Amarra, Tailwind e SQLite — powered by Cais.",
-	"home.minimal.hint":     "Use ` + "`amarra-cais g resource <name> --public`" + ` para começar.",
+	"home.title":          "Página Inicial",
+	"home.hero_heading":   "%s está no ar",
+	"home.tagline":        "Mini app Go com Amarra, Tailwind e SQLite.",
+	"home.stack":          "Go · Amarra · SQLite",
+	"home.next_steps":     "Próximos passos",
+	"home.step_resource":  "Gere seu primeiro resource",
+	"home.step_dev":       "Suba o servidor de desenvolvimento",
+	"home.step_docs":      "Explore o framework",
+	"home.powered_by":     "Powered by Cais — apps leves no Lightsail",
 
-	"dashboard.title":    "Dashboard",
-	"dashboard.env":      "Ambiente:",
-	"dashboard.locale":   "Idioma:",
+	"dashboard.title":  "Dashboard",
+	"dashboard.env":    "Ambiente",
+	"dashboard.locale": "Idioma",
 
-	"layout.footer": "Rodando leve no Lightsail",
 	"layout.theme_light": "Modo claro",
 	"layout.theme_dark":  "Modo escuro",
 }
@@ -169,7 +149,7 @@ import "testing"
 
 func TestDefaultCatalog_english(t *testing.T) {
 	c := DefaultCatalog()
-	if got := c.T("auth.welcome"); got != "Welcome!" {
+	if got := c.T("auth.welcome"); got != "Welcome back" {
 		t.Errorf("T(auth.welcome) = %q", got)
 	}
 	if got := c.T("auth.signup_prompt"); got != "Don't have an account?" {
@@ -179,7 +159,7 @@ func TestDefaultCatalog_english(t *testing.T) {
 
 func TestNewCatalog_portuguese(t *testing.T) {
 	c := NewCatalog("pt-BR")
-	if got := c.T("auth.welcome"); got != "Bem-vindo!" {
+	if got := c.T("auth.welcome"); got != "Bem-vindo de volta" {
 		t.Errorf("T(auth.welcome) = %q", got)
 	}
 	if c.HTMLLang() != "pt-BR" {

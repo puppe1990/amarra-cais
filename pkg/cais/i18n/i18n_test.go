@@ -34,7 +34,7 @@ func TestNewCatalog_en(t *testing.T) {
 
 func TestNewCatalog_pt(t *testing.T) {
 	c := NewCatalog("pt_BR")
-	if got := c.T("auth.welcome"); got != "Bem-vindo!" {
+	if got := c.T("auth.welcome"); got != "Bem-vindo de volta" {
 		t.Errorf("T(auth.welcome) = %q", got)
 	}
 	if c.HTMLLang() != "pt-BR" {
@@ -47,8 +47,8 @@ func TestNewCatalog_pt(t *testing.T) {
 
 func TestNewCatalog_emptyLocale_defaultsToEn(t *testing.T) {
 	c := NewCatalog("")
-	if got := c.T("auth.welcome"); got != "Welcome!" {
-		t.Errorf("T(auth.welcome) = %q, want Welcome!", got)
+	if got := c.T("auth.welcome"); got != "Welcome back" {
+		t.Errorf("T(auth.welcome) = %q, want Welcome back", got)
 	}
 }
 

@@ -120,9 +120,9 @@ func Test{{.Pascal}}Handler_RendersHTML(t *testing.T) {
 `
 
 const tplGenericPage = `{{"{{"}} define "content" {{"}}"}}
-<div class="p-8">
-  <h1 class="text-2xl font-bold">{{.Title}}</h1>
-  <p>{{.Title}} page — customize this HTML template.</p>
+<div class="mx-auto max-w-3xl">
+  <h1 class="font-serif text-3xl font-medium text-foam">{{.Title}}</h1>
+  <p class="mt-3 text-sm text-foam/70">{{.Title}} page — customize this HTML template.</p>
 </div>
 {{"{{"}} end {{"}}"}}
 `

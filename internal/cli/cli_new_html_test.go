@@ -202,7 +202,7 @@ func TestScaffoldNewApp_driveFlashLoginEmailHomeTest(t *testing.T) {
 	if strings.Contains(string(homeTest), "You're on Cais!") {
 		t.Error("home test must not assert unescaped You're (html/template emits &#39;)")
 	}
-	if !strings.Contains(string(homeTest), "made landfall") {
+	if !strings.Contains(string(homeTest), "is running") {
 		t.Error("home test should still assert the heading")
 	}
 }
@@ -276,7 +276,7 @@ func TestScaffold_InputCSSIncludesHTMXStyles(t *testing.T) {
 		".no-scrollbar",
 		".cais-toast-enter", ".cais-skeleton",
 		".cais-chat-scroll-down", ".cais-msg-time", ".cais-thinking-dots",
-		".amarra-grain",
+		".amarra-btn-primary", ".amarra-field", ".amarra-nav-link",
 	} {
 		if !strings.Contains(body, needle) {
 			t.Errorf("input.css missing %q", needle)
@@ -285,6 +285,7 @@ func TestScaffold_InputCSSIncludesHTMXStyles(t *testing.T) {
 	for _, leftover := range []string{
 		".htmx-swapping", ".htmx-settling", ".htmx-indicator", ".htmx-request",
 		"from-indigo", "text-indigo", "bg-indigo",
+		".amarra-grain", ".amarra-lantern",
 	} {
 		if strings.Contains(body, leftover) {
 			t.Errorf("input.css still has leftover %q", leftover)
