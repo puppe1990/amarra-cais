@@ -173,7 +173,7 @@ Dev seed user: `demo@example.com` / `password`. Sessions persist in SQLite via `
 
 **Session expiry** — cookies and DB rows expire after 7 days (`sessionTTL` / `defaultMaxAge`). SQLite stores `expires_at`; expired rows are ignored on lookup. Prune stale rows with `amarra-cais db prune-sessions` (or call `session.Store.PruneExpired()`).
 
-**Production cookies** — `session.CookieOptionsFromConfig(cfg)` sets `Secure` when `cfg.CookieSecure()` is true (`ENV=production`).
+**Production cookies** — `session.CookieOptionsFromConfig(cfg)` sets `Secure` when `cfg.CookieSecure()` is true (`ENV=production`). The session cookie is then `__Host-cais_session` (Secure, Path=/, no Domain); `TokenFromRequest` still reads a leftover `cais_session` so a deploy rotates without logging everyone out (#395).
 
 ## Amarra Views + Drive (default frontend)
 

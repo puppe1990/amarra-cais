@@ -83,6 +83,86 @@ func TestSignOut_ClearsCookieAndSession(t *testing.T) {
 	}
 }
 
+func TestSignIn_secureUsesHostPrefixedCookie(t *testing.T) {
+	store := NewMemoryStore()
+	rr := httptest.NewRecorder()
+	if err := SignIn(rr, store, httptest.NewRequest(http.MethodPost, "/login", nil), 5, CookieOptions{Secure: true}); err != nil {
+		t.Fatal(err)
+	}
+	var host *http.Cookie
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == DefaultCookieName {
+			t.Error("SignIn Secure must not set plain cais_session")
+		}
+		if c.Name == "__Host-cais_session" {
+			host = c
+		}
+	}
+	if host == nil {
+		t.Fatal("missing __Host- session cookie")
+	}
+	id, ok := store.Get(host.Value)
+	if !ok || id != 5 {
+		t.Fatalf("store.Get() = (%d, %v), want (5, true)", id, ok)
+	}
+}
+
+func TestSignIn_rotatesLegacyPlainCookie(t *testing.T) {
+	store := NewMemoryStore()
+	oldToken, err := store.Create(9)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/login", nil)
+	req.AddCookie(&http.Cookie{Name: DefaultCookieName, Value: oldToken})
+	rr := httptest.NewRecorder()
+	if err := SignIn(rr, store, req, 9, CookieOptions{Secure: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := store.Get(oldToken); ok {
+		t.Fatal("legacy session token should be invalidated")
+	}
+	var host *http.Cookie
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == "__Host-cais_session" {
+			host = c
+		}
+	}
+	if host == nil {
+		t.Fatal("SignIn Secure should issue __Host- cookie")
+	}
+	if id, ok := store.Get(host.Value); !ok || id != 9 {
+		t.Fatalf("new token lookup = (%d, %v), want (9, true)", id, ok)
+	}
+}
+
+func TestSignOut_secureClearsHostAndPlainCookies(t *testing.T) {
+	store := NewMemoryStore()
+	token, err := store.Create(3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	req.AddCookie(&http.Cookie{Name: "__Host-cais_session", Value: token})
+	rr := httptest.NewRecorder()
+	if err := SignOut(rr, store, req, CookieOptions{Secure: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := store.Get(token); ok {
+		t.Error("session should be deleted")
+	}
+	names := map[string]bool{}
+	for _, c := range rr.Result().Cookies() {
+		names[c.Name] = true
+		if c.MaxAge != -1 {
+			t.Errorf("%s MaxAge = %d, want -1", c.Name, c.MaxAge)
+		}
+	}
+	if !names["__Host-cais_session"] || !names[DefaultCookieName] {
+		t.Errorf("SignOut Secure cookies = %v, want both names", names)
+	}
+}
+
 func TestSessionRevocationFailure_DoesNotChangeCookie(t *testing.T) {
 	for _, action := range []string{"login", "logout"} {
 		t.Run(action, func(t *testing.T) {
