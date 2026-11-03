@@ -5,8 +5,11 @@ import (
 	"go/ast"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+var dashboardAuthWrap = regexp.MustCompile(`middleware\.RequireAuthFunc\("/login",\s*(dashboard\.\w+)\)`)
 
 func destroyAuth(dir string, dryRun bool) error {
 	files := []string{
@@ -161,12 +164,8 @@ func unpatchAuthRoutes(content string) (string, error) {
 	if content, err = pruneUnusedAssigns(content, "registerRoutes"); err != nil {
 		return "", err
 	}
-	// The dashboard keeps its route once the auth redirect target is gone.
-	content = strings.Replace(content,
-		`middleware.RequireAuthFunc("/login", dashboard.ServeHTTP)`,
-		`dashboard.ServeHTTP`,
-		1,
-	)
+	// The dashboard keeps its routes once the auth redirect target is gone.
+	content = dashboardAuthWrap.ReplaceAllString(content, `$1`)
 	content = dropUnusedImport(content, "middleware")
 	return dropUnusedImport(content, "http"), nil
 }
