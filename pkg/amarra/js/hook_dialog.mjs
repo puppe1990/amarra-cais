@@ -83,8 +83,7 @@ export function makeDialog() {
 export const dialog = makeDialog();
 
 function loadDialogSrc(btn, dlg) {
-  const src =
-    btn.getAttribute?.("data-amarra-dialog-src") || btn.getAttribute?.("href") || "";
+  const src = btn.getAttribute?.("data-amarra-dialog-src") || btn.getAttribute?.("href") || "";
   if (!src) return;
   const frame =
     dlg.querySelector?.("amarra-frame") || dlg.querySelector?.("[data-amarra-dialog-body]");

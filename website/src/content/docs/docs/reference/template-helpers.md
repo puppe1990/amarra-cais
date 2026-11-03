@@ -21,7 +21,7 @@ Amarra registers a set of helper functions on the view renderer so page template
 | `flashMessage`    | `{{ flashMessage .Flash }}`                                                               | The one-shot flash notice.                                        |
 | `linkTo`          | `{{ linkTo "/items/1" "Delete" (dict "method" "delete" "confirm" "Delete this item?") }}` | A plain `<a>` that Drive intercepts.                              |
 | `t`               | `{{ t "key" }}`                                                                           | A localized string from the catalog.                              |
-| `dict`            | `(dict "method" "delete" "confirm" "Sure?" "frame" "cart" "skip" true)`                    | A map, used to pass options.                                      |
+| `dict`            | `(dict "method" "delete" "confirm" "Sure?" "frame" "cart" "skip" true)`                   | A map, used to pass options.                                      |
 
 ## CSRF
 

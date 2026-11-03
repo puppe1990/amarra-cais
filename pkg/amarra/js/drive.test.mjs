@@ -144,10 +144,7 @@ test("applyOutlets replaces a named shell node", () => {
 
 test("applyOutlets leaves the node when the template is missing", () => {
   const taps = { innerHTML: "0" };
-  applyOutlets(
-    { getElementById: () => taps },
-    `<main id="amarra-main">x</main>`
-  );
+  applyOutlets({ getElementById: () => taps }, `<main id="amarra-main">x</main>`);
   assert.equal(taps.innerHTML, "0");
 });
 
