@@ -33,6 +33,31 @@ func TestLinkTo_escapesHrefAndLabel(t *testing.T) {
 	}
 }
 
+func TestOutlet_wrapsHTMLInTemplate(t *testing.T) {
+	got := string(Outlet("amarra-taps", "3"))
+	if !strings.Contains(got, `data-amarra-outlet="amarra-taps"`) {
+		t.Errorf("missing outlet attr: %s", got)
+	}
+	if !strings.Contains(got, ">3</template>") {
+		t.Errorf("missing inner: %s", got)
+	}
+	if strings.Contains(got, "<script>") {
+		t.Errorf("unexpected script: %s", got)
+	}
+}
+
+func TestOutlet_escapesIdAndText(t *testing.T) {
+	got := string(Outlet(`x"><script>`, `<b>nope</b>`))
+	if strings.Contains(got, `<script>`) || strings.Contains(got, `<b>`) {
+		t.Errorf("unescaped: %s", got)
+	}
+	if !strings.Contains(got, `data-amarra-outlet="x&#34;&gt;`) && !strings.Contains(got, `data-amarra-outlet="x&quot;&gt;`) {
+		if !strings.Contains(got, "data-amarra-outlet=") {
+			t.Errorf("missing attr: %s", got)
+		}
+	}
+}
+
 func TestLinkTo_skipEmitsDataAmarraSkip(t *testing.T) {
 	got := string(LinkTo("/en/x", "EN", map[string]any{"skip": true}))
 	if !strings.Contains(got, `href="/en/x"`) {

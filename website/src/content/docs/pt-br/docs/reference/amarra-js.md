@@ -13,6 +13,8 @@ O Drive intercepta **todos os cliques e submits same-origin por padrão** — n�
 
 O primeiro carregamento, o `curl` e os crawlers recebem o layout completo. Remova um elemento do Drive com `data-amarra-skip`.
 
+O Drive morfa só `#amarra-main`. Para atualizar um nó do shell (badge da nav, contador), a resposta inclui `<template data-amarra-outlet="id">…</template>` fora do main; depois do morph, o Drive copia o template para `#id` com `replaceChildren` (sem scripts). Helpers: `view.Outlet("id", inner)` / `{{ outlet "id" .N }}`. Resposta sem o template deixa o nó como está. Ids ausentes são ignorados.
+
 Uma requisição que troca o **shell** do layout (login, signup, logout) precisa mudar o marcador `data-amarra-shell` no `<body>` — o scaffold emite `auth`/`app` a partir de `.Site.LoggedIn`. O Drive compara o valor e faz navegação completa em vez de morfar `#amarra-main`, para a página não ficar dentro do shell anterior (#249).
 
 O layout renderiza `<meta name="csrf-token">`, e o Drive envia `X-CSRF-Token` em suas requisições (em par com o cookie double-submit `cais_csrf`).
@@ -33,6 +35,7 @@ Não use `dataset.ready` como guarda de inicialização: o morph remove o atribu
 | `data-amarra-method`            | link                      | Usa este método HTTP para o link (por exemplo, `delete`).                                 |
 | `data-amarra-disable-with`      | submit / button           | Rótulo para o qual o controle muda enquanto sua requisição está em andamento.             |
 | `data-amarra-frame`             | link / form               | Aponta para um frame nomeado em vez do morph padrão de `#amarra-main`.                    |
+| `data-amarra-outlet`            | `<template>`              | Depois do morph de `#amarra-main`, copia o template para `#id` no shell (#397).           |
 | `amarra-click`                  | element                   | Vincula uma ação de click.                                                                |
 | `amarra-change`                 | element                   | Vincula uma ação de change.                                                               |
 | `amarra-submit`                 | element                   | Vincula uma ação de submit.                                                               |

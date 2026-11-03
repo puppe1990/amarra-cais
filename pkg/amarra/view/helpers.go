@@ -92,6 +92,24 @@ func safeHref(href string) string {
 	return "#"
 }
 
+// Outlet wraps inner text in <template data-amarra-outlet="id"> so Drive can
+// update a shell node after morphing #amarra-main (#397). Inner is escaped
+// unless it is already template.HTML.
+func Outlet(id string, inner any) template.HTML {
+	var b strings.Builder
+	b.WriteString(`<template data-amarra-outlet="`)
+	template.HTMLEscape(&b, []byte(id))
+	b.WriteString(`">`)
+	switch v := inner.(type) {
+	case template.HTML:
+		b.WriteString(string(v))
+	default:
+		template.HTMLEscape(&b, []byte(fmt.Sprint(v)))
+	}
+	b.WriteString(`</template>`)
+	return template.HTML(b.String())
+}
+
 func writeDataAttr(b *strings.Builder, name, value string) {
 	if value == "" {
 		return
@@ -115,6 +133,7 @@ func Dict(kv ...any) map[string]any {
 func helperFuncs() template.FuncMap {
 	return template.FuncMap{
 		"linkTo":         LinkTo,
+		"outlet":         Outlet,
 		"dict":           Dict,
 		"paginationHref": PaginationHref,
 		"sortHref":       SortHref,

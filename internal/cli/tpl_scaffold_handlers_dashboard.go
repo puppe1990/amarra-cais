@@ -4,6 +4,7 @@ const tplDashboardHandler = `package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/puppe1990/amarra-cais/pkg/amarra/view"
 	"github.com/puppe1990/amarra-cais/pkg/cais"
@@ -32,11 +33,30 @@ func (h *DashboardHandler) t(r *http.Request, key string, args ...any) string {
 }
 
 func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	taps := tapsFromRequest(r)
 	writeView(w, r, h.views, h.cfg, "app", "dashboard", amarraData(r, h.site, map[string]any{
 		"Title":     h.t(r, "dashboard.title"),
 		"ActiveNav": "dashboard",
 		"Env":       h.cfg.Env,
 		"Locale":    i18n.CatalogOr(r, h.catalog).Locale(),
+		"Taps":      taps,
+		"Outlets":   view.Outlet("amarra-taps", strconv.Itoa(taps)),
 	}), 0)
+}
+
+// TapPost increments the shell counter cookie and 303s back so Drive can
+// apply the outlet from the following GET (#397).
+func (h *DashboardHandler) TapPost(w http.ResponseWriter, r *http.Request) {
+	n := tapsFromRequest(r) + 1
+	http.SetCookie(w, &http.Cookie{
+		Name:     "amarra_taps",
+		Value:    strconv.Itoa(n),
+		Path:     "/",
+		MaxAge:   86400 * 365,
+		SameSite: http.SameSiteLaxMode,
+		HttpOnly: true,
+		Secure:   h.cfg.CookieSecure(),
+	})
+	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 `

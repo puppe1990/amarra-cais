@@ -13,6 +13,8 @@ Drive intercepts **all same-origin clicks and submits by default** — there is 
 
 The first load, `curl`, and crawlers get the full layout. Opt an element out of Drive with `data-amarra-skip`.
 
+Drive morphs only `#amarra-main`. To refresh a shell node (nav badge, counter), the response includes `<template data-amarra-outlet="id">…</template>` outside main; after the morph, Drive copies the template into `#id` with `replaceChildren` (no scripts). Helpers: `view.Outlet("id", inner)` / `{{ outlet "id" .N }}`. A response without the template leaves the node as-is. Missing ids are ignored.
+
 A request that swaps the layout **shell** (login, signup, logout) must change the `data-amarra-shell` marker on `<body>` — the scaffold emits `auth`/`app` from `.Site.LoggedIn`. Drive compares it and does a full navigation instead of morphing `#amarra-main`, so the page does not stay inside the previous shell (#249).
 
 The layout renders `<meta name="csrf-token">`, and Drive sends `X-CSRF-Token` on its requests (paired with the double-submit `cais_csrf` cookie).
@@ -33,6 +35,7 @@ Do not use `dataset.ready` as an initialization guard: the morph removes the `da
 | `data-amarra-method`            | link                     | Use this HTTP method for the link (for example `delete`).                             |
 | `data-amarra-disable-with`      | submit / button          | Label the control switches to while its request is in flight.                         |
 | `data-amarra-frame`             | link / form              | Target a named frame instead of the default `#amarra-main` morph.                     |
+| `data-amarra-outlet`            | `<template>`             | After morphing `#amarra-main`, copy the template into `#id` in the shell (#397).      |
 | `amarra-click`                  | element                  | Bind a click action.                                                                  |
 | `amarra-change`                 | element                  | Bind a change action.                                                                 |
 | `amarra-submit`                 | element                  | Bind a submit action.                                                                 |

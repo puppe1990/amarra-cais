@@ -121,6 +121,10 @@ const tplLayoutBaseClose = `
               <.locale-toggle current="{{"{{"}} .Locale {{"}}"}}" />
               ` + tplLayoutThemeToggle + `
             </div>
+            <p class="flex items-center justify-between px-1 font-mono text-[11px] text-foam/50">
+              <span>{{"{{"}} t "dashboard.taps" {{"}}"}}</span>
+              <span id="amarra-taps" data-amarra-outlet>{{"{{"}} .Taps {{"}}"}}</span>
+            </p>
             <.form action="/logout" method="post">
               <button type="submit" class="flex h-9 w-full items-center rounded-lg pl-4 pr-3 text-left text-sm text-foam/60 hover:bg-foam/5 hover:text-foam">{{"{{"}} t "auth.logout" {{"}}"}}</button>
             </.form>
@@ -133,6 +137,7 @@ const tplLayoutBaseClose = `
         <.flash />
         {{"{{"}} template "content" . {{"}}"}}
       </main>
+      {{"{{"}} .Outlets {{"}}"}}
     </div>
     {{"{{"}} if not .Site.LoggedIn {{"}}"}}
     <footer class="mt-auto border-t border-foam/10 py-6">
@@ -248,6 +253,9 @@ const tplPageDashboard = `{{"{{"}} define "content" {{"}}"}}
     <.stat label="{{"{{"}} t "dashboard.env" {{"}}"}}" value="{{"{{"}} .Env {{"}}"}}" />
     <.stat label="{{"{{"}} t "dashboard.locale" {{"}}"}}" value="{{"{{"}} .Locale {{"}}"}}" />
   </div>
+  <.form action="/dashboard/tap" method="post" class="mt-8">
+    <.button type="submit" class="amarra-btn amarra-btn-primary">{{"{{"}} t "dashboard.tap" {{"}}"}}</.button>
+  </.form>
   <.form action="/logout" method="post" class="mt-8">
     <.button type="submit" class="amarra-btn amarra-btn-secondary">{{"{{"}} t "auth.logout" {{"}}"}}</.button>
   </.form>
