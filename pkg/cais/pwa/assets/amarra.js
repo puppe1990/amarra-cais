@@ -1079,6 +1079,7 @@
             ev?.preventDefault?.();
             opener = btn;
             dlg.showModal?.();
+            loadDialogSrc(btn, dlg);
           };
           btn[OPEN] = fn;
           btn.addEventListener?.("click", fn);
@@ -1127,6 +1128,12 @@
     };
   }
   var dialog = makeDialog();
+  function loadDialogSrc(btn, dlg) {
+    const src = btn.getAttribute?.("data-amarra-dialog-src") || btn.getAttribute?.("href") || "";
+    if (!src) return;
+    const frame = dlg.querySelector?.("amarra-frame") || dlg.querySelector?.("[data-amarra-dialog-body]");
+    if (frame?.setAttribute) frame.setAttribute("src", src);
+  }
 
   // pkg/amarra/js/hook_dropdown.mjs
   var BTN = "_amarraDropdownToggle";

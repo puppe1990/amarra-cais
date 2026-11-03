@@ -4,8 +4,12 @@ const ONCLOSE = "_amarraDialogOnClose";
 const STATE = "_amarraDialogState";
 
 // #21: native <dialog> gives Esc, focus trap, and ::backdrop for free — the
-// hook only wires open/close buttons and returns focus to the opener.
-// Markup: container[amarra-hook=dialog] > button[data-amarra-dialog-open]
+// hook wires open/close and returns focus to the opener.
+// #392: an opener href / data-amarra-dialog-src is copied onto the inner
+// <amarra-frame> (or [data-amarra-dialog-body]); setting src loads the
+// fragment via Amarra-Frame. preventDefault runs first so Drive does not
+// morph #amarra-main. Static dialogs without href stay as #21.
+// Markup: container[amarra-hook=dialog] > a|button[data-amarra-dialog-open]
 // + dialog[data-amarra-dialog-target] (+ optional [data-amarra-dialog-close]).
 // form method="dialog" needs no JS.
 export function makeDialog() {
@@ -24,6 +28,7 @@ export function makeDialog() {
           ev?.preventDefault?.();
           opener = btn;
           dlg.showModal?.();
+          loadDialogSrc(btn, dlg);
         };
         btn[OPEN] = fn;
         btn.addEventListener?.("click", fn);
@@ -76,3 +81,12 @@ export function makeDialog() {
 }
 
 export const dialog = makeDialog();
+
+function loadDialogSrc(btn, dlg) {
+  const src =
+    btn.getAttribute?.("data-amarra-dialog-src") || btn.getAttribute?.("href") || "";
+  if (!src) return;
+  const frame =
+    dlg.querySelector?.("amarra-frame") || dlg.querySelector?.("[data-amarra-dialog-body]");
+  if (frame?.setAttribute) frame.setAttribute("src", src);
+}
