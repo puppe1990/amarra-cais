@@ -170,3 +170,59 @@ func TestKit_localeTogglePostsToLocale(t *testing.T) {
 		}
 	}
 }
+
+func TestKit_localeToggleRendersLinksMode(t *testing.T) {
+	// #400: path-prefix i18n uses <a hreflang data-amarra-skip>, not POST /locale.
+	fsys := fstest.MapFS{
+		"layouts/app.html": &fstest.MapFile{Data: []byte(`{{ define "app" }}{{ template "content" . }}{{ end }}`)},
+		"pages/home.html": &fstest.MapFile{Data: []byte(
+			`{{ define "content" }}<.locale-toggle current="pt" links="pt:/artigo/x,en:/en/artigo/y" />{{ end }}`,
+		)},
+	}
+	rec, err := Load(fsys, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	Write(rr, httptest.NewRequest(http.MethodGet, "/", nil), rec, Page{
+		Layout: "app", Name: "home",
+		Data: map[string]any{"CSRFToken": "tok"},
+	}, cais.Config{})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", rr.Code, rr.Body.String())
+	}
+	body := rr.Body.String()
+	for _, want := range []string{
+		`href="/artigo/x"`,
+		`href="/en/artigo/y"`,
+		`hreflang="pt"`,
+		`hreflang="en"`,
+		`data-amarra-skip`,
+		`aria-pressed="true"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("links mode missing %q in %s", want, body)
+		}
+	}
+	if strings.Contains(body, `action="/locale"`) || strings.Contains(body, `method="post"`) {
+		t.Errorf("links mode must not emit POST forms, body=%s", body)
+	}
+	if strings.Contains(body, `name="csrf_token"`) {
+		t.Errorf("links mode must not emit csrf, body=%s", body)
+	}
+	ptAt := strings.Index(body, `hreflang="pt"`)
+	enAt := strings.Index(body, `hreflang="en"`)
+	if ptAt < 0 {
+		t.Fatalf("missing PT link, body=%s", body)
+	}
+	ptEnd := enAt
+	if ptEnd < 0 || ptEnd < ptAt {
+		ptEnd = len(body)
+	}
+	if !strings.Contains(body[ptAt:ptEnd], `aria-pressed="true"`) {
+		t.Errorf("PT should be pressed, body=%s", body)
+	}
+	if enAt >= 0 && strings.Contains(body[enAt:], `aria-pressed="true"`) {
+		t.Errorf("EN should not be pressed, body=%s", body)
+	}
+}

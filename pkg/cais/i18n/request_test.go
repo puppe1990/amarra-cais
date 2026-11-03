@@ -233,6 +233,34 @@ func TestCatalogForRequest_esAndZhFromCustomMaps(t *testing.T) {
 	assertLocale(t, CatalogForRequest(zhReq, catalogs, "en"), "zh")
 }
 
+func TestPathLocale_matchesPrefixSegment(t *testing.T) {
+	// #400: /en/... is English; the default locale lives at the root.
+	cases := []struct {
+		path     string
+		prefixes []string
+		want     string
+	}{
+		{"/en/artigo/y", []string{"en"}, "en"},
+		{"/en", []string{"en"}, "en"},
+		{"/en/", []string{"en"}, "en"},
+		{"/artigo/x", []string{"en"}, ""},
+		{"/english", []string{"en"}, ""},
+		{"/pt/foo", []string{"en", "pt"}, "pt"},
+		{"/en/artigo/y", []string{"/en", "pt"}, "en"},
+		{"/", []string{"en"}, ""},
+		{"/en-US/x", []string{"en-US"}, "en"},
+	}
+	for _, tc := range cases {
+		got := PathLocale(newLocaleRequest(t, tc.path), tc.prefixes...)
+		if got != tc.want {
+			t.Errorf("PathLocale(%q, %v) = %q, want %q", tc.path, tc.prefixes, got, tc.want)
+		}
+	}
+	if got := PathLocale(nil, "en"); got != "" {
+		t.Errorf("PathLocale(nil) = %q, want empty", got)
+	}
+}
+
 func newLocaleRequest(t *testing.T, rawURL string) *http.Request {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)

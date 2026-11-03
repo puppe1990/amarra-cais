@@ -113,6 +113,24 @@ func TestCatalog_Funcs_localeTags(t *testing.T) {
 	}
 }
 
+func TestCatalog_Funcs_localeHrefs(t *testing.T) {
+	c := NewCatalog("en")
+	fn, ok := c.Funcs()["localeHrefs"].(func(any) []LocaleHref)
+	if !ok {
+		t.Fatal("localeHrefs func missing")
+	}
+	got := fn("pt:/artigo/x,en:/en/artigo/y")
+	if len(got) != 2 || got[0].Tag != "pt" || got[0].Href != "/artigo/x" || got[1].Tag != "en" || got[1].Href != "/en/artigo/y" {
+		t.Errorf("localeHrefs = %#v", got)
+	}
+	if got := fn(""); len(got) != 0 {
+		t.Errorf("empty links = %#v", got)
+	}
+	if got := fn(nil); len(got) != 0 {
+		t.Errorf("nil links = %#v", got)
+	}
+}
+
 func TestCatalog_Funcs_localeLabel(t *testing.T) {
 	c := NewCatalog("en")
 	fn, ok := c.Funcs()["localeLabel"].(func(any) string)

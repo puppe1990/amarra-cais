@@ -1,9 +1,16 @@
 <div class="flex items-center gap-0.5" role="group" aria-label="Language">
+  {{ $hrefs := localeHrefs .Links }}
+  {{ if $hrefs }}
+  {{ range $hrefs }}
+  <a href="{{ .Href }}" hreflang="{{ .Tag }}" data-amarra-skip class="rounded-md px-2 py-1 text-xs font-medium{{- if eq (localeBase .Current) .Tag }} bg-foam/5 text-foam{{ else }} text-foam/50 hover:text-foam{{ end }}"{{- if eq (localeBase .Current) .Tag }} aria-pressed="true"{{ end }}>{{ localeLabel .Tag }}</a>
+  {{ end }}
+  {{ else }}
   {{ range localeTags .Locales }}
   <form action="{{ if .Action }}{{ .Action }}{{ else }}/locale{{ end }}" method="post" data-amarra-skip>
     {{ csrfField $.CSRFToken }}
     <input type="hidden" name="locale" value="{{ . }}" />
     <button type="submit" class="rounded-md px-2 py-1 text-xs font-medium{{- if eq (localeBase .Current) . }} bg-foam/5 text-foam{{ else }} text-foam/50 hover:text-foam{{ end }}"{{- if eq (localeBase .Current) . }} aria-pressed="true"{{ end }}>{{ localeLabel . }}</button>
   </form>
+  {{ end }}
   {{ end }}
 </div>
