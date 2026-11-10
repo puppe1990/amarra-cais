@@ -9,7 +9,7 @@ import (
 // #403: Drive applyHead copies a closed set of document meta after a morph.
 // The amarra.js reference (EN + pt-BR) is the contract page; dropping a
 // needle here means the docs drifted from the JS.
-func TestWebsiteDocs_documentDriveHeadMeta(t *testing.T) {
+func TestDocs_driveHeadCopiesCanonicalOgJSONLD(t *testing.T) {
 	needles := []string{
 		"canonical",
 		"og:",
