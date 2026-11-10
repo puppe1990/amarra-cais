@@ -42,3 +42,19 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  testdocs:
+    name: TestDocs contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      #295: website PRs skip ci.yml (paths-ignore website/**). Run the docs
+      # contract tests here without the full smoke/scaffold suite (#407).
+      - name: TestDocs
+        run: go test ./internal/cli/ -count=1 -run TestDocs

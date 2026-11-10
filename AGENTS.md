@@ -21,21 +21,21 @@ Scaffolded apps: Go tests only (`go test ./...` / `amarra-cais test`). Pages are
 
 Imperative. Prefer these when trading off effort.
 
-| Priority | Rule                                                                                                                                                                               |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1        | **Small units** — functions ~4–20 lines; files target 200–300 lines, hard cap ~500. Split god files before adding more logic.                                                      |
-| 2        | **SRP** — one reason to change per file/package. Prefer three focused modules over one multi-concern dump.                                                                         |
-| 3        | **Greppable names** — unique domain nouns. Avoid `data`, `handler`, `Manager`, `Service`, `util`, `helper` as primary names. If `rg Name` floods, rename.                          |
-| 4        | **Comments = WHY / provenance** — security tradeoffs, SQLite limits, issue IDs (`#123`), upstream constraints. Never strip intent comments on refactor. No `// increment i` noise. |
-| 5        | **Explicit contracts** — Go public APIs fully typed; HTML pages and kit tags named; no silent `interface{}`/`any` on boundaries.                                                   |
-| 6        | **DRY** — extract shared logic (generators, handlers, scaffold templates). No copy-variant drift.                                                                                  |
-| 7        | **Headless tests** — one command: `make ci` (or focused `go test ./pkg/... -run X`). SQLite `:memory:`; no manual seed for unit tests. Bug fix → regression test.                  |
-| 8        | **Predictable layout** — table below + generator patch markers. Mirror `foo.go` ↔ `foo_test.go`.                                                                                   |
-| 9        | **Inject deps** — handlers take `Store`, `*view.Renderer`, `cais.Config` via constructor; no hidden globals.                                                                       |
-| 10       | **Early returns** — max ~2 nesting levels for control flow.                                                                                                                        |
-| 11       | **Errors with values** — `fmt.Errorf("tailwind watch: %w", err)` not bare `"failed"`.                                                                                              |
-| 12       | **Format without debate** — `gofmt` / `make format` (Prettier).                                                                                                                    |
-| 13       | **Structured logs** — JSON request/SQL in dev via `devlog`/`sqllog`; plain text only for CLI UX.                                                                                   |
+| Priority | Rule                                                                                                                                                                                                  |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1        | **Small units** — functions ~4–20 lines; files target 200–300 lines, hard cap ~500 (Go and `pkg/amarra/js/*.mjs`; skip vendor, `*.test.mjs`, `.worktrees`). Split god files before adding more logic. |
+| 2        | **SRP** — one reason to change per file/package. Prefer three focused modules over one multi-concern dump.                                                                                            |
+| 3        | **Greppable names** — unique domain nouns. Avoid `data`, `handler`, `Manager`, `Service`, `util`, `helper` as primary names. If `rg Name` floods, rename.                                             |
+| 4        | **Comments = WHY / provenance** — security tradeoffs, SQLite limits, issue IDs (`#123`), upstream constraints. Never strip intent comments on refactor. No `// increment i` noise.                    |
+| 5        | **Explicit contracts** — Go public APIs fully typed; HTML pages and kit tags named; no silent `interface{}`/`any` on boundaries.                                                                      |
+| 6        | **DRY** — extract shared logic (generators, handlers, scaffold templates). No copy-variant drift.                                                                                                     |
+| 7        | **Headless tests** — one command: `make ci` (or focused `go test ./pkg/... -run X`). SQLite `:memory:`; no manual seed for unit tests. Bug fix → regression test.                                     |
+| 8        | **Predictable layout** — table below + generator patch markers. Mirror `foo.go` ↔ `foo_test.go`.                                                                                                      |
+| 9        | **Inject deps** — handlers take `Store`, `*view.Renderer`, `cais.Config` via constructor; no hidden globals.                                                                                          |
+| 10       | **Early returns** — max ~2 nesting levels for control flow.                                                                                                                                           |
+| 11       | **Errors with values** — `fmt.Errorf("tailwind watch: %w", err)` not bare `"failed"`.                                                                                                                 |
+| 12       | **Format without debate** — `gofmt` / `make format` (Prettier).                                                                                                                                       |
+| 13       | **Structured logs** — JSON request/SQL in dev via `devlog`/`sqllog`; plain text only for CLI UX.                                                                                                      |
 
 ### Repo red flags (split when you touch them)
 
@@ -45,6 +45,7 @@ Imperative. Prefer these when trading off effort.
 | `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks      |
 | `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further |
 | `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates        |
+| `pkg/amarra/js/drive.mjs`                     | Barrel: visit / html / outlets / response (#406)       |
 
 Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go`), never a mega template dump.
 
@@ -205,7 +206,7 @@ flash.Set(w, "notice", "Saved!", cfg.CookieSecure())
 http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 ```
 
-Drive requests still render the layout so JS can morph `#amarra-main`. Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only. A GET 404 whose HTML still has `#amarra-main` morphs and `pushState`s that URL; a 500 with the same marker morphs without pushing (so a refresh does not re-POST). Responses without `#amarra-main` and network failures emit `amarra:drive-error` with a toast — Drive never retries the mutation (#360). A non-HTML response (PDF/DXF/SVG/attachment) to GET is handed to the browser; the same response to a mutation is saved from the fetched body through a blob URL named by `Content-Disposition`, never replayed as GET (#366).
+Drive requests still render the layout so JS can morph `#amarra-main`. After the morph, `applyHead` copies title, `html lang`, csrf-token, canonical, `hreflang`, description, `og:`/`twitter:` and JSON-LD from the response `<head>` (#403). Frame requests (`Amarra-Frame: <id>`) render `{{ define "frame:<id>" }}` only. A GET 404 whose HTML still has `#amarra-main` morphs and `pushState`s that URL; a 500 with the same marker morphs without pushing (so a refresh does not re-POST). Responses without `#amarra-main` and network failures emit `amarra:drive-error` with a toast — Drive never retries the mutation (#360). A non-HTML response (PDF/DXF/SVG/attachment) to GET is handed to the browser; the same response to a mutation is saved from the fetched body through a blob URL named by `Content-Disposition`, never replayed as GET (#366).
 
 ### Template loader contract
 

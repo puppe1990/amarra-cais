@@ -76,6 +76,36 @@ func TestSmokeProduction_buildsCSSWithoutGoModule(t *testing.T) {
 	}
 }
 
+// #407: ci.yml paths-ignore website/**, so a docs-only PR never ran TestDocs_*.
+// docs-site.yml is the job that still fires; pin the Go contract there without
+// the full smoke/scaffold suite (#295).
+func TestDocsSiteCI_runsTestDocs(t *testing.T) {
+	body, err := os.ReadFile("../../.github/workflows/docs-site.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(body)
+	for _, want := range []string{
+		"actions/setup-go",
+		"go test ./internal/cli/",
+		"-run TestDocs",
+		"#295",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("docs-site.yml missing %q (website PRs must run TestDocs)", want)
+		}
+	}
+	for _, refuse := range []string{
+		"make ci",
+		"smoke-production",
+		"amarra-cais new",
+	} {
+		if strings.Contains(text, refuse) {
+			t.Errorf("docs-site.yml must not run %q on docs-only PRs", refuse)
+		}
+	}
+}
+
 func TestMakefile_hasBundleCheck(t *testing.T) {
 	body, err := os.ReadFile("../../Makefile")
 	if err != nil {

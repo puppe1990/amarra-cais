@@ -32,7 +32,7 @@ async function main() {
     format: "iife",
     outfile: resolve(outDir, "amarra.js"),
     banner,
-    minify: false,
+    minify: true,
     sourcemap: false,
   });
 

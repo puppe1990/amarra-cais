@@ -1,4 +1,5 @@
 import { csrfTokenFromMeta } from "./hook.mjs";
+import { applyDocumentMeta } from "./drive_head_meta.mjs";
 
 export function extractTitle(html) {
   const m = String(html ?? "").match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
@@ -28,11 +29,14 @@ export function applyHead(doc, html) {
   const lang = extractHTMLAttr(html, "lang");
   if (lang != null && doc.documentElement) doc.documentElement.lang = lang;
   const token = csrfTokenFromMeta(html);
-  if (!token) return;
-  const meta = doc.querySelector?.('meta[name="csrf-token"]');
-  if (!meta) return;
-  if (typeof meta.setAttribute === "function") meta.setAttribute("content", token);
-  else meta.content = token;
+  if (token) {
+    const meta = doc.querySelector?.('meta[name="csrf-token"]');
+    if (meta) {
+      if (typeof meta.setAttribute === "function") meta.setAttribute("content", token);
+      else meta.content = token;
+    }
+  }
+  applyDocumentMeta(doc, html);
 }
 
 function ensureVeilKeyframes(doc) {
