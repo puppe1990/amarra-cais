@@ -19,6 +19,8 @@ Uma requisição que troca o **shell** do layout (login, signup, logout) precisa
 
 O layout renderiza `<meta name="csrf-token">`, e o Drive envia `X-CSRF-Token` em suas requisições (em par com o cookie double-submit `cais_csrf`).
 
+Depois de um morph, `applyHead` copia um conjunto fechado do `<head>` da resposta para o `document.head`: `link[rel=canonical]`, `link[rel=alternate][hreflang]`, `meta[name=description]`, `meta[property^="og:"]`, `meta[name^="twitter:"]` e `script[type="application/ld+json"]` (JSON-LD via `textContent`). Tag que existia só na página anterior some. Stylesheets, preloads e outros scripts ficam no layout (#403).
+
 ## Scripts e reuso no morph
 
 Um nó com o mesmo `id` nas duas respostas é o mesmo nó do DOM depois do morph: listeners JS e propriedades expandidas sobrevivem, enquanto `value`/atributos vêm do HTML novo e atributos `data-*` gravados só pelo JS são removidos. Tags `<script>` inline não rodam num morph; coloque o comportamento num script estático do layout e faça delegação em `document` uma vez atrás de uma flag em `window`, ou teardown antes do reinit (`removeEventListener`, `disconnect`, `cloneNode`) no `amarra:morphed`.

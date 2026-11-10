@@ -19,6 +19,8 @@ A request that swaps the layout **shell** (login, signup, logout) must change th
 
 The layout renders `<meta name="csrf-token">`, and Drive sends `X-CSRF-Token` on its requests (paired with the double-submit `cais_csrf` cookie).
 
+After a morph, `applyHead` copies a closed set from the response `<head>` onto `document.head`: `link[rel=canonical]`, `link[rel=alternate][hreflang]`, `meta[name=description]`, `meta[property^="og:"]`, `meta[name^="twitter:"]`, and `script[type="application/ld+json"]` (JSON-LD via `textContent`). A tag present only on the previous page is removed. Stylesheets, preloads, and other scripts stay on the layout (#403).
+
 ## Scripts and morph reuse
 
 A node with the same `id` in both responses is the same DOM node after a morph: JS listeners and expando properties survive, while `value`/attributes come from the new HTML and JS-only `data-*` attributes are removed. Inline `<script>` tags do not run on a morph; put behavior in a static layout script and either delegate on `document` once behind a `window` flag or tear down before re-init (`removeEventListener`, `disconnect`, `cloneNode`) on `amarra:morphed`.

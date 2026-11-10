@@ -122,6 +122,126 @@ test("showProgress shows a veil with a system-color spinner", () => {
   assert.equal(veil.hidden, true);
 });
 
+function articleHTML({ slug, title, desc, jsonld, extra = "" }) {
+  return `<html lang="pt-BR"><head>
+    <title>${title}</title>
+    <link rel="canonical" href="https://sintaxe.example/${slug}">
+    <link rel="alternate" hreflang="en" href="https://sintaxe.example/en/${slug}">
+    <meta name="description" content="${desc}">
+    <meta property="og:url" content="https://sintaxe.example/${slug}">
+    <meta property="og:title" content="${title}">
+    <meta name="twitter:card" content="summary">
+    <script type="application/ld+json">${jsonld}</script>
+    ${extra}
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="csrf-token" content="tok">
+  </head><body><main id="amarra-main">${title}</main></body></html>`;
+}
+
+function makeHeadDoc() {
+  const nodes = [];
+  const head = {
+    childNodes: nodes,
+    appendChild(el) {
+      el.parentNode = this;
+      nodes.push(el);
+      return el;
+    },
+    querySelectorAll(sel) {
+      const tag = String(sel).toUpperCase();
+      return nodes.filter((el) => el.tagName === tag);
+    },
+  };
+  return {
+    title: "",
+    head,
+    documentElement: { lang: "en" },
+    createElement(tag) {
+      const attrs = {};
+      const el = {
+        tagName: tag.toUpperCase(),
+        getAttribute(name) {
+          return Object.prototype.hasOwnProperty.call(attrs, name) ? attrs[name] : null;
+        },
+        setAttribute(name, value) {
+          attrs[name] = String(value);
+        },
+        textContent: "",
+        parentNode: null,
+        remove() {
+          if (!this.parentNode) return;
+          const list = this.parentNode.childNodes;
+          const i = list.indexOf(this);
+          if (i >= 0) list.splice(i, 1);
+          this.parentNode = null;
+        },
+      };
+      return el;
+    },
+    querySelector() {
+      return null;
+    },
+  };
+}
+
+function headAttr(doc, tag, attr, value) {
+  return [...doc.head.querySelectorAll(tag)].find((el) => el.getAttribute(attr) === value) ?? null;
+}
+
+test("applyHead copies canonical, og, description and JSON-LD from article A to B", () => {
+  const doc = makeHeadDoc();
+  applyHead(
+    doc,
+    articleHTML({
+      slug: "a",
+      title: "Post A",
+      desc: "Desc A",
+      jsonld: '{"@id":"a"}',
+      extra: `<meta property="og:image" content="https://sintaxe.example/a.png">`,
+    })
+  );
+
+  applyHead(
+    doc,
+    articleHTML({
+      slug: "b",
+      title: "Post B",
+      desc: "Desc B",
+      jsonld: '{"@id":"b"}',
+    })
+  );
+
+  assert.equal(doc.title, "Post B");
+  assert.equal(
+    headAttr(doc, "link", "rel", "canonical").getAttribute("href"),
+    "https://sintaxe.example/b"
+  );
+  assert.equal(
+    headAttr(doc, "link", "hreflang", "en").getAttribute("href"),
+    "https://sintaxe.example/en/b"
+  );
+  assert.equal(
+    headAttr(doc, "meta", "property", "og:url").getAttribute("content"),
+    "https://sintaxe.example/b"
+  );
+  assert.equal(headAttr(doc, "meta", "property", "og:title").getAttribute("content"), "Post B");
+  assert.equal(headAttr(doc, "meta", "name", "description").getAttribute("content"), "Desc B");
+  const jsonld = [...doc.head.querySelectorAll("script")].filter(
+    (el) => el.getAttribute("type") === "application/ld+json"
+  );
+  assert.equal(jsonld.length, 1);
+  assert.equal(jsonld[0].textContent, '{"@id":"b"}');
+  assert.equal(headAttr(doc, "meta", "property", "og:image"), null);
+  assert.equal(headAttr(doc, "link", "rel", "stylesheet"), null);
+});
+
+test("applyHead does not invent document meta when the response has none", () => {
+  const doc = makeHeadDoc();
+  applyHead(doc, `<html><head><title>Home</title></head><body></body></html>`);
+  assert.equal(doc.title, "Home");
+  assert.equal(doc.head.childNodes.length, 0);
+});
+
 test("showProgress creates a bar and hideProgress hides it", () => {
   const created = [];
   const doc = {
