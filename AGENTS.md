@@ -23,7 +23,7 @@ Imperative. Prefer these when trading off effort.
 
 | Priority | Rule                                                                                                                                                                               |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1        | **Small units** — functions ~4–20 lines; files target 200–300 lines, hard cap ~500. Split god files before adding more logic.                                                      |
+| 1        | **Small units** — functions ~4–20 lines; files target 200–300 lines, hard cap ~500 (Go and `pkg/amarra/js/*.mjs`; skip vendor, `*.test.mjs`, `.worktrees`). Split god files before adding more logic. |
 | 2        | **SRP** — one reason to change per file/package. Prefer three focused modules over one multi-concern dump.                                                                         |
 | 3        | **Greppable names** — unique domain nouns. Avoid `data`, `handler`, `Manager`, `Service`, `util`, `helper` as primary names. If `rg Name` floods, rename.                          |
 | 4        | **Comments = WHY / provenance** — security tradeoffs, SQLite limits, issue IDs (`#123`), upstream constraints. Never strip intent comments on refactor. No `// increment i` noise. |
@@ -45,6 +45,7 @@ Imperative. Prefer these when trading off effort.
 | `internal/cli/doctor.go` + `_env` + `_mobile` | Split done: core / env production / mobile checks      |
 | `internal/cli/tpl_scaffold_handlers_auth.go`  | ~420 — split login vs signup/reset if it grows further |
 | `internal/cli/tpl_scaffold_tooling.go`        | ~600 — CI vs package.json vs Makefile templates        |
+| `pkg/amarra/js/drive.mjs`                     | Barrel: visit / html / outlets / response (#406)       |
 
 Scaffold `const tpl*` blobs: one family per file (`tpl_scaffold_handlers_auth.go`), never a mega template dump.
 

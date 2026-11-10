@@ -774,112 +774,6 @@
     visit: () => visit
   });
 
-  // pkg/amarra/js/svg_attrs.mjs
-  var SVG_NS = "http://www.w3.org/2000/svg";
-  var CAMEL_CASE_SVG_ATTRS = [
-    "attributeName",
-    "attributeType",
-    "baseFrequency",
-    "baseProfile",
-    "calcMode",
-    "clipPathUnits",
-    "diffuseConstant",
-    "edgeMode",
-    "filterUnits",
-    "glyphRef",
-    "gradientTransform",
-    "gradientUnits",
-    "kernelMatrix",
-    "kernelUnitLength",
-    "keyPoints",
-    "keySplines",
-    "keyTimes",
-    "lengthAdjust",
-    "limitingConeAngle",
-    "markerHeight",
-    "markerUnits",
-    "markerWidth",
-    "maskContentUnits",
-    "maskUnits",
-    "numOctaves",
-    "pathLength",
-    "patternContentUnits",
-    "patternTransform",
-    "patternUnits",
-    "pointsAtX",
-    "pointsAtY",
-    "pointsAtZ",
-    "preserveAlpha",
-    "preserveAspectRatio",
-    "primitiveUnits",
-    "refX",
-    "refY",
-    "repeatCount",
-    "repeatDur",
-    "requiredExtensions",
-    "requiredFeatures",
-    "specularConstant",
-    "specularExponent",
-    "spreadMethod",
-    "startOffset",
-    "stdDeviation",
-    "stitchTiles",
-    "surfaceScale",
-    "systemLanguage",
-    "tableValues",
-    "targetX",
-    "targetY",
-    "textLength",
-    "viewBox",
-    "viewTarget",
-    "xChannelSelector",
-    "yChannelSelector",
-    "zoomAndPan"
-  ];
-  var canonicalByLowerCase = new Map(
-    CAMEL_CASE_SVG_ATTRS.map((name) => [name.toLowerCase(), name])
-  );
-  function restoreSvgAttributeCase(root) {
-    if (!root || typeof root.querySelectorAll !== "function") return 0;
-    let restored = 0;
-    for (const element of [root, ...root.querySelectorAll("*")]) {
-      if (!isSvgElement(element)) continue;
-      for (const attribute of [...element.attributes ?? []]) {
-        const canonical = canonicalByLowerCase.get(String(attribute.name).toLowerCase());
-        if (!canonical || attribute.name === canonical) continue;
-        element.setAttribute(canonical, attribute.value);
-        element.removeAttribute(attribute.name);
-        restored += 1;
-      }
-    }
-    return restored;
-  }
-  function isSvgElement(element) {
-    return !!element && element.namespaceURI === SVG_NS && typeof element.setAttribute === "function" && typeof element.removeAttribute === "function";
-  }
-
-  // pkg/amarra/js/morph.mjs
-  function morph(el, html, morphFn, opts = {}) {
-    if (!el) return;
-    const parent = el.parentNode ?? null;
-    const result = morphInto(el, html, morphFn, opts);
-    restoreSvgAttributeCase(el.isConnected === false && parent ? parent : el);
-    return result;
-  }
-  function morphInto(el, html, morphFn, opts) {
-    if (typeof morphFn === "function") return morphFn(el, html);
-    const style = opts.morphStyle || "innerHTML";
-    const lib = globalThis.Idiomorph;
-    if (lib && typeof lib.morph === "function") {
-      return lib.morph(el, html, { morphStyle: style });
-    }
-    if (style === "outerHTML" && "outerHTML" in el) {
-      el.outerHTML = html ?? "";
-      return;
-    }
-    if ("innerHTML" in el) el.innerHTML = html ?? "";
-  }
-
   // pkg/amarra/js/sequence.mjs
   var counters = /* @__PURE__ */ new WeakMap();
   var fallback = 0;
@@ -2172,6 +2066,114 @@
     observeLazy: () => observeLazy,
     visitIntoFrame: () => visitIntoFrame
   });
+
+  // pkg/amarra/js/svg_attrs.mjs
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var CAMEL_CASE_SVG_ATTRS = [
+    "attributeName",
+    "attributeType",
+    "baseFrequency",
+    "baseProfile",
+    "calcMode",
+    "clipPathUnits",
+    "diffuseConstant",
+    "edgeMode",
+    "filterUnits",
+    "glyphRef",
+    "gradientTransform",
+    "gradientUnits",
+    "kernelMatrix",
+    "kernelUnitLength",
+    "keyPoints",
+    "keySplines",
+    "keyTimes",
+    "lengthAdjust",
+    "limitingConeAngle",
+    "markerHeight",
+    "markerUnits",
+    "markerWidth",
+    "maskContentUnits",
+    "maskUnits",
+    "numOctaves",
+    "pathLength",
+    "patternContentUnits",
+    "patternTransform",
+    "patternUnits",
+    "pointsAtX",
+    "pointsAtY",
+    "pointsAtZ",
+    "preserveAlpha",
+    "preserveAspectRatio",
+    "primitiveUnits",
+    "refX",
+    "refY",
+    "repeatCount",
+    "repeatDur",
+    "requiredExtensions",
+    "requiredFeatures",
+    "specularConstant",
+    "specularExponent",
+    "spreadMethod",
+    "startOffset",
+    "stdDeviation",
+    "stitchTiles",
+    "surfaceScale",
+    "systemLanguage",
+    "tableValues",
+    "targetX",
+    "targetY",
+    "textLength",
+    "viewBox",
+    "viewTarget",
+    "xChannelSelector",
+    "yChannelSelector",
+    "zoomAndPan"
+  ];
+  var canonicalByLowerCase = new Map(
+    CAMEL_CASE_SVG_ATTRS.map((name) => [name.toLowerCase(), name])
+  );
+  function restoreSvgAttributeCase(root) {
+    if (!root || typeof root.querySelectorAll !== "function") return 0;
+    let restored = 0;
+    for (const element of [root, ...root.querySelectorAll("*")]) {
+      if (!isSvgElement(element)) continue;
+      for (const attribute of [...element.attributes ?? []]) {
+        const canonical = canonicalByLowerCase.get(String(attribute.name).toLowerCase());
+        if (!canonical || attribute.name === canonical) continue;
+        element.setAttribute(canonical, attribute.value);
+        element.removeAttribute(attribute.name);
+        restored += 1;
+      }
+    }
+    return restored;
+  }
+  function isSvgElement(element) {
+    return !!element && element.namespaceURI === SVG_NS && typeof element.setAttribute === "function" && typeof element.removeAttribute === "function";
+  }
+
+  // pkg/amarra/js/morph.mjs
+  function morph(el, html, morphFn, opts = {}) {
+    if (!el) return;
+    const parent = el.parentNode ?? null;
+    const result = morphInto(el, html, morphFn, opts);
+    restoreSvgAttributeCase(el.isConnected === false && parent ? parent : el);
+    return result;
+  }
+  function morphInto(el, html, morphFn, opts) {
+    if (typeof morphFn === "function") return morphFn(el, html);
+    const style = opts.morphStyle || "innerHTML";
+    const lib = globalThis.Idiomorph;
+    if (lib && typeof lib.morph === "function") {
+      return lib.morph(el, html, { morphStyle: style });
+    }
+    if (style === "outerHTML" && "outerHTML" in el) {
+      el.outerHTML = html ?? "";
+      return;
+    }
+    if ("innerHTML" in el) el.innerHTML = html ?? "";
+  }
+
+  // pkg/amarra/js/frame.mjs
   function frameHeaders(id, csrfToken) {
     const headers = {
       "Amarra-Frame": String(id ?? ""),
@@ -2803,43 +2805,7 @@ ${lines.join("\n")}
     else revoke();
   }
 
-  // pkg/amarra/js/drive.mjs
-  function shouldInterceptClick({
-    href,
-    target,
-    download,
-    origin,
-    locationOrigin,
-    skip,
-    currentHref,
-    resolvedHref,
-    button
-  } = {}) {
-    if (skip) return false;
-    if (button != null && button !== 0) return false;
-    if (download) return false;
-    if (target && target !== "_self") return false;
-    if (!href) return false;
-    if (/^(mailto|javascript|tel):/i.test(href)) return false;
-    if (isHashOnlyNavigation(href, resolvedHref, currentHref)) return false;
-    if (origin && locationOrigin && origin !== locationOrigin) return false;
-    return true;
-  }
-  function shouldInterceptSubmit({ skip, target, method, origin, locationOrigin } = {}) {
-    if (skip) return false;
-    if (target && target !== "_self") return false;
-    if (String(method || "GET").toLowerCase() === "dialog") return false;
-    if (origin && locationOrigin && origin !== locationOrigin) return false;
-    return true;
-  }
-  function driveHeaders(csrfToken) {
-    const headers = {
-      "Amarra-Drive": "true",
-      Accept: "text/html"
-    };
-    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
-    return headers;
-  }
+  // pkg/amarra/js/drive_html.mjs
   function extractMainHTML(html) {
     const str = String(html ?? "");
     const open2 = extractMainOpen(str);
@@ -2850,6 +2816,44 @@ ${lines.join("\n")}
   function extractMainTagName(html) {
     return extractMainOpen(String(html ?? ""))?.[1]?.toUpperCase() ?? null;
   }
+  function sliceMatchingClose(str, start5, tag) {
+    const lower = str.toLowerCase();
+    const name = tag.toLowerCase();
+    const closeToken = `</${name}>`;
+    let depth = 1;
+    let i = start5;
+    while (i < str.length && depth > 0) {
+      const nextOpen = findOpenTag(lower, i, name);
+      const nextClose = lower.indexOf(closeToken, i);
+      if (nextClose === -1) return null;
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth += 1;
+        i = nextOpen + name.length + 1;
+        continue;
+      }
+      depth -= 1;
+      if (depth === 0) return str.slice(start5, nextClose);
+      i = nextClose + closeToken.length;
+    }
+    return null;
+  }
+  function extractMainOpen(str) {
+    return str.match(/<([a-zA-Z][\w:-]*)(?=[^>]*\sid\s*=\s*["']amarra-main["'])[^>]*>/i);
+  }
+  function findOpenTag(lower, from, name) {
+    const token = `<${name}`;
+    let i = from;
+    while (i < lower.length) {
+      const j = lower.indexOf(token, i);
+      if (j === -1) return -1;
+      const after = lower[j + token.length];
+      if (after === ">" || after === "/" || after && /\s/.test(after)) return j;
+      i = j + token.length;
+    }
+    return -1;
+  }
+
+  // pkg/amarra/js/drive_outlets.mjs
   function applyOutlets(doc, html) {
     if (!doc?.getElementById) return;
     const source = String(html ?? "");
@@ -2873,13 +2877,22 @@ ${lines.join("\n")}
     }
     if ("innerHTML" in target) target.innerHTML = inner;
   }
+
+  // pkg/amarra/js/drive_response.mjs
+  var DRIVE_ERROR_MESSAGE = "N\xE3o foi poss\xEDvel carregar a p\xE1gina.";
+  function emitDriveError(doc, detail) {
+    if (doc && typeof doc.dispatchEvent === "function") {
+      doc.dispatchEvent(
+        new CustomEvent("amarra:drive-error", { bubbles: true, detail: detail ?? {} })
+      );
+    }
+  }
   function defaultDriveWarn(msg) {
     try {
       globalThis.console?.warn?.(msg);
     } catch {
     }
   }
-  var DRIVE_ERROR_MESSAGE = "N\xE3o foi poss\xEDvel carregar a p\xE1gina.";
   function applyDriveResponse({
     status,
     html,
@@ -2974,24 +2987,12 @@ ${lines.join("\n")}
     const at = str.indexOf("#");
     return at === -1 ? "" : str.slice(at);
   }
-  function withRequestHash(responseURL, requestURL) {
-    const hash = hashOf(requestURL);
-    if (!hash) return responseURL;
-    const base = String(responseURL ?? "");
-    const at = base.indexOf("#");
-    return (at === -1 ? base : base.slice(0, at)) + hash;
-  }
   function assignLocation(location, url) {
     if (url && typeof location?.assign === "function") {
       location.assign(url);
       return;
     }
     if (url && location) location.href = url;
-  }
-  function isHtmlResponse(headers) {
-    const type = String(headers?.get?.("content-type") ?? "").split(";")[0].trim().toLowerCase();
-    if (/attachment/i.test(String(headers?.get?.("content-disposition") ?? ""))) return false;
-    return type === "" || type === "text/html" || type === "application/xhtml+xml";
   }
   function applyLayoutMarker(doc, html) {
     const layout = extractHTMLAttr(html, "data-amarra-layout");
@@ -3004,6 +3005,44 @@ ${lines.join("\n")}
     if (shell != null && doc?.body?.dataset) {
       doc.body.dataset.amarraShell = shell;
     }
+  }
+
+  // pkg/amarra/js/drive_visit.mjs
+  function shouldInterceptClick({
+    href,
+    target,
+    download,
+    origin,
+    locationOrigin,
+    skip,
+    currentHref,
+    resolvedHref,
+    button
+  } = {}) {
+    if (skip) return false;
+    if (button != null && button !== 0) return false;
+    if (download) return false;
+    if (target && target !== "_self") return false;
+    if (!href) return false;
+    if (/^(mailto|javascript|tel):/i.test(href)) return false;
+    if (isHashOnlyNavigation(href, resolvedHref, currentHref)) return false;
+    if (origin && locationOrigin && origin !== locationOrigin) return false;
+    return true;
+  }
+  function shouldInterceptSubmit({ skip, target, method, origin, locationOrigin } = {}) {
+    if (skip) return false;
+    if (target && target !== "_self") return false;
+    if (String(method || "GET").toLowerCase() === "dialog") return false;
+    if (origin && locationOrigin && origin !== locationOrigin) return false;
+    return true;
+  }
+  function driveHeaders(csrfToken) {
+    const headers = {
+      "Amarra-Drive": "true",
+      Accept: "text/html"
+    };
+    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+    return headers;
   }
   async function visit(url, opts = {}) {
     const fetchFn = opts.fetchFn ?? opts.fetch ?? fetch;
@@ -3160,41 +3199,17 @@ ${lines.join("\n")}
       return false;
     }
   }
-  function sliceMatchingClose(str, start5, tag) {
-    const lower = str.toLowerCase();
-    const name = tag.toLowerCase();
-    const closeToken = `</${name}>`;
-    let depth = 1;
-    let i = start5;
-    while (i < str.length && depth > 0) {
-      const nextOpen = findOpenTag(lower, i, name);
-      const nextClose = lower.indexOf(closeToken, i);
-      if (nextClose === -1) return null;
-      if (nextOpen !== -1 && nextOpen < nextClose) {
-        depth += 1;
-        i = nextOpen + name.length + 1;
-        continue;
-      }
-      depth -= 1;
-      if (depth === 0) return str.slice(start5, nextClose);
-      i = nextClose + closeToken.length;
-    }
-    return null;
+  function withRequestHash(responseURL, requestURL) {
+    const hash = hashOf(requestURL);
+    if (!hash) return responseURL;
+    const base = String(responseURL ?? "");
+    const at = base.indexOf("#");
+    return (at === -1 ? base : base.slice(0, at)) + hash;
   }
-  function extractMainOpen(str) {
-    return str.match(/<([a-zA-Z][\w:-]*)(?=[^>]*\sid\s*=\s*["']amarra-main["'])[^>]*>/i);
-  }
-  function findOpenTag(lower, from, name) {
-    const token = `<${name}`;
-    let i = from;
-    while (i < lower.length) {
-      const j = lower.indexOf(token, i);
-      if (j === -1) return -1;
-      const after = lower[j + token.length];
-      if (after === ">" || after === "/" || after && /\s/.test(after)) return j;
-      i = j + token.length;
-    }
-    return -1;
+  function isHtmlResponse(headers) {
+    const type = String(headers?.get?.("content-type") ?? "").split(";")[0].trim().toLowerCase();
+    if (/attachment/i.test(String(headers?.get?.("content-disposition") ?? ""))) return false;
+    return type === "" || type === "text/html" || type === "application/xhtml+xml";
   }
   function formDataWithSubmitter(form, submitter, Ctor) {
     try {
@@ -3205,13 +3220,6 @@ ${lines.join("\n")}
         fd.append(submitter.name, submitter.value ?? "");
       }
       return fd;
-    }
-  }
-  function emitDriveError(doc, detail) {
-    if (doc && typeof doc.dispatchEvent === "function") {
-      doc.dispatchEvent(
-        new CustomEvent("amarra:drive-error", { bubbles: true, detail: detail ?? {} })
-      );
     }
   }
   function findAnchor(target) {
