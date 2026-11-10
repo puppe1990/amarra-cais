@@ -55,6 +55,9 @@ Usage:
   amarra-cais routes [--verbose]    List HTTP routes from internal/app/routes.go
   amarra-cais destroy [--dry-run] resource|handler|model|component <name>
                              Remove generated resource, handler, model, or component files
+  amarra-cais destroy [--dry-run] live <name>      Remove a generated Live view
+  amarra-cais destroy [--dry-run] stream chat      Remove generated SSE chat
+  amarra-cais destroy [--dry-run] job <name>       Remove a generated job handler
   amarra-cais destroy [--dry-run] auth             Remove login/auth scaffolding
   amarra-cais destroy [--dry-run] migration <name> Remove a generated SQL migration file
   amarra-cais version               Print Cais framework version

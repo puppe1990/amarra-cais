@@ -64,5 +64,15 @@ func scaffoldStreamChat(dir string, opts streamOpts) error {
 	if err := patchRoutesForStreamChat(dir, opts.dryRun); err != nil {
 		return err
 	}
-	return patchLayoutNavForStreamChat(dir, opts.dryRun)
+	if err := patchLayoutNavForStreamChat(dir, opts.dryRun); err != nil {
+		return err
+	}
+	if opts.dryRun {
+		return nil
+	}
+	rels := fileRels(files)
+	if opts.live {
+		rels = append(rels, filepath.ToSlash(filepath.Join("internal/handlers", "chat_live.go")))
+	}
+	return recordGeneratedFiles(dir, rels)
 }

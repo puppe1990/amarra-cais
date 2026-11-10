@@ -201,7 +201,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
-		return fmt.Errorf("usage: amarra-cais destroy [--dry-run] <resource|handler|model|component|auth|migration> [name]")
+		return fmt.Errorf("usage: amarra-cais destroy [--dry-run] <resource|handler|model|component|auth|migration|live|stream|job> [name]")
 	}
 
 	cwd, err := os.Getwd()
@@ -215,7 +215,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 	kind := args[0]
 	var genErr error
 	switch kind {
-	case "resource", "handler", "model", "migration", "component":
+	case "resource", "handler", "model", "migration", "component", "live", "job":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: amarra-cais destroy [--dry-run] %s <name>", kind)
 		}
@@ -234,12 +234,27 @@ func (c *CLI) cmdDestroy(args []string) error {
 			genErr = destroyMigration(cwd, name, dryRun)
 		case "component":
 			genErr = destroyComponent(cwd, name, dryRun, force)
+		case "live":
+			genErr = destroyLive(cwd, name, dryRun, force)
+		case "job":
+			genErr = destroyJob(cwd, name, dryRun, force)
 		}
 		if genErr != nil {
 			return genErr
 		}
 		if !dryRun {
 			_, _ = fmt.Fprintf(c.Out, "=> Removed %s %s\n", kind, name)
+		}
+	case "stream":
+		if len(args) < 2 || args[1] != "chat" {
+			return fmt.Errorf("usage: amarra-cais destroy [--dry-run] stream chat")
+		}
+		genErr = destroyStreamChat(cwd, dryRun, force)
+		if genErr != nil {
+			return genErr
+		}
+		if !dryRun {
+			_, _ = fmt.Fprintln(c.Out, "=> Removed stream chat")
 		}
 	case "auth":
 		if len(args) > 1 {
@@ -253,7 +268,7 @@ func (c *CLI) cmdDestroy(args []string) error {
 			_, _ = fmt.Fprintln(c.Out, "=> Removed auth")
 		}
 	default:
-		return fmt.Errorf("unknown destroy target %q (use resource, handler, model, component, auth, or migration)", kind)
+		return fmt.Errorf("unknown destroy target %q (use resource, handler, model, component, auth, migration, live, stream, or job)", kind)
 	}
 	return nil
 }

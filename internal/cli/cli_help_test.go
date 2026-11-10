@@ -54,6 +54,24 @@ func TestCLI_Help_IncludesResource(t *testing.T) {
 	}
 }
 
+func TestCLI_Help_IncludesDestroyLiveStreamJob(t *testing.T) {
+	var buf bytes.Buffer
+	c := &CLI{Out: &buf}
+	if err := c.Run([]string{"help"}); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	for _, want := range []string{
+		"destroy [--dry-run] live",
+		"destroy [--dry-run] stream chat",
+		"destroy [--dry-run] job",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("help missing %q", want)
+		}
+	}
+}
+
 func TestCLI_Help_IncludesLive(t *testing.T) {
 	var buf bytes.Buffer
 	c := &CLI{Out: &buf}

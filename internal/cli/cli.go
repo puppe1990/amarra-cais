@@ -188,7 +188,7 @@ func (c *CLI) cmdGenerate(args []string) error {
 			genErr = scaffoldModel(cwd, name, opts)
 		}
 	default:
-		return fmt.Errorf("unknown generator %q (use handler, page, component, migration, resource, model, stream, auth, ci, app, sitemap, or console)", kind)
+		return fmt.Errorf("unknown generator %q (use handler, page, component, migration, resource, model, stream, live, job, console, auth, ci, or sitemap)", kind)
 	}
 	if genErr != nil {
 		return genErr
@@ -204,8 +204,6 @@ func printGenerateNextSteps(w io.Writer, kind string) {
 	switch kind {
 	case "resource", "model", "migration", "auth", "stream", "sitemap":
 		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais db migrate && amarra-cais test")
-	case "app":
-		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais install && amarra-cais dev")
 	default:
 		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais test")
 	}
