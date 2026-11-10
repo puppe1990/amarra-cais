@@ -21,21 +21,21 @@ Scaffolded apps: Go tests only (`go test ./...` / `amarra-cais test`). Pages are
 
 Imperative. Prefer these when trading off effort.
 
-| Priority | Rule                                                                                                                                                                               |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Priority | Rule                                                                                                                                                                                                  |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1        | **Small units** — functions ~4–20 lines; files target 200–300 lines, hard cap ~500 (Go and `pkg/amarra/js/*.mjs`; skip vendor, `*.test.mjs`, `.worktrees`). Split god files before adding more logic. |
-| 2        | **SRP** — one reason to change per file/package. Prefer three focused modules over one multi-concern dump.                                                                         |
-| 3        | **Greppable names** — unique domain nouns. Avoid `data`, `handler`, `Manager`, `Service`, `util`, `helper` as primary names. If `rg Name` floods, rename.                          |
-| 4        | **Comments = WHY / provenance** — security tradeoffs, SQLite limits, issue IDs (`#123`), upstream constraints. Never strip intent comments on refactor. No `// increment i` noise. |
-| 5        | **Explicit contracts** — Go public APIs fully typed; HTML pages and kit tags named; no silent `interface{}`/`any` on boundaries.                                                   |
-| 6        | **DRY** — extract shared logic (generators, handlers, scaffold templates). No copy-variant drift.                                                                                  |
-| 7        | **Headless tests** — one command: `make ci` (or focused `go test ./pkg/... -run X`). SQLite `:memory:`; no manual seed for unit tests. Bug fix → regression test.                  |
-| 8        | **Predictable layout** — table below + generator patch markers. Mirror `foo.go` ↔ `foo_test.go`.                                                                                   |
-| 9        | **Inject deps** — handlers take `Store`, `*view.Renderer`, `cais.Config` via constructor; no hidden globals.                                                                       |
-| 10       | **Early returns** — max ~2 nesting levels for control flow.                                                                                                                        |
-| 11       | **Errors with values** — `fmt.Errorf("tailwind watch: %w", err)` not bare `"failed"`.                                                                                              |
-| 12       | **Format without debate** — `gofmt` / `make format` (Prettier).                                                                                                                    |
-| 13       | **Structured logs** — JSON request/SQL in dev via `devlog`/`sqllog`; plain text only for CLI UX.                                                                                   |
+| 2        | **SRP** — one reason to change per file/package. Prefer three focused modules over one multi-concern dump.                                                                                            |
+| 3        | **Greppable names** — unique domain nouns. Avoid `data`, `handler`, `Manager`, `Service`, `util`, `helper` as primary names. If `rg Name` floods, rename.                                             |
+| 4        | **Comments = WHY / provenance** — security tradeoffs, SQLite limits, issue IDs (`#123`), upstream constraints. Never strip intent comments on refactor. No `// increment i` noise.                    |
+| 5        | **Explicit contracts** — Go public APIs fully typed; HTML pages and kit tags named; no silent `interface{}`/`any` on boundaries.                                                                      |
+| 6        | **DRY** — extract shared logic (generators, handlers, scaffold templates). No copy-variant drift.                                                                                                     |
+| 7        | **Headless tests** — one command: `make ci` (or focused `go test ./pkg/... -run X`). SQLite `:memory:`; no manual seed for unit tests. Bug fix → regression test.                                     |
+| 8        | **Predictable layout** — table below + generator patch markers. Mirror `foo.go` ↔ `foo_test.go`.                                                                                                      |
+| 9        | **Inject deps** — handlers take `Store`, `*view.Renderer`, `cais.Config` via constructor; no hidden globals.                                                                                          |
+| 10       | **Early returns** — max ~2 nesting levels for control flow.                                                                                                                                           |
+| 11       | **Errors with values** — `fmt.Errorf("tailwind watch: %w", err)` not bare `"failed"`.                                                                                                                 |
+| 12       | **Format without debate** — `gofmt` / `make format` (Prettier).                                                                                                                                       |
+| 13       | **Structured logs** — JSON request/SQL in dev via `devlog`/`sqllog`; plain text only for CLI UX.                                                                                                      |
 
 ### Repo red flags (split when you touch them)
 
