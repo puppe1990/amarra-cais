@@ -4,6 +4,29 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.0] - 2026-11-10
+
+### Added
+
+- Drive `applyHead` copies canonical, hreflang, description, og:/twitter: and JSON-LD (`application/ld+json` via `textContent`) from the response into `document.head`. Stylesheets and other scripts stay on the layout (#403).
+- `amarra-cais destroy` reverses `g live`, `g stream chat` and `g job` through `.cais-generated.json` (#404).
+
+### Fixed
+
+- Void self-closing tags (`<meta … />`, `<link … />`) no longer feed `/` to `setAttribute`. Chromium threw `InvalidCharacterError` and Drive `visit` swallowed it, so morph and `pushState` never ran (#403).
+- Unknown-generator errors list the real generators instead of a phantom `app` target (#404).
+- Website-only PRs run `TestDocs_*` in `docs-site.yml`; `ci.yml` still ignores `website/**` (#407).
+
+### Changed
+
+- The committed `amarra.js` IIFE is minified. The version banner stays on line 1 so doctor can still match go.mod; `amarra-cais pwa` without `--bump` is enough because the SW already network-firsts `/static/js/` (#405).
+- Drive JS is split: `drive.mjs` is a barrel over visit, html extract, outlets, and response. The 500-line godfile cap now covers `pkg/amarra/js/*.mjs` and skips `.worktrees` (#406).
+
+### Upgrade
+
+- Minor release: `destroy live|stream|job` is new public CLI, and Drive `applyHead` now copies SEO/social/JSON-LD tags. Run `amarra-cais upgrade v0.29.0`.
+- Run `amarra-cais pwa` so vendored `amarra.js` is the minified IIFE and copies those head tags (void self-closing `/` is ignored). `--bump` is still required after changing icons/images/manifest.
+
 ## [0.28.0] - 2026-11-03
 
 ### Added

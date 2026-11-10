@@ -10,6 +10,8 @@ type migrationStep struct {
 
 // frameworkMigrations is maintained per release, newest first.
 var frameworkMigrations = []migrationStep{
+	{Version: "0.29.0", Title: "destroy live, stream chat, and job", Action: "amarra-cais destroy now reverses g live, g stream chat and g job through .cais-generated.json; unknown generators list the real names instead of a phantom app"},
+	{Version: "0.29.0", Title: "Drive applyHead copies SEO tags; minified amarra.js", Action: "run amarra-cais pwa so vendored amarra.js copies canonical/hreflang/description/og/twitter/JSON-LD on morph (void-tag slash is ignored) and ships the minified IIFE; --bump is still required after changing icons/images/manifest"},
 	{Version: "0.28.0", Title: "PaaS CSS needs vendored kit-classes.txt", Action: "copy web/static/css/kit-classes.txt from a fresh scaffold (and keep it in tailwind.config.js content) if PaaS builds CSS before go mod download; otherwise kit utilities such as bg-copper are missing"},
 	{Version: "0.28.0", Title: "Production session cookie is __Host-cais_session", Action: "production logins issue __Host-cais_session (Secure, Path=/, no Domain). Leftover cais_session cookies still authenticate until they expire or the user signs out; logout clears both names"},
 	{Version: "0.28.0", Title: "Drive outlets, dialog src, network-first /static/js/", Action: "run amarra-cais pwa so vendored amarra.js and sw.js pick up outlets, dialog opener src, and network-first fetch for all of /static/js/; --bump is still required after changing icons/images/manifest"},
