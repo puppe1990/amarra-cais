@@ -164,6 +164,12 @@ function makeHeadDoc() {
           return Object.prototype.hasOwnProperty.call(attrs, name) ? attrs[name] : null;
         },
         setAttribute(name, value) {
+          // Mirror Chromium: void-tag slashes must not land here as "/".
+          if (!/^[A-Za-z_:][\w:.-]*$/.test(String(name))) {
+            throw new Error(
+              `InvalidCharacterError: Failed to execute 'setAttribute' on 'Element': '${name}' is not a valid attribute name.`
+            );
+          }
           attrs[name] = String(value);
         },
         textContent: "",
@@ -233,6 +239,30 @@ test("applyHead copies canonical, og, description and JSON-LD from article A to 
   assert.equal(jsonld[0].textContent, '{"@id":"b"}');
   assert.equal(headAttr(doc, "meta", "property", "og:image"), null);
   assert.equal(headAttr(doc, "link", "rel", "stylesheet"), null);
+});
+
+test("applyHead copies self-closing canonical and og tags without treating slash as an attribute", () => {
+  const doc = makeHeadDoc();
+  applyHead(
+    doc,
+    `<html><head>
+      <title>Sign in</title>
+      <meta charset="UTF-8" />
+      <meta name="description" content="Login" />
+      <meta property="og:title" content="Sign in" />
+      <link rel="canonical" href="https://example.test/login" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    </head><body><main id="amarra-main">x</main></body></html>`
+  );
+
+  assert.equal(doc.title, "Sign in");
+  assert.equal(
+    headAttr(doc, "link", "rel", "canonical").getAttribute("href"),
+    "https://example.test/login"
+  );
+  assert.equal(headAttr(doc, "meta", "name", "description").getAttribute("content"), "Login");
+  assert.equal(headAttr(doc, "meta", "property", "og:title").getAttribute("content"), "Sign in");
+  assert.equal(headAttr(doc, "link", "rel", "canonical").getAttribute("/"), null);
 });
 
 test("applyHead does not invent document meta when the response has none", () => {

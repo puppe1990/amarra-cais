@@ -89,7 +89,11 @@ function parseAttrs(raw) {
   const re = /([^\s=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
   let m;
   while ((m = re.exec(raw))) {
-    attrs[m[1].toLowerCase()] = m[2] ?? m[3] ?? m[4] ?? "";
+    const name = m[1].toLowerCase();
+    // Void tags in the layout are written `<meta … />`; the trailing slash
+    // is not an attribute. Chromium throws InvalidCharacterError on "/".
+    if (!/^[a-z_:][\w:.-]*$/.test(name)) continue;
+    attrs[name] = m[2] ?? m[3] ?? m[4] ?? "";
   }
   return attrs;
 }
