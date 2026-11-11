@@ -132,9 +132,21 @@ export async function visit(url, opts = {}) {
 }
 
 export function start(opts = {}) {
+  const ctx = driveContext(opts);
+  if (!ctx) return;
+  ctx.document.addEventListener("click", (event) => onDriveClick(event, ctx));
+  ctx.document.addEventListener("submit", (event) => onDriveSubmit(event, ctx));
+  if (typeof window !== "undefined" && opts.popstate !== false) {
+    window.addEventListener("popstate", () => {
+      void visit(ctx.location?.href ?? window.location.href, { ...ctx.shared, push: false });
+    });
+  }
+}
+
+function driveContext(opts = {}) {
   const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
-  if (!doc || typeof doc.addEventListener !== "function") return;
-  if (doc.documentElement?.dataset?.amarraDrive === "true") return;
+  if (!doc || typeof doc.addEventListener !== "function") return null;
+  if (doc.documentElement?.dataset?.amarraDrive === "true") return null;
   if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraDrive = "true";
 
   const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
@@ -143,90 +155,86 @@ export function start(opts = {}) {
   const csrfToken = opts.csrfToken ?? csrfTokenFromMeta(doc);
   const FormDataCtor = opts.FormData ?? (typeof FormData !== "undefined" ? FormData : null);
   const shared = { ...opts, document: doc, location, history, fetchFn, csrfToken };
+  return { document: doc, location, FormDataCtor, confirm: opts.confirm, shared };
+}
 
-  doc.addEventListener("click", (event) => {
-    if (event.defaultPrevented) return;
-    if (event.button != null && event.button !== 0) return;
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const a = findAnchor(event.target);
-    if (!a) return;
-    const href = a.getAttribute?.("href") ?? a.href;
-    const resolved = resolveURL(href, location);
-    if (
-      !shouldInterceptClick({
-        href,
-        resolvedHref: resolved?.href,
-        currentHref: location?.href,
-        target: a.getAttribute?.("target") ?? a.target ?? "",
-        download: !!(a.hasAttribute?.("download") || a.download),
-        origin: resolved?.origin,
-        locationOrigin: location?.origin,
-        skip: a.hasAttribute?.("data-amarra-skip"),
-        button: event.button,
-      })
-    ) {
-      return;
-    }
-    event.preventDefault();
-    if (!confirmOk(a, opts.confirm)) return;
-    const method = requestMethod(a, "GET");
-    const hrefURL = resolved?.href ?? href;
-    void (async () => {
-      if (await visitIntoFrame(a, hrefURL, shared)) return;
-      await visit(hrefURL, { ...shared, method });
-    })().catch(() => emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE }));
-  });
-
-  doc.addEventListener("submit", (event) => {
-    if (event.defaultPrevented) return;
-    const form = findForm(event.target);
-    if (!form) return;
-    const submitter = event.submitter;
-    const rawAction =
-      submitter?.getAttribute?.("formaction") ||
-      form.getAttribute?.("action") ||
-      form.action ||
-      location?.href ||
-      "";
-    const method = (
-      submitter?.getAttribute?.("formmethod") ||
-      form.getAttribute?.("method") ||
-      form.method ||
-      "GET"
-    ).toUpperCase();
-    const resolved = resolveURL(rawAction, location);
-    if (
-      !shouldInterceptSubmit({
-        skip: form.hasAttribute?.("data-amarra-skip"),
-        target: form.getAttribute?.("target") ?? form.target ?? "",
-        method,
-        origin: resolved?.origin,
-        locationOrigin: location?.origin,
-      })
-    ) {
-      return;
-    }
-    event.preventDefault();
-    if (!confirmOk(form, opts.confirm) || !confirmOk(submitter, opts.confirm)) return;
-    const verb = requestMethod(form, method);
-    const fd = FormDataCtor ? formDataWithSubmitter(form, submitter, FormDataCtor) : null;
-    const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
-    const body = verb === "GET" ? undefined : driveFormBody(fd);
-    const disabled = disableSubmit(submitter);
-    void visit(url, {
-      ...shared,
-      method: verb,
-      body,
+function onDriveClick(event, ctx) {
+  if (event.defaultPrevented) return;
+  if (event.button != null && event.button !== 0) return;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const a = findAnchor(event.target);
+  if (!a) return;
+  const href = a.getAttribute?.("href") ?? a.href;
+  const resolved = resolveURL(href, ctx.location);
+  if (
+    !shouldInterceptClick({
+      href,
+      resolvedHref: resolved?.href,
+      currentHref: ctx.location?.href,
+      target: a.getAttribute?.("target") ?? a.target ?? "",
+      download: !!(a.hasAttribute?.("download") || a.download),
+      origin: resolved?.origin,
+      locationOrigin: ctx.location?.origin,
+      skip: a.hasAttribute?.("data-amarra-skip"),
+      button: event.button,
     })
-      .catch(() => emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE }))
-      .finally(() => restoreSubmit(disabled));
-  });
-
-  if (typeof window !== "undefined" && opts.popstate !== false) {
-    window.addEventListener("popstate", () => {
-      void visit(location?.href ?? window.location.href, { ...shared, push: false });
-    });
+  ) {
+    return;
   }
+  event.preventDefault();
+  if (!confirmOk(a, ctx.confirm)) return;
+  const method = requestMethod(a, "GET");
+  const hrefURL = resolved?.href ?? href;
+  const doc = ctx.document;
+  void (async () => {
+    if (await visitIntoFrame(a, hrefURL, ctx.shared)) return;
+    await visit(hrefURL, { ...ctx.shared, method });
+  })().catch(() => emitDriveError(doc, { message: DRIVE_ERROR_MESSAGE }));
+}
+
+function onDriveSubmit(event, ctx) {
+  if (event.defaultPrevented) return;
+  const form = findForm(event.target);
+  if (!form) return;
+  const submitter = event.submitter;
+  const rawAction =
+    submitter?.getAttribute?.("formaction") ||
+    form.getAttribute?.("action") ||
+    form.action ||
+    ctx.location?.href ||
+    "";
+  const method = (
+    submitter?.getAttribute?.("formmethod") ||
+    form.getAttribute?.("method") ||
+    form.method ||
+    "GET"
+  ).toUpperCase();
+  const resolved = resolveURL(rawAction, ctx.location);
+  if (
+    !shouldInterceptSubmit({
+      skip: form.hasAttribute?.("data-amarra-skip"),
+      target: form.getAttribute?.("target") ?? form.target ?? "",
+      method,
+      origin: resolved?.origin,
+      locationOrigin: ctx.location?.origin,
+    })
+  ) {
+    return;
+  }
+  event.preventDefault();
+  if (!confirmOk(form, ctx.confirm) || !confirmOk(submitter, ctx.confirm)) return;
+  const verb = requestMethod(form, method);
+  const fd = ctx.FormDataCtor ? formDataWithSubmitter(form, submitter, ctx.FormDataCtor) : null;
+  const url = verb === "GET" ? withQuery(rawAction, fd) : rawAction;
+  const body = verb === "GET" ? undefined : driveFormBody(fd);
+  const disabled = disableSubmit(submitter);
+  void visit(url, {
+    ...ctx.shared,
+    method: verb,
+    body,
+  })
+    .catch(() => emitDriveError(ctx.document, { message: DRIVE_ERROR_MESSAGE }))
+    .finally(() => restoreSubmit(disabled));
 }
 
 function isHashOnlyNavigation(href, resolvedHref, currentHref) {

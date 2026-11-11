@@ -111,179 +111,179 @@ export function liveState(root, state, detail = {}) {
 }
 
 export function start(opts = {}) {
+  const session = liveSession(opts);
+  if (!session) return;
+  liveSync(session);
+  session.document.addEventListener("amarra:morphed", () => liveSync(session));
+  session.document.addEventListener("click", (ev) => onLiveClick(ev, session), true);
+  session.document.addEventListener("change", (ev) => onLiveChange(ev, session), true);
+  session.document.addEventListener("submit", (ev) => onLiveSubmit(ev, session), true);
+}
+
+function liveSession(opts = {}) {
   const doc = opts.document ?? (typeof document !== "undefined" ? document : null);
-  if (!doc || typeof doc.addEventListener !== "function") return;
-  if (doc.documentElement?.dataset?.amarraLive === "true") return;
+  if (!doc || typeof doc.addEventListener !== "function") return null;
+  if (doc.documentElement?.dataset?.amarraLive === "true") return null;
   if (doc.documentElement?.dataset) doc.documentElement.dataset.amarraLive = "true";
+  return {
+    document: doc,
+    opts,
+    WS: opts.WebSocket ?? (typeof WebSocket !== "undefined" ? WebSocket : null),
+    location: opts.location ?? (typeof window !== "undefined" ? window.location : null),
+    connections: new Map(),
+    setTimer: opts.setTimeout ?? setTimeout,
+    clearTimer: opts.clearTimeout ?? clearTimeout,
+    disabled: opts.reconnectMs !== undefined && opts.reconnectMs < 0,
+  };
+}
 
-  const WS = opts.WebSocket ?? (typeof WebSocket !== "undefined" ? WebSocket : null);
-  const location = opts.location ?? (typeof window !== "undefined" ? window.location : null);
-  const connections = new Map();
-  const setTimer = opts.setTimeout ?? setTimeout;
-  const clearTimer = opts.clearTimeout ?? clearTimeout;
-  const disabled = opts.reconnectMs !== undefined && opts.reconnectMs < 0;
+function liveRemoved(session, root) {
+  return (
+    root.isConnected === false ||
+    (typeof session.document.contains === "function" && !session.document.contains(root))
+  );
+}
 
-  function removed(root) {
-    return (
-      root.isConnected === false || (typeof doc.contains === "function" && !doc.contains(root))
-    );
+function liveOnClose(session, root, record, ev) {
+  record.ws = null;
+  if (!session.connections.has(root)) return;
+  if (liveRemoved(session, root)) {
+    root?.removeAttribute?.("data-amarra-live-state");
+    session.connections.delete(root);
+    return;
   }
-
-  function onClose(root, record, ev) {
-    record.ws = null;
-    if (!connections.has(root)) return;
-    if (removed(root)) {
-      root?.removeAttribute?.("data-amarra-live-state");
-      connections.delete(root);
+  const code = ev?.code ?? 1006;
+  if (LIVE_RECONNECT_CODES.has(code)) {
+    record.failed = true;
+    liveState(root, "failed", {
+      permanent: true,
+      code,
+      reason: ev?.reason ?? "",
+      attempt: record.attempts,
+    });
+    return;
+  }
+  if (session.disabled) {
+    liveState(root, "closed", { code });
+    return;
+  }
+  record.attempts += 1;
+  const wait = reconnectDelay(record.attempts, {
+    baseMs: session.opts.reconnectMs ?? 1000,
+    maxMs: session.opts.maxMs,
+    jitter: session.opts.jitter,
+    random: session.opts.random,
+  });
+  liveState(root, "reconnecting", { code, attempt: record.attempts, retryInMs: wait });
+  record.timer = session.setTimer(() => {
+    record.timer = null;
+    if (!session.connections.has(root) || liveRemoved(session, root)) {
+      session.connections.delete(root);
       return;
     }
-    const code = ev?.code ?? 1006;
-    if (LIVE_RECONNECT_CODES.has(code)) {
-      record.failed = true;
-      liveState(root, "failed", {
-        permanent: true,
-        code,
-        reason: ev?.reason ?? "",
-        attempt: record.attempts,
-      });
+    liveOpen(session, root, record);
+  }, wait);
+}
+
+function liveOpen(session, root, record) {
+  const ws = new session.WS(record.url);
+  record.ws = ws;
+  liveState(root, "connecting", { attempt: record.attempts });
+  ws.addEventListener("open", () => {
+    record.attempts = 0;
+    liveState(root, "open");
+    const csrf = session.opts.csrfToken ?? csrfTokenFromMeta(session.document);
+    ws.send(JSON.stringify({ type: "join", csrf }));
+  });
+  ws.addEventListener("message", (ev) => {
+    let msg;
+    try {
+      msg = JSON.parse(ev.data);
+    } catch {
       return;
     }
-    if (disabled) {
-      liveState(root, "closed", { code });
-      return;
-    }
-    record.attempts += 1;
-    const wait = reconnectDelay(record.attempts, {
-      baseMs: opts.reconnectMs ?? 1000,
-      maxMs: opts.maxMs,
-      jitter: opts.jitter,
-      random: opts.random,
+    applyLiveMessage(msg, root, session.opts.morphFn, {
+      document: session.document,
+      history: session.opts.history ?? (typeof window !== "undefined" ? window.history : null),
+      location: session.location,
     });
-    liveState(root, "reconnecting", { code, attempt: record.attempts, retryInMs: wait });
-    record.timer = setTimer(() => {
-      record.timer = null;
-      if (!connections.has(root) || removed(root)) {
-        connections.delete(root);
-        return;
-      }
-      open(root, record);
-    }, wait);
-  }
+    setLoading(root._amarraPending, root, false);
+    root._amarraPending = null;
+  });
+  ws.addEventListener("close", (ev) => liveOnClose(session, root, record, ev));
+}
 
-  function open(root, record) {
-    const ws = new WS(record.url);
-    record.ws = ws;
-    liveState(root, "connecting", { attempt: record.attempts });
-    ws.addEventListener("open", () => {
-      record.attempts = 0;
-      liveState(root, "open");
-      const csrf = opts.csrfToken ?? csrfTokenFromMeta(doc);
-      ws.send(JSON.stringify({ type: "join", csrf }));
-    });
-    ws.addEventListener("message", (ev) => {
-      let msg;
-      try {
-        msg = JSON.parse(ev.data);
-      } catch {
-        return;
-      }
-      applyLiveMessage(msg, root, opts.morphFn, {
-        document: doc,
-        history: opts.history ?? (typeof window !== "undefined" ? window.history : null),
-        location,
-      });
-      setLoading(root._amarraPending, root, false);
-      root._amarraPending = null;
-    });
-    ws.addEventListener("close", (ev) => onClose(root, record, ev));
-  }
+function liveConnect(session, root) {
+  if (!root || !session.WS || !session.location || session.connections.has(root)) return;
+  const view = root.getAttribute("amarra-live");
+  if (!view) return;
+  const topic = root.getAttribute("data-amarra-topic") || view;
+  const record = {
+    url: wsURL(session.location, { view, topic }),
+    ws: null,
+    attempts: 0,
+    timer: null,
+    failed: false,
+  };
+  session.connections.set(root, record);
+  liveOpen(session, root, record);
+}
 
-  function connect(root) {
-    if (!root || !WS || !location || connections.has(root)) return;
-    const view = root.getAttribute("amarra-live");
-    if (!view) return;
-    const topic = root.getAttribute("data-amarra-topic") || view;
-    const record = {
-      url: wsURL(location, { view, topic }),
-      ws: null,
-      attempts: 0,
-      timer: null,
-      failed: false,
-    };
-    connections.set(root, record);
-    open(root, record);
+// #113: Drive morphs the page on navigation; rescan on amarra:morphed so a
+// chat reached via link still joins, and close sockets of replaced roots.
+// A pending backoff keeps its record, so the morph cannot open a duplicate.
+function liveSync(session) {
+  for (const [root, record] of session.connections) {
+    if (!liveRemoved(session, root)) continue;
+    if (record.timer) session.clearTimer(record.timer);
+    record.ws?.close?.();
+    root?.removeAttribute?.("data-amarra-live-state");
+    session.connections.delete(root);
   }
+  session.document.querySelectorAll?.("[amarra-live]").forEach((el) => {
+    if (!session.connections.has(el)) liveConnect(session, el);
+  });
+}
 
-  // #113: Drive morphs the page on navigation; rescan on amarra:morphed so a
-  // chat reached via link still joins, and close sockets of replaced roots.
-  // A pending backoff keeps its record, so the morph cannot open a duplicate.
-  function sync() {
-    for (const [root, record] of connections) {
-      if (!removed(root)) continue;
-      if (record.timer) clearTimer(record.timer);
-      record.ws?.close?.();
-      root?.removeAttribute?.("data-amarra-live-state");
-      connections.delete(root);
-    }
-    doc.querySelectorAll?.("[amarra-live]").forEach((el) => {
-      if (!connections.has(el)) connect(el);
-    });
-  }
-  sync();
-  if (typeof doc.addEventListener === "function") doc.addEventListener("amarra:morphed", sync);
-
-  function sendFrom(el, kind, extra) {
-    const root = liveRoot(el);
-    if (!root) return false;
-    const name = eventName(kind === "submit" ? el : el.closest?.(`[amarra-${kind}]`) || el, kind);
-    if (!name) return false;
-    const ws = connections.get(root)?.ws;
-    if (!ws || ws.readyState !== 1) return false;
-    const payload = extra ?? {};
-    const send = () => {
-      setLoading(el, root, true);
-      root._amarraPending = el;
-      ws.send(JSON.stringify({ type: "event", event: name, payload, ref: String(Date.now()) }));
-    };
-    const wait = debounceWait(el);
-    if (wait) {
-      clearTimeout(el._amarraDebounce);
-      el._amarraDebounce = setTimeout(send, wait);
-      return true;
-    }
-    send();
+function liveSendFrom(session, el, kind, extra) {
+  const root = liveRoot(el);
+  if (!root) return false;
+  const name = eventName(kind === "submit" ? el : el.closest?.(`[amarra-${kind}]`) || el, kind);
+  if (!name) return false;
+  const ws = session.connections.get(root)?.ws;
+  if (!ws || ws.readyState !== 1) return false;
+  const payload = extra ?? {};
+  const send = () => {
+    setLoading(el, root, true);
+    root._amarraPending = el;
+    ws.send(JSON.stringify({ type: "event", event: name, payload, ref: String(Date.now()) }));
+  };
+  const wait = debounceWait(el);
+  if (wait) {
+    clearTimeout(el._amarraDebounce);
+    el._amarraDebounce = setTimeout(send, wait);
     return true;
   }
+  send();
+  return true;
+}
 
-  doc.addEventListener(
-    "click",
-    (ev) => {
-      const btn = ev.target?.closest?.("[amarra-click]");
-      if (!btn || !liveRoot(btn)) return;
-      ev.preventDefault();
-      sendFrom(btn, "click", { value: btn.value ?? btn.textContent ?? "" });
-    },
-    true
-  );
+function onLiveClick(ev, session) {
+  const btn = ev.target?.closest?.("[amarra-click]");
+  if (!btn || !liveRoot(btn)) return;
+  ev.preventDefault();
+  liveSendFrom(session, btn, "click", { value: btn.value ?? btn.textContent ?? "" });
+}
 
-  doc.addEventListener(
-    "change",
-    (ev) => {
-      const el = ev.target?.closest?.("[amarra-change]");
-      if (!el || !liveRoot(el)) return;
-      sendFrom(el, "change", { value: el.value ?? "" });
-    },
-    true
-  );
+function onLiveChange(ev, session) {
+  const el = ev.target?.closest?.("[amarra-change]");
+  if (!el || !liveRoot(el)) return;
+  liveSendFrom(session, el, "change", { value: el.value ?? "" });
+}
 
-  doc.addEventListener(
-    "submit",
-    (ev) => {
-      const form = ev.target?.closest?.("form[amarra-submit]");
-      if (!form || !liveRoot(form)) return;
-      ev.preventDefault();
-      sendFrom(form, "submit", formPayload(form, opts.FormData));
-    },
-    true
-  );
+function onLiveSubmit(ev, session) {
+  const form = ev.target?.closest?.("form[amarra-submit]");
+  if (!form || !liveRoot(form)) return;
+  ev.preventDefault();
+  liveSendFrom(session, form, "submit", formPayload(form, session.opts.FormData));
 }
