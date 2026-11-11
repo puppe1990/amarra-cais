@@ -210,3 +210,66 @@ func TestParseFields_keepsValidNames(t *testing.T) {
 		t.Fatalf("fields = %d, want 4", len(fields))
 	}
 }
+
+func TestDisplayFieldForList(t *testing.T) {
+	titleFirst, err := parseFields("url:url,title:string")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := displayFieldForList(titleFirst); got.Name != "title" {
+		t.Errorf("displayFieldForList = %q, want title", got.Name)
+	}
+
+	nameOnly, err := parseFields("url:url,name:string")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := displayFieldForList(nameOnly); got.Name != "name" {
+		t.Errorf("displayFieldForList = %q, want name", got.Name)
+	}
+
+	fallback, err := parseFields("url:url,notes:text")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := displayFieldForList(fallback); got.Name != "url" {
+		t.Errorf("displayFieldForList = %q, want first field url", got.Name)
+	}
+}
+
+func TestFieldNeedsGoType(t *testing.T) {
+	notes, err := parseFields("title:string,notes:text?")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !fieldNeedsGoType(notes, "*string") {
+		t.Fatal("optional text should need *string")
+	}
+	if fieldNeedsGoType(notes, "*int64") {
+		t.Fatal("optional text should not need *int64")
+	}
+
+	qty, err := parseFields("qty:int?")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !fieldNeedsGoType(qty, "*int64") {
+		t.Fatal("optional int should need *int64")
+	}
+
+	price, err := parseFields("price:float?")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !fieldNeedsGoType(price, "*float64") {
+		t.Fatal("optional float should need *float64")
+	}
+
+	flags, err := parseFields("published:bool")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !fieldNeedsGoType(flags, "bool") {
+		t.Fatal("bool field should match bool")
+	}
+}

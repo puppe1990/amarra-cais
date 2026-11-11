@@ -2,6 +2,7 @@ bin/
 data/
 node_modules/
 tmp/
+.metrics/
 .air/
 *.db
 .DS_Store

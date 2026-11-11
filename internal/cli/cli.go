@@ -72,141 +72,17 @@ func (c *CLI) Run(args []string) error {
 	}
 }
 
-func (c *CLI) cmdGenerate(args []string) error {
-	dryRun := false
-	filtered := make([]string, 0, len(args))
+func stripFlag(args []string, name string) (bool, []string) {
+	out := make([]string, 0, len(args))
+	found := false
 	for _, arg := range args {
-		if arg == "--dry-run" {
-			dryRun = true
+		if arg == name {
+			found = true
 			continue
 		}
-		filtered = append(filtered, arg)
+		out = append(out, arg)
 	}
-	args = filtered
-	setScaffoldOut(c.Out)
-
-	if len(args) < 1 {
-		return fmt.Errorf("usage: amarra-cais g [--dry-run] <handler|page|component|migration|resource|model|stream|live|job|console|auth|ci|sitemap> [name]")
-	}
-
-	kind := args[0]
-	// --list is discovery and needs no app: the shipped kit is framework-side (#63).
-	if kind == "component" && len(args) >= 2 && args[1] == "--list" {
-		printShippedComponents(c.Out)
-		return nil
-	}
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	if !isCaisApp(cwd) {
-		if isCaisFramework(cwd) {
-			return fmt.Errorf("you are inside the Cais framework directory — cd into your app first")
-		}
-		return fmt.Errorf("not a Cais app (missing go.mod with github.com/puppe1990/amarra-cais as a dependency)")
-	}
-
-	var genErr error
-	switch kind {
-	case "console":
-		genErr = scaffoldConsole(cwd, dryRun)
-	case "auth":
-		genErr = scaffoldAuth(cwd, scaffoldData{AppName: filepath.Base(cwd), ModulePath: moduleFromDir(cwd)}, dryRun)
-	case "ci":
-		genErr = scaffoldCI(cwd, scaffoldData{AppName: filepath.Base(cwd), ModulePath: moduleFromDir(cwd)}, dryRun)
-	case "job":
-		if len(args) < 2 {
-			return fmt.Errorf("usage: amarra-cais g job <name> [--cron \"0 3 * * *\"]")
-		}
-		if err := validateGeneratedName(kind, args[1]); err != nil {
-			return err
-		}
-		opts, parseErr := parseJobOpts(args[2:])
-		if parseErr != nil {
-			return parseErr
-		}
-		opts.dryRun = dryRun
-		genErr = scaffoldJob(cwd, args[1], opts)
-	case "live":
-		if len(args) < 2 {
-			return fmt.Errorf("usage: amarra-cais g live <name>")
-		}
-		if err := validateGeneratedName(kind, args[1]); err != nil {
-			return err
-		}
-		genErr = scaffoldLive(cwd, args[1], dryRun)
-	case "stream":
-		if len(args) < 2 || args[1] != "chat" {
-			return fmt.Errorf("usage: amarra-cais g stream chat [--live]")
-		}
-		opts := streamOpts{dryRun: dryRun}
-		for _, a := range args[2:] {
-			if a == "--live" {
-				opts.live = true
-			}
-		}
-		genErr = scaffoldStreamChat(cwd, opts)
-	case "component":
-		if len(args) < 2 {
-			return fmt.Errorf("usage: amarra-cais g component <name>|--list")
-		}
-		if err := validateGeneratedName(kind, args[1]); err != nil {
-			return err
-		}
-		genErr = scaffoldComponent(cwd, args[1], dryRun)
-	case "sitemap":
-		genErr = scaffoldSitemap(cwd, dryRun)
-	case "handler", "page", "migration", "resource", "model":
-		if len(args) < 2 {
-			return fmt.Errorf("usage: amarra-cais g %s <name>", kind)
-		}
-		name := args[1]
-		if err := validateGeneratedName(kind, name); err != nil {
-			return err
-		}
-		switch kind {
-		case "handler":
-			genErr = scaffoldHandler(cwd, name, dryRun)
-		case "page":
-			genErr = scaffoldPage(cwd, name, dryRun)
-		case "migration":
-			genErr = scaffoldMigration(cwd, name, dryRun)
-		case "resource":
-			opts, parseErr := parseResourceOpts(args[2:])
-			if parseErr != nil {
-				return parseErr
-			}
-			opts.dryRun = dryRun
-			genErr = scaffoldResource(cwd, name, opts)
-		case "model":
-			opts, parseErr := parseModelOpts(args[2:])
-			if parseErr != nil {
-				return parseErr
-			}
-			opts.dryRun = dryRun
-			genErr = scaffoldModel(cwd, name, opts)
-		}
-	default:
-		return fmt.Errorf("unknown generator %q (use handler, page, component, migration, resource, model, stream, live, job, console, auth, ci, or sitemap)", kind)
-	}
-	if genErr != nil {
-		return genErr
-	}
-	if !dryRun {
-		printGenerateNextSteps(c.Out, kind)
-	}
-	return nil
-}
-
-func printGenerateNextSteps(w io.Writer, kind string) {
-	_, _ = fmt.Fprintln(w)
-	switch kind {
-	case "resource", "model", "migration", "auth", "stream", "sitemap":
-		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais db migrate && amarra-cais test")
-	default:
-		_, _ = fmt.Fprintln(w, "=> Next: amarra-cais test")
-	}
+	return found, out
 }
 
 func (c *CLI) cmdVersion() error {

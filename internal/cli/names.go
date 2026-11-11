@@ -78,16 +78,7 @@ func toPlural(snake string) string {
 }
 
 func toPascal(s string) string {
-	parts := splitName(s)
-	for i, p := range parts {
-		if p == "" {
-			continue
-		}
-		r := []rune(p)
-		r[0] = unicode.ToUpper(r[0])
-		parts[i] = string(r)
-	}
-	return strings.Join(parts, "")
+	return joinCased(s, "")
 }
 
 func lowerFirst(s string) string {
@@ -104,6 +95,10 @@ func toSnake(s string) string {
 }
 
 func toTitle(s string) string {
+	return joinCased(s, " ")
+}
+
+func joinCased(s, sep string) string {
 	parts := splitName(s)
 	for i, p := range parts {
 		if p == "" {
@@ -113,7 +108,7 @@ func toTitle(s string) string {
 		r[0] = unicode.ToUpper(r[0])
 		parts[i] = string(r)
 	}
-	return strings.Join(parts, " ")
+	return strings.Join(parts, sep)
 }
 
 func splitName(s string) []string {

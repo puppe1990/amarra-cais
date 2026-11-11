@@ -112,7 +112,7 @@ func buildResourceStoreMethods(data scaffoldData) string {
 	sets := updateSets(data.Fields)
 	updArgs := insertArgs(data.Fields) + ", c.ID"
 	sel := selectColumns(data.Fields)
-	searchCol := sqlIdent(adminIndexDisplayField(data.Fields).Name)
+	searchCol := sqlIdent(displayFieldForList(data.Fields).Name)
 
 	return nullableStoreHelpers(data.Fields) + fmt.Sprintf(`
 func (s *SQLiteStore) Insert%s(c models.%s) (int64, error) {
@@ -245,7 +245,7 @@ func (s *SQLiteStore) Find%sBySlug(slug string) (models.%s, error) {
 
 func buildResourcePaginatedStoreMethod(data scaffoldData) string {
 	sel := selectColumns(data.Fields)
-	searchCol := sqlIdent(adminIndexDisplayField(data.Fields).Name)
+	searchCol := sqlIdent(displayFieldForList(data.Fields).Name)
 	return fmt.Sprintf(`
 func (s *SQLiteStore) List%s(search, sort, dir string, page, perPage int) ([]models.%s, int, error) {
 	orderCol, orderDir := %sOrderClause(sort, dir)
