@@ -1,4 +1,4 @@
-.PHONY: build test test-v lint format format-check pre-commit-install ci install-cli js-build js-test js-bundle-check e2e docs docs-build clean
+.PHONY: build test test-v lint format format-check pre-commit-install ci install-cli js-build js-test js-bundle-check e2e docs docs-build clean crap dry
 
 BIN := bin/amarra-cais
 
@@ -50,4 +50,12 @@ docs-build:
 	cd website && npm ci && npm run build
 
 clean:
-	rm -rf bin/ tmp/
+	rm -rf bin/ tmp/ .metrics/
+
+# ub-mode quality gates. Source roots skip leftover .worktrees; generated
+# IIFE pkg/cais/pwa/assets/amarra.js still matches pkg/cais and can be ignored.
+crap:
+	crapper --no-coverage --source-root pkg/amarra --source-root pkg/cais --source-root internal --source-root cmd
+
+dry:
+	dryer --threshold 0.8 --source-root pkg/amarra --source-root pkg/cais --source-root internal --source-root cmd
