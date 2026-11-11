@@ -4,6 +4,20 @@ All notable changes to the Cais framework are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.1] - 2026-11-11
+
+### Changed
+
+- Drive, Live and theme `start` extract nested listeners so cyclomatic complexity is no longer charged to the outer function (#409).
+- `amarra-cais g` dispatches through a `generateCmds` map; `--dry-run`/`--force` share `stripFlag` with destroy (#409).
+- PWA `WriteStaticInertia`/`WriteStaticAmarra` share one `WriteStatic`; CLI name/field helpers share `joinCased`, `numberField`, `scanBoolLines`, `fieldNeedsGoType` and `displayFieldForList` (#409).
+- `make crap` / `make dry` pin `--source-root`; `.metrics/` is gitignored (#409).
+
+### Upgrade
+
+- Patch release: no public API change. Run `amarra-cais upgrade v0.29.1`.
+- Run `amarra-cais pwa` so vendored `amarra.js` matches the extracted Drive/Live/theme start. `--bump` is still required after changing icons/images/manifest.
+
 ## [0.29.0] - 2026-11-10
 
 ### Added
