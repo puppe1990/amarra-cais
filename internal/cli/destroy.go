@@ -183,21 +183,8 @@ func destroyHandler(dir, name string, dryRun, force bool) error {
 }
 
 func (c *CLI) cmdDestroy(args []string) error {
-	dryRun := false
-	force := false
-	filtered := make([]string, 0, len(args))
-	for _, arg := range args {
-		if arg == "--dry-run" {
-			dryRun = true
-			continue
-		}
-		if arg == "--force" {
-			force = true
-			continue
-		}
-		filtered = append(filtered, arg)
-	}
-	args = filtered
+	dryRun, args := stripFlag(args, "--dry-run")
+	force, args := stripFlag(args, "--force")
 	setScaffoldOut(c.Out)
 
 	if len(args) < 1 {
