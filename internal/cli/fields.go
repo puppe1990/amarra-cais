@@ -251,37 +251,27 @@ func stringField(name, pascal string, required bool, htmlType, widget string) Fi
 }
 
 func floatField(name, pascal string, required bool) FieldDef {
-	f := FieldDef{
-		Name:     toSnake(name),
-		Pascal:   pascal,
-		HTMLType: "float",
-		Widget:   "input",
-		Required: required,
-	}
-	if required {
-		f.SQLType = "REAL NOT NULL DEFAULT 0"
-		f.GoType = "float64"
-	} else {
-		f.SQLType = "REAL"
-		f.GoType = "*float64"
-	}
-	return f
+	return numberField(name, pascal, required, "float", "REAL", "float64")
 }
 
 func intField(name, pascal string, required bool) FieldDef {
+	return numberField(name, pascal, required, "number", "INTEGER", "int64")
+}
+
+func numberField(name, pascal string, required bool, htmlType, sqlBase, goBase string) FieldDef {
 	f := FieldDef{
 		Name:     toSnake(name),
 		Pascal:   pascal,
-		HTMLType: "number",
+		HTMLType: htmlType,
 		Widget:   "input",
 		Required: required,
 	}
 	if required {
-		f.SQLType = "INTEGER NOT NULL DEFAULT 0"
-		f.GoType = "int64"
+		f.SQLType = sqlBase + " NOT NULL DEFAULT 0"
+		f.GoType = goBase
 	} else {
-		f.SQLType = "INTEGER"
-		f.GoType = "*int64"
+		f.SQLType = sqlBase
+		f.GoType = "*" + goBase
 	}
 	return f
 }
@@ -295,26 +285,20 @@ func defaultFields() ([]FieldDef, error) {
 }
 
 func fieldNeedsStrPtr(fields []FieldDef) bool {
-	for _, f := range fields {
-		if f.GoType == "*string" {
-			return true
-		}
-	}
-	return false
+	return fieldNeedsGoType(fields, "*string")
 }
 
 func fieldNeedsInt64Ptr(fields []FieldDef) bool {
-	for _, f := range fields {
-		if f.GoType == "*int64" {
-			return true
-		}
-	}
-	return false
+	return fieldNeedsGoType(fields, "*int64")
 }
 
 func fieldNeedsFloat64Ptr(fields []FieldDef) bool {
+	return fieldNeedsGoType(fields, "*float64")
+}
+
+func fieldNeedsGoType(fields []FieldDef, goType string) bool {
 	for _, f := range fields {
-		if f.GoType == "*float64" {
+		if f.GoType == goType {
 			return true
 		}
 	}

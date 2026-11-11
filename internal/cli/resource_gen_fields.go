@@ -180,30 +180,16 @@ func boolScanTemp(f FieldDef) string {
 	return f.Name + "Int"
 }
 
+func boolScanDecl(f FieldDef) string {
+	return "var " + boolScanTemp(f) + " int"
+}
+
 func scanDeclare(fields []FieldDef) string {
-	var extra []string
-	for _, f := range fields {
-		if f.GoType == "bool" {
-			extra = append(extra, "\tvar "+boolScanTemp(f)+" int")
-		}
-	}
-	if len(extra) == 0 {
-		return ""
-	}
-	return strings.Join(extra, "\n") + "\n"
+	return scanBoolLines(fields, "\t", boolScanDecl)
 }
 
 func scanLoopDeclare(fields []FieldDef) string {
-	var extra []string
-	for _, f := range fields {
-		if f.GoType == "bool" {
-			extra = append(extra, "\t\tvar "+boolScanTemp(f)+" int")
-		}
-	}
-	if len(extra) == 0 {
-		return ""
-	}
-	return strings.Join(extra, "\n") + "\n"
+	return scanBoolLines(fields, "\t\t", boolScanDecl)
 }
 
 func scanVars(fields []FieldDef) string {
@@ -219,30 +205,29 @@ func scanVars(fields []FieldDef) string {
 	return "&c.ID, " + strings.Join(vars, ", ")
 }
 
+func boolScanAssign(f FieldDef) string {
+	return "c." + f.Pascal + " = " + boolScanTemp(f) + " == 1"
+}
+
 func scanAssign(fields []FieldDef) string {
-	var lines []string
-	for _, f := range fields {
-		if f.GoType == "bool" {
-			lines = append(lines, "\tc."+f.Pascal+" = "+boolScanTemp(f)+" == 1")
-		}
-	}
-	if len(lines) == 0 {
-		return ""
-	}
-	return strings.Join(lines, "\n") + "\n"
+	return scanBoolLines(fields, "\t", boolScanAssign)
 }
 
 func scanLoopAssign(fields []FieldDef) string {
-	var lines []string
+	return scanBoolLines(fields, "\t\t", boolScanAssign)
+}
+
+func scanBoolLines(fields []FieldDef, indent string, line func(FieldDef) string) string {
+	var extra []string
 	for _, f := range fields {
 		if f.GoType == "bool" {
-			lines = append(lines, "\t\tc."+f.Pascal+" = "+boolScanTemp(f)+" == 1")
+			extra = append(extra, indent+line(f))
 		}
 	}
-	if len(lines) == 0 {
+	if len(extra) == 0 {
 		return ""
 	}
-	return strings.Join(lines, "\n") + "\n"
+	return strings.Join(extra, "\n") + "\n"
 }
 
 func needsStrconv(fields []FieldDef) bool {
@@ -264,12 +249,7 @@ func hasFieldNamed(fields []FieldDef, name string) bool {
 }
 
 func hasBoolField(fields []FieldDef) bool {
-	for _, f := range fields {
-		if f.GoType == "bool" {
-			return true
-		}
-	}
-	return false
+	return fieldNeedsGoType(fields, "bool")
 }
 
 func boolImport(cond bool, s string) string {

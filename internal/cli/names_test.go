@@ -4,9 +4,17 @@ import "testing"
 
 func TestToPlural(t *testing.T) {
 	tests := map[string]string{
+		"":         "",
+		"y":        "ys",
 		"dish":     "dishes",
 		"recipe":   "recipes",
 		"category": "categories",
+		"city":     "cities",
+		"boy":      "boys",
+		"day":      "days",
+		"key":      "keys",
+		"toy":      "toys",
+		"play":     "plays",
 		"task":     "tasks",
 		"class":    "classes",
 		"box":      "boxes",
@@ -38,6 +46,7 @@ func TestToSnake_pascalCase(t *testing.T) {
 		"category":      "category",
 		"blog_post":     "blog_post",
 		"user-settings": "user_settings",
+		"ID":            "id",
 	}
 	for in, want := range tests {
 		if got := toSnake(in); got != want {
@@ -53,5 +62,38 @@ func TestNames(t *testing.T) {
 	}
 	if data.Snake != "user_settings" {
 		t.Errorf("Snake = %q", data.Snake)
+	}
+	if data.Title != "User Settings" {
+		t.Errorf("Title = %q", data.Title)
+	}
+}
+
+func TestLowerFirst(t *testing.T) {
+	tests := map[string]string{
+		"":             "",
+		"A":            "a",
+		"UserSettings": "userSettings",
+		"ID":           "iD",
+	}
+	for in, want := range tests {
+		if got := lowerFirst(in); got != want {
+			t.Errorf("lowerFirst(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestToPascalAndToTitle(t *testing.T) {
+	tests := []struct{ in, pascal, title string }{
+		{"user_settings", "UserSettings", "User Settings"},
+		{"blog-post", "BlogPost", "Blog Post"},
+		{"Category", "Category", "Category"},
+	}
+	for _, tt := range tests {
+		if got := toPascal(tt.in); got != tt.pascal {
+			t.Errorf("toPascal(%q) = %q, want %q", tt.in, got, tt.pascal)
+		}
+		if got := toTitle(tt.in); got != tt.title {
+			t.Errorf("toTitle(%q) = %q, want %q", tt.in, got, tt.title)
+		}
 	}
 }

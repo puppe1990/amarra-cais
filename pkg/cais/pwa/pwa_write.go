@@ -73,55 +73,10 @@ func InstallTo(appDir, name string) error {
 	return WriteStatic(appDir, cfg)
 }
 
-// WriteStaticInertia writes PWA assets for Inertia+Svelte apps (no HTMX JS bundles).
-// Copies amarra.js so the shared SW PRECACHE cache.addAll does not 404.
+// WriteStaticInertia writes the same runtime PWA assets as WriteStatic
+// (Amarra ships no HTMX; the Inertia name is the historical entry point).
 func WriteStaticInertia(appDir string, cfg Config) error {
-	if cfg.ThemeColor == "" {
-		cfg.ThemeColor = ThemeColor
-	}
-	if cfg.StartURL == "" {
-		cfg.StartURL = "/"
-	}
-
-	staticDir := filepath.Join(appDir, "web", "static")
-	if err := os.MkdirAll(filepath.Join(staticDir, "icons"), 0o755); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Join(staticDir, "js"), 0o755); err != nil {
-		return err
-	}
-	if err := writeManifest(filepath.Join(staticDir, "manifest.webmanifest"), cfg); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Join(staticDir, "img"), 0o755); err != nil {
-		return err
-	}
-
-	for _, pair := range []struct{ src, dst string }{
-		{"assets/amarra.js", "js/amarra.js"},
-	} {
-		if err := copyAsset(pair.src, filepath.Join(staticDir, pair.dst)); err != nil {
-			return err
-		}
-	}
-	if err := writeUserAsset("assets/offline.html", filepath.Join(staticDir, "offline.html"), cfg.Force); err != nil {
-		return err
-	}
-	if _, _, err := SyncServiceWorker(appDir); err != nil {
-		return err
-	}
-
-	if err := writeOGImage(filepath.Join(staticDir, "og.png"), cfg.Force); err != nil {
-		return err
-	}
-	if err := writeUserAsset("assets/favicon.svg", filepath.Join(staticDir, "favicon.svg"), cfg.Force); err != nil {
-		return err
-	}
-	if err := writeAppIcons(filepath.Join(staticDir, "icons"), cfg.IconPath, cfg.Force); err != nil {
-		return err
-	}
-
-	return nil
+	return WriteStatic(appDir, cfg)
 }
 
 // InstallForInertia writes PWA assets for Inertia scaffolds (no HTMX).
@@ -132,10 +87,7 @@ func InstallForInertia(appDir, name string) error {
 // WriteStaticAmarra writes PWA assets for HTML-first Amarra apps.
 // Ships amarra.js only — no HTMX, sse-ext, idiomorph-ext, or cais.js.
 func WriteStaticAmarra(appDir string, cfg Config) error {
-	if err := WriteStaticInertia(appDir, cfg); err != nil {
-		return err
-	}
-	return copyAsset("assets/amarra.js", filepath.Join(appDir, "web", "static", "js", "amarra.js"))
+	return WriteStatic(appDir, cfg)
 }
 
 // InstallForAmarra writes PWA assets for Amarra scaffolds (no HTMX).
